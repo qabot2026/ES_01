@@ -50,7 +50,7 @@ window.QA_CHAT_UI_CONFIG = {
       restartBody: 'How can I help you today?',
       /** Tap chips below welcome/restart text — sends message to bot */
       suggestionChips: {
-        enabled: true,
+        enabled: false,
         items: [
           {
             label: 'Quality standards',
