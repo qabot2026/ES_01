@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var QA_ASSET_VERSION = '20260527-ringfix3';
+  var QA_ASSET_VERSION = '20260527-ig-ring';
 
   var script = document.currentScript;
   var base = '';

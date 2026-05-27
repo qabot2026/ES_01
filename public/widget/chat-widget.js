@@ -300,10 +300,10 @@
     if (wrap && launch.storyRing && launch.storyRing.enabled) {
       wrap.classList.add('qa-launcher-wrap--ring');
       var ring = launch.storyRing;
-      var ringW = ring.widthPx != null ? ring.widthPx : 1;
+      var ringW = ring.widthPx != null ? ring.widthPx : 2.5;
       wrap.style.setProperty('--qa-ring-width', ringW + 'px');
-      if (ring.color) {
-        wrap.style.setProperty('--qa-ring-color', ring.color);
+      if (ring.gradient) {
+        wrap.style.setProperty('--qa-ring-gradient', ring.gradient);
       }
       if (ring.rotateSeconds > 0) {
         wrap.classList.add('qa-launcher-wrap--ring-spin');
@@ -463,6 +463,7 @@
     return (
       stripHtml +
       '<div class="qa-launcher-wrap">' +
+      '<span class="qa-launcher-ring-bg" aria-hidden="true"></span>' +
       '<button type="button" class="qa-launcher" aria-label="Open chat">' +
       (common.launcher && common.launcher.iconUrl ? '' : ICONS.chat) +
       '</button></div>' +
