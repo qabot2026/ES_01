@@ -28,6 +28,20 @@ window.QA_CHAT_UI_CONFIG = {
         /** One FRESH per page load until Restart (stops duplicate bot replies) */
         triggerOncePerSession: true,
       },
+      /**
+       * Fire when the user ends the chat (e.g. closes the panel).
+       * Create the same event under Dialogflow → Events (e.g. ENDCHAT).
+       */
+      endChatEvent: {
+        enabled: true,
+        eventName: 'ENDCHAT',
+        triggerOnChatClose: true,
+        /** Fire ENDCHAT before Restart, then FRESH runs as usual */
+        triggerOnRestart: false,
+        /** Show Dialogflow goodbye reply before the panel closes */
+        showBotResponse: true,
+        triggerOncePerSession: false,
+      },
       /** GREEN — chips + info cards from Custom payload richContent */
       richContentChips: {
         enabled: true,

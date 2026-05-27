@@ -134,6 +134,11 @@
     return df.welcomeEvent || {};
   }
 
+  function getEndChatEventCfg() {
+    var df = getRootCfg().dialogflow || {};
+    return df.endChatEvent || {};
+  }
+
   function isRichContentEnabled() {
     var df = getRootCfg().dialogflow || {};
     var rc = df.richContentChips || {};
@@ -228,6 +233,8 @@
     this.isSending = false;
     this._welcomeEventSent = false;
     this._welcomeEventInFlight = false;
+    this._endChatEventSent = false;
+    this._endChatEventInFlight = false;
     this.recognition = null;
     this.root = null;
     this.els = {};
@@ -744,15 +751,70 @@
       : 'en';
   };
 
-  QualityAssistantWidget.prototype.postToDialogflow = function (body) {
+  QualityAssistantWidget.prototype.applyDialogflowResult = function (result) {
+    if (!result.ok) {
+      this.appendMessage(
+        'bot',
+        result.data.message ||
+          'Sorry, I could not connect right now. Please try again.'
+      );
+      if (result.data.message) this.showError(result.data.message);
+      return;
+    }
+    if (result.data.sessionId) this.sessionId = result.data.sessionId;
+    var richOn = isRichContentEnabled();
+    var chips = richOn && result.data.chips ? result.data.chips : [];
+    var infoCards = richOn && result.data.infoCards ? result.data.infoCards : [];
+    var downloads = richOn && result.data.downloads ? result.data.downloads : [];
+    var dropdowns = result.data.dropdowns || [];
+    var galleries = result.data.galleries || [];
+    var reply = (result.data.reply || '').trim();
+    var replyParts = result.data.replyParts || [];
+    var chipHeading = (result.data.chipHeading || '').trim();
+    if (
+      reply ||
+      replyParts.length ||
+      chips.length ||
+      chipHeading ||
+      infoCards.length ||
+      downloads.length ||
+      dropdowns.length ||
+      galleries.length
+    ) {
+      this.appendMessage('bot', reply, {
+        replyParts: replyParts,
+        chips: chips,
+        chipHeading: chipHeading,
+        infoCards: infoCards,
+        downloads: downloads,
+        dropdowns: dropdowns,
+        galleries: galleries,
+      });
+    }
+  };
+
+  QualityAssistantWidget.prototype.postToDialogflow = function (body, opts) {
+    opts = opts || {};
     var self = this;
-    if (!this.apiBase || this.isSending) {
+    if (!this.apiBase) {
       return Promise.resolve();
     }
-    this.hideError();
-    this.isSending = true;
-    this.els.send.disabled = true;
-    var typing = this.showTyping();
+    if (opts.skipIfSending && this.isSending) {
+      return Promise.resolve();
+    }
+    if (!opts.silent && this.isSending) {
+      return Promise.resolve();
+    }
+
+    var showTyping = opts.showTyping !== false && !opts.silent;
+    var applyResponse = opts.applyResponse !== false && !opts.silent;
+
+    if (!opts.silent) {
+      this.hideError();
+      this.isSending = true;
+      this.els.send.disabled = true;
+    }
+    var typing = showTyping ? this.showTyping() : null;
 
     return fetch(this.apiBase + '/api/chat', {
       method: 'POST',
@@ -765,62 +827,30 @@
         });
       })
       .then(function (result) {
-        if (typing._stopTyping) typing._stopTyping();
-        typing.remove();
-        if (result.ok) {
-          if (result.data.sessionId) self.sessionId = result.data.sessionId;
-          var richOn = isRichContentEnabled();
-          var chips = richOn && result.data.chips ? result.data.chips : [];
-          var infoCards =
-            richOn && result.data.infoCards ? result.data.infoCards : [];
-          var downloads =
-            richOn && result.data.downloads ? result.data.downloads : [];
-          var dropdowns = result.data.dropdowns || [];
-          var galleries = result.data.galleries || [];
-          var reply = (result.data.reply || '').trim();
-          var replyParts = result.data.replyParts || [];
-          var chipHeading = (result.data.chipHeading || '').trim();
-          if (
-            reply ||
-            replyParts.length ||
-            chips.length ||
-            chipHeading ||
-            infoCards.length ||
-            downloads.length ||
-            dropdowns.length ||
-            galleries.length
-          ) {
-            self.appendMessage('bot', reply, {
-              replyParts: replyParts,
-              chips: chips,
-              chipHeading: chipHeading,
-              infoCards: infoCards,
-              downloads: downloads,
-              dropdowns: dropdowns,
-              galleries: galleries,
-            });
-          }
-        } else {
-          self.appendMessage(
-            'bot',
-            result.data.message ||
-              'Sorry, I could not connect right now. Please try again.'
-          );
-          if (result.data.message) self.showError(result.data.message);
+        if (typing) {
+          if (typing._stopTyping) typing._stopTyping();
+          typing.remove();
         }
+        if (applyResponse) self.applyDialogflowResult(result);
       })
       .catch(function () {
-        if (typing._stopTyping) typing._stopTyping();
-        typing.remove();
-        self.appendMessage(
-          'bot',
-          'Network error. Check your connection and try again.'
-        );
-        self.showError('Could not reach chat server.');
+        if (typing) {
+          if (typing._stopTyping) typing._stopTyping();
+          typing.remove();
+        }
+        if (applyResponse) {
+          self.appendMessage(
+            'bot',
+            'Network error. Check your connection and try again.'
+          );
+          self.showError('Could not reach chat server.');
+        }
       })
       .finally(function () {
-        self.isSending = false;
-        self.els.send.disabled = false;
+        if (!opts.silent) {
+          self.isSending = false;
+          self.els.send.disabled = false;
+        }
       });
   };
 
@@ -842,6 +872,52 @@
       self._welcomeEventInFlight = false;
       self._welcomeEventSent = true;
     });
+  };
+
+  QualityAssistantWidget.prototype.triggerEndChatEvent = function (opts) {
+    opts = opts || {};
+    var cfg = getEndChatEventCfg();
+    if (cfg.enabled === false) return Promise.resolve();
+    if (this._endChatEventInFlight) return Promise.resolve();
+    if (cfg.triggerOncePerSession && this._endChatEventSent) {
+      return Promise.resolve();
+    }
+
+    var name = (cfg.eventName || 'ENDCHAT').trim();
+    if (!name) return Promise.resolve();
+
+    var self = this;
+    var showBotResponse = cfg.showBotResponse !== false;
+    this._endChatEventInFlight = true;
+
+    return this.postToDialogflow(
+      {
+        event: name,
+        sessionId: this.sessionId,
+        languageCode: this.getDialogflowLang(),
+      },
+      {
+        silent: !showBotResponse,
+        showTyping: showBotResponse,
+        applyResponse: showBotResponse,
+        skipIfSending: false,
+      }
+    )
+      .finally(function () {
+        self._endChatEventInFlight = false;
+        self._endChatEventSent = true;
+      });
+  };
+
+  QualityAssistantWidget.prototype.finishClose = function () {
+    this.isOpen = false;
+    this.els.panel.classList.remove('qa-panel--open');
+    if (this.els.launcherWrap) {
+      this.els.launcherWrap.classList.remove('qa-launcher--hidden');
+    }
+    var strip = this.root.querySelector('.qa-launcher-strip');
+    if (strip) strip.classList.remove('qa-launcher-strip--hidden');
+    this.stopSpeech();
   };
 
   QualityAssistantWidget.prototype.maybeTriggerWelcomeEvent = function () {
@@ -867,33 +943,55 @@
   };
 
   QualityAssistantWidget.prototype.close = function () {
-    this.isOpen = false;
-    this.els.panel.classList.remove('qa-panel--open');
-    if (this.els.launcherWrap) {
-      this.els.launcherWrap.classList.remove('qa-launcher--hidden');
+    var self = this;
+    var cfg = getEndChatEventCfg();
+    var shouldEnd =
+      cfg.enabled !== false &&
+      cfg.triggerOnChatClose !== false &&
+      !(cfg.triggerOncePerSession && this._endChatEventSent);
+
+    if (shouldEnd && !this._endChatEventInFlight) {
+      this.triggerEndChatEvent().finally(function () {
+        self.finishClose();
+      });
+      return;
     }
-    var strip = this.root.querySelector('.qa-launcher-strip');
-    if (strip) strip.classList.remove('qa-launcher-strip--hidden');
-    this.stopSpeech();
+    this.finishClose();
   };
 
   QualityAssistantWidget.prototype.restart = function () {
-    this.sessionId = this.newSessionId();
-    this._welcomeEventSent = false;
-    this._welcomeEventInFlight = false;
-    this.els.messages.innerHTML = this.buildWelcomeHtml(
-      this.restartTitle,
-      this.restartBody
-    );
-    this.els.welcome = isWelcomeEnabled()
-      ? this.root.querySelector('.qa-welcome')
-      : null;
-    this.hideError();
-    this.els.input.focus();
-    var ev = getWelcomeEventCfg();
-    if (ev.enabled !== false && ev.triggerOnRestart !== false) {
-      this.triggerWelcomeEvent();
+    var self = this;
+    var endCfg = getEndChatEventCfg();
+    var runRestart = function () {
+      self.sessionId = self.newSessionId();
+      self._welcomeEventSent = false;
+      self._welcomeEventInFlight = false;
+      self._endChatEventSent = false;
+      self._endChatEventInFlight = false;
+      self.els.messages.innerHTML = self.buildWelcomeHtml(
+        self.restartTitle,
+        self.restartBody
+      );
+      self.els.welcome = isWelcomeEnabled()
+        ? self.root.querySelector('.qa-welcome')
+        : null;
+      self.hideError();
+      self.els.input.focus();
+      var ev = getWelcomeEventCfg();
+      if (ev.enabled !== false && ev.triggerOnRestart !== false) {
+        self.triggerWelcomeEvent();
+      }
+    };
+
+    if (
+      endCfg.enabled !== false &&
+      endCfg.triggerOnRestart !== false &&
+      !this._endChatEventInFlight
+    ) {
+      this.triggerEndChatEvent().finally(runRestart);
+      return;
     }
+    runRestart();
   };
 
   QualityAssistantWidget.prototype.botAvatarHtml = function () {
