@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var QA_ASSET_VERSION = '20260527-fresh-event';
+  var QA_ASSET_VERSION = '20260527-rich-chips';
 
   var script = document.currentScript;
   var base = '';

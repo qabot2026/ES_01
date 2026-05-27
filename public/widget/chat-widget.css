@@ -434,6 +434,23 @@
   cursor: not-allowed;
 }
 
+.qa-msg__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+  max-width: 100%;
+}
+
+.qa-msg--bot .qa-msg__chips {
+  justify-content: flex-start;
+}
+
+.qa-chip--bot {
+  font-size: 0.8125rem;
+  padding: 8px 14px;
+}
+
 /* Footer */
 .qa-footer {
   flex-shrink: 0;

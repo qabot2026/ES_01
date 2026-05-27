@@ -26,6 +26,8 @@ window.QA_CHAT_UI_CONFIG = {
         triggerOnChatOpen: true,
         triggerOnRestart: true,
       },
+      /** GREEN — show chips from Custom payload richContent in bot replies */
+      richContentChips: { enabled: true, cost: 'green' },
     },
 
     deploy: {

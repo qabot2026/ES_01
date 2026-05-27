@@ -134,6 +134,12 @@
     return df.welcomeEvent || {};
   }
 
+  function isRichContentChipsEnabled() {
+    var df = getRootCfg().dialogflow || {};
+    var rc = df.richContentChips || {};
+    return rc.enabled !== false;
+  }
+
   function getWelcomeChips() {
     if (!isWelcomeEnabled()) return [];
     var welcome = getRootCfg().welcome || {};
@@ -697,9 +703,16 @@
       .then(function (result) {
         if (typing._stopTyping) typing._stopTyping();
         typing.remove();
-        if (result.ok && result.data.reply) {
+        if (result.ok) {
           if (result.data.sessionId) self.sessionId = result.data.sessionId;
-          self.appendMessage('bot', result.data.reply);
+          var chips =
+            isRichContentChipsEnabled() && result.data.chips
+              ? result.data.chips
+              : [];
+          var reply = (result.data.reply || '').trim();
+          if (reply || chips.length) {
+            self.appendMessage('bot', reply, { chips: chips });
+          }
         } else {
           self.appendMessage(
             'bot',
@@ -878,7 +891,8 @@
     return html;
   };
 
-  QualityAssistantWidget.prototype.appendMessage = function (role, text) {
+  QualityAssistantWidget.prototype.appendMessage = function (role, text, options) {
+    options = options || {};
     if (this.els.welcome) {
       this.els.welcome.remove();
       this.els.welcome = null;
@@ -888,10 +902,33 @@
     var body = document.createElement('div');
     body.className = 'qa-msg__body';
     body.appendChild(this.buildPersonaRow(role));
-    var bubble = document.createElement('div');
-    bubble.className = 'qa-msg__bubble';
-    bubble.textContent = text;
-    body.appendChild(bubble);
+    var textStr = text == null ? '' : String(text).trim();
+    if (textStr) {
+      var bubble = document.createElement('div');
+      bubble.className = 'qa-msg__bubble';
+      bubble.textContent = textStr;
+      body.appendChild(bubble);
+    }
+    var chips = options.chips || [];
+    if (role === 'bot' && chips.length) {
+      var chipsWrap = document.createElement('div');
+      chipsWrap.className = 'qa-msg__chips';
+      chipsWrap.setAttribute('role', 'group');
+      chipsWrap.setAttribute('aria-label', 'Suggested replies');
+      var self = this;
+      chips.forEach(function (c) {
+        var label = c.label || c.message || '';
+        var message = c.message || c.label || '';
+        if (!label) return;
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'qa-chip qa-chip--bot';
+        btn.setAttribute('data-message', message);
+        btn.textContent = label;
+        chipsWrap.appendChild(btn);
+      });
+      if (chipsWrap.childNodes.length) body.appendChild(chipsWrap);
+    }
     row.appendChild(body);
     this.els.messages.appendChild(row);
     this.els.messages.scrollTop = this.els.messages.scrollHeight;
