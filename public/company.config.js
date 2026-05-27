@@ -44,10 +44,10 @@ window.QA_CHAT_UI_CONFIG = {
     welcome: {
       /** false = no welcome title/body/chips when chat opens or after Restart */
       enabled: true,
-      title: '',
-      body: '',
-      restartTitle: '',
-      restartBody: 'How can I help you today?',
+      title: 'title',
+      body: 'body',
+      restartTitle: 'restartTitle',
+      restartBody: 'restartBody',
       /** Tap chips below welcome/restart text — sends message to bot */
       suggestionChips: {
         enabled: true,
