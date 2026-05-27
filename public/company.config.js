@@ -34,7 +34,7 @@ window.QA_CHAT_UI_CONFIG = {
       chatIconUrl: QA_LOGO_LAUNCHER,
       chatTitleIconUrl: QA_LOGO_HEADER,
       headerIconUrl: QA_LOGO_HEADER,
-      titlebarIconSizePx: 96,
+      titlebarIconSizePx: 40,
       showHeaderIcon: true,
       botWritingText: 'Typing',
       botWritingDotsIntervalMs: 480,
@@ -50,15 +50,16 @@ window.QA_CHAT_UI_CONFIG = {
     botPersona: {
       mode: 'image',
       imageUrl: QA_LOGO_HEADER,
-      label: 'QA',
-      avatarSizePx: 32,
+      label: 'Bot',
+      avatarSizePx: 36,
       gapBelowPx: 4,
       showTime: false,
       timeZone: 'Asia/Kolkata',
     },
 
     userPersona: {
-      label: '🙂User',
+      label: 'You',
+      showLabelAboveBubble: true,
       showTime: false,
       timeZone: 'Asia/Kolkata',
     },
@@ -148,10 +149,11 @@ window.QA_CHAT_UI_CONFIG = {
 
   desk: {
     showChatbot: true,
-    titlebarIconSizePx: 96,
+    titlebarIconSizePx: 40,
     chatWindow: {
       widthPx: 400,
-      heightPx: 450,
+      heightPx: 620,
+      minHeightPx: 520,
       position: { rightPx: 10, bottomPx: 20, leftPx: null },
     },
     autoOpenChat: { enabled: false, delayMs: 5000 },
@@ -160,8 +162,11 @@ window.QA_CHAT_UI_CONFIG = {
 
   mob: {
     showChatbot: true,
-    titlebarIconSizePx: 56,
+    titlebarIconSizePx: 36,
     chatWindow: {
+      widthPx: null,
+      heightPx: null,
+      minHeightPx: 480,
       horizontalInsetPx: 12,
       bottomInsetPx: 10,
       topInsetPx: 26,

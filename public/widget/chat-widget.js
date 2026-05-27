@@ -215,8 +215,14 @@
     if (win.heightPx) {
       panel.style.height = win.heightPx + 'px';
       panel.style.maxHeight = win.heightPx + 'px';
+    } else if (win.minHeightPx) {
+      panel.style.minHeight = win.minHeightPx + 'px';
+      panel.style.height = 'min(92vh, ' + (win.minHeightPx + 80) + 'px)';
+      panel.style.maxHeight = 'min(92vh, ' + (win.minHeightPx + 80) + 'px)';
     }
-    if (win.horizontalInsetPx != null) {
+    var isMob =
+      global.matchMedia && global.matchMedia('(max-width: 768px)').matches;
+    if (isMob && win.horizontalInsetPx != null) {
       panel.style.width = 'calc(100vw - ' + win.horizontalInsetPx * 2 + 'px)';
       panel.style.maxWidth = 'calc(100vw - ' + win.horizontalInsetPx * 2 + 'px)';
     }
@@ -587,10 +593,6 @@
   };
 
   QualityAssistantWidget.prototype.userAvatarHtml = function () {
-    var up = getRootCfg().userPersona || {};
-    if (up.label) {
-      return '<span style="font-size:0.6rem;font-weight:700">' + this.escape(up.label) + '</span>';
-    }
     return ICONS.user;
   };
 
@@ -601,19 +603,35 @@
     }
     var row = document.createElement('div');
     row.className = 'qa-msg qa-msg--' + role;
+    var bp = getRootCfg().botPersona || {};
+    var up = getRootCfg().userPersona || {};
+    var persona = role === 'bot' ? bp : up;
     var avatar = document.createElement('div');
     avatar.className = 'qa-msg__avatar';
+    if (role === 'bot' && bp.mode === 'image' && bp.imageUrl) {
+      avatar.classList.add('qa-msg__avatar--image');
+    }
     avatar.setAttribute('aria-hidden', 'true');
     avatar.innerHTML =
       role === 'bot' ? this.botAvatarHtml() : this.userAvatarHtml();
     var body = document.createElement('div');
     body.className = 'qa-msg__body';
+    if (role === 'user' && up.label && up.showLabelAboveBubble !== false) {
+      var nameEl = document.createElement('div');
+      nameEl.className = 'qa-msg__persona-label';
+      nameEl.textContent = up.label;
+      body.appendChild(nameEl);
+    }
+    if (role === 'bot' && bp.label && bp.showLabelAboveBubble) {
+      var botLabel = document.createElement('div');
+      botLabel.className = 'qa-msg__persona-label';
+      botLabel.textContent = bp.label;
+      body.appendChild(botLabel);
+    }
     var bubble = document.createElement('div');
     bubble.className = 'qa-msg__bubble';
     bubble.textContent = text;
     body.appendChild(bubble);
-    var persona =
-      role === 'bot' ? getRootCfg().botPersona : getRootCfg().userPersona;
     var timeStr = formatPersonaTime(persona);
     if (timeStr) {
       var timeEl = document.createElement('div');
@@ -635,14 +653,22 @@
     var interval = header.botWritingDotsIntervalMs || 480;
     var row = document.createElement('div');
     row.className = 'qa-msg qa-msg--bot qa-msg--typing-indicator';
+    var avatar = document.createElement('div');
+    avatar.className = 'qa-msg__avatar';
+    var bp = getRootCfg().botPersona || {};
+    if (bp.mode === 'image' && bp.imageUrl) {
+      avatar.classList.add('qa-msg__avatar--image');
+    }
+    avatar.setAttribute('aria-hidden', 'true');
+    avatar.innerHTML = this.botAvatarHtml();
+    var body = document.createElement('div');
+    body.className = 'qa-msg__body';
     var bubble = document.createElement('div');
     bubble.className = 'qa-msg__bubble qa-msg__typing-text';
     bubble.textContent = baseText;
-    row.innerHTML =
-      '<div class="qa-msg__avatar" aria-hidden="true">' +
-      this.botAvatarHtml() +
-      '</div>';
-    row.appendChild(bubble);
+    body.appendChild(bubble);
+    row.appendChild(avatar);
+    row.appendChild(body);
     var dots = 0;
     row._typingTimer = setInterval(function () {
       dots = (dots + 1) % 4;

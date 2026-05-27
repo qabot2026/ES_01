@@ -67,7 +67,8 @@
   bottom: 0;
   right: 0;
   width: min(400px, calc(100vw - 32px));
-  height: min(640px, calc(100vh - 48px));
+  height: min(680px, calc(100vh - 40px));
+  min-height: 520px;
   background: var(--qa-surface);
   border-radius: var(--qa-panel-tl, var(--qa-radius, 16px))
     var(--qa-panel-tr, var(--qa-radius, 16px))
@@ -94,8 +95,9 @@
 .qa-header {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 16px 16px 14px;
+  gap: 10px;
+  padding: 12px 14px;
+  min-height: 0;
   background: var(--qa-header-bg);
   color: var(--qa-user-text, #f0f9ff);
   flex-shrink: 0;
@@ -103,9 +105,11 @@
 }
 
 .qa-header__icon {
-  width: var(--qa-header-icon-size, 44px);
-  height: var(--qa-header-icon-size, 44px);
-  border-radius: 12px;
+  width: var(--qa-header-icon-size, 40px);
+  height: var(--qa-header-icon-size, 40px);
+  max-width: 48px;
+  max-height: 48px;
+  border-radius: 10px;
   background: rgba(255, 255, 255, 0.2);
   display: flex;
   align-items: center;
@@ -184,10 +188,11 @@
 
 .qa-msg {
   display: flex;
+  align-items: flex-start;
   gap: 10px;
-  max-width: 92%;
+  max-width: 88%;
   animation: qa-fade-in 0.3s ease;
-  margin-bottom: var(--qa-bot-gap, 0);
+  margin-bottom: var(--qa-bot-gap, 6px);
 }
 
 @keyframes qa-fade-in {
@@ -211,6 +216,23 @@
   flex-direction: column;
   gap: 4px;
   min-width: 0;
+  flex: 1;
+}
+
+.qa-msg__persona-label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--qa-muted);
+  line-height: 1.2;
+}
+
+.qa-msg--user .qa-msg__persona-label {
+  text-align: right;
+  align-self: flex-end;
+}
+
+.qa-msg--bot .qa-msg__persona-label {
+  align-self: flex-start;
 }
 
 .qa-msg__time {
@@ -226,18 +248,29 @@
 .qa-msg__avatar {
   width: var(--qa-avatar-size, 36px);
   height: var(--qa-avatar-size, 36px);
+  min-width: var(--qa-avatar-size, 36px);
+  min-height: var(--qa-avatar-size, 36px);
   border-radius: 50%;
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.65rem;
-  font-weight: 700;
+  overflow: hidden;
   color: #fff;
+}
+
+.qa-msg__avatar svg {
+  width: 60%;
+  height: 60%;
 }
 
 .qa-msg--bot .qa-msg__avatar {
   background: linear-gradient(135deg, #334155, #475569);
+}
+
+.qa-msg--bot .qa-msg__avatar--image {
+  background: #fff;
+  border: 1px solid var(--qa-border);
 }
 
 .qa-msg--user .qa-msg__avatar {
