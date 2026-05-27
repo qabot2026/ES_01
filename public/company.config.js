@@ -50,18 +50,23 @@ window.QA_CHAT_UI_CONFIG = {
     botPersona: {
       mode: 'image',
       imageUrl: QA_LOGO_HEADER,
-      label: 'Bot',
-      avatarSizePx: 36,
+      label: 'Quality',
+      avatarSizePx: 32,
       gapBelowPx: 4,
-      showTime: false,
+      showTime: true,
+      showSeconds: true,
       timeZone: 'Asia/Kolkata',
+      messageTimeIncludesDate: false,
     },
 
     userPersona: {
       label: 'You',
-      showLabelAboveBubble: true,
-      showTime: false,
+      avatarSizePx: 18,
+      gapBelowPx: 4,
+      showTime: true,
+      showSeconds: true,
       timeZone: 'Asia/Kolkata',
+      messageTimeIncludesDate: false,
     },
 
     features: {
