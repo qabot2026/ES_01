@@ -159,13 +159,13 @@ window.QA_CHAT_UI_CONFIG = {
       sizePx: 64,
       iconUrl: QA_LOGO_LAUNCHER,
       cornerRoundness: '50%',
-      storyRing: { enabled: true, widthPx: 1.5, rotateSeconds: 5 },
+      storyRing: { enabled: true, widthPx: 0.75, rotateSeconds: 5 },
     },
 
     launcherStrip: {
       enabled: true,
       text: '👋Hey, how are you?😊',
-      position: { rightPx: 10, bottomPx: 72 },
+      position: { rightPx: 10, bottomPx: 66 },
       style: { fontSizePx: 13, paddingYpx: 10, paddingXpx: 14, maxWidthPx: 260 },
     },
   },
@@ -198,7 +198,7 @@ window.QA_CHAT_UI_CONFIG = {
     autoOpenChat: { enabled: false, delayMs: 5000 },
     launcherStrip: {
       text: '🤖Chat with us',
-      position: { rightPx: 12, bottomPx: 66 },
+      position: { rightPx: 12, bottomPx: 60 },
     },
   },
 };
