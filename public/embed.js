@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var QA_ASSET_VERSION = '20260527-md-links';
+  var QA_ASSET_VERSION = '20260527-accordion';
 
   var script = document.currentScript;
   var base = '';

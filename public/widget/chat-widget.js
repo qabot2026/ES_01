@@ -993,6 +993,13 @@
         article.appendChild(subEl);
       }
 
+      if (card.body) {
+        var bodyEl = document.createElement('div');
+        bodyEl.className = 'qa-rich-card__body';
+        bodyEl.textContent = card.body;
+        article.appendChild(bodyEl);
+      }
+
       var buttons = card.buttons || [];
       if (buttons.length) {
         var actions = document.createElement('div');

@@ -593,6 +593,13 @@
   line-height: 1.35;
 }
 
+.qa-rich-card__body {
+  padding: 6px 12px 0;
+  font-size: 0.75rem;
+  color: var(--qa-text-soft, var(--qa-muted));
+  line-height: 1.4;
+}
+
 .qa-rich-card__actions {
   display: flex;
   flex-wrap: wrap;
