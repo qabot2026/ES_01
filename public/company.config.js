@@ -140,6 +140,8 @@ window.QA_CHAT_UI_CONFIG = {
         'linear-gradient(180deg, rgba(255,255,255,0.38) 0%, rgba(255,255,255,0.1) 24%, transparent 46%), linear-gradient(168deg, #38bdf8 0%, #0284c7 42%, #075985 100%)',
       '--qa-shadow':
         '0 10px 28px -6px rgba(15, 23, 42, 0.1), 0 20px 40px -14px rgba(14, 165, 233, 0.12)',
+      '--qa-launcher-shadow': '0 3px 10px -2px rgba(14, 165, 233, 0.2)',
+      '--qa-launcher-shadow-hover': '0 5px 14px -2px rgba(14, 165, 233, 0.28)',
       '--qa-radius': '22px',
       '--qa-ring-color': '#0ea5e9',
     },
@@ -159,7 +161,7 @@ window.QA_CHAT_UI_CONFIG = {
       sizePx: 64,
       iconUrl: QA_LOGO_LAUNCHER,
       cornerRoundness: '50%',
-      storyRing: { enabled: true, widthPx: 1, rotateSeconds: 5 },
+      storyRing: { enabled: true, widthPx: 1, rotateSeconds: 8 },
     },
 
     launcherStrip: {

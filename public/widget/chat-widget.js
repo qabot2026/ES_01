@@ -293,23 +293,23 @@
         launcher.innerHTML =
           '<img src="' +
           launcherImg.replace(/"/g, '') +
-          '" alt="" style="width:88%;height:88%;object-fit:cover;border-radius:inherit"/>';
+          '" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit"/>';
       }
-      if (launch.storyRing && launch.storyRing.enabled) {
-        launcher.classList.add('qa-launcher--ring');
-        var ring = launch.storyRing;
-        var ringW =
-          ring.widthPx != null ? ring.widthPx : 1;
-        launcher.style.setProperty('--qa-ring-width', ringW + 'px');
-        if (ring.color) {
-          launcher.style.setProperty('--qa-ring-color', ring.color);
-        }
-        if (ring.rotateSeconds) {
-          launcher.style.setProperty(
-            '--qa-ring-duration',
-            ring.rotateSeconds + 's'
-          );
-        }
+    }
+    var wrap = this.root.querySelector('.qa-launcher-wrap');
+    if (wrap && launch.storyRing && launch.storyRing.enabled) {
+      wrap.classList.add('qa-launcher-wrap--ring');
+      var ring = launch.storyRing;
+      var ringW = ring.widthPx != null ? ring.widthPx : 1;
+      wrap.style.setProperty('--qa-ring-width', ringW + 'px');
+      if (ring.color) {
+        wrap.style.setProperty('--qa-ring-color', ring.color);
+      }
+      if (ring.rotateSeconds) {
+        wrap.style.setProperty(
+          '--qa-ring-duration',
+          ring.rotateSeconds + 's'
+        );
       }
     }
 
@@ -461,9 +461,10 @@
 
     return (
       stripHtml +
+      '<div class="qa-launcher-wrap">' +
       '<button type="button" class="qa-launcher" aria-label="Open chat">' +
       (common.launcher && common.launcher.iconUrl ? '' : ICONS.chat) +
-      '</button>' +
+      '</button></div>' +
       '<div class="qa-panel" role="dialog" aria-label="' +
       this.escape(this.title) +
       ' chat">' +
@@ -517,6 +518,7 @@
 
   QualityAssistantWidget.prototype.cacheElements = function () {
     this.els = {
+      launcherWrap: this.root.querySelector('.qa-launcher-wrap'),
       launcher: this.root.querySelector('.qa-launcher'),
       panel: this.root.querySelector('.qa-panel'),
       close: this.root.querySelector('.qa-header__close'),
@@ -607,7 +609,9 @@
   QualityAssistantWidget.prototype.open = function () {
     this.isOpen = true;
     this.els.panel.classList.add('qa-panel--open');
-    this.els.launcher.classList.add('qa-launcher--hidden');
+    if (this.els.launcherWrap) {
+      this.els.launcherWrap.classList.add('qa-launcher--hidden');
+    }
     var strip = this.root.querySelector('.qa-launcher-strip');
     if (strip) strip.classList.add('qa-launcher-strip--hidden');
     this.els.input.focus();
@@ -616,7 +620,9 @@
   QualityAssistantWidget.prototype.close = function () {
     this.isOpen = false;
     this.els.panel.classList.remove('qa-panel--open');
-    this.els.launcher.classList.remove('qa-launcher--hidden');
+    if (this.els.launcherWrap) {
+      this.els.launcherWrap.classList.remove('qa-launcher--hidden');
+    }
     var strip = this.root.querySelector('.qa-launcher-strip');
     if (strip) strip.classList.remove('qa-launcher-strip--hidden');
     this.stopSpeech();

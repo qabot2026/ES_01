@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var QA_ASSET_VERSION = '20260527-ring';
+  var QA_ASSET_VERSION = '20260527-ringfix2';
 
   var script = document.currentScript;
   var base = '';
@@ -20,10 +20,15 @@
   }
 
   function loadCss(href) {
-    if (document.querySelector('link[data-qa-widget-css]')) return;
+    var url = assetUrl(href);
+    var existing = document.querySelector('link[data-qa-widget-css]');
+    if (existing) {
+      if (existing.getAttribute('href') === url) return;
+      existing.remove();
+    }
     var link = document.createElement('link');
     link.rel = 'stylesheet';
-    link.href = assetUrl(href);
+    link.href = url;
     link.setAttribute('data-qa-widget-css', 'true');
     document.head.appendChild(link);
   }

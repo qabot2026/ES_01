@@ -19,6 +19,17 @@ app.use((req, res, next) => {
 });
 
 app.use(express.json({ limit: '32kb' }));
+
+app.use((req, res, next) => {
+  if (
+    /^\/(embed\.js|company\.config\.js|widget\/)/.test(req.path) &&
+    /\.(js|css)$/i.test(req.path)
+  ) {
+    res.setHeader('Cache-Control', 'no-cache, must-revalidate');
+  }
+  next();
+});
+
 app.use(express.static(publicDir, {
   maxAge: process.env.NODE_ENV === 'production' ? '1d' : 0,
   etag: true,

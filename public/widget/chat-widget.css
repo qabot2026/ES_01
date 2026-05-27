@@ -31,7 +31,14 @@
   box-sizing: border-box;
 }
 
-/* Launcher */
+/* Launcher — never use --qa-shadow on the bubble (reads as a thick ring) */
+.qa-launcher-wrap {
+  display: inline-flex;
+  border-radius: 50%;
+  line-height: 0;
+  flex-shrink: 0;
+}
+
 .qa-launcher {
   width: 60px;
   height: 60px;
@@ -40,16 +47,23 @@
   background: var(--qa-user-bg);
   color: #fff;
   cursor: pointer;
-  box-shadow: var(--qa-shadow);
+  box-shadow: var(
+    --qa-launcher-shadow,
+    0 3px 10px -2px rgba(14, 165, 233, 0.22)
+  );
   display: flex;
   align-items: center;
   justify-content: center;
   transition: transform 0.2s, box-shadow 0.2s;
+  overflow: hidden;
 }
 
 .qa-launcher:hover {
   transform: scale(1.05);
-  box-shadow: 0 20px 40px rgba(14, 165, 233, 0.35);
+  box-shadow: var(
+    --qa-launcher-shadow-hover,
+    0 5px 14px -2px rgba(14, 165, 233, 0.3)
+  );
 }
 
 .qa-launcher svg {
@@ -57,7 +71,8 @@
   height: 28px;
 }
 
-.qa-launcher--hidden {
+.qa-launcher--hidden,
+.qa-launcher-wrap.qa-launcher--hidden {
   display: none;
 }
 
@@ -556,22 +571,8 @@
   display: none;
 }
 
-/* Thin colorful ring via mask (not box-shadow — avoids thick/blurry halo) */
-.qa-launcher.qa-launcher--ring {
-  position: relative;
-  isolation: isolate;
-  box-shadow: 0 4px 12px -2px rgba(14, 165, 233, 0.18);
-}
-
-.qa-launcher.qa-launcher--ring:hover {
-  box-shadow: 0 6px 14px -2px rgba(14, 165, 233, 0.26);
-}
-
-.qa-launcher.qa-launcher--ring::before {
-  content: '';
-  position: absolute;
-  inset: calc(-1 * var(--qa-ring-width, 1px));
-  border-radius: inherit;
+/* Story ring: thin padding on wrapper (reliable; no mask / no hue-rotate blur) */
+.qa-launcher-wrap--ring {
   padding: var(--qa-ring-width, 1px);
   background: conic-gradient(
     from 0deg,
@@ -581,23 +582,23 @@
     #075985,
     var(--qa-ring-color, #0ea5e9)
   );
-  -webkit-mask:
-    linear-gradient(#fff 0 0) content-box,
-    linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask:
-    linear-gradient(#fff 0 0) content-box,
-    linear-gradient(#fff 0 0);
-  mask-composite: exclude;
   animation: qa-ring-rotate var(--qa-ring-duration, 5s) linear infinite;
-  pointer-events: none;
-  z-index: 0;
+  box-shadow: var(
+    --qa-launcher-shadow,
+    0 3px 10px -2px rgba(14, 165, 233, 0.22)
+  );
 }
 
-.qa-launcher.qa-launcher--ring > img,
-.qa-launcher.qa-launcher--ring > svg {
-  position: relative;
-  z-index: 1;
+.qa-launcher-wrap--ring .qa-launcher {
+  box-shadow: none;
+}
+
+.qa-launcher-wrap--ring:hover .qa-launcher {
+  transform: scale(1.05);
+}
+
+.qa-launcher-wrap--ring .qa-launcher:hover {
+  box-shadow: none;
 }
 
 @keyframes qa-ring-rotate {
