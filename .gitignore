@@ -3,3 +3,7 @@ node_modules/
 credentials.json
 .DS_Store
 *.log
+
+# Friend's CX reference — study only, do not publish
+Only to refer company.config.js
+Only to refer*

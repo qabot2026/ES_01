@@ -2,16 +2,15 @@
   'use strict';
 
   var script = document.currentScript;
-  var base =
-    (typeof window !== 'undefined' &&
-      window.QA_CONFIG &&
-      window.QA_CONFIG.apiBase) ||
-    '';
+  var base = '';
   if (script && script.src) {
     base = script.src.replace(/\/embed\.js(\?.*)?$/i, '');
   }
-  if (!base && typeof window !== 'undefined' && window.QA_CONFIG) {
+  if (!base && window.QA_CONFIG && window.QA_CONFIG.apiBase) {
     base = window.QA_CONFIG.apiBase;
+  }
+  if (!base && window.QA_CHAT_UI_CONFIG && window.QA_CHAT_UI_CONFIG.common) {
+    base = window.QA_CHAT_UI_CONFIG.common.deploy.publicBaseUrl;
   }
 
   function loadCss(href) {
@@ -24,26 +23,30 @@
   }
 
   function loadJs(src, cb) {
-    if (document.querySelector('script[data-qa-widget-js]')) {
+    if (document.querySelector('script[src="' + src + '"]')) {
       if (cb) cb();
       return;
     }
     var s = document.createElement('script');
     s.src = src;
-    s.async = true;
-    s.setAttribute('data-qa-widget-js', 'true');
+    s.async = false;
     s.onload = cb || null;
     document.head.appendChild(s);
   }
 
   function boot() {
     if (window.__qaWidgetLoaded) return;
-    window.__qaWidgetLoaded = true;
-    loadCss(base + '/widget/chat-widget.css');
-    loadJs(base + '/widget/chat-widget.js', function () {
-      if (window.QualityAssistantWidget) {
-        new window.QualityAssistantWidget({ apiBase: base });
-      }
+    loadJs(base + '/company.config.js', function () {
+      loadCss(base + '/widget/chat-widget.css');
+      loadJs(base + '/widget/chat-widget.js', function () {
+        if (window.QualityAssistantWidget) {
+          window.__qaWidgetLoaded = true;
+          new window.QualityAssistantWidget({
+            apiBase:
+              (window.QA_CONFIG && window.QA_CONFIG.apiBase) || base,
+          });
+        }
+      });
     });
   }
 

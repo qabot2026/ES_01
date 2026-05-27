@@ -395,12 +395,12 @@
 
 .qa-lang {
   flex: 0 0 auto;
-  width: calc(10ch + 5px);
-  max-width: calc(10ch + 5px);
+  width: var(--qa-lang-width, calc(10ch + 5px));
+  max-width: var(--qa-lang-width, calc(10ch + 5px));
   min-width: 0;
   height: 36px;
   padding: 0 4px 0 6px;
-  border: none;
+  border: 1px solid var(--qa-border);
   border-radius: 10px;
   font-family: inherit;
   font-size: 0.75rem;
@@ -412,8 +412,18 @@
   overflow: hidden;
 }
 
+.qa-lang--no-border .qa-lang,
+.qa-widget.qa-lang--no-border .qa-lang {
+  border: none;
+}
+
 .qa-lang:focus {
   box-shadow: 0 0 0 2px rgba(20, 184, 166, 0.25);
+}
+
+.qa-widget--left {
+  right: auto;
+  left: 24px;
 }
 
 .qa-restart {

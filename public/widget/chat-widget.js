@@ -1,12 +1,6 @@
 (function (global) {
   'use strict';
 
-  var LANG_MAP = {
-    en: { label: 'English', speech: 'en-IN', df: 'en' },
-    hi: { label: 'Hindi', speech: 'hi-IN', df: 'hi' },
-    mr: { label: 'Marathi', speech: 'mr-IN', df: 'mr' },
-  };
-
   var ICONS = {
     bot: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a2 2 0 012 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 017 7v1h1a1 1 0 011 1v3a1 1 0 01-1 1h-1v1a2 2 0 01-2 2H6a2 2 0 01-2-2v-1H3a1 1 0 01-1-1v-3a1 1 0 011-1h1v-1a7 7 0 017-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 012-2z"/><circle cx="9" cy="13" r="1" fill="currentColor"/><circle cx="15" cy="13" r="1" fill="currentColor"/><path d="M9 17h6"/></svg>',
     user: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg>',
@@ -18,12 +12,70 @@
     header: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>',
   };
 
+  function getRootCfg() {
+    return (global.QA_CHAT_UI_CONFIG && global.QA_CHAT_UI_CONFIG.common) || {};
+  }
+
+  function getViewportCfg() {
+    var root = global.QA_CHAT_UI_CONFIG || {};
+    var mob =
+      global.matchMedia && global.matchMedia('(max-width: 768px)').matches;
+    return mob ? root.mob || {} : root.desk || {};
+  }
+
+  function getLangList() {
+    var ml = getRootCfg().features && getRootCfg().features.multiLanguage;
+    if (ml && ml.languages && ml.languages.length) return ml.languages;
+    return [
+      { code: 'en', label: 'English', speech: 'en-IN', dialogflow: 'en' },
+      { code: 'hi', label: 'Hindi', speech: 'hi-IN', dialogflow: 'hi' },
+      { code: 'mr', label: 'Marathi', speech: 'mr-IN', dialogflow: 'mr' },
+    ];
+  }
+
+  function langMapFromList(list) {
+    var map = {};
+    list.forEach(function (L) {
+      map[L.code] = {
+        label: L.label,
+        speech: L.speech || 'en-IN',
+        df: L.dialogflow || L.code,
+      };
+    });
+    return map;
+  }
+
   function QualityAssistantWidget(options) {
-    this.apiBase = (options && options.apiBase) || '';
-    this.title = (options && options.title) || 'QualityAssistant';
-    this.subtitle = (options && options.subtitle) || 'Your quality & compliance guide';
+    var common = getRootCfg();
+    var header = common.header || {};
+    var welcome = common.welcome || {};
+    var deploy = common.deploy || {};
+
+    this.cfg = global.QA_CHAT_UI_CONFIG || {};
+    this.langList = getLangList();
+    this.langMap = langMapFromList(this.langList);
+
+    this.apiBase =
+      (options && options.apiBase) ||
+      (global.QA_CONFIG && global.QA_CONFIG.apiBase) ||
+      deploy.publicBaseUrl ||
+      '';
+
+    this.title = header.title || 'QualityAssistant';
+    this.subtitle = header.subtitle || 'Your quality & compliance guide';
+    this.welcomeTitle = welcome.title || 'Welcome to ' + this.title;
+    this.welcomeBody =
+      welcome.body ||
+      'Ask about quality standards, procedures, or compliance.';
+    this.restartTitle = welcome.restartTitle || 'Conversation restarted';
+    this.restartBody = welcome.restartBody || 'How can I help you today?';
+
     this.sessionId = this.newSessionId();
-    this.language = 'en';
+    this.language =
+      (common.features &&
+        common.features.multiLanguage &&
+        common.features.multiLanguage.defaultLanguage) ||
+      'en';
     this.isOpen = false;
     this.isSending = false;
     this.recognition = null;
@@ -37,80 +89,221 @@
   };
 
   QualityAssistantWidget.prototype.init = function () {
-    var self = this;
+    var vp = getViewportCfg();
+    if (vp.showChatbot === false) return;
+
     this.root = document.createElement('div');
     this.root.className = 'qa-widget';
     this.root.innerHTML = this.template();
     document.body.appendChild(this.root);
+    this.applyTheme();
+    this.applyLayout();
     this.cacheElements();
+    this.applyFeatureToggles();
     this.bindEvents();
     this.fetchConfig();
+    this.maybeAutoOpen();
+  };
+
+  QualityAssistantWidget.prototype.applyTheme = function () {
+    var theme = getRootCfg().theme || {};
+    Object.keys(theme).forEach(
+      function (key) {
+        this.root.style.setProperty(key, theme[key]);
+      }.bind(this)
+    );
+    var ml = getRootCfg().features && getRootCfg().features.multiLanguage;
+    if (ml) {
+      var ch = ml.selectWidthCh != null ? ml.selectWidthCh : 10;
+      var extra = ml.selectWidthExtraPx != null ? ml.selectWidthExtraPx : 5;
+      this.root.style.setProperty('--qa-lang-width', 'calc(' + ch + 'ch + ' + extra + 'px)');
+      if (ml.showSelectBorder === false) {
+        this.root.classList.add('qa-lang--no-border');
+      }
+    }
+    var side =
+      (getRootCfg().chatLayout && getRootCfg().chatLayout.side) || 'right';
+    if (side === 'left') this.root.classList.add('qa-widget--left');
+  };
+
+  QualityAssistantWidget.prototype.applyLayout = function () {
+    var vp = getViewportCfg();
+    var win = vp.chatWindow || {};
+    var panel = this.root.querySelector('.qa-panel');
+    var launcher = this.root.querySelector('.qa-launcher');
+    if (!panel) return;
+
+    if (win.widthPx) {
+      panel.style.width = win.widthPx + 'px';
+      panel.style.maxWidth = win.widthPx + 'px';
+    }
+    if (win.heightPx) {
+      panel.style.height = win.heightPx + 'px';
+      panel.style.maxHeight = win.heightPx + 'px';
+    }
+    if (win.horizontalInsetPx != null) {
+      panel.style.width = 'calc(100vw - ' + win.horizontalInsetPx * 2 + 'px)';
+      panel.style.maxWidth = 'calc(100vw - ' + win.horizontalInsetPx * 2 + 'px)';
+    }
+
+    var pos = win.position || {};
+    if (pos.rightPx != null) {
+      this.root.style.right = pos.rightPx + 'px';
+      if (launcher) launcher.style.right = '0';
+    }
+    if (pos.leftPx != null) {
+      this.root.style.left = pos.leftPx + 'px';
+      this.root.style.right = 'auto';
+    }
+    if (pos.bottomPx != null) {
+      this.root.style.bottom = pos.bottomPx + 'px';
+    }
+
+    var launch = getRootCfg().launcher || {};
+    if (launch.sizePx && launcher) {
+      launcher.style.width = launch.sizePx + 'px';
+      launcher.style.height = launch.sizePx + 'px';
+    }
+  };
+
+  QualityAssistantWidget.prototype.applyFeatureToggles = function () {
+    var feats = (getRootCfg().features) || {};
+    if (feats.speechToText && feats.speechToText.enabled === false && this.els.mic) {
+      this.els.mic.style.display = 'none';
+    }
+    if (feats.restartChat && feats.restartChat.enabled === false && this.els.restart) {
+      this.els.restart.style.display = 'none';
+    }
+    if (
+      feats.multiLanguage &&
+      feats.multiLanguage.enabled === false &&
+      this.els.lang
+    ) {
+      this.els.lang.style.display = 'none';
+    }
+    var pb = getRootCfg().poweredBy;
+    var powered = this.root.querySelector('.qa-powered');
+    if (pb && pb.enabled === false && powered) {
+      powered.style.display = 'none';
+    }
+  };
+
+  QualityAssistantWidget.prototype.maybeAutoOpen = function () {
+    var vp = getViewportCfg();
+    var ao = vp.autoOpenChat;
+    if (!ao || !ao.enabled) return;
+    var self = this;
+    setTimeout(function () {
+      self.open();
+    }, ao.delayMs || 0);
   };
 
   QualityAssistantWidget.prototype.template = function () {
-    var langOptions = Object.keys(LANG_MAP)
-      .map(function (code) {
-        return '<option value="' + code + '">' + LANG_MAP[code].label + '</option>';
+    var common = getRootCfg();
+    var header = common.header || {};
+    var feats = common.features || {};
+    var ml = feats.multiLanguage || {};
+    var restart = feats.restartChat || {};
+    var pb = common.poweredBy || {};
+    var placeholders = feats.inputPlaceholderByLanguage || {};
+
+    var langOptions = this.langList
+      .map(function (L) {
+        return (
+          '<option value="' +
+          L.code +
+          '">' +
+          (L.label || L.code) +
+          '</option>'
+        );
       })
       .join('');
+
+    var placeholder =
+      placeholders[this.language] || placeholders.en || 'Type your message…';
+
+    var headerIcon = ICONS.header;
+    if (header.headerIconUrl) {
+      headerIcon =
+        '<img src="' +
+        this.escape(header.headerIconUrl) +
+        '" alt="" width="24" height="24" style="border-radius:8px;object-fit:cover"/>';
+    } else if (header.showHeaderIcon === false) {
+      headerIcon = '';
+    }
+
+    var logoSrc =
+      pb.logoUrl ||
+      (this.apiBase ? this.apiBase + '/widget/logo-powered.svg' : '');
+    var poweredHtml = '';
+    if (pb.enabled !== false) {
+      poweredHtml =
+        '<div class="qa-powered">' +
+        '<span>' +
+        this.escape(pb.prefix || 'Powered by') +
+        '</span>' +
+        (logoSrc
+          ? '<img class="qa-powered__logo" src="' +
+            this.escape(logoSrc) +
+            '" alt="" width="90" height="18" onerror="this.style.display=\'none\'"/>'
+          : '') +
+        '<strong>' +
+        this.escape(pb.brandName || 'QualityAssistant') +
+        '</strong></div>';
+    }
 
     return (
       '<button type="button" class="qa-launcher" aria-label="Open chat">' +
       ICONS.chat +
       '</button>' +
-      '<div class="qa-panel" role="dialog" aria-label="QualityAssistant chat">' +
+      '<div class="qa-panel" role="dialog" aria-label="' +
+      this.escape(this.title) +
+      ' chat">' +
       '<header class="qa-header">' +
-      '<div class="qa-header__icon" aria-hidden="true">' +
-      ICONS.header +
-      '</div>' +
+      (headerIcon
+        ? '<div class="qa-header__icon" aria-hidden="true">' + headerIcon + '</div>'
+        : '') +
       '<div class="qa-header__text">' +
       '<h2 class="qa-header__title">' +
       this.escape(this.title) +
       '</h2>' +
       '<p class="qa-header__subtitle">' +
       this.escape(this.subtitle) +
-      '</p>' +
-      '</div>' +
+      '</p></div>' +
       '<button type="button" class="qa-header__close" aria-label="Close chat">' +
       ICONS.close +
-      '</button>' +
-      '</header>' +
+      '</button></header>' +
       '<div class="qa-messages" role="log" aria-live="polite">' +
-      '<div class="qa-welcome">' +
-      '<strong>Welcome to ' +
-      this.escape(this.title) +
+      '<div class="qa-welcome"><strong>' +
+      this.escape(this.welcomeTitle) +
       '</strong>' +
-      'Ask about quality standards, procedures, or compliance.' +
-      '</div>' +
-      '</div>' +
+      this.escape(this.welcomeBody) +
+      '</div></div>' +
       '<footer class="qa-footer">' +
       '<div class="qa-input-row">' +
-      '<textarea class="qa-input" rows="1" placeholder="Type your message…" aria-label="Message"></textarea>' +
+      '<textarea class="qa-input" rows="1" placeholder="' +
+      this.escape(placeholder) +
+      '" aria-label="Message"></textarea>' +
       '<button type="button" class="qa-mic" aria-label="Speech to text">' +
       ICONS.mic +
       '</button>' +
       '<button type="button" class="qa-send" aria-label="Send message">' +
       ICONS.send +
-      '</button>' +
-      '</div>' +
+      '</button></div>' +
       '<div class="qa-toolbar">' +
-      '<select class="qa-lang" aria-label="Language">' +
-      langOptions +
-      '</select>' +
-      '<button type="button" class="qa-restart">' +
-      ICONS.restart +
-      ' Restart</button>' +
+      (ml.enabled !== false
+        ? '<select class="qa-lang" aria-label="Language">' + langOptions + '</select>'
+        : '') +
+      (restart.enabled !== false
+        ? '<button type="button" class="qa-restart">' +
+          ICONS.restart +
+          ' ' +
+          this.escape(restart.label || 'Restart') +
+          '</button>'
+        : '') +
       '</div>' +
-      '<div class="qa-powered">' +
-      '<span>Powered by</span>' +
-      '<img class="qa-powered__logo" src="' +
-      this.apiBase +
-      '/widget/logo-powered.svg" alt="QualityAssistant" width="90" height="18" onerror="this.style.display=\'none\'"/>' +
-      '<strong>QualityAssistant</strong>' +
-      '</div>' +
-      '<p class="qa-error" hidden></p>' +
-      '</footer>' +
-      '</div>'
+      poweredHtml +
+      '<p class="qa-error" hidden></p></footer></div>'
     );
   };
 
@@ -128,10 +321,14 @@
       error: this.root.querySelector('.qa-error'),
       welcome: this.root.querySelector('.qa-welcome'),
     };
+    if (this.els.lang) this.els.lang.value = this.language;
   };
 
   QualityAssistantWidget.prototype.bindEvents = function () {
     var self = this;
+    var feats = getRootCfg().features || {};
+    var placeholders = feats.inputPlaceholderByLanguage || {};
+
     this.els.launcher.addEventListener('click', function () {
       self.open();
     });
@@ -149,17 +346,27 @@
     });
     this.els.input.addEventListener('input', function () {
       self.els.input.style.height = 'auto';
-      self.els.input.style.height = Math.min(self.els.input.scrollHeight, 100) + 'px';
+      self.els.input.style.height =
+        Math.min(self.els.input.scrollHeight, 100) + 'px';
     });
-    this.els.lang.addEventListener('change', function () {
-      self.language = self.els.lang.value;
-    });
-    this.els.restart.addEventListener('click', function () {
-      self.restart();
-    });
-    this.els.mic.addEventListener('click', function () {
-      self.toggleSpeech();
-    });
+    if (this.els.lang) {
+      this.els.lang.addEventListener('change', function () {
+        self.language = self.els.lang.value;
+        var ph =
+          placeholders[self.language] || placeholders.en || self.els.input.placeholder;
+        self.els.input.placeholder = ph;
+      });
+    }
+    if (this.els.restart) {
+      this.els.restart.addEventListener('click', function () {
+        self.restart();
+      });
+    }
+    if (this.els.mic) {
+      this.els.mic.addEventListener('click', function () {
+        self.toggleSpeech();
+      });
+    }
   };
 
   QualityAssistantWidget.prototype.fetchConfig = function () {
@@ -172,15 +379,17 @@
       .then(function (cfg) {
         if (cfg.title) {
           self.title = cfg.title;
-          self.root.querySelector('.qa-header__title').textContent = cfg.title;
+          var t = self.root.querySelector('.qa-header__title');
+          if (t) t.textContent = cfg.title;
         }
         if (cfg.subtitle) {
           self.subtitle = cfg.subtitle;
-          self.root.querySelector('.qa-header__subtitle').textContent = cfg.subtitle;
+          var s = self.root.querySelector('.qa-header__subtitle');
+          if (s) s.textContent = cfg.subtitle;
         }
         if (!cfg.dialogflowReady) {
           self.showError(
-            'Server credentials missing. Add credentials.json for full chat API.'
+            'Server credentials missing. Set GOOGLE_CREDENTIALS_JSON on Railway.'
           );
         }
       })
@@ -204,10 +413,37 @@
   QualityAssistantWidget.prototype.restart = function () {
     this.sessionId = this.newSessionId();
     this.els.messages.innerHTML =
-      '<div class="qa-welcome"><strong>Conversation restarted</strong>How can I help you today?</div>';
+      '<div class="qa-welcome"><strong>' +
+      this.escape(this.restartTitle) +
+      '</strong>' +
+      this.escape(this.restartBody) +
+      '</div>';
     this.els.welcome = this.root.querySelector('.qa-welcome');
     this.hideError();
     this.els.input.focus();
+  };
+
+  QualityAssistantWidget.prototype.botAvatarHtml = function () {
+    var bp = getRootCfg().botPersona || {};
+    if (bp.mode === 'image' && bp.imageUrl) {
+      return (
+        '<img src="' +
+        this.escape(bp.imageUrl) +
+        '" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover"/>'
+      );
+    }
+    if (bp.label && bp.mode !== 'icon') {
+      return '<span style="font-size:0.65rem;font-weight:700">' + this.escape(bp.label) + '</span>';
+    }
+    return ICONS.bot;
+  };
+
+  QualityAssistantWidget.prototype.userAvatarHtml = function () {
+    var up = getRootCfg().userPersona || {};
+    if (up.label) {
+      return '<span style="font-size:0.6rem;font-weight:700">' + this.escape(up.label) + '</span>';
+    }
+    return ICONS.user;
   };
 
   QualityAssistantWidget.prototype.appendMessage = function (role, text) {
@@ -220,7 +456,8 @@
     var avatar = document.createElement('div');
     avatar.className = 'qa-msg__avatar';
     avatar.setAttribute('aria-hidden', 'true');
-    avatar.innerHTML = role === 'bot' ? ICONS.bot : ICONS.user;
+    avatar.innerHTML =
+      role === 'bot' ? this.botAvatarHtml() : this.userAvatarHtml();
     var bubble = document.createElement('div');
     bubble.className = 'qa-msg__bubble';
     bubble.textContent = text;
@@ -236,7 +473,7 @@
     row.className = 'qa-msg qa-msg--bot qa-msg--typing-indicator';
     row.innerHTML =
       '<div class="qa-msg__avatar" aria-hidden="true">' +
-      ICONS.bot +
+      this.botAvatarHtml() +
       '</div><div class="qa-msg__bubble qa-msg__typing"><span></span><span></span><span></span></div>';
     this.els.messages.appendChild(row);
     this.els.messages.scrollTop = this.els.messages.scrollHeight;
@@ -254,7 +491,9 @@
     this.isSending = true;
     this.els.send.disabled = true;
     var typing = this.showTyping();
-    var langCode = LANG_MAP[this.language] ? LANG_MAP[this.language].df : 'en';
+    var langCode = this.langMap[this.language]
+      ? this.langMap[this.language].df
+      : 'en';
 
     fetch(this.apiBase + '/api/chat', {
       method: 'POST',
@@ -286,7 +525,10 @@
       })
       .catch(function () {
         typing.remove();
-        self.appendMessage('bot', 'Network error. Check your connection and try again.');
+        self.appendMessage(
+          'bot',
+          'Network error. Check your connection and try again.'
+        );
         self.showError('Could not reach chat server.');
       })
       .finally(function () {
@@ -296,6 +538,9 @@
   };
 
   QualityAssistantWidget.prototype.toggleSpeech = function () {
+    var stt = getRootCfg().features && getRootCfg().features.speechToText;
+    if (stt && stt.enabled === false) return;
+
     if (this.recognition) {
       this.stopSpeech();
       return;
@@ -303,11 +548,15 @@
     var SpeechRecognition =
       global.SpeechRecognition || global.webkitSpeechRecognition;
     if (!SpeechRecognition) {
-      this.showError('Speech-to-text is not supported in this browser. Use Chrome or Edge.');
+      this.showError(
+        'Speech-to-text is not supported in this browser. Use Chrome or Edge.'
+      );
       return;
     }
     var self = this;
-    var lang = LANG_MAP[this.language] ? LANG_MAP[this.language].speech : 'en-IN';
+    var lang = this.langMap[this.language]
+      ? this.langMap[this.language].speech
+      : 'en-IN';
     this.recognition = new SpeechRecognition();
     this.recognition.lang = lang;
     this.recognition.interimResults = false;
@@ -335,7 +584,7 @@
       } catch (e) {}
       this.recognition = null;
     }
-    this.els.mic.classList.remove('qa-mic--active');
+    if (this.els.mic) this.els.mic.classList.remove('qa-mic--active');
   };
 
   QualityAssistantWidget.prototype.showError = function (msg) {
