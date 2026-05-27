@@ -6,6 +6,17 @@ const dialogflow = require('./lib/dialogflow');
 const app = express();
 const PORT = process.env.PORT || 4567;
 const publicDir = path.join(__dirname, 'public');
+const PUBLIC_BASE_URL =
+  process.env.PUBLIC_BASE_URL ||
+  'https://es-based-chatbot-production.up.railway.app';
+
+app.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  if (req.method === 'OPTIONS') return res.sendStatus(204);
+  next();
+});
 
 app.use(express.json({ limit: '32kb' }));
 app.use(express.static(publicDir, {
@@ -54,6 +65,8 @@ app.get('/api/config', (_req, res) => {
     title: 'QualityAssistant',
     subtitle: 'Your quality & compliance guide',
     dialogflowReady: dialogflow.isConfigured(),
+    publicBaseUrl: PUBLIC_BASE_URL,
+    embedScript: `${PUBLIC_BASE_URL}/embed.js`,
   });
 });
 
@@ -64,7 +77,9 @@ app.get('*', (req, res, next) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`QualityAssistant → http://localhost:${PORT}`);
+  const local = `http://localhost:${PORT}`;
+  console.log(`QualityAssistant → ${PUBLIC_BASE_URL}`);
+  console.log(`Local: ${local}`);
   if (!dialogflow.isConfigured()) {
     console.warn('⚠ credentials.json missing — UI works; /api/chat needs Google service account key.');
   }

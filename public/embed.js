@@ -2,9 +2,16 @@
   'use strict';
 
   var script = document.currentScript;
-  var base = '';
+  var base =
+    (typeof window !== 'undefined' &&
+      window.QA_CONFIG &&
+      window.QA_CONFIG.apiBase) ||
+    '';
   if (script && script.src) {
     base = script.src.replace(/\/embed\.js(\?.*)?$/i, '');
+  }
+  if (!base && typeof window !== 'undefined' && window.QA_CONFIG) {
+    base = window.QA_CONFIG.apiBase;
   }
 
   function loadCss(href) {

@@ -38,6 +38,7 @@
       margin-top: 2rem;
       font-size: 0.875rem;
       color: #94a3b8;
+      word-break: break-all;
     }
   </style>
 </head>
@@ -45,11 +46,12 @@
   <main class="demo-hero">
     <h1>QualityAssistant</h1>
     <p>Modern chat for quality &amp; compliance. Use the teal button bottom-right to open the assistant.</p>
-    <p class="hint">Project: qualityassistant-ygdm</p>
+    <p class="hint">Production: es-based-chatbot-production.up.railway.app</p>
   </main>
+  <script src="/qa-config.js"></script>
   <script src="/widget/chat-widget.js"></script>
   <script>
-    new QualityAssistantWidget({ apiBase: '' });
+    new QualityAssistantWidget({ apiBase: window.QA_CONFIG.apiBase });
   </script>
 </body>
 </html>
