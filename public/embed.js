@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var QA_ASSET_VERSION = '20260527-welcome-chips';
+  var QA_ASSET_VERSION = '20260527-welcome-toggle';
 
   var script = document.currentScript;
   var base = '';

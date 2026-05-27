@@ -124,7 +124,13 @@
     return lang.nativeLabel || lang.label || lang.code;
   }
 
+  function isWelcomeEnabled() {
+    var welcome = getRootCfg().welcome || {};
+    return welcome.enabled !== false;
+  }
+
   function getWelcomeChips() {
+    if (!isWelcomeEnabled()) return [];
     var welcome = getRootCfg().welcome || {};
     var chips = welcome.suggestionChips;
     if (!chips || chips.enabled === false) return [];
@@ -683,7 +689,9 @@
       this.restartTitle,
       this.restartBody
     );
-    this.els.welcome = this.root.querySelector('.qa-welcome');
+    this.els.welcome = isWelcomeEnabled()
+      ? this.root.querySelector('.qa-welcome')
+      : null;
     this.hideError();
     this.els.input.focus();
   };
@@ -751,6 +759,7 @@
   };
 
   QualityAssistantWidget.prototype.buildWelcomeHtml = function (title, body) {
+    if (!isWelcomeEnabled()) return '';
     var html =
       '<div class="qa-welcome"><strong>' +
       this.escape(title) +
