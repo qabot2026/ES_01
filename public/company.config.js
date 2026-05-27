@@ -74,7 +74,7 @@ window.QA_CHAT_UI_CONFIG = {
         enabled: true,
         defaultLanguage: 'en',
         selectWidthCh: 10,
-        selectWidthExtraPx: 5,
+        selectWidthExtraPx: 15,
         showSelectBorder: false,
         languages: [
           { code: 'en', label: 'English', speech: 'en-IN', dialogflow: 'en' },
@@ -96,7 +96,7 @@ window.QA_CHAT_UI_CONFIG = {
       prefix: '⚡by ',
       brandName: 'QualityAssistant',
       logoUrl: QA_LOGO_HEADER,
-      linkUrl: '',
+      linkUrl: 'www.google.com',
       color: '#0369a1',
       fontSizePx: 11,
     },
@@ -147,7 +147,7 @@ window.QA_CHAT_UI_CONFIG = {
     launcherStrip: {
       enabled: true,
       text: '👋Hey, how are you?😊',
-      position: { rightPx: 10, bottomPx: 96 },
+      position: { rightPx: 10, bottomPx: 86 },
       style: { fontSizePx: 13, paddingYpx: 10, paddingXpx: 14, maxWidthPx: 260 },
     },
   },
@@ -180,7 +180,7 @@ window.QA_CHAT_UI_CONFIG = {
     autoOpenChat: { enabled: false, delayMs: 5000 },
     launcherStrip: {
       text: '🤖Chat with us',
-      position: { rightPx: 12, bottomPx: 86 },
+      position: { rightPx: 12, bottomPx: 76 },
     },
   },
 };

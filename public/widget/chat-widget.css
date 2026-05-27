@@ -213,7 +213,7 @@
 .qa-msg__body {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 2px;
   min-width: 0;
   flex: 1;
   max-width: 100%;
@@ -480,8 +480,8 @@
 
 .qa-lang {
   flex: 0 0 auto;
-  width: var(--qa-lang-width, calc(10ch + 5px));
-  max-width: var(--qa-lang-width, calc(10ch + 5px));
+  width: var(--qa-lang-width, calc(10ch + 15px));
+  max-width: var(--qa-lang-width, calc(10ch + 15px));
   min-width: 0;
   height: 36px;
   padding: 0 4px 0 6px;
@@ -536,7 +536,7 @@
 .qa-launcher-strip {
   position: absolute;
   right: 0;
-  bottom: 72px;
+  bottom: 62px;
   max-width: 220px;
   padding: 8px 12px;
   background: var(--qa-surface);
