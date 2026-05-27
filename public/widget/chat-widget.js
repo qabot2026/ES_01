@@ -425,14 +425,25 @@
           logoImg +
           '</a>';
       }
+      var brandName = pb.brandName || 'QualityAssistant';
+      var brandBlock =
+        '<strong class="qa-powered__brand">' +
+        this.escape(brandName) +
+        '</strong>';
+      if (poweredLink) {
+        brandBlock =
+          '<a class="qa-powered__brand-link" href="' +
+          this.escape(poweredLink) +
+          '" target="_blank" rel="noopener noreferrer">' +
+          brandBlock +
+          '</a>';
+      }
       var inner =
         '<span>' +
         this.escape(pb.prefix || 'Powered by') +
         '</span>' +
         logoBlock +
-        '<strong>' +
-        this.escape(pb.brandName || 'QualityAssistant') +
-        '</strong>';
+        brandBlock;
       poweredHtml = '<div class="qa-powered">' + inner + '</div>';
     }
 
