@@ -394,18 +394,22 @@
 }
 
 .qa-lang {
-  flex: 1;
-  min-width: 120px;
+  flex: 0 0 auto;
+  width: 10ch;
+  max-width: 10ch;
+  min-width: 0;
   height: 36px;
-  padding: 0 10px;
+  padding: 0 4px 0 6px;
   border: 1px solid var(--qa-border);
   border-radius: 10px;
   font-family: inherit;
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   color: var(--qa-text);
   background: var(--qa-surface);
   cursor: pointer;
   outline: none;
+  text-overflow: ellipsis;
+  overflow: hidden;
 }
 
 .qa-lang:focus {

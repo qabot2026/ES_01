@@ -3,8 +3,8 @@
 
   var LANG_MAP = {
     en: { label: 'English', speech: 'en-IN', df: 'en' },
-    hi: { label: 'हिंदी', speech: 'hi-IN', df: 'hi' },
-    mr: { label: 'मराठी', speech: 'mr-IN', df: 'mr' },
+    hi: { label: 'Hindi', speech: 'hi-IN', df: 'hi' },
+    mr: { label: 'Marathi', speech: 'mr-IN', df: 'mr' },
   };
 
   var ICONS = {
