@@ -434,12 +434,24 @@
   cursor: not-allowed;
 }
 
+.qa-msg__chips-heading {
+  margin-top: 8px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--qa-muted);
+  line-height: 1.35;
+}
+
 .qa-msg__chips {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
   margin-top: 8px;
   max-width: 100%;
+}
+
+.qa-msg__chips-heading + .qa-msg__chips {
+  margin-top: 6px;
 }
 
 .qa-msg--bot .qa-msg__chips {

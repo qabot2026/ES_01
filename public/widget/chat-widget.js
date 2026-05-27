@@ -712,8 +712,12 @@
               ? result.data.chips
               : [];
           var reply = (result.data.reply || '').trim();
-          if (reply || chips.length) {
-            self.appendMessage('bot', reply, { chips: chips });
+          var chipHeading = (result.data.chipHeading || '').trim();
+          if (reply || chips.length || chipHeading) {
+            self.appendMessage('bot', reply, {
+              chips: chips,
+              chipHeading: chipHeading,
+            });
           }
         } else {
           self.appendMessage(
@@ -923,6 +927,13 @@
       body.appendChild(bubble);
     }
     var chips = options.chips || [];
+    var chipHeading = (options.chipHeading || '').trim();
+    if (role === 'bot' && chipHeading) {
+      var headingEl = document.createElement('div');
+      headingEl.className = 'qa-msg__chips-heading';
+      headingEl.textContent = chipHeading;
+      body.appendChild(headingEl);
+    }
     if (role === 'bot' && chips.length) {
       var chipsWrap = document.createElement('div');
       chipsWrap.className = 'qa-msg__chips';
