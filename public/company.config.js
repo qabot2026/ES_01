@@ -61,6 +61,13 @@ window.QA_CHAT_UI_CONFIG = {
           objectFit: 'contain',
           background: '#e8f4fc',
         },
+        /** open_card_carousel — swipeable property/product cards */
+        cardCarousel: {
+          cardWidthPx: 200,
+          imageHeightPx: 140,
+          objectFit: 'cover',
+          background: '#e8f4fc',
+        },
         /** open_gallery — horizontal image strip (urls in Dialogflow payload) */
         galleryImage: {
           itemWidthPx: 120,

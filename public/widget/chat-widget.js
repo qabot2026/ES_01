@@ -412,6 +412,26 @@
     if (galCfg.background) {
       this.root.style.setProperty('--qa-gallery-img-bg', galCfg.background);
     }
+
+    var carouselCfg = (rc && rc.cardCarousel) || {};
+    if (carouselCfg.cardWidthPx != null) {
+      this.root.style.setProperty(
+        '--qa-carousel-card-width',
+        carouselCfg.cardWidthPx + 'px'
+      );
+    }
+    if (carouselCfg.imageHeightPx != null) {
+      this.root.style.setProperty(
+        '--qa-carousel-img-height',
+        carouselCfg.imageHeightPx + 'px'
+      );
+    }
+    if (carouselCfg.objectFit) {
+      this.root.style.setProperty('--qa-carousel-img-fit', carouselCfg.objectFit);
+    }
+    if (carouselCfg.background) {
+      this.root.style.setProperty('--qa-carousel-img-bg', carouselCfg.background);
+    }
   };
 
   QualityAssistantWidget.prototype.applyLayout = function () {
@@ -838,6 +858,7 @@
     var downloads = richOn && result.data.downloads ? result.data.downloads : [];
     var dropdowns = result.data.dropdowns || [];
     var galleries = result.data.galleries || [];
+    var cardCarousels = richOn && result.data.cardCarousels ? result.data.cardCarousels : [];
     var reply = (result.data.reply || '').trim();
     var replyParts = result.data.replyParts || [];
     var chipHeading = (result.data.chipHeading || '').trim();
@@ -849,7 +870,8 @@
       infoCards.length ||
       downloads.length ||
       dropdowns.length ||
-      galleries.length
+      galleries.length ||
+      cardCarousels.length
     ) {
       this.appendMessage('bot', reply, {
         replyParts: replyParts,
@@ -859,6 +881,7 @@
         downloads: downloads,
         dropdowns: dropdowns,
         galleries: galleries,
+        cardCarousels: cardCarousels,
       });
     }
   };
@@ -1371,6 +1394,69 @@
     return wrap;
   };
 
+  QualityAssistantWidget.prototype.buildCardCarouselEl = function (carousel) {
+    var wrap = document.createElement('div');
+    wrap.className = 'qa-card-carousel';
+    var track = document.createElement('div');
+    track.className = 'qa-card-carousel__track';
+    track.setAttribute('role', 'list');
+
+    (carousel.cards || []).forEach(function (card) {
+      var article = document.createElement('article');
+      article.className = 'qa-card-carousel__card';
+      article.setAttribute('role', 'listitem');
+      if (card.id) article.setAttribute('data-card-id', card.id);
+
+      if (card.imageUrl) {
+        var imgWrap = document.createElement('div');
+        imgWrap.className = 'qa-card-carousel__media';
+        var img = document.createElement('img');
+        img.className = 'qa-card-carousel__img';
+        img.src = card.imageUrl;
+        img.alt = card.title || '';
+        img.loading = 'lazy';
+        img.onerror = function () {
+          imgWrap.style.display = 'none';
+        };
+        imgWrap.appendChild(img);
+        article.appendChild(imgWrap);
+      }
+
+      if (card.title) {
+        var titleEl = document.createElement('div');
+        titleEl.className = 'qa-card-carousel__title';
+        titleEl.textContent = card.title;
+        article.appendChild(titleEl);
+      }
+
+      if (card.subtitle) {
+        var subEl = document.createElement('div');
+        subEl.className = 'qa-card-carousel__subtitle';
+        subEl.textContent = card.subtitle;
+        article.appendChild(subEl);
+      }
+
+      var ctaLabel = String(card.ctaLabel || 'View').trim();
+      var ctaMessage = String(card.ctaMessage || ctaLabel).trim();
+      if (ctaLabel) {
+        var actions = document.createElement('div');
+        actions.className = 'qa-card-carousel__actions';
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'qa-chip qa-chip--bot qa-card-carousel__cta';
+        btn.setAttribute('data-message', ctaMessage);
+        btn.textContent = ctaLabel;
+        actions.appendChild(btn);
+        article.appendChild(actions);
+      }
+
+      track.appendChild(article);
+    });
+
+    wrap.appendChild(track);
+    return wrap;
+  };
+
   QualityAssistantWidget.prototype.createDownloadLink = function (entry) {
     var a = document.createElement('a');
     a.className = 'qa-download-btn';
@@ -1743,6 +1829,7 @@
     var replyParts = options.replyParts || [];
     var dropdowns = options.dropdowns || [];
     var galleries = options.galleries || [];
+    var cardCarousels = options.cardCarousels || [];
     var skipBubbleForDropdown =
       role === 'bot' &&
       textStr &&
@@ -1751,6 +1838,9 @@
       }) ||
         galleries.some(function (g) {
           return String(g.message || '').trim() === textStr;
+        }) ||
+        cardCarousels.some(function (c) {
+          return String(c.message || '').trim() === textStr;
         }));
     if ((textStr || replyParts.length) && !skipBubbleForDropdown) {
       var bubble = document.createElement('div');
@@ -1809,6 +1899,12 @@
       var selfGallery = this;
       galleries.forEach(function (gallery) {
         body.appendChild(selfGallery.buildGalleryEl(gallery));
+      });
+    }
+    if (role === 'bot' && cardCarousels.length) {
+      var selfCarousel = this;
+      cardCarousels.forEach(function (carousel) {
+        body.appendChild(selfCarousel.buildCardCarouselEl(carousel));
       });
     }
     if (role === 'bot' && dropdowns.length) {

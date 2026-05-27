@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var QA_ASSET_VERSION = '20260527-restart-close';
+  var QA_ASSET_VERSION = '20260527-card-carousel';
 
   var script = document.currentScript;
   var base = '';
