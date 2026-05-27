@@ -1097,10 +1097,11 @@ body.qa-lightbox-open {
 
 .qa-toolbar__actions {
   display: flex;
-  align-items: flex-start;
-  flex-wrap: wrap;
+  align-items: center;
+  flex-wrap: nowrap;
   gap: 8px 10px;
   margin-left: auto;
+  transform: translateX(calc(-1 * var(--qa-restart-offset-left, 0px)));
 }
 
 .qa-lang {
@@ -1139,8 +1140,7 @@ body.qa-lightbox-open {
 .qa-restart {
   height: 36px;
   padding: 0 12px;
-  position: relative;
-  left: calc(-1 * var(--qa-restart-offset-left, 0px));
+  flex-shrink: 0;
   border: 1px solid var(--qa-border);
   border-radius: 10px;
   background: var(--qa-surface);
@@ -1260,13 +1260,15 @@ body.qa-lightbox-open {
   justify-content: flex-end;
   gap: 4px;
   margin: 0;
-  margin-top: var(--qa-powered-offset-down, 0px);
   padding: 0;
   border-top: none;
+  flex-shrink: 1;
+  min-width: 0;
   font-size: var(--qa-powered-size, 0.5625rem);
   line-height: 1.2;
   color: var(--qa-powered-color, var(--qa-muted));
   text-decoration: none;
+  transform: translateY(var(--qa-powered-offset-down, 0px));
 }
 
 .qa-powered--link:hover {

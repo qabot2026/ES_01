@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var QA_ASSET_VERSION = '20260527-panel-height';
+  var QA_ASSET_VERSION = '20260527-toolbar-stable';
 
   var script = document.currentScript;
   var base = '';
