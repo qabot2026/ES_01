@@ -718,11 +718,30 @@
   box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
 }
 
-.qa-card-carousel__media {
+.qa-card-carousel__media,
+.qa-card-carousel__media-btn {
   width: 100%;
   height: var(--qa-carousel-img-height, 140px);
   background: var(--qa-carousel-img-bg, var(--qa-bg));
   overflow: hidden;
+}
+
+.qa-card-carousel__media-btn {
+  display: block;
+  padding: 0;
+  margin: 0;
+  border: none;
+  cursor: zoom-in;
+  transition: opacity 0.15s ease;
+}
+
+.qa-card-carousel__media-btn:hover {
+  opacity: 0.92;
+}
+
+.qa-card-carousel__media-btn:focus-visible {
+  outline: 2px solid var(--qa-primary, #0284c7);
+  outline-offset: 2px;
 }
 
 .qa-card-carousel__img {
@@ -731,6 +750,7 @@
   object-fit: var(--qa-carousel-img-fit, cover);
   object-position: center;
   display: block;
+  pointer-events: none;
 }
 
 .qa-card-carousel__title {
@@ -1014,8 +1034,8 @@ body.qa-lightbox-open {
 .qa-lightbox__panel {
   position: relative;
   z-index: 1;
-  width: min(92vw, 960px);
-  max-height: min(88vh, 900px);
+  width: min(96vw, 1200px);
+  max-height: min(92vh, 960px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1025,7 +1045,7 @@ body.qa-lightbox-open {
 .qa-lightbox__figure {
   margin: 0;
   max-width: 100%;
-  max-height: min(88vh, 900px);
+  max-height: min(92vh, 960px);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1034,8 +1054,8 @@ body.qa-lightbox-open {
 
 .qa-lightbox__img {
   display: block;
-  max-width: 100%;
-  max-height: min(80vh, 820px);
+  max-width: min(96vw, 1200px);
+  max-height: min(86vh, 900px);
   width: auto;
   height: auto;
   object-fit: contain;
@@ -1083,7 +1103,9 @@ body.qa-lightbox-open {
 }
 
 .qa-lightbox__nav {
-  display: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   position: fixed;
   top: 50%;
   transform: translateY(-50%);
@@ -1102,24 +1124,30 @@ body.qa-lightbox-open {
   transition: background 0.15s ease, transform 0.15s ease;
 }
 
+.qa-lightbox__nav[hidden] {
+  display: none !important;
+}
+
 .qa-lightbox__nav:hover {
   background: #fff;
   transform: translateY(-50%) scale(1.06);
 }
 
 .qa-lightbox__prev {
-  left: 20px;
+  left: 12px;
 }
 
 .qa-lightbox__next {
-  right: 20px;
+  right: 12px;
 }
 
 @media (min-width: 768px) {
-  .qa-lightbox__nav {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  .qa-lightbox__prev {
+    left: 20px;
+  }
+
+  .qa-lightbox__next {
+    right: 20px;
   }
 }
 

@@ -1400,6 +1400,17 @@
     var track = document.createElement('div');
     track.className = 'qa-card-carousel__track';
     track.setAttribute('role', 'list');
+    var self = this;
+
+    var lightboxImages = (carousel.cards || [])
+      .filter(function (c) {
+        return c && c.imageUrl;
+      })
+      .map(function (c) {
+        var name = [c.title, c.subtitle].filter(Boolean).join(' — ');
+        return { url: c.imageUrl, name: name || '' };
+      });
+    var lightboxIndex = 0;
 
     (carousel.cards || []).forEach(function (card) {
       var article = document.createElement('article');
@@ -1408,18 +1419,30 @@
       if (card.id) article.setAttribute('data-card-id', card.id);
 
       if (card.imageUrl) {
-        var imgWrap = document.createElement('div');
-        imgWrap.className = 'qa-card-carousel__media';
+        var currentLbIndex = lightboxIndex;
+        lightboxIndex += 1;
+        var mediaBtn = document.createElement('button');
+        mediaBtn.type = 'button';
+        mediaBtn.className =
+          'qa-card-carousel__media qa-card-carousel__media-btn';
+        mediaBtn.setAttribute(
+          'aria-label',
+          'View full image' + (card.title ? ': ' + card.title : '')
+        );
+        mediaBtn.addEventListener('click', function () {
+          self.openGalleryLightbox(lightboxImages, currentLbIndex);
+        });
         var img = document.createElement('img');
         img.className = 'qa-card-carousel__img';
         img.src = card.imageUrl;
         img.alt = card.title || '';
         img.loading = 'lazy';
+        img.draggable = false;
         img.onerror = function () {
-          imgWrap.style.display = 'none';
+          mediaBtn.style.display = 'none';
         };
-        imgWrap.appendChild(img);
-        article.appendChild(imgWrap);
+        mediaBtn.appendChild(img);
+        article.appendChild(mediaBtn);
       }
 
       if (card.title) {
