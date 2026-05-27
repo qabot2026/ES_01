@@ -27,9 +27,27 @@
     var ml = getRootCfg().features && getRootCfg().features.multiLanguage;
     if (ml && ml.languages && ml.languages.length) return ml.languages;
     return [
-      { code: 'en', label: 'English', speech: 'en-IN', dialogflow: 'en' },
-      { code: 'hi', label: 'Hindi', speech: 'hi-IN', dialogflow: 'hi' },
-      { code: 'mr', label: 'Marathi', speech: 'mr-IN', dialogflow: 'mr' },
+      {
+        code: 'en',
+        label: 'English',
+        nativeLabel: 'English',
+        speech: 'en-IN',
+        dialogflow: 'en',
+      },
+      {
+        code: 'hi',
+        label: 'Hindi',
+        nativeLabel: 'हिन्दी',
+        speech: 'hi-IN',
+        dialogflow: 'hi',
+      },
+      {
+        code: 'mr',
+        label: 'Marathi',
+        nativeLabel: 'मराठी',
+        speech: 'mr-IN',
+        dialogflow: 'mr',
+      },
     ];
   }
 
@@ -63,6 +81,18 @@
       getRootCfg().launcherStrip || {},
       getViewportCfg().launcherStrip || {}
     );
+  }
+
+  function normalizeExternalUrl(url) {
+    if (!url || typeof url !== 'string') return '';
+    var trimmed = url.trim();
+    if (!trimmed) return '';
+    if (/^https?:\/\//i.test(trimmed)) return trimmed;
+    return 'https://' + trimmed;
+  }
+
+  function langOptionLabel(lang) {
+    return lang.nativeLabel || lang.label || lang.code;
   }
 
   function formatPersonaTime(persona) {
@@ -352,7 +382,7 @@
           '<option value="' +
           L.code +
           '">' +
-          (L.label || L.code) +
+          langOptionLabel(L) +
           '</option>'
         );
       })
@@ -376,27 +406,34 @@
     var logoSrc =
       pb.logoUrl ||
       (this.apiBase ? this.apiBase + '/widget/logo-powered.svg' : '');
+    var poweredLink = normalizeExternalUrl(pb.linkUrl);
     var poweredHtml = '';
     if (pb.enabled !== false) {
+      var logoImg = logoSrc
+        ? '<img class="qa-powered__logo" src="' +
+          this.escape(logoSrc) +
+          '" alt="" width="90" height="18" onerror="this.style.display=\'none\'"/>'
+        : '';
+      var logoBlock = logoImg;
+      if (logoImg && poweredLink) {
+        logoBlock =
+          '<a class="qa-powered__logo-link" href="' +
+          this.escape(poweredLink) +
+          '" target="_blank" rel="noopener noreferrer" aria-label="' +
+          this.escape(pb.brandName || 'QualityAssistant') +
+          '">' +
+          logoImg +
+          '</a>';
+      }
       var inner =
         '<span>' +
         this.escape(pb.prefix || 'Powered by') +
         '</span>' +
-        (logoSrc
-          ? '<img class="qa-powered__logo" src="' +
-            this.escape(logoSrc) +
-            '" alt="" width="90" height="18" onerror="this.style.display=\'none\'"/>'
-          : '') +
+        logoBlock +
         '<strong>' +
         this.escape(pb.brandName || 'QualityAssistant') +
         '</strong>';
-      poweredHtml = pb.linkUrl
-        ? '<a class="qa-powered qa-powered--link" href="' +
-          this.escape(pb.linkUrl) +
-          '" target="_blank" rel="noopener noreferrer">' +
-          inner +
-          '</a>'
-        : '<div class="qa-powered">' + inner + '</div>';
+      poweredHtml = '<div class="qa-powered">' + inner + '</div>';
     }
 
     var stripCfg = getLauncherStripCfg();

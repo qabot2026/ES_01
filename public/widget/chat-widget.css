@@ -600,10 +600,23 @@
   border-radius: 12px;
 }
 
+.qa-powered__logo-link {
+  display: inline-flex;
+  line-height: 0;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: opacity 0.15s;
+}
+
+.qa-powered__logo-link:hover .qa-powered__logo {
+  opacity: 1;
+}
+
 .qa-powered__logo {
   height: 18px;
   width: auto;
   opacity: 0.85;
+  pointer-events: none;
 }
 
 .qa-error {
