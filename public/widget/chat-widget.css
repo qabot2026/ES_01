@@ -678,6 +678,15 @@
   max-width: 100%;
 }
 
+.qa-inline-select--chips .qa-inline-select__chips {
+  margin-top: 0;
+}
+
+.qa-inline-select--used .qa-chip {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 .qa-inline-select__label {
   display: block;
   font-size: 0.8125rem;

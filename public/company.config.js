@@ -46,6 +46,13 @@ window.QA_CHAT_UI_CONFIG = {
           objectFit: 'cover',
           background: '#e8f4fc',
         },
+        /**
+         * Dialogflow options payload (dfchat_inline_select / open_gallery).
+         * display: 'chips' = clickable chips | 'dropdown' = select menu
+         */
+        inlineSelect: {
+          display: 'chips',
+        },
       },
     },
 

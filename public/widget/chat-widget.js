@@ -140,6 +140,15 @@
     return rc.enabled !== false;
   }
 
+  /** 'chips' | 'dropdown' — how payload options are shown */
+  function getInlineSelectDisplay() {
+    var rc = (getRootCfg().dialogflow || {}).richContentChips || {};
+    var mode = String((rc.inlineSelect && rc.inlineSelect.display) || 'chips')
+      .toLowerCase()
+      .trim();
+    return mode === 'dropdown' ? 'dropdown' : 'chips';
+  }
+
   function getWelcomeChips() {
     if (!isWelcomeEnabled()) return [];
     var welcome = getRootCfg().welcome || {};
@@ -1265,9 +1274,70 @@
   };
 
   QualityAssistantWidget.prototype.buildInlineSelectEl = function (dropdown, opts) {
+    if (getInlineSelectDisplay() === 'dropdown') {
+      return this.buildInlineSelectDropdownEl(dropdown, opts);
+    }
+    return this.buildInlineSelectChipsEl(dropdown, opts);
+  };
+
+  QualityAssistantWidget.prototype.buildInlineSelectChipsEl = function (dropdown, opts) {
     opts = opts || {};
     var wrap = document.createElement('div');
-    wrap.className = 'qa-inline-select';
+    wrap.className = 'qa-inline-select qa-inline-select--chips';
+
+    if (dropdown.message && !opts.hideLabel) {
+      var heading = document.createElement('div');
+      heading.className = 'qa-inline-select__label';
+      heading.textContent = dropdown.message;
+      wrap.appendChild(heading);
+    }
+
+    var chipsWrap = document.createElement('div');
+    chipsWrap.className = 'qa-msg__chips qa-inline-select__chips';
+    chipsWrap.setAttribute('role', 'group');
+    chipsWrap.setAttribute(
+      'aria-label',
+      dropdown.message || 'Choose an option'
+    );
+
+    (dropdown.options || []).forEach(function (opt) {
+      var label = opt.label || opt.value || '';
+      var message = opt.value || opt.label || '';
+      if (!label) return;
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'qa-chip qa-chip--bot';
+      btn.setAttribute('data-message', message);
+      btn.textContent = label;
+      chipsWrap.appendChild(btn);
+    });
+
+    if (chipsWrap.childNodes.length) {
+      chipsWrap.addEventListener(
+        'click',
+        function (e) {
+          var chip = e.target.closest('.qa-chip[data-message]');
+          if (!chip || wrap.classList.contains('qa-inline-select--used')) return;
+          wrap.classList.add('qa-inline-select--used');
+          chipsWrap.querySelectorAll('.qa-chip').forEach(function (b) {
+            b.disabled = true;
+          });
+        },
+        true
+      );
+      wrap.appendChild(chipsWrap);
+    }
+
+    return wrap;
+  };
+
+  QualityAssistantWidget.prototype.buildInlineSelectDropdownEl = function (
+    dropdown,
+    opts
+  ) {
+    opts = opts || {};
+    var wrap = document.createElement('div');
+    wrap.className = 'qa-inline-select qa-inline-select--dropdown';
     var selectId =
       'qa-select-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
 
