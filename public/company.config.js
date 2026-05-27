@@ -122,7 +122,7 @@ window.QA_CHAT_UI_CONFIG = {
       speechToText: { enabled: true },
       restartChat: { enabled: true, label: 'Restart' },
       inputPlaceholderByLanguage: {
-        en: 'Type your message…',
+        en: 'Type your message here…',
         hi: 'अपना संदेश लिखें…',
         mr: 'तुमचा संदेश लिहा…',
       },
