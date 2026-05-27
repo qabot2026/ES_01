@@ -305,7 +305,8 @@
       if (ring.color) {
         wrap.style.setProperty('--qa-ring-color', ring.color);
       }
-      if (ring.rotateSeconds) {
+      if (ring.rotateSeconds > 0) {
+        wrap.classList.add('qa-launcher-wrap--ring-spin');
         wrap.style.setProperty(
           '--qa-ring-duration',
           ring.rotateSeconds + 's'

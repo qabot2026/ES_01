@@ -161,7 +161,7 @@ window.QA_CHAT_UI_CONFIG = {
       sizePx: 64,
       iconUrl: QA_LOGO_LAUNCHER,
       cornerRoundness: '50%',
-      storyRing: { enabled: true, widthPx: 1, rotateSeconds: 8 },
+      storyRing: { enabled: true, widthPx: 1, rotateSeconds: 0 },
     },
 
     launcherStrip: {
