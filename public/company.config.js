@@ -52,11 +52,11 @@ window.QA_CHAT_UI_CONFIG = {
         items: [
           {
             label: 'Quality standards',
-            message: 'Tell me about quality standards',
+            message: 'location',
           },
           {
             label: 'Compliance help',
-            message: 'What compliance guidance can you provide?',
+            message: 'Hi',
           },
           {
             label: 'Procedures',
