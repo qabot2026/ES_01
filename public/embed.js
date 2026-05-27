@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var QA_ASSET_VERSION = '20260527-idle-endchat';
+  var QA_ASSET_VERSION = '20260527-persona-soft';
 
   var script = document.currentScript;
   var base = '';

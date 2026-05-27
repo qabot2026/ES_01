@@ -249,8 +249,10 @@
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: 6px 8px;
-  line-height: 1.2;
+  gap: 4px 6px;
+  line-height: 1.15;
+  opacity: var(--qa-persona-meta-opacity, 0.82);
+  filter: blur(var(--qa-persona-blur, 0.35px));
 }
 
 .qa-msg--user .qa-msg__persona-meta {
@@ -258,8 +260,8 @@
 }
 
 .qa-msg__persona-name {
-  font-size: 0.8125rem;
-  font-weight: 700;
+  font-size: var(--qa-persona-name-size, 0.6875rem);
+  font-weight: 600;
   color: var(--qa-text);
 }
 
@@ -268,7 +270,7 @@
 }
 
 .qa-msg__persona-time {
-  font-size: 0.6875rem;
+  font-size: var(--qa-persona-time-size, 0.625rem);
   font-weight: 500;
   color: var(--qa-muted);
   white-space: nowrap;

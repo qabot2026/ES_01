@@ -318,6 +318,26 @@
       this.root.style.setProperty('--qa-bot-gap', bp.gapBelowPx + 'px');
     }
 
+    var pd = common.personaDisplay || {};
+    if (pd.nameFontSizePx != null) {
+      this.root.style.setProperty(
+        '--qa-persona-name-size',
+        pd.nameFontSizePx + 'px'
+      );
+    }
+    if (pd.timeFontSizePx != null) {
+      this.root.style.setProperty(
+        '--qa-persona-time-size',
+        pd.timeFontSizePx + 'px'
+      );
+    }
+    if (pd.blurPx != null) {
+      this.root.style.setProperty('--qa-persona-blur', pd.blurPx + 'px');
+    }
+    if (pd.opacity != null) {
+      this.root.style.setProperty('--qa-persona-meta-opacity', String(pd.opacity));
+    }
+
     var pb = common.poweredBy || {};
     if (pb.color) this.root.style.setProperty('--qa-powered-color', pb.color);
     if (pb.fontSizePx) {

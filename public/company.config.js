@@ -151,6 +151,14 @@ window.QA_CHAT_UI_CONFIG = {
       messageTimeIncludesDate: false,
     },
 
+    /** Name + time above each message (Quality / You + 12:11:55 am) */
+    personaDisplay: {
+      nameFontSizePx: 11,
+      timeFontSizePx: 10,
+      blurPx: 0.35,
+      opacity: 0.82,
+    },
+
     features: {
       multiLanguage: {
         enabled: true,
