@@ -738,6 +738,8 @@
           var chips = richOn && result.data.chips ? result.data.chips : [];
           var infoCards =
             richOn && result.data.infoCards ? result.data.infoCards : [];
+          var downloads =
+            richOn && result.data.downloads ? result.data.downloads : [];
           var reply = (result.data.reply || '').trim();
           var replyParts = result.data.replyParts || [];
           var chipHeading = (result.data.chipHeading || '').trim();
@@ -746,13 +748,15 @@
             replyParts.length ||
             chips.length ||
             chipHeading ||
-            infoCards.length
+            infoCards.length ||
+            downloads.length
           ) {
             self.appendMessage('bot', reply, {
               replyParts: replyParts,
               chips: chips,
               chipHeading: chipHeading,
               infoCards: infoCards,
+              downloads: downloads,
             });
           }
         } else {
@@ -1007,7 +1011,18 @@
         buttons.forEach(function (btn) {
           var label = btn.label || '';
           if (!label) return;
-          if (btn.href) {
+          if (
+            btn.href &&
+            btn.download &&
+            self.appendDownloadLink(actions, {
+              href: btn.href,
+              label: label,
+              download: true,
+              fileName: btn.fileName || label,
+            })
+          ) {
+            /* download link */
+          } else if (btn.href) {
             var link = document.createElement('a');
             link.className = 'qa-chip qa-chip--bot qa-chip--link';
             link.href = btn.href;
@@ -1031,6 +1046,68 @@
     });
 
     return wrap;
+  };
+
+  QualityAssistantWidget.prototype.createDownloadLink = function (entry) {
+    var a = document.createElement('a');
+    a.className = 'qa-download-btn';
+    a.href = entry.href;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    var fileName = entry.fileName || entry.label || '';
+    if (fileName) a.setAttribute('download', fileName);
+    if (entry.iconUrl) {
+      var icon = document.createElement('img');
+      icon.className = 'qa-download-btn__icon';
+      icon.src = entry.iconUrl;
+      icon.alt = '';
+      icon.loading = 'lazy';
+      icon.onerror = function () {
+        icon.remove();
+      };
+      a.appendChild(icon);
+    }
+    var labelEl = document.createElement('span');
+    labelEl.className = 'qa-download-btn__label';
+    labelEl.textContent = entry.label || 'Download';
+    a.appendChild(labelEl);
+    return a;
+  };
+
+  QualityAssistantWidget.prototype.buildDownloadsEl = function (downloads) {
+    var wrap = document.createElement('div');
+    wrap.className = 'qa-downloads';
+    wrap.setAttribute('role', 'list');
+    var self = this;
+    (downloads || []).forEach(function (entry) {
+      if (!entry || !entry.href) return;
+      var item = document.createElement('div');
+      item.className = 'qa-download-item';
+      item.setAttribute('role', 'listitem');
+      item.appendChild(self.createDownloadLink(entry));
+      wrap.appendChild(item);
+    });
+    return wrap;
+  };
+
+  QualityAssistantWidget.prototype.appendDownloadLink = function (
+    parent,
+    btn
+  ) {
+    if (!btn || !btn.href || !/^https?:\/\//i.test(btn.href)) return false;
+    var link = document.createElement('a');
+    link.className =
+      'qa-chip qa-chip--bot qa-chip--link' +
+      (btn.download ? ' qa-chip--download' : '');
+    link.href = btn.href;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    if (btn.download) {
+      link.setAttribute('download', btn.fileName || btn.label || '');
+    }
+    link.textContent = btn.label || 'Download';
+    parent.appendChild(link);
+    return true;
   };
 
   QualityAssistantWidget.prototype.fillMessageBubble = function (bubble, text, replyParts) {
@@ -1098,6 +1175,18 @@
         var label = c.label || c.message || '';
         var message = c.message || c.label || '';
         if (!label) return;
+        if (
+          c.href &&
+          /^https?:\/\//i.test(c.href) &&
+          self.appendDownloadLink(chipsWrap, {
+            href: c.href,
+            label: label,
+            download: true,
+            fileName: label,
+          })
+        ) {
+          return;
+        }
         var btn = document.createElement('button');
         btn.type = 'button';
         btn.className = 'qa-chip qa-chip--bot';
@@ -1110,6 +1199,10 @@
     var infoCards = options.infoCards || [];
     if (role === 'bot' && infoCards.length) {
       body.appendChild(this.buildInfoCardsEl(infoCards));
+    }
+    var downloads = options.downloads || [];
+    if (role === 'bot' && downloads.length) {
+      body.appendChild(this.buildDownloadsEl(downloads));
     }
     row.appendChild(body);
     this.els.messages.appendChild(row);
