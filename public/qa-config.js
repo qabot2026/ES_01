@@ -11,7 +11,10 @@
         embedScript:
           'https://es-based-chatbot-production.up.railway.app/embed.js',
       },
-      header: { title: 'QualityAssistant', subtitle: 'Your quality & compliance guide' },
+      header: {
+        title: 'QualityAssistant',
+        subtitle: 'We are online to assist you',
+      },
     },
   };
   window.QA_CONFIG = {

@@ -100,8 +100,6 @@ app.get('/api/config', (_req, res) => {
   res.json({
     projectId: dialogflow.PROJECT_ID,
     agentId: '07ccbfd0-4cad-4898-8323-e6baeec80fc1',
-    title: 'QualityAssistant',
-    subtitle: 'Your quality & compliance guide',
     dialogflowReady: dialogflow.isConfigured(),
     publicBaseUrl: PUBLIC_BASE_URL,
     embedScript: `${PUBLIC_BASE_URL}/embed.js`,

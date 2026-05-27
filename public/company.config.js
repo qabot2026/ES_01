@@ -28,6 +28,7 @@ window.QA_CHAT_UI_CONFIG = {
       fontFamily: '"Segoe UI", system-ui, -apple-system, sans-serif',
     },
 
+    // Chat panel top bar — title + subtitle (only edit here, not server.js)
     header: {
       title: 'QualityAssistant',
       subtitle: '🟢 We are online to assist you',

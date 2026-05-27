@@ -624,16 +624,7 @@
         return r.json();
       })
       .then(function (cfg) {
-        if (cfg.title) {
-          self.title = cfg.title;
-          var t = self.root.querySelector('.qa-header__title');
-          if (t) t.textContent = cfg.title;
-        }
-        if (cfg.subtitle) {
-          self.subtitle = cfg.subtitle;
-          var s = self.root.querySelector('.qa-header__subtitle');
-          if (s) s.textContent = cfg.subtitle;
-        }
+        /* Title/subtitle: edit company.config.js → common.header (not /api/config). */
         if (!cfg.dialogflowReady) {
           self.showError(
             'Server credentials missing. Set GOOGLE_CREDENTIALS_JSON on Railway.'
