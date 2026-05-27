@@ -452,10 +452,13 @@
         launcher.style.borderRadius = launch.cornerRoundness;
       }
       if (launcherImg) {
-        launcher.innerHTML =
-          '<img src="' +
-          launcherImg.replace(/"/g, '') +
-          '" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit"/>';
+        var openState = launcher.querySelector('.qa-launcher__state--open');
+        if (openState) {
+          openState.innerHTML =
+            '<img src="' +
+            launcherImg.replace(/"/g, '') +
+            '" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit"/>';
+        }
       }
     }
     var wrap = this.root.querySelector('.qa-launcher-wrap');
@@ -633,7 +636,12 @@
       '<div class="qa-launcher-wrap">' +
       '<span class="qa-launcher-ring-bg" aria-hidden="true"></span>' +
       '<button type="button" class="qa-launcher" aria-label="Open chat">' +
+      '<span class="qa-launcher__state qa-launcher__state--open">' +
       (common.launcher && common.launcher.iconUrl ? '' : ICONS.chat) +
+      '</span>' +
+      '<span class="qa-launcher__state qa-launcher__state--close" hidden aria-hidden="true">' +
+      ICONS.close +
+      '</span>' +
       '</button></div>' +
       '<div class="qa-panel" role="dialog" aria-label="' +
       this.escape(this.title) +
@@ -648,10 +656,7 @@
       '</h2>' +
       '<p class="qa-header__subtitle">' +
       this.escape(this.subtitle) +
-      '</p></div>' +
-      '<button type="button" class="qa-header__close" aria-label="Close chat">' +
-      ICONS.close +
-      '</button></header>' +
+      '</p></div></header>' +
       '<div class="qa-messages" role="log" aria-live="polite">' +
       this.buildWelcomeHtml(this.welcomeTitle, this.welcomeBody) +
       '</div>' +
@@ -670,6 +675,7 @@
       (ml.enabled !== false
         ? '<select class="qa-lang" aria-label="Language">' + langOptions + '</select>'
         : '') +
+      '<div class="qa-toolbar__actions">' +
       (restart.enabled !== false
         ? '<button type="button" class="qa-restart">' +
           ICONS.restart +
@@ -677,8 +683,8 @@
           this.escape(restart.label || 'Restart') +
           '</button>'
         : '') +
-      '</div>' +
       poweredHtml +
+      '</div></div>' +
       '<p class="qa-error" hidden></p></footer></div>'
     );
   };
@@ -688,7 +694,7 @@
       launcherWrap: this.root.querySelector('.qa-launcher-wrap'),
       launcher: this.root.querySelector('.qa-launcher'),
       panel: this.root.querySelector('.qa-panel'),
-      close: this.root.querySelector('.qa-header__close'),
+      close: this.root.querySelector('.qa-launcher'),
       messages: this.root.querySelector('.qa-messages'),
       input: this.root.querySelector('.qa-input'),
       send: this.root.querySelector('.qa-send'),
@@ -707,10 +713,8 @@
     var placeholders = feats.inputPlaceholderByLanguage || {};
 
     this.els.launcher.addEventListener('click', function () {
-      self.open();
-    });
-    this.els.close.addEventListener('click', function () {
-      self.close();
+      if (self.isOpen) self.close();
+      else self.open();
     });
     this.els.send.addEventListener('click', function () {
       self.sendMessage();
@@ -1021,10 +1025,9 @@
   QualityAssistantWidget.prototype.finishClose = function () {
     this.clearIdleTimer();
     this.isOpen = false;
+    this.root.classList.remove('qa-widget--chat-open');
     this.els.panel.classList.remove('qa-panel--open');
-    if (this.els.launcherWrap) {
-      this.els.launcherWrap.classList.remove('qa-launcher--hidden');
-    }
+    this.setLauncherCloseMode(false);
     var strip = this.root.querySelector('.qa-launcher-strip');
     if (strip) strip.classList.remove('qa-launcher-strip--hidden');
     this.stopSpeech();
@@ -1040,12 +1043,27 @@
     }, 0);
   };
 
+  QualityAssistantWidget.prototype.setLauncherCloseMode = function (isClose) {
+    var btn = this.els.launcher;
+    if (!btn) return;
+    var openEl = btn.querySelector('.qa-launcher__state--open');
+    var closeEl = btn.querySelector('.qa-launcher__state--close');
+    if (openEl) {
+      openEl.hidden = !!isClose;
+      openEl.setAttribute('aria-hidden', isClose ? 'true' : 'false');
+    }
+    if (closeEl) {
+      closeEl.hidden = !isClose;
+      closeEl.setAttribute('aria-hidden', isClose ? 'false' : 'true');
+    }
+    btn.setAttribute('aria-label', isClose ? 'Close chat' : 'Open chat');
+  };
+
   QualityAssistantWidget.prototype.open = function () {
     this.isOpen = true;
+    this.root.classList.add('qa-widget--chat-open');
     this.els.panel.classList.add('qa-panel--open');
-    if (this.els.launcherWrap) {
-      this.els.launcherWrap.classList.add('qa-launcher--hidden');
-    }
+    this.setLauncherCloseMode(true);
     var strip = this.root.querySelector('.qa-launcher-strip');
     if (strip) strip.classList.add('qa-launcher-strip--hidden');
     this.els.input.focus();

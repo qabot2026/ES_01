@@ -37,6 +37,8 @@
   border-radius: 50%;
   line-height: 0;
   flex-shrink: 0;
+  position: relative;
+  z-index: 3;
 }
 
 .qa-launcher {
@@ -71,12 +73,30 @@
   height: 28px;
 }
 
+.qa-launcher__state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.qa-launcher__state--close svg {
+  width: 26px;
+  height: 26px;
+}
+
+.qa-widget--chat-open .qa-launcher {
+  background: var(--qa-user-bg);
+  color: #fff;
+}
+
 .qa-launcher--hidden,
 .qa-launcher-wrap.qa-launcher--hidden {
   display: none;
 }
 
-/* Panel */
+/* Panel — sits above launcher; close X stays on the bubble */
 .qa-panel {
   position: absolute;
   bottom: 0;
@@ -84,6 +104,7 @@
   width: min(400px, calc(100vw - 32px));
   height: min(680px, calc(100vh - 40px));
   min-height: 520px;
+  z-index: 1;
   background: var(--qa-surface);
   border-radius: var(--qa-panel-tl, var(--qa-radius, 16px))
     var(--qa-panel-tr, var(--qa-radius, 16px))
@@ -104,6 +125,12 @@
   opacity: 1;
   visibility: visible;
   transform: translateY(0) scale(1);
+}
+
+.qa-widget--chat-open .qa-panel {
+  bottom: 72px;
+  height: min(680px, calc(100vh - 112px));
+  min-height: 480px;
 }
 
 /* Header */
@@ -159,25 +186,6 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.qa-header__close {
-  width: 36px;
-  height: 36px;
-  border: none;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.15);
-  color: #fff;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  transition: background 0.15s;
-}
-
-.qa-header__close:hover {
-  background: rgba(255, 255, 255, 0.28);
 }
 
 /* Messages */
@@ -1064,8 +1072,17 @@ body.qa-lightbox-open {
 .qa-toolbar {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 8px;
   flex-wrap: wrap;
+}
+
+.qa-toolbar__actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+  margin-left: auto;
 }
 
 .qa-lang {
@@ -1220,11 +1237,11 @@ body.qa-lightbox-open {
 .qa-powered--link {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-end;
   gap: 6px;
-  margin-top: 10px;
-  padding-top: 8px;
-  border-top: 1px solid var(--qa-border);
+  margin: 0;
+  padding: 0;
+  border-top: none;
   font-size: var(--qa-powered-size, 0.6875rem);
   color: var(--qa-powered-color, var(--qa-muted));
   text-decoration: none;
@@ -1292,5 +1309,10 @@ body.qa-lightbox-open {
   .qa-panel {
     width: 100%;
     right: 0;
+  }
+
+  .qa-widget--chat-open .qa-panel {
+    bottom: 72px;
+    height: min(680px, calc(100vh - 112px));
   }
 }
