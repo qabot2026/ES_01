@@ -44,9 +44,9 @@ window.QA_CHAT_UI_CONFIG = {
     welcome: {
       /** false = no welcome title/body/chips when chat opens or after Restart */
       enabled: true,
-      title: 'Welcome to QualityAssistant',
-      body: 'Ask about quality standards, procedures, or compliance.',
-      restartTitle: 'Conversation restarted',
+      title: '',
+      body: '',
+      restartTitle: '',
       restartBody: 'How can I help you today?',
       /** Tap chips below welcome/restart text — sends message to bot */
       suggestionChips: {
