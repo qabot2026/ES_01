@@ -345,6 +345,22 @@
   border-bottom-right-radius: 4px;
 }
 
+.qa-msg__bubble .qa-msg__link {
+  color: var(--qa-primary, #0284c7);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.qa-msg__bubble .qa-msg__link:hover {
+  color: var(--qa-primary-dark, #0369a1);
+}
+
+.qa-msg--user .qa-msg__bubble .qa-msg__link {
+  color: var(--qa-user-text, #f0f9ff);
+  text-decoration-thickness: 2px;
+}
+
 .qa-msg__typing {
   display: flex;
   gap: 4px;

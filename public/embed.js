@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var QA_ASSET_VERSION = '20260527-rich-scroll';
+  var QA_ASSET_VERSION = '20260527-md-links';
 
   var script = document.currentScript;
   var base = '';

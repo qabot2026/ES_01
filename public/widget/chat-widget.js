@@ -739,9 +739,17 @@
           var infoCards =
             richOn && result.data.infoCards ? result.data.infoCards : [];
           var reply = (result.data.reply || '').trim();
+          var replyParts = result.data.replyParts || [];
           var chipHeading = (result.data.chipHeading || '').trim();
-          if (reply || chips.length || chipHeading || infoCards.length) {
+          if (
+            reply ||
+            replyParts.length ||
+            chips.length ||
+            chipHeading ||
+            infoCards.length
+          ) {
             self.appendMessage('bot', reply, {
+              replyParts: replyParts,
               chips: chips,
               chipHeading: chipHeading,
               infoCards: infoCards,
@@ -1018,6 +1026,34 @@
     return wrap;
   };
 
+  QualityAssistantWidget.prototype.fillMessageBubble = function (bubble, text, replyParts) {
+    bubble.textContent = '';
+    var parts = replyParts && replyParts.length ? replyParts : null;
+    if (!parts) {
+      var textStr = text == null ? '' : String(text).trim();
+      if (textStr) bubble.textContent = textStr;
+      return;
+    }
+    var self = this;
+    parts.forEach(function (part) {
+      if (part.type === 'link' && part.href && /^https?:\/\//i.test(part.href)) {
+        var a = document.createElement('a');
+        a.className = 'qa-msg__link';
+        a.href = part.href;
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+        a.textContent = part.text || part.href;
+        bubble.appendChild(a);
+        return;
+      }
+      var chunk = part.text != null ? String(part.text) : '';
+      if (chunk) bubble.appendChild(document.createTextNode(chunk));
+    });
+    if (!bubble.childNodes.length && text) {
+      bubble.textContent = String(text).trim();
+    }
+  };
+
   QualityAssistantWidget.prototype.appendMessage = function (role, text, options) {
     options = options || {};
     if (this.els.welcome) {
@@ -1030,10 +1066,11 @@
     body.className = 'qa-msg__body';
     body.appendChild(this.buildPersonaRow(role));
     var textStr = text == null ? '' : String(text).trim();
-    if (textStr) {
+    var replyParts = options.replyParts || [];
+    if (textStr || replyParts.length) {
       var bubble = document.createElement('div');
       bubble.className = 'qa-msg__bubble';
-      bubble.textContent = textStr;
+      this.fillMessageBubble(bubble, textStr, replyParts);
       body.appendChild(bubble);
     }
     var chips = options.chips || [];
