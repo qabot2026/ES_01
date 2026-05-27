@@ -41,8 +41,8 @@ window.QA_CHAT_UI_CONFIG = {
         },
         /** open_gallery — horizontal image strip (urls in Dialogflow payload) */
         galleryImage: {
-          itemWidthPx: 180,
-          imageHeightPx: 120,
+          itemWidthPx: 120,
+          imageHeightPx: 90,
           objectFit: 'cover',
           background: '#e8f4fc',
         },
