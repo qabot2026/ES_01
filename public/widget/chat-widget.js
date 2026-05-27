@@ -83,6 +83,35 @@
     );
   }
 
+  var QA_RING_GRADIENT_INSTAGRAM =
+    'conic-gradient(from 180deg, #f09433 0deg, #e6683c 72deg, #dc2743 144deg, #cc2366 216deg, #bc1888 252deg, #833ab4 288deg, #5851db 324deg, #405de6 360deg, #f09433 360deg)';
+
+  function getStoryRingGradient(ring) {
+    if (ring && ring.gradient) return ring.gradient;
+    if (ring && ring.instagramStyle === true) return QA_RING_GRADIENT_INSTAGRAM;
+    var theme = getRootCfg().theme || {};
+    var c1 = theme['--qa-ring-color'] || '#0ea5e9';
+    var c2 = theme['--qa-accent'] || '#0ea5e9';
+    var c3 = theme['--qa-primary'] || '#0284c7';
+    var c4 = theme['--qa-primary-dark'] || '#0369a1';
+    var c5 = theme['--qa-primary-deep'] || '#075985';
+    return (
+      'conic-gradient(from 0deg, ' +
+      c1 +
+      ' 0deg, ' +
+      c2 +
+      ' 72deg, ' +
+      c3 +
+      ' 144deg, ' +
+      c4 +
+      ' 216deg, ' +
+      c5 +
+      ' 288deg, ' +
+      c1 +
+      ' 360deg)'
+    );
+  }
+
   function normalizeExternalUrl(url) {
     if (!url || typeof url !== 'string') return '';
     var trimmed = url.trim();
@@ -302,8 +331,11 @@
       var ring = launch.storyRing;
       var ringW = ring.widthPx != null ? ring.widthPx : 2.5;
       wrap.style.setProperty('--qa-ring-width', ringW + 'px');
-      if (ring.gradient) {
-        wrap.style.setProperty('--qa-ring-gradient', ring.gradient);
+      wrap.style.setProperty('--qa-ring-gradient', getStoryRingGradient(ring));
+      if (ring.instagramStyle === true) {
+        wrap.classList.add('qa-launcher-wrap--ring-ig');
+      } else {
+        wrap.classList.add('qa-launcher-wrap--ring-brand');
       }
       var motionOn =
         ring.colorRingMotionEnabled !== false &&

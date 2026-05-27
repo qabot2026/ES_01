@@ -596,16 +596,13 @@
   background: var(
     --qa-ring-gradient,
     conic-gradient(
-      from 180deg,
-      #f09433 0deg,
-      #e6683c 72deg,
-      #dc2743 144deg,
-      #cc2366 216deg,
-      #bc1888 252deg,
-      #833ab4 288deg,
-      #5851db 324deg,
-      #405de6 360deg,
-      #f09433 360deg
+      from 0deg,
+      var(--qa-ring-color, #0ea5e9) 0deg,
+      var(--qa-accent, #0ea5e9) 72deg,
+      var(--qa-primary, #0284c7) 144deg,
+      var(--qa-primary-dark, #0369a1) 216deg,
+      var(--qa-primary-deep, #075985) 288deg,
+      var(--qa-ring-color, #0ea5e9) 360deg
     )
   );
   pointer-events: none;
