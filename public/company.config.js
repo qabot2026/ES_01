@@ -164,7 +164,13 @@ window.QA_CHAT_UI_CONFIG = {
       storyRing: {
         enabled: true,
         widthPx: 2.5,
+        /** Spin the gradient around the ring (Instagram-style). Icon stays still. */
         rotateSeconds: 3,
+        /**
+         * When true, the colored ring animates (uses rotateSeconds).
+         * When false, ring stays static (same colors, no motion).
+         */
+        colorRingMotionEnabled: true,
         instagramStyle: true,
       },
     },

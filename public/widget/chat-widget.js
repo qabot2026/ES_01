@@ -305,7 +305,10 @@
       if (ring.gradient) {
         wrap.style.setProperty('--qa-ring-gradient', ring.gradient);
       }
-      if (ring.rotateSeconds > 0) {
+      var motionOn =
+        ring.colorRingMotionEnabled !== false &&
+        ring.rotateSeconds > 0;
+      if (motionOn) {
         wrap.classList.add('qa-launcher-wrap--ring-spin');
         wrap.style.setProperty(
           '--qa-ring-duration',
