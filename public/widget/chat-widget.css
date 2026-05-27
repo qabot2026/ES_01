@@ -768,7 +768,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: min(120px, 38vw);
+  width: min(var(--qa-gallery-item-width, 120px), var(--qa-gallery-item-max-vw, 38vw));
   text-decoration: none;
   color: inherit;
   border-radius: 12px;
@@ -786,10 +786,10 @@
 
 .qa-gallery__img {
   width: 100%;
-  height: 90px;
-  object-fit: cover;
+  height: var(--qa-gallery-img-height, 90px);
+  object-fit: var(--qa-gallery-img-fit, cover);
   display: block;
-  background: var(--qa-bg, #e8f4fc);
+  background: var(--qa-gallery-img-bg, var(--qa-bg, #e8f4fc));
 }
 
 .qa-gallery__item--error .qa-gallery__img {

@@ -331,6 +331,32 @@
     if (imgCfg.background) {
       this.root.style.setProperty('--qa-rich-card-img-bg', imgCfg.background);
     }
+
+    var galCfg = (rc && rc.galleryImage) || {};
+    if (galCfg.itemWidthPx != null) {
+      this.root.style.setProperty(
+        '--qa-gallery-item-width',
+        galCfg.itemWidthPx + 'px'
+      );
+    }
+    if (galCfg.itemMaxWidthVw != null) {
+      this.root.style.setProperty(
+        '--qa-gallery-item-max-vw',
+        galCfg.itemMaxWidthVw + 'vw'
+      );
+    }
+    if (galCfg.imageHeightPx != null) {
+      this.root.style.setProperty(
+        '--qa-gallery-img-height',
+        galCfg.imageHeightPx + 'px'
+      );
+    }
+    if (galCfg.objectFit) {
+      this.root.style.setProperty('--qa-gallery-img-fit', galCfg.objectFit);
+    }
+    if (galCfg.background) {
+      this.root.style.setProperty('--qa-gallery-img-bg', galCfg.background);
+    }
   };
 
   QualityAssistantWidget.prototype.applyLayout = function () {

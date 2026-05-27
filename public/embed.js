@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var QA_ASSET_VERSION = '20260527-gallery';
+  var QA_ASSET_VERSION = '20260527-gallery-size';
 
   var script = document.currentScript;
   var base = '';

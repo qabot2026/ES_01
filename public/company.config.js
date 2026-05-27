@@ -35,8 +35,15 @@ window.QA_CHAT_UI_CONFIG = {
         /** Info card image — contain = full image visible (no crop); cover = fill & crop */
         infoCardImage: {
           cardWidthPx: 220,
-          imageMaxHeightPx: 470,
+          imageMaxHeightPx: 220,
           objectFit: 'contain',
+          background: '#e8f4fc',
+        },
+        /** open_gallery — horizontal image strip (urls in Dialogflow payload) */
+        galleryImage: {
+          itemWidthPx: 120,
+          imageHeightPx: 90,
+          objectFit: 'cover',
           background: '#e8f4fc',
         },
       },
