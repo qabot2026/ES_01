@@ -24,13 +24,28 @@ app.use(express.static(publicDir, {
   etag: true,
 }));
 
-app.get('/health', (_req, res) => {
-  res.json({
+app.get('/health', async (_req, res) => {
+  const base = {
     status: 'ok',
     service: 'quality-assistant-chatbot',
-    dialogflow: dialogflow.isConfigured() ? 'ready' : 'credentials_missing',
     projectId: dialogflow.PROJECT_ID,
-  });
+    credentials: dialogflow.isConfigured() ? 'present' : 'missing',
+    credentialsMeta: dialogflow.getCredentialsMeta(),
+  };
+  if (!dialogflow.isConfigured()) {
+    return res.json({ ...base, dialogflow: 'credentials_missing' });
+  }
+  try {
+    await dialogflow.probe();
+    res.json({ ...base, dialogflow: 'ready' });
+  } catch (err) {
+    console.error('[health probe]', dialogflow.formatApiError(err));
+    res.status(503).json({
+      ...base,
+      dialogflow: 'error',
+      error: dialogflow.formatApiError(err),
+    });
+  }
 });
 
 app.post('/api/chat', async (req, res) => {
@@ -47,13 +62,25 @@ app.post('/api/chat', async (req, res) => {
     );
     res.json({ sessionId: sid, ...result });
   } catch (err) {
-    console.error('[dialogflow]', err.message);
-    const status = err.message?.includes('not found') ? 503 : 500;
+    const detail = dialogflow.formatApiError(err);
+    console.error('[dialogflow]', detail);
+    const status =
+      err.code === 7 || err.code === 16 || err.message?.includes('not found')
+        ? 503
+        : 500;
     res.status(status).json({
       error: 'dialogflow_error',
       message: dialogflow.isConfigured()
         ? 'Could not reach Dialogflow. Check credentials and agent setup.'
-        : 'Add credentials.json (service account) to enable chat API.',
+        : 'Set GOOGLE_CREDENTIALS_JSON in Railway Variables.',
+      detail,
+      projectId: dialogflow.PROJECT_ID,
+      hint:
+        err.code === 7
+          ? 'Service account needs Dialogflow API Client role on project qualityassistant-ygdm.'
+          : err.code === 16
+            ? 'Invalid or corrupted JSON key in Railway — re-paste the full service account file.'
+            : undefined,
     });
   }
 });
@@ -81,6 +108,13 @@ app.listen(PORT, () => {
   console.log(`QualityAssistant → ${PUBLIC_BASE_URL}`);
   console.log(`Local: ${local}`);
   if (!dialogflow.isConfigured()) {
-    console.warn('⚠ credentials.json missing — UI works; /api/chat needs Google service account key.');
+    console.warn('⚠ GOOGLE_CREDENTIALS_JSON missing — /api/chat will not work.');
+    return;
   }
+  dialogflow
+    .probe()
+    .then(() => console.log('Dialogflow probe OK'))
+    .catch((err) =>
+      console.error('Dialogflow probe failed:', dialogflow.formatApiError(err))
+    );
 });
