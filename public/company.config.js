@@ -30,8 +30,8 @@ window.QA_CHAT_UI_CONFIG = {
 
     // Chat panel top bar — title + subtitle (only edit here, not server.js)
     header: {
-      title: 'QualityAssistant',
-      subtitle: '🟢 We are online to assist you',
+      title: 'Quality Testing Assistant',
+      subtitle: '🟢 We are online to help',
       chatIconUrl: QA_LOGO_LAUNCHER,
       chatTitleIconUrl: QA_LOGO_HEADER,
       headerIconUrl: QA_LOGO_HEADER,
