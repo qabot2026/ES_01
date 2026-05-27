@@ -172,7 +172,7 @@ window.QA_CHAT_UI_CONFIG = {
          */
         colorRingMotionEnabled: false,
         /** true = Instagram rainbow ring; false = theme blue ring (from theme colors). */
-        instagramStyle: false,
+        instagramStyle: true,
       },
     },
 
