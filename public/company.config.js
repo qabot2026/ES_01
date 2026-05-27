@@ -51,7 +51,7 @@ window.QA_CHAT_UI_CONFIG = {
          * display: 'chips' = clickable chips | 'dropdown' = select menu
          */
         inlineSelect: {
-          display: 'dropdown',
+          display: 'chips',
         },
       },
     },
