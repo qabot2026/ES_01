@@ -741,6 +741,7 @@
           var downloads =
             richOn && result.data.downloads ? result.data.downloads : [];
           var dropdowns = result.data.dropdowns || [];
+          var galleries = result.data.galleries || [];
           var reply = (result.data.reply || '').trim();
           var replyParts = result.data.replyParts || [];
           var chipHeading = (result.data.chipHeading || '').trim();
@@ -751,7 +752,8 @@
             chipHeading ||
             infoCards.length ||
             downloads.length ||
-            dropdowns.length
+            dropdowns.length ||
+            galleries.length
           ) {
             self.appendMessage('bot', reply, {
               replyParts: replyParts,
@@ -760,6 +762,7 @@
               infoCards: infoCards,
               downloads: downloads,
               dropdowns: dropdowns,
+              galleries: galleries,
             });
           }
         } else {
@@ -1077,13 +1080,56 @@
     return a;
   };
 
-  QualityAssistantWidget.prototype.buildInlineSelectEl = function (dropdown) {
+  QualityAssistantWidget.prototype.buildGalleryEl = function (gallery) {
+    var wrap = document.createElement('div');
+    wrap.className = 'qa-gallery';
+    if (gallery.message) {
+      var heading = document.createElement('div');
+      heading.className = 'qa-gallery__label';
+      heading.textContent = gallery.message;
+      wrap.appendChild(heading);
+    }
+    var track = document.createElement('div');
+    track.className = 'qa-gallery__track';
+    track.setAttribute('role', 'list');
+    (gallery.images || []).forEach(function (img) {
+      if (!img || !img.url) return;
+      var item = document.createElement('a');
+      item.className = 'qa-gallery__item';
+      item.href = img.url;
+      item.target = '_blank';
+      item.rel = 'noopener noreferrer';
+      item.setAttribute('role', 'listitem');
+      item.title = img.name || '';
+      var image = document.createElement('img');
+      image.className = 'qa-gallery__img';
+      image.src = img.url;
+      image.alt = img.name || '';
+      image.loading = 'lazy';
+      image.onerror = function () {
+        item.classList.add('qa-gallery__item--error');
+      };
+      item.appendChild(image);
+      if (img.name) {
+        var cap = document.createElement('span');
+        cap.className = 'qa-gallery__caption';
+        cap.textContent = img.name;
+        item.appendChild(cap);
+      }
+      track.appendChild(item);
+    });
+    if (track.childNodes.length) wrap.appendChild(track);
+    return wrap;
+  };
+
+  QualityAssistantWidget.prototype.buildInlineSelectEl = function (dropdown, opts) {
+    opts = opts || {};
     var wrap = document.createElement('div');
     wrap.className = 'qa-inline-select';
     var selectId =
       'qa-select-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
 
-    if (dropdown.message) {
+    if (dropdown.message && !opts.hideLabel) {
       var label = document.createElement('label');
       label.className = 'qa-inline-select__label';
       label.setAttribute('for', selectId);
@@ -1202,13 +1248,16 @@
     var textStr = text == null ? '' : String(text).trim();
     var replyParts = options.replyParts || [];
     var dropdowns = options.dropdowns || [];
+    var galleries = options.galleries || [];
     var skipBubbleForDropdown =
       role === 'bot' &&
-      dropdowns.length &&
       textStr &&
-      dropdowns.some(function (d) {
+      (dropdowns.some(function (d) {
         return String(d.message || '').trim() === textStr;
-      });
+      }) ||
+        galleries.some(function (g) {
+          return String(g.message || '').trim() === textStr;
+        }));
     if ((textStr || replyParts.length) && !skipBubbleForDropdown) {
       var bubble = document.createElement('div');
       bubble.className = 'qa-msg__bubble';
@@ -1262,10 +1311,21 @@
     if (role === 'bot' && downloads.length) {
       body.appendChild(this.buildDownloadsEl(downloads));
     }
+    if (role === 'bot' && galleries.length) {
+      var selfGallery = this;
+      galleries.forEach(function (gallery) {
+        body.appendChild(selfGallery.buildGalleryEl(gallery));
+      });
+    }
     if (role === 'bot' && dropdowns.length) {
       var selfDropdown = this;
+      var sharedGalleryMsg =
+        galleries.length === 1 ? String(galleries[0].message || '').trim() : '';
       dropdowns.forEach(function (dropdown) {
-        body.appendChild(selfDropdown.buildInlineSelectEl(dropdown));
+        var hideLabel =
+          sharedGalleryMsg &&
+          String(dropdown.message || '').trim() === sharedGalleryMsg;
+        body.appendChild(selfDropdown.buildInlineSelectEl(dropdown, { hideLabel: hideLabel }));
       });
     }
     row.appendChild(body);
