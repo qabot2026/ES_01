@@ -740,6 +740,7 @@
             richOn && result.data.infoCards ? result.data.infoCards : [];
           var downloads =
             richOn && result.data.downloads ? result.data.downloads : [];
+          var dropdowns = result.data.dropdowns || [];
           var reply = (result.data.reply || '').trim();
           var replyParts = result.data.replyParts || [];
           var chipHeading = (result.data.chipHeading || '').trim();
@@ -749,7 +750,8 @@
             chips.length ||
             chipHeading ||
             infoCards.length ||
-            downloads.length
+            downloads.length ||
+            dropdowns.length
           ) {
             self.appendMessage('bot', reply, {
               replyParts: replyParts,
@@ -757,6 +759,7 @@
               chipHeading: chipHeading,
               infoCards: infoCards,
               downloads: downloads,
+              dropdowns: dropdowns,
             });
           }
         } else {
@@ -1074,6 +1077,53 @@
     return a;
   };
 
+  QualityAssistantWidget.prototype.buildInlineSelectEl = function (dropdown) {
+    var wrap = document.createElement('div');
+    wrap.className = 'qa-inline-select';
+    var selectId =
+      'qa-select-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
+
+    if (dropdown.message) {
+      var label = document.createElement('label');
+      label.className = 'qa-inline-select__label';
+      label.setAttribute('for', selectId);
+      label.textContent = dropdown.message;
+      wrap.appendChild(label);
+    }
+
+    var select = document.createElement('select');
+    select.id = selectId;
+    select.className = 'qa-inline-select__control';
+    select.setAttribute('aria-label', dropdown.message || 'Select an option');
+
+    var placeholder = document.createElement('option');
+    placeholder.value = '';
+    placeholder.textContent = dropdown.placeholder || 'Choose…';
+    placeholder.disabled = true;
+    placeholder.selected = true;
+    placeholder.hidden = true;
+    select.appendChild(placeholder);
+
+    (dropdown.options || []).forEach(function (opt) {
+      var option = document.createElement('option');
+      option.value = opt.value || opt.label || '';
+      option.textContent = opt.label || opt.value || '';
+      select.appendChild(option);
+    });
+
+    var self = this;
+    select.addEventListener('change', function () {
+      var val = (select.value || '').trim();
+      if (!val || self.isSending) return;
+      select.disabled = true;
+      wrap.classList.add('qa-inline-select--used');
+      self.sendMessageWithText(val);
+    });
+
+    wrap.appendChild(select);
+    return wrap;
+  };
+
   QualityAssistantWidget.prototype.buildDownloadsEl = function (downloads) {
     var wrap = document.createElement('div');
     wrap.className = 'qa-downloads';
@@ -1151,7 +1201,15 @@
     body.appendChild(this.buildPersonaRow(role));
     var textStr = text == null ? '' : String(text).trim();
     var replyParts = options.replyParts || [];
-    if (textStr || replyParts.length) {
+    var dropdowns = options.dropdowns || [];
+    var skipBubbleForDropdown =
+      role === 'bot' &&
+      dropdowns.length &&
+      textStr &&
+      dropdowns.some(function (d) {
+        return String(d.message || '').trim() === textStr;
+      });
+    if ((textStr || replyParts.length) && !skipBubbleForDropdown) {
       var bubble = document.createElement('div');
       bubble.className = 'qa-msg__bubble';
       this.fillMessageBubble(bubble, textStr, replyParts);
@@ -1203,6 +1261,12 @@
     var downloads = options.downloads || [];
     if (role === 'bot' && downloads.length) {
       body.appendChild(this.buildDownloadsEl(downloads));
+    }
+    if (role === 'bot' && dropdowns.length) {
+      var selfDropdown = this;
+      dropdowns.forEach(function (dropdown) {
+        body.appendChild(selfDropdown.buildInlineSelectEl(dropdown));
+      });
     }
     row.appendChild(body);
     this.els.messages.appendChild(row);

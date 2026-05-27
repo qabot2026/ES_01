@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var QA_ASSET_VERSION = '20260527-downloads';
+  var QA_ASSET_VERSION = '20260527-dropdown';
 
   var script = document.currentScript;
   var base = '';
