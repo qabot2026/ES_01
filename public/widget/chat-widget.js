@@ -189,12 +189,14 @@
 
     this.title = header.title || 'QualityAssistant';
     this.subtitle = header.subtitle || 'Your quality & compliance guide';
-    this.welcomeTitle = welcome.title || 'Welcome to ' + this.title;
+    /* Use ?? so empty string "" in config is kept (|| wrongly showed defaults). */
+    this.welcomeTitle =
+      welcome.title ?? 'Welcome to ' + this.title;
     this.welcomeBody =
-      welcome.body ||
+      welcome.body ??
       'Ask about quality standards, procedures, or compliance.';
-    this.restartTitle = welcome.restartTitle || 'Conversation restarted';
-    this.restartBody = welcome.restartBody || 'How can I help you today?';
+    this.restartTitle = welcome.restartTitle ?? 'Conversation restarted';
+    this.restartBody = welcome.restartBody ?? 'How can I help you today?';
 
     this.sessionId = this.newSessionId();
     this.language =
@@ -760,12 +762,17 @@
 
   QualityAssistantWidget.prototype.buildWelcomeHtml = function (title, body) {
     if (!isWelcomeEnabled()) return '';
-    var html =
-      '<div class="qa-welcome"><strong>' +
-      this.escape(title) +
-      '</strong>' +
-      this.escape(body);
+    var titleStr = (title == null ? '' : String(title)).trim();
+    var bodyStr = (body == null ? '' : String(body)).trim();
     var chips = getWelcomeChips();
+    if (!titleStr && !bodyStr && !chips.length) return '';
+    var html = '<div class="qa-welcome">';
+    if (titleStr) {
+      html += '<strong>' + this.escape(titleStr) + '</strong>';
+    }
+    if (bodyStr) {
+      html += this.escape(bodyStr);
+    }
     if (chips.length) {
       html +=
         '<div class="qa-welcome-chips" role="group" aria-label="Suggested questions">';

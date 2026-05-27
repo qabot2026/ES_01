@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var QA_ASSET_VERSION = '20260527-welcome-toggle';
+  var QA_ASSET_VERSION = '20260527-welcome-empty';
 
   var script = document.currentScript;
   var base = '';
