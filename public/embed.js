@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var QA_ASSET_VERSION = '20260527-card-carousel';
+  var QA_ASSET_VERSION = '20260527-card-carousel-2btn';
 
   var script = document.currentScript;
   var base = '';

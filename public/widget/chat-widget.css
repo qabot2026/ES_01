@@ -750,12 +750,17 @@
 }
 
 .qa-card-carousel__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
   padding: 10px 12px 12px;
 }
 
 .qa-card-carousel__cta {
-  width: 100%;
+  flex: 1 1 calc(50% - 4px);
+  min-width: 0;
   justify-content: center;
+  text-align: center;
 }
 
 /* Document / file download buttons (Dialogflow files, button, link chips) */

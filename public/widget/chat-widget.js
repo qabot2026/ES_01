@@ -1436,18 +1436,41 @@
         article.appendChild(subEl);
       }
 
-      var ctaLabel = String(card.ctaLabel || 'View').trim();
-      var ctaMessage = String(card.ctaMessage || ctaLabel).trim();
-      if (ctaLabel) {
+      var buttons = card.buttons || [];
+      if (!buttons.length && card.ctaLabel) {
+        buttons = [
+          {
+            label: card.ctaLabel,
+            message: card.ctaMessage || card.ctaLabel,
+            href: '',
+          },
+        ];
+      }
+      if (buttons.length) {
         var actions = document.createElement('div');
         actions.className = 'qa-card-carousel__actions';
-        var btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'qa-chip qa-chip--bot qa-card-carousel__cta';
-        btn.setAttribute('data-message', ctaMessage);
-        btn.textContent = ctaLabel;
-        actions.appendChild(btn);
-        article.appendChild(actions);
+        buttons.forEach(function (btn) {
+          var label = String(btn.label || '').trim();
+          if (!label) return;
+          var message = String(btn.message || label).trim();
+          if (btn.href && /^https?:\/\//i.test(btn.href)) {
+            var link = document.createElement('a');
+            link.className = 'qa-chip qa-chip--bot qa-card-carousel__cta';
+            link.href = btn.href;
+            link.target = '_blank';
+            link.rel = 'noopener noreferrer';
+            link.textContent = label;
+            actions.appendChild(link);
+            return;
+          }
+          var chip = document.createElement('button');
+          chip.type = 'button';
+          chip.className = 'qa-chip qa-chip--bot qa-card-carousel__cta';
+          chip.setAttribute('data-message', message);
+          chip.textContent = label;
+          actions.appendChild(chip);
+        });
+        if (actions.childNodes.length) article.appendChild(actions);
       }
 
       track.appendChild(article);
