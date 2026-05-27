@@ -235,6 +235,7 @@
     this._welcomeEventInFlight = false;
     this._endChatEventSent = false;
     this._endChatEventInFlight = false;
+    this._endChatCloseTimer = null;
     this.recognition = null;
     this.root = null;
     this.els = {};
@@ -942,6 +943,27 @@
     this.maybeTriggerWelcomeEvent();
   };
 
+  QualityAssistantWidget.prototype.scheduleFinishClose = function () {
+    var self = this;
+    var cfg = getEndChatEventCfg();
+    var delay = 0;
+    if (cfg.showBotResponse !== false && cfg.closePanelAfterMs != null) {
+      delay = Math.max(0, parseInt(cfg.closePanelAfterMs, 10) || 0);
+    }
+    if (self._endChatCloseTimer) {
+      clearTimeout(self._endChatCloseTimer);
+      self._endChatCloseTimer = null;
+    }
+    if (delay > 0) {
+      self._endChatCloseTimer = setTimeout(function () {
+        self._endChatCloseTimer = null;
+        self.finishClose();
+      }, delay);
+      return;
+    }
+    self.finishClose();
+  };
+
   QualityAssistantWidget.prototype.close = function () {
     var self = this;
     var cfg = getEndChatEventCfg();
@@ -952,7 +974,7 @@
 
     if (shouldEnd && !this._endChatEventInFlight) {
       this.triggerEndChatEvent().finally(function () {
-        self.finishClose();
+        self.scheduleFinishClose();
       });
       return;
     }

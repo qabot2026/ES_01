@@ -40,6 +40,11 @@ window.QA_CHAT_UI_CONFIG = {
         triggerOnRestart: false,
         /** Show Dialogflow goodbye reply before the panel closes */
         showBotResponse: true,
+        /**
+         * How long to keep the chat open after the goodbye message (milliseconds).
+         * You decide this here — 0 = close as soon as Dialogflow replies.
+         */
+        closePanelAfterMs: 2500,
         triggerOncePerSession: false,
       },
       /** GREEN — chips + info cards from Custom payload richContent */
