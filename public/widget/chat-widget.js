@@ -236,6 +236,8 @@
     this._endChatEventSent = false;
     this._endChatEventInFlight = false;
     this._endChatCloseTimer = null;
+    this._idleTimer = null;
+    this._idleActivityAt = 0;
     this.recognition = null;
     this.root = null;
     this.els = {};
@@ -701,7 +703,19 @@
       self.els.input.style.height = 'auto';
       self.els.input.style.height =
         Math.min(self.els.input.scrollHeight, 100) + 'px';
+      self.noteUserActivity();
     });
+    this.els.input.addEventListener('keydown', function () {
+      self.noteUserActivity();
+    });
+    if (this.els.panel) {
+      var panelActivity = function () {
+        self.noteUserActivity();
+      };
+      this.els.panel.addEventListener('mousedown', panelActivity);
+      this.els.panel.addEventListener('touchstart', panelActivity, { passive: true });
+      this.els.panel.addEventListener('scroll', panelActivity, true);
+    }
     if (this.els.lang) {
       this.els.lang.addEventListener('change', function () {
         self.language = self.els.lang.value;
@@ -852,6 +866,7 @@
           self.isSending = false;
           self.els.send.disabled = false;
         }
+        if (self.isOpen) self.resetIdleTimer();
       });
   };
 
@@ -910,7 +925,68 @@
       });
   };
 
+  QualityAssistantWidget.prototype.getIdleTimeoutMs = function () {
+    var cfg = getEndChatEventCfg();
+    if (cfg.idleTimeoutMs != null) {
+      return Math.max(0, parseInt(cfg.idleTimeoutMs, 10) || 0);
+    }
+    return 20000;
+  };
+
+  QualityAssistantWidget.prototype.clearIdleTimer = function () {
+    if (this._idleTimer) {
+      clearTimeout(this._idleTimer);
+      this._idleTimer = null;
+    }
+  };
+
+  QualityAssistantWidget.prototype.noteUserActivity = function () {
+    var cfg = getEndChatEventCfg();
+    if (cfg.enabled === false || cfg.triggerOnIdle === false) return;
+    if (!this.isOpen) return;
+    var now = Date.now();
+    if (now - this._idleActivityAt < 800) return;
+    this._idleActivityAt = now;
+    this.resetIdleTimer();
+  };
+
+  QualityAssistantWidget.prototype.resetIdleTimer = function () {
+    var cfg = getEndChatEventCfg();
+    if (cfg.enabled === false || cfg.triggerOnIdle === false) return;
+    if (!this.isOpen) return;
+    if (cfg.triggerOncePerSession && this._endChatEventSent) return;
+
+    var ms = this.getIdleTimeoutMs();
+    if (ms <= 0) return;
+
+    var self = this;
+    this.clearIdleTimer();
+    this._idleTimer = setTimeout(function () {
+      self._idleTimer = null;
+      self.onUserIdle();
+    }, ms);
+  };
+
+  QualityAssistantWidget.prototype.onUserIdle = function () {
+    var cfg = getEndChatEventCfg();
+    if (cfg.enabled === false || cfg.triggerOnIdle === false) return;
+    if (!this.isOpen) return;
+    if (cfg.triggerOncePerSession && this._endChatEventSent) return;
+    if (this.isSending || this._endChatEventInFlight) {
+      this.resetIdleTimer();
+      return;
+    }
+
+    var self = this;
+    this.triggerEndChatEvent().finally(function () {
+      if (cfg.closePanelAfterEnd === true) {
+        self.scheduleFinishClose();
+      }
+    });
+  };
+
   QualityAssistantWidget.prototype.finishClose = function () {
+    this.clearIdleTimer();
     this.isOpen = false;
     this.els.panel.classList.remove('qa-panel--open');
     if (this.els.launcherWrap) {
@@ -941,11 +1017,16 @@
     if (strip) strip.classList.add('qa-launcher-strip--hidden');
     this.els.input.focus();
     this.maybeTriggerWelcomeEvent();
+    this.resetIdleTimer();
   };
 
   QualityAssistantWidget.prototype.scheduleFinishClose = function () {
     var self = this;
     var cfg = getEndChatEventCfg();
+    if (cfg.closePanelAfterEnd !== true) {
+      self.finishClose();
+      return;
+    }
     var delay = 0;
     if (cfg.showBotResponse !== false && cfg.closePanelAfterMs != null) {
       delay = Math.max(0, parseInt(cfg.closePanelAfterMs, 10) || 0);
@@ -1003,8 +1084,10 @@
       if (ev.enabled !== false && ev.triggerOnRestart !== false) {
         self.triggerWelcomeEvent();
       }
+      self.resetIdleTimer();
     };
 
+    this.clearIdleTimer();
     if (
       endCfg.enabled !== false &&
       endCfg.triggerOnRestart !== false &&
@@ -1705,6 +1788,7 @@
   QualityAssistantWidget.prototype.sendMessageWithText = function (text) {
     text = (text || '').trim();
     if (!text || this.isSending) return;
+    this.noteUserActivity();
     this.appendMessage('user', text);
     this.postToDialogflow({
       message: text,

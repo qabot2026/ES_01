@@ -29,23 +29,24 @@ window.QA_CHAT_UI_CONFIG = {
         triggerOncePerSession: true,
       },
       /**
-       * Fire when the user ends the chat (e.g. closes the panel).
-       * Create the same event under Dialogflow → Events (e.g. ENDCHAT).
+       * ENDCHAT — end conversation (Dialogflow → Events + intent with event ENDCHAT).
+       * Set idleTimeoutMs to how long the user can be inactive before ENDCHAT fires.
        */
       endChatEvent: {
         enabled: true,
         eventName: 'ENDCHAT',
-        triggerOnChatClose: true,
-        /** Fire ENDCHAT before Restart, then FRESH runs as usual */
+        /** Fire after user is idle this many ms (you decide — e.g. 20000 = 20 seconds) */
+        triggerOnIdle: true,
+        idleTimeoutMs: 20000,
+        /** Fire when user clicks close (usually false if you only want idle) */
+        triggerOnChatClose: false,
         triggerOnRestart: false,
-        /** Show Dialogflow goodbye reply before the panel closes */
         showBotResponse: true,
-        /**
-         * How long to keep the chat open after the goodbye message (milliseconds).
-         * You decide this here — 0 = close as soon as Dialogflow replies.
-         */
+        /** After goodbye: close panel automatically (optional) */
+        closePanelAfterEnd: false,
         closePanelAfterMs: 2500,
-        triggerOncePerSession: false,
+        /** One auto ENDCHAT per chat open until Restart */
+        triggerOncePerSession: true,
       },
       /** GREEN — chips + info cards from Custom payload richContent */
       richContentChips: {
