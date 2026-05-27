@@ -1,6 +1,8 @@
 (function () {
   'use strict';
 
+  var QA_ASSET_VERSION = '20260527-ring';
+
   var script = document.currentScript;
   var base = '';
   if (script && script.src) {
@@ -13,11 +15,15 @@
     base = window.QA_CHAT_UI_CONFIG.common.deploy.publicBaseUrl;
   }
 
+  function assetUrl(path) {
+    return path + (path.indexOf('?') >= 0 ? '&' : '?') + 'v=' + QA_ASSET_VERSION;
+  }
+
   function loadCss(href) {
     if (document.querySelector('link[data-qa-widget-css]')) return;
     var link = document.createElement('link');
     link.rel = 'stylesheet';
-    link.href = href;
+    link.href = assetUrl(href);
     link.setAttribute('data-qa-widget-css', 'true');
     document.head.appendChild(link);
   }
@@ -36,9 +42,9 @@
 
   function boot() {
     if (window.__qaWidgetLoaded) return;
-    loadJs(base + '/company.config.js', function () {
+    loadJs(assetUrl(base + '/company.config.js'), function () {
       loadCss(base + '/widget/chat-widget.css');
-      loadJs(base + '/widget/chat-widget.js', function () {
+      loadJs(assetUrl(base + '/widget/chat-widget.js'), function () {
         if (window.QualityAssistantWidget) {
           window.__qaWidgetLoaded = true;
           new window.QualityAssistantWidget({

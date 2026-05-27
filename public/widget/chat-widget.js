@@ -298,8 +298,11 @@
       if (launch.storyRing && launch.storyRing.enabled) {
         launcher.classList.add('qa-launcher--ring');
         var ring = launch.storyRing;
-        if (ring.widthPx) {
-          launcher.style.setProperty('--qa-ring-width', ring.widthPx + 'px');
+        var ringW =
+          ring.widthPx != null ? ring.widthPx : 1;
+        launcher.style.setProperty('--qa-ring-width', ringW + 'px');
+        if (ring.color) {
+          launcher.style.setProperty('--qa-ring-color', ring.color);
         }
         if (ring.rotateSeconds) {
           launcher.style.setProperty(
