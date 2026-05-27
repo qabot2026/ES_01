@@ -536,7 +536,7 @@
 .qa-launcher-strip {
   position: absolute;
   right: 0;
-  bottom: 62px;
+  bottom: 52px;
   max-width: 220px;
   padding: 8px 12px;
   background: var(--qa-surface);
@@ -558,7 +558,7 @@
 
 .qa-launcher--ring {
   position: relative;
-  box-shadow: 0 0 0 var(--qa-ring-width, 3px) var(--qa-ring-color, #0ea5e9),
+  box-shadow: 0 0 0 var(--qa-ring-width, 1.5px) var(--qa-ring-color, #0ea5e9),
     var(--qa-shadow);
   animation: qa-ring-spin var(--qa-ring-duration, 5s) linear infinite;
 }
