@@ -35,7 +35,7 @@ window.QA_CHAT_UI_CONFIG = {
         /** Info card image — contain = full image visible (no crop); cover = fill & crop */
         infoCardImage: {
           cardWidthPx: 220,
-          imageMaxHeightPx: 120,
+          imageMaxHeightPx: 220,
           objectFit: 'contain',
           background: '#e8f4fc',
         },
