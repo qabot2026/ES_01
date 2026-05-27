@@ -235,6 +235,9 @@
     }
 
     var launch = getRootCfg().launcher || {};
+    var hdr = getRootCfg().header || {};
+    var launcherImg =
+      launch.iconUrl || hdr.chatIconUrl || hdr.headerIconUrl || '';
     if (launcher) {
       if (launch.sizePx) {
         launcher.style.width = launch.sizePx + 'px';
@@ -243,11 +246,11 @@
       if (launch.cornerRoundness) {
         launcher.style.borderRadius = launch.cornerRoundness;
       }
-      if (launch.iconUrl) {
+      if (launcherImg) {
         launcher.innerHTML =
           '<img src="' +
-          launch.iconUrl.replace(/"/g, '') +
-          '" alt="" style="width:55%;height:55%;object-fit:cover;border-radius:inherit"/>';
+          launcherImg.replace(/"/g, '') +
+          '" alt="" style="width:88%;height:88%;object-fit:cover;border-radius:inherit"/>';
       }
       if (launch.storyRing && launch.storyRing.enabled) {
         launcher.classList.add('qa-launcher--ring');
@@ -345,12 +348,14 @@
     var placeholder =
       placeholders[this.language] || placeholders.en || 'Type your message…';
 
+    var titleIconUrl =
+      header.chatTitleIconUrl || header.headerIconUrl || '';
     var headerIcon = ICONS.header;
-    if (header.headerIconUrl) {
+    if (titleIconUrl) {
       headerIcon =
         '<img src="' +
-        this.escape(header.headerIconUrl) +
-        '" alt="" width="24" height="24" style="border-radius:8px;object-fit:cover"/>';
+        this.escape(titleIconUrl) +
+        '" alt="" style="width:100%;height:100%;border-radius:12px;object-fit:cover"/>';
     } else if (header.showHeaderIcon === false) {
       headerIcon = '';
     }

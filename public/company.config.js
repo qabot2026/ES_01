@@ -1,45 +1,46 @@
 /**
- * QualityAssistant — EDIT ONLY THIS FILE to customize the chatbot.
- * All sections below are 🟢 GREEN (UI / browser only — no extra paid APIs).
+ * QualityAssistant — EDIT ONLY THIS FILE (same idea as refer company.config.js).
+ * All 🟢 GREEN — UI / browser only.
  *
- * Load: company.config.js → chat-widget.js
- * Embed: <script src="https://es-based-chatbot-production.up.railway.app/embed.js" async></script>
+ * Logos: set your HTTPS image URLs below (refer uses chatIconUrl + chatTitleIconUrl).
  */
+
+var QA_LOGO_LAUNCHER =
+  'https://storage.googleapis.com/companybucket/Images/cat.png';
+var QA_LOGO_HEADER =
+  'https://storage.googleapis.com/companybucket/Images/cat-icon.png';
 
 window.QA_CHAT_UI_CONFIG = {
   common: {
     cost: 'green',
     dialogflow: {
-      cost: 'green',
       projectId: 'qualityassistant-ygdm',
       agentId: '07ccbfd0-4cad-4898-8323-e6baeec80fc1',
     },
 
     deploy: {
-      cost: 'green',
       publicBaseUrl: 'https://es-based-chatbot-production.up.railway.app',
       embedScript:
         'https://es-based-chatbot-production.up.railway.app/embed.js',
     },
 
     typography: {
-      cost: 'green',
       fontFamily: '"Segoe UI", system-ui, -apple-system, sans-serif',
     },
 
     header: {
-      cost: 'green',
       title: 'QualityAssistant',
-      subtitle: 'Your quality & compliance guide',
-      headerIconUrl: '',
-      titlebarIconSizePx: 44,
+      subtitle: '🟢 We are online to assist you',
+      chatIconUrl: QA_LOGO_LAUNCHER,
+      chatTitleIconUrl: QA_LOGO_HEADER,
+      headerIconUrl: QA_LOGO_HEADER,
+      titlebarIconSizePx: 96,
       showHeaderIcon: true,
       botWritingText: 'Typing',
       botWritingDotsIntervalMs: 480,
     },
 
     welcome: {
-      cost: 'green',
       title: 'Welcome to QualityAssistant',
       body: 'Ask about quality standards, procedures, or compliance.',
       restartTitle: 'Conversation restarted',
@@ -47,27 +48,23 @@ window.QA_CHAT_UI_CONFIG = {
     },
 
     botPersona: {
-      cost: 'green',
-      mode: 'icon',
-      imageUrl: '',
+      mode: 'image',
+      imageUrl: QA_LOGO_HEADER,
       label: 'QA',
-      avatarSizePx: 36,
+      avatarSizePx: 32,
       gapBelowPx: 4,
       showTime: false,
       timeZone: 'Asia/Kolkata',
-      messageTimeIncludesDate: false,
     },
 
     userPersona: {
-      cost: 'green',
-      label: 'You',
+      label: '🙂User',
       showTime: false,
       timeZone: 'Asia/Kolkata',
     },
 
     features: {
       multiLanguage: {
-        cost: 'green',
         enabled: true,
         defaultLanguage: 'en',
         selectWidthCh: 10,
@@ -79,17 +76,9 @@ window.QA_CHAT_UI_CONFIG = {
           { code: 'mr', label: 'Marathi', speech: 'mr-IN', dialogflow: 'mr' },
         ],
       },
-      speechToText: {
-        cost: 'green',
-        enabled: true,
-      },
-      restartChat: {
-        cost: 'green',
-        enabled: true,
-        label: 'Restart',
-      },
+      speechToText: { enabled: true },
+      restartChat: { enabled: true, label: 'Restart' },
       inputPlaceholderByLanguage: {
-        cost: 'green',
         en: 'Type your message…',
         hi: 'अपना संदेश लिखें…',
         mr: 'तुमचा संदेश लिहा…',
@@ -97,108 +86,91 @@ window.QA_CHAT_UI_CONFIG = {
     },
 
     poweredBy: {
-      cost: 'green',
       enabled: true,
-      prefix: 'Powered by',
+      prefix: '⚡by ',
       brandName: 'QualityAssistant',
-      logoUrl: '',
+      logoUrl: QA_LOGO_HEADER,
       linkUrl: '',
-      color: '#64748b',
+      color: '#0369a1',
       fontSizePx: 11,
     },
 
     theme: {
-      cost: 'green',
-      '--qa-primary': '#0f766e',
-      '--qa-primary-dark': '#0d5c56',
-      '--qa-accent': '#14b8a6',
-      '--qa-bg': '#f0fdfa',
+      '--qa-primary': '#0284c7',
+      '--qa-primary-dark': '#0369a1',
+      '--qa-primary-deep': '#075985',
+      '--qa-accent': '#0ea5e9',
+      '--qa-accent-light': '#bae6fd',
+      '--qa-bg': '#e8f4fc',
+      '--qa-bg-2': '#f7fbff',
       '--qa-surface': '#ffffff',
       '--qa-text': '#0f172a',
-      '--qa-muted': '#64748b',
-      '--qa-border': '#e2e8f0',
-      '--qa-bot-bg': '#f1f5f9',
-      '--qa-user-bg': 'linear-gradient(135deg, #0f766e 0%, #0d9488 100%)',
-      '--qa-shadow': '0 25px 50px -12px rgba(15, 118, 110, 0.25)',
-      '--qa-radius': '16px',
+      '--qa-text-soft': '#475569',
+      '--qa-muted': '#475569',
+      '--qa-border': '#dbe5ec',
+      '--qa-bot-bg': 'linear-gradient(168deg, #e8f6ff 0%, #bae6fd 100%)',
+      '--qa-bot-text': '#0c4a6e',
+      '--qa-user-bg': 'linear-gradient(145deg, #0284c7 0%, #0ea5e9 100%)',
+      '--qa-user-text': '#f0f9ff',
+      '--qa-header-bg':
+        'linear-gradient(180deg, rgba(255,255,255,0.38) 0%, rgba(255,255,255,0.1) 24%, transparent 46%), linear-gradient(168deg, #38bdf8 0%, #0284c7 42%, #075985 100%)',
+      '--qa-shadow':
+        '0 10px 28px -6px rgba(15, 23, 42, 0.1), 0 20px 40px -14px rgba(14, 165, 233, 0.12)',
+      '--qa-radius': '22px',
+      '--qa-ring-color': '#0ea5e9',
     },
 
     chatPanel: {
-      cost: 'green',
       borderRadius: {
-        topLeft: '16px',
-        topRight: '16px',
-        bottomLeft: '16px',
-        bottomRight: '16px',
+        topLeft: '22px',
+        topRight: '22px',
+        bottomLeft: '20px',
+        bottomRight: '20px',
       },
     },
 
-    chatLayout: {
-      cost: 'green',
-      side: 'right',
-    },
+    chatLayout: { side: 'right' },
 
     launcher: {
-      cost: 'green',
-      sizePx: 60,
-      iconUrl: '',
+      sizePx: 64,
+      iconUrl: QA_LOGO_LAUNCHER,
       cornerRoundness: '50%',
-      storyRing: {
-        enabled: false,
-        widthPx: 3,
-        rotateSeconds: 5,
-      },
+      storyRing: { enabled: true, widthPx: 3, rotateSeconds: 5 },
     },
 
     launcherStrip: {
-      cost: 'green',
       enabled: true,
-      text: '👋 How can we help?',
-      position: { rightPx: 0, bottomPx: 72 },
-      style: {
-        fontSizePx: 13,
-        paddingYpx: 8,
-        paddingXpx: 12,
-        maxWidthPx: 220,
-      },
+      text: '👋Hey, how are you?😊',
+      position: { rightPx: 10, bottomPx: 96 },
+      style: { fontSizePx: 13, paddingYpx: 10, paddingXpx: 14, maxWidthPx: 260 },
     },
   },
 
   desk: {
-    cost: 'green',
     showChatbot: true,
-    titlebarIconSizePx: 44,
+    titlebarIconSizePx: 96,
     chatWindow: {
       widthPx: 400,
-      heightPx: 640,
-      position: { rightPx: 24, bottomPx: 24, leftPx: null },
+      heightPx: 450,
+      position: { rightPx: 10, bottomPx: 20, leftPx: null },
     },
-    autoOpenChat: {
-      enabled: false,
-      delayMs: 3000,
-    },
-    launcherStrip: {
-      text: '👋 How can we help?',
-    },
+    autoOpenChat: { enabled: false, delayMs: 5000 },
+    launcherStrip: { text: '👋Hey, how are you?😊' },
   },
 
   mob: {
-    cost: 'green',
     showChatbot: true,
-    titlebarIconSizePx: 40,
+    titlebarIconSizePx: 56,
     chatWindow: {
-      horizontalInsetPx: 16,
-      bottomInsetPx: 16,
-      topInsetPx: 24,
-      position: { rightPx: 16, bottomPx: 16, leftPx: null },
+      horizontalInsetPx: 12,
+      bottomInsetPx: 10,
+      topInsetPx: 26,
+      position: { rightPx: 12, bottomPx: 10, leftPx: null },
     },
-    autoOpenChat: {
-      enabled: false,
-      delayMs: 3000,
-    },
+    autoOpenChat: { enabled: false, delayMs: 5000 },
     launcherStrip: {
-      text: '👋 Chat with us',
-      position: { rightPx: 0, bottomPx: 68 },
+      text: '🤖Chat with us',
+      position: { rightPx: 12, bottomPx: 86 },
     },
   },
 };
