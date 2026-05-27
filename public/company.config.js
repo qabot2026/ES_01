@@ -287,8 +287,9 @@ window.QA_CHAT_UI_CONFIG = {
     titlebarIconSizePx: 40,
     chatWindow: {
       widthPx: 400,
-      heightPx: 620,
-      minHeightPx: 520,
+      heightPx: 520,
+      minHeightPx: 360,
+      topInsetPx: 16,
       position: { rightPx: 10, bottomPx: 20, leftPx: null },
     },
     autoOpenChat: { enabled: true, delayMs: 2000 },

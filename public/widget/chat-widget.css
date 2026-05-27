@@ -102,8 +102,16 @@
   bottom: 0;
   right: 0;
   width: min(400px, calc(100vw - 32px));
-  height: min(680px, calc(100vh - 40px));
-  min-height: 520px;
+  height: min(
+    var(--qa-panel-height, 520px),
+    calc(
+      100vh - var(--qa-panel-top-inset, 16px) - var(--qa-widget-bottom, 24px) - 16px
+    )
+  );
+  max-height: calc(
+    100vh - var(--qa-panel-top-inset, 16px) - var(--qa-widget-bottom, 24px) - 16px
+  );
+  min-height: min(var(--qa-panel-min-height, 360px), calc(100vh - 120px));
   z-index: 1;
   background: var(--qa-surface);
   border-radius: var(--qa-panel-tl, var(--qa-radius, 16px))
@@ -128,9 +136,19 @@
 }
 
 .qa-widget--chat-open .qa-panel {
-  bottom: 72px;
-  height: min(680px, calc(100vh - 112px));
-  min-height: 480px;
+  bottom: var(--qa-launcher-stack, 72px);
+  height: min(
+    var(--qa-panel-height, 520px),
+    calc(
+      100vh - var(--qa-panel-top-inset, 16px) - var(--qa-launcher-stack, 72px) -
+        var(--qa-widget-bottom, 24px) - 8px
+    )
+  );
+  max-height: calc(
+    100vh - var(--qa-panel-top-inset, 16px) - var(--qa-launcher-stack, 72px) -
+      var(--qa-widget-bottom, 24px) - 8px
+  );
+  min-height: min(var(--qa-panel-min-height, 320px), calc(100vh - 140px));
 }
 
 /* Header */
@@ -1316,7 +1334,10 @@ body.qa-lightbox-open {
   }
 
   .qa-widget--chat-open .qa-panel {
-    bottom: 72px;
-    height: min(680px, calc(100vh - 112px));
+    bottom: var(--qa-launcher-stack, 72px);
+    max-height: calc(
+      100vh - var(--qa-panel-top-inset, 26px) - var(--qa-launcher-stack, 72px) -
+        var(--qa-widget-bottom, 16px) - 8px
+    );
   }
 }

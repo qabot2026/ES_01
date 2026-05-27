@@ -417,17 +417,23 @@
     var launcher = this.root.querySelector('.qa-launcher');
     if (!panel) return;
 
+    var pos = win.position || {};
+    var topInset = win.topInsetPx != null ? win.topInsetPx : 16;
+    var widgetBottom = pos.bottomPx != null ? pos.bottomPx : 24;
+    var launcherStack = 72;
+    this.root.style.setProperty('--qa-panel-top-inset', topInset + 'px');
+    this.root.style.setProperty('--qa-widget-bottom', widgetBottom + 'px');
+    this.root.style.setProperty('--qa-launcher-stack', launcherStack + 'px');
+
     if (win.widthPx) {
       panel.style.width = win.widthPx + 'px';
       panel.style.maxWidth = win.widthPx + 'px';
     }
     if (win.heightPx) {
-      panel.style.height = win.heightPx + 'px';
-      panel.style.maxHeight = win.heightPx + 'px';
-    } else if (win.minHeightPx) {
-      panel.style.minHeight = win.minHeightPx + 'px';
-      panel.style.height = 'min(92vh, ' + (win.minHeightPx + 80) + 'px)';
-      panel.style.maxHeight = 'min(92vh, ' + (win.minHeightPx + 80) + 'px)';
+      this.root.style.setProperty('--qa-panel-height', win.heightPx + 'px');
+    }
+    if (win.minHeightPx) {
+      this.root.style.setProperty('--qa-panel-min-height', win.minHeightPx + 'px');
     }
     var isMob =
       global.matchMedia && global.matchMedia('(max-width: 768px)').matches;
@@ -436,7 +442,6 @@
       panel.style.maxWidth = 'calc(100vw - ' + win.horizontalInsetPx * 2 + 'px)';
     }
 
-    var pos = win.position || {};
     if (pos.rightPx != null) {
       this.root.style.right = pos.rightPx + 'px';
       if (launcher) launcher.style.right = '0';

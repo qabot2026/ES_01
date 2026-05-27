@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var QA_ASSET_VERSION = '20260527-footer-layout';
+  var QA_ASSET_VERSION = '20260527-panel-height';
 
   var script = document.currentScript;
   var base = '';
