@@ -214,7 +214,8 @@ window.QA_CHAT_UI_CONFIG = {
     },
 
     restartButton: {
-      offsetLeftPx: 30,
+      /** Space between language dropdown and Restart (px). */
+      gapAfterLanguagePx: 10,
     },
 
     theme: {

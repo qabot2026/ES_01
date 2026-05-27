@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var QA_ASSET_VERSION = '20260527-toolbar-stable';
+  var QA_ASSET_VERSION = '20260527-restart-close';
 
   var script = document.currentScript;
   var base = '';

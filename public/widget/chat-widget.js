@@ -352,8 +352,12 @@
       this.root.style.setProperty('--qa-powered-logo-height', pb.logoHeightPx + 'px');
     }
     var rb = common.restartButton || {};
-    if (rb.offsetLeftPx != null) {
-      this.root.style.setProperty('--qa-restart-offset-left', rb.offsetLeftPx + 'px');
+    var restartGap =
+      rb.gapAfterLanguagePx != null
+        ? rb.gapAfterLanguagePx
+        : rb.offsetLeftPx;
+    if (restartGap != null) {
+      this.root.style.setProperty('--qa-restart-gap-after-lang', restartGap + 'px');
     }
 
     var rc = common.dialogflow && common.dialogflow.richContentChips;
@@ -671,7 +675,10 @@
       '</h2>' +
       '<p class="qa-header__subtitle">' +
       this.escape(this.subtitle) +
-      '</p></div></header>' +
+      '</p></div>' +
+      '<button type="button" class="qa-header__close" aria-label="Close chat">' +
+      ICONS.close +
+      '</button></header>' +
       '<div class="qa-messages" role="log" aria-live="polite">' +
       this.buildWelcomeHtml(this.welcomeTitle, this.welcomeBody) +
       '</div>' +
@@ -687,10 +694,10 @@
       ICONS.send +
       '</button></div>' +
       '<div class="qa-toolbar">' +
+      '<div class="qa-toolbar__start">' +
       (ml.enabled !== false
         ? '<select class="qa-lang" aria-label="Language">' + langOptions + '</select>'
         : '') +
-      '<div class="qa-toolbar__actions">' +
       (restart.enabled !== false
         ? '<button type="button" class="qa-restart">' +
           ICONS.restart +
@@ -698,8 +705,9 @@
           this.escape(restart.label || 'Restart') +
           '</button>'
         : '') +
-      poweredHtml +
-      '</div></div>' +
+      '</div>' +
+      (poweredHtml ? '<div class="qa-toolbar__end">' + poweredHtml + '</div>' : '') +
+      '</div>' +
       '<p class="qa-error" hidden></p></footer></div>'
     );
   };
@@ -709,6 +717,7 @@
       launcherWrap: this.root.querySelector('.qa-launcher-wrap'),
       launcher: this.root.querySelector('.qa-launcher'),
       panel: this.root.querySelector('.qa-panel'),
+      panelClose: this.root.querySelector('.qa-header__close'),
       close: this.root.querySelector('.qa-launcher'),
       messages: this.root.querySelector('.qa-messages'),
       input: this.root.querySelector('.qa-input'),
@@ -731,6 +740,11 @@
       if (self.isOpen) self.close();
       else self.open();
     });
+    if (this.els.panelClose) {
+      this.els.panelClose.addEventListener('click', function () {
+        self.close();
+      });
+    }
     this.els.send.addEventListener('click', function () {
       self.sendMessage();
     });
