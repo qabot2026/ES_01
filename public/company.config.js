@@ -47,6 +47,8 @@ window.QA_CHAT_UI_CONFIG = {
         closePanelAfterMs: 2500,
         /** One auto ENDCHAT per chat open until Restart */
         triggerOncePerSession: true,
+        /** Idle ENDCHAT only after user sent a message / chip / dropdown once */
+        requireUserInteraction: true,
       },
       /** GREEN — chips + info cards from Custom payload richContent */
       richContentChips: {

@@ -238,6 +238,8 @@
     this._endChatCloseTimer = null;
     this._idleTimer = null;
     this._idleActivityAt = 0;
+    /** true after user sends a message / chip / dropdown (not just opening chat) */
+    this._userHasInteracted = false;
     this.recognition = null;
     this.root = null;
     this.els = {};
@@ -970,10 +972,18 @@
     this.resetIdleTimer();
   };
 
+  QualityAssistantWidget.prototype.markUserInteracted = function () {
+    this._userHasInteracted = true;
+  };
+
   QualityAssistantWidget.prototype.resetIdleTimer = function () {
     var cfg = getEndChatEventCfg();
     if (cfg.enabled === false || cfg.triggerOnIdle === false) return;
     if (!this.isOpen) return;
+    if (cfg.requireUserInteraction !== false && !this._userHasInteracted) {
+      this.clearIdleTimer();
+      return;
+    }
     if (cfg.triggerOncePerSession && this._endChatEventSent) return;
 
     var ms = this.getIdleTimeoutMs();
@@ -991,6 +1001,9 @@
     var cfg = getEndChatEventCfg();
     if (cfg.enabled === false || cfg.triggerOnIdle === false) return;
     if (!this.isOpen) return;
+    if (cfg.requireUserInteraction !== false && !this._userHasInteracted) {
+      return;
+    }
     if (cfg.triggerOncePerSession && this._endChatEventSent) return;
     if (this.isSending || this._endChatEventInFlight) {
       this.resetIdleTimer();
@@ -1037,7 +1050,6 @@
     if (strip) strip.classList.add('qa-launcher-strip--hidden');
     this.els.input.focus();
     this.maybeTriggerWelcomeEvent();
-    this.resetIdleTimer();
   };
 
   QualityAssistantWidget.prototype.scheduleFinishClose = function () {
@@ -1091,6 +1103,7 @@
       self._welcomeEventInFlight = false;
       self._endChatEventSent = false;
       self._endChatEventInFlight = false;
+      self._userHasInteracted = false;
       self.els.messages.innerHTML = self.buildWelcomeHtml(
         self.restartTitle,
         self.restartBody
@@ -1104,7 +1117,6 @@
       if (ev.enabled !== false && ev.triggerOnRestart !== false) {
         self.triggerWelcomeEvent();
       }
-      self.resetIdleTimer();
     };
 
     this.clearIdleTimer();
@@ -1808,6 +1820,7 @@
   QualityAssistantWidget.prototype.sendMessageWithText = function (text) {
     text = (text || '').trim();
     if (!text || this.isSending) return;
+    this.markUserInteracted();
     this.noteUserActivity();
     this.appendMessage('user', text);
     this.postToDialogflow({
