@@ -217,6 +217,8 @@
       'en';
     this.isOpen = false;
     this.isSending = false;
+    this._welcomeEventSent = false;
+    this._welcomeEventInFlight = false;
     this.recognition = null;
     this.root = null;
     this.els = {};
@@ -740,18 +742,27 @@
   QualityAssistantWidget.prototype.triggerWelcomeEvent = function () {
     var cfg = getWelcomeEventCfg();
     if (cfg.enabled === false) return;
+    if (this._welcomeEventSent || this._welcomeEventInFlight || this.isSending) {
+      return;
+    }
     var name = (cfg.eventName || 'FRESH').trim();
     if (!name) return;
+    var self = this;
+    this._welcomeEventInFlight = true;
     this.postToDialogflow({
       event: name,
       sessionId: this.sessionId,
       languageCode: this.getDialogflowLang(),
+    }).finally(function () {
+      self._welcomeEventInFlight = false;
+      self._welcomeEventSent = true;
     });
   };
 
   QualityAssistantWidget.prototype.maybeTriggerWelcomeEvent = function () {
     var cfg = getWelcomeEventCfg();
     if (cfg.enabled === false || cfg.triggerOnChatOpen === false) return;
+    if (this._welcomeEventSent || this._welcomeEventInFlight) return;
     var self = this;
     setTimeout(function () {
       self.triggerWelcomeEvent();
@@ -783,6 +794,8 @@
 
   QualityAssistantWidget.prototype.restart = function () {
     this.sessionId = this.newSessionId();
+    this._welcomeEventSent = false;
+    this._welcomeEventInFlight = false;
     this.els.messages.innerHTML = this.buildWelcomeHtml(
       this.restartTitle,
       this.restartBody

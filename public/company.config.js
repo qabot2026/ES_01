@@ -25,6 +25,8 @@ window.QA_CHAT_UI_CONFIG = {
         eventName: 'FRESH',
         triggerOnChatOpen: true,
         triggerOnRestart: true,
+        /** One FRESH per page load until Restart (stops duplicate bot replies) */
+        triggerOncePerSession: true,
       },
       /** GREEN — show chips from Custom payload richContent in bot replies */
       richContentChips: { enabled: true, cost: 'green' },

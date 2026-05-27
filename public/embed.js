@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var QA_ASSET_VERSION = '20260527-rich-chips';
+  var QA_ASSET_VERSION = '20260527-dedupe-reply';
 
   var script = document.currentScript;
   var base = '';
