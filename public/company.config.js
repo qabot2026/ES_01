@@ -1,75 +1,75 @@
 /**
- * QualityAssistant — single settings file (Dialogflow ES + custom widget).
+ * QualityAssistant — EDIT ONLY THIS FILE to customize the chatbot.
+ * All sections below are 🟢 GREEN (UI / browser only — no extra paid APIs).
  *
- * How to use:
- * 1. Edit values below, save.
- * 2. Hard-refresh (Ctrl+F5) or bump ?v= on script tags after deploy.
- *
- * Load order (before chat-widget.js):
- *   company.config.js → chat-widget.js
- *
- * Embed one-liner for client sites:
- *   <script src="https://es-based-chatbot-production.up.railway.app/embed.js" async></script>
- *
- * Layout: common = shared | desk = desktop | mob = mobile (≤768px)
- *
- * Cost flags (for planning):
- *   🟢 Green = no extra API / free (UI, browser speech)
- *   🔴 Red = extra Dialogflow/Railway/paid API usage
+ * Load: company.config.js → chat-widget.js
+ * Embed: <script src="https://es-based-chatbot-production.up.railway.app/embed.js" async></script>
  */
 
 window.QA_CHAT_UI_CONFIG = {
-  // ========================= COMMON =========================
   common: {
-    // Dialogflow ES (not CX — no location field).
+    cost: 'green',
     dialogflow: {
+      cost: 'green',
       projectId: 'qualityassistant-ygdm',
       agentId: '07ccbfd0-4cad-4898-8323-e6baeec80fc1',
     },
 
-    // Production / embed URLs.
     deploy: {
+      cost: 'green',
       publicBaseUrl: 'https://es-based-chatbot-production.up.railway.app',
       embedScript:
         'https://es-based-chatbot-production.up.railway.app/embed.js',
     },
 
-    // Header (open chat panel).
-    header: {
-      title: 'QualityAssistant',
-      subtitle: 'Your quality & compliance guide',
-      // Optional HTTPS image URLs (leave "" to use built-in SVG icon).
-      headerIconUrl: '',
-      showHeaderIcon: true,
+    typography: {
+      cost: 'green',
+      fontFamily: '"Segoe UI", system-ui, -apple-system, sans-serif',
     },
 
-    // Welcome block (first open / after restart).
+    header: {
+      cost: 'green',
+      title: 'QualityAssistant',
+      subtitle: 'Your quality & compliance guide',
+      headerIconUrl: '',
+      titlebarIconSizePx: 44,
+      showHeaderIcon: true,
+      botWritingText: 'Typing',
+      botWritingDotsIntervalMs: 480,
+    },
+
     welcome: {
+      cost: 'green',
       title: 'Welcome to QualityAssistant',
       body: 'Ask about quality standards, procedures, or compliance.',
       restartTitle: 'Conversation restarted',
       restartBody: 'How can I help you today?',
     },
 
-    // Bot row avatar 🟢 UI only
     botPersona: {
-      mode: 'icon', // "icon" | "image"
+      cost: 'green',
+      mode: 'icon',
       imageUrl: '',
       label: 'QA',
+      avatarSizePx: 36,
+      gapBelowPx: 4,
+      showTime: false,
+      timeZone: 'Asia/Kolkata',
+      messageTimeIncludesDate: false,
     },
 
-    // User row avatar 🟢 UI only
     userPersona: {
+      cost: 'green',
       label: 'You',
+      showTime: false,
+      timeZone: 'Asia/Kolkata',
     },
 
-    // Footer: language + mic + restart + powered by
     features: {
-      // 🟢 Each message = 1 Dialogflow detectIntent (required for chat).
       multiLanguage: {
+        cost: 'green',
         enabled: true,
         defaultLanguage: 'en',
-        // Dropdown width: ch + extra px; border on/off
         selectWidthCh: 10,
         selectWidthExtraPx: 5,
         showSelectBorder: false,
@@ -79,38 +79,36 @@ window.QA_CHAT_UI_CONFIG = {
           { code: 'mr', label: 'Marathi', speech: 'mr-IN', dialogflow: 'mr' },
         ],
       },
-
-      // 🟢 Browser Web Speech API (no Google Speech bill).
       speechToText: {
+        cost: 'green',
         enabled: true,
       },
-
-      // 🟢 New session id only — no extra API until user sends again.
       restartChat: {
+        cost: 'green',
         enabled: true,
         label: 'Restart',
       },
-
-      // Composer placeholder per language (optional).
       inputPlaceholderByLanguage: {
+        cost: 'green',
         en: 'Type your message…',
         hi: 'अपना संदेश लिखें…',
         mr: 'तुमचा संदेश लिहा…',
       },
     },
 
-    // "Powered by" strip in footer 🟢
     poweredBy: {
+      cost: 'green',
       enabled: true,
       prefix: 'Powered by',
       brandName: 'QualityAssistant',
-      logoUrl: '', // empty = /widget/logo-powered.svg from apiBase
+      logoUrl: '',
       linkUrl: '',
+      color: '#64748b',
       fontSizePx: 11,
     },
 
-    // Chat colors (CSS variables on .qa-widget) 🟢
     theme: {
+      cost: 'green',
       '--qa-primary': '#0f766e',
       '--qa-primary-dark': '#0d5c56',
       '--qa-accent': '#14b8a6',
@@ -122,22 +120,54 @@ window.QA_CHAT_UI_CONFIG = {
       '--qa-bot-bg': '#f1f5f9',
       '--qa-user-bg': 'linear-gradient(135deg, #0f766e 0%, #0d9488 100%)',
       '--qa-shadow': '0 25px 50px -12px rgba(15, 118, 110, 0.25)',
+      '--qa-radius': '16px',
     },
 
-    // Widget position when closed (launcher bubble).
+    chatPanel: {
+      cost: 'green',
+      borderRadius: {
+        topLeft: '16px',
+        topRight: '16px',
+        bottomLeft: '16px',
+        bottomRight: '16px',
+      },
+    },
+
     chatLayout: {
-      side: 'right', // "right" | "left"
+      cost: 'green',
+      side: 'right',
     },
 
-    // Launcher button (closed state) 🟢
     launcher: {
+      cost: 'green',
       sizePx: 60,
+      iconUrl: '',
+      cornerRoundness: '50%',
+      storyRing: {
+        enabled: false,
+        widthPx: 3,
+        rotateSeconds: 5,
+      },
+    },
+
+    launcherStrip: {
+      cost: 'green',
+      enabled: true,
+      text: '👋 How can we help?',
+      position: { rightPx: 0, bottomPx: 72 },
+      style: {
+        fontSizePx: 13,
+        paddingYpx: 8,
+        paddingXpx: 12,
+        maxWidthPx: 220,
+      },
     },
   },
 
-  // ========================= DESKTOP =========================
   desk: {
+    cost: 'green',
     showChatbot: true,
+    titlebarIconSizePx: 44,
     chatWindow: {
       widthPx: 400,
       heightPx: 640,
@@ -145,28 +175,34 @@ window.QA_CHAT_UI_CONFIG = {
     },
     autoOpenChat: {
       enabled: false,
-      delayMs: 0,
+      delayMs: 3000,
+    },
+    launcherStrip: {
+      text: '👋 How can we help?',
     },
   },
 
-  // ========================= MOBILE (≤768px) =========================
   mob: {
+    cost: 'green',
     showChatbot: true,
+    titlebarIconSizePx: 40,
     chatWindow: {
-      widthPx: null, // null = full width minus inset
-      heightPx: null,
       horizontalInsetPx: 16,
       bottomInsetPx: 16,
+      topInsetPx: 24,
       position: { rightPx: 16, bottomPx: 16, leftPx: null },
     },
     autoOpenChat: {
       enabled: false,
-      delayMs: 0,
+      delayMs: 3000,
+    },
+    launcherStrip: {
+      text: '👋 Chat with us',
+      position: { rightPx: 0, bottomPx: 68 },
     },
   },
 };
 
-// Back-compat for embed / demos that read QA_CONFIG.
 (function () {
   var c = window.QA_CHAT_UI_CONFIG;
   if (!c || !c.common) return;

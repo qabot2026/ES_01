@@ -64,7 +64,10 @@
   width: min(400px, calc(100vw - 32px));
   height: min(640px, calc(100vh - 48px));
   background: var(--qa-surface);
-  border-radius: var(--qa-radius);
+  border-radius: var(--qa-panel-tl, var(--qa-radius, 16px))
+    var(--qa-panel-tr, var(--qa-radius, 16px))
+    var(--qa-panel-br, var(--qa-radius, 16px))
+    var(--qa-panel-bl, var(--qa-radius, 16px));
   box-shadow: var(--qa-shadow);
   border: 1px solid var(--qa-border);
   display: flex;
@@ -94,8 +97,8 @@
 }
 
 .qa-header__icon {
-  width: 44px;
-  height: 44px;
+  width: var(--qa-header-icon-size, 44px);
+  height: var(--qa-header-icon-size, 44px);
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.2);
   display: flex;
@@ -177,6 +180,7 @@
   gap: 10px;
   max-width: 92%;
   animation: qa-fade-in 0.3s ease;
+  margin-bottom: var(--qa-bot-gap, 0);
 }
 
 @keyframes qa-fade-in {
@@ -195,9 +199,26 @@
   flex-direction: row-reverse;
 }
 
+.qa-msg__body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.qa-msg__time {
+  font-size: 0.625rem;
+  color: var(--qa-muted);
+  padding: 0 2px;
+}
+
+.qa-msg--user .qa-msg__time {
+  text-align: right;
+}
+
 .qa-msg__avatar {
-  width: 36px;
-  height: 36px;
+  width: var(--qa-avatar-size, 36px);
+  height: var(--qa-avatar-size, 36px);
   border-radius: 50%;
   flex-shrink: 0;
   display: flex;
@@ -448,7 +469,50 @@
   color: var(--qa-primary);
 }
 
-.qa-powered {
+.qa-launcher-strip {
+  position: absolute;
+  right: 0;
+  bottom: 72px;
+  max-width: 220px;
+  padding: 8px 12px;
+  background: var(--qa-surface);
+  color: var(--qa-text);
+  border: 1px solid var(--qa-border);
+  border-radius: 12px;
+  font-size: 13px;
+  line-height: 1.35;
+  box-shadow: var(--qa-shadow);
+  pointer-events: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.qa-launcher-strip--hidden {
+  display: none;
+}
+
+.qa-launcher--ring {
+  position: relative;
+  box-shadow: 0 0 0 var(--qa-ring-width, 3px) #14b8a6,
+    var(--qa-shadow);
+  animation: qa-ring-spin var(--qa-ring-duration, 5s) linear infinite;
+}
+
+@keyframes qa-ring-spin {
+  to {
+    filter: hue-rotate(360deg);
+  }
+}
+
+.qa-msg__typing-text {
+  color: var(--qa-muted);
+  font-size: 0.8125rem;
+  font-style: italic;
+}
+
+.qa-powered,
+.qa-powered--link {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -456,8 +520,13 @@
   margin-top: 10px;
   padding-top: 8px;
   border-top: 1px solid var(--qa-border);
-  font-size: 0.6875rem;
-  color: var(--qa-muted);
+  font-size: var(--qa-powered-size, 0.6875rem);
+  color: var(--qa-powered-color, var(--qa-muted));
+  text-decoration: none;
+}
+
+.qa-powered--link:hover {
+  color: var(--qa-primary);
 }
 
 .qa-powered__logo {

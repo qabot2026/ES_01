@@ -45,6 +45,46 @@
     return map;
   }
 
+  function shallowMerge(base, over) {
+    var out = {};
+    var b = base || {};
+    var o = over || {};
+    Object.keys(b).forEach(function (k) {
+      out[k] = b[k];
+    });
+    Object.keys(o).forEach(function (k) {
+      out[k] = o[k];
+    });
+    return out;
+  }
+
+  function getLauncherStripCfg() {
+    return shallowMerge(
+      getRootCfg().launcherStrip || {},
+      getViewportCfg().launcherStrip || {}
+    );
+  }
+
+  function formatPersonaTime(persona) {
+    if (!persona || !persona.showTime) return '';
+    var tz = persona.timeZone || 'Asia/Kolkata';
+    var opts = persona.messageTimeIncludesDate
+      ? {
+          timeZone: tz,
+          day: '2-digit',
+          month: 'short',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true,
+        }
+      : { timeZone: tz, hour: '2-digit', minute: '2-digit', hour12: true };
+    try {
+      return new Date().toLocaleString('en-IN', opts);
+    } catch (e) {
+      return new Date().toLocaleTimeString();
+    }
+  }
+
   function QualityAssistantWidget(options) {
     var common = getRootCfg();
     var header = common.header || {};
@@ -106,13 +146,20 @@
   };
 
   QualityAssistantWidget.prototype.applyTheme = function () {
-    var theme = getRootCfg().theme || {};
+    var common = getRootCfg();
+    var theme = common.theme || {};
+    var typo = common.typography || {};
+    if (typo.fontFamily) {
+      this.root.style.setProperty('--qa-font', typo.fontFamily);
+      this.root.style.fontFamily = typo.fontFamily;
+    }
     Object.keys(theme).forEach(
       function (key) {
+        if (key === 'cost') return;
         this.root.style.setProperty(key, theme[key]);
       }.bind(this)
     );
-    var ml = getRootCfg().features && getRootCfg().features.multiLanguage;
+    var ml = common.features && common.features.multiLanguage;
     if (ml) {
       var ch = ml.selectWidthCh != null ? ml.selectWidthCh : 10;
       var extra = ml.selectWidthExtraPx != null ? ml.selectWidthExtraPx : 5;
@@ -121,9 +168,37 @@
         this.root.classList.add('qa-lang--no-border');
       }
     }
-    var side =
-      (getRootCfg().chatLayout && getRootCfg().chatLayout.side) || 'right';
+    var side = (common.chatLayout && common.chatLayout.side) || 'right';
     if (side === 'left') this.root.classList.add('qa-widget--left');
+
+    var panel = common.chatPanel && common.chatPanel.borderRadius;
+    if (panel) {
+      this.root.style.setProperty('--qa-panel-tl', panel.topLeft || '16px');
+      this.root.style.setProperty('--qa-panel-tr', panel.topRight || '16px');
+      this.root.style.setProperty('--qa-panel-bl', panel.bottomLeft || '16px');
+      this.root.style.setProperty('--qa-panel-br', panel.bottomRight || '16px');
+    }
+
+    var vp = getViewportCfg();
+    var iconPx =
+      vp.titlebarIconSizePx ||
+      (common.header && common.header.titlebarIconSizePx) ||
+      44;
+    this.root.style.setProperty('--qa-header-icon-size', iconPx + 'px');
+
+    var bp = common.botPersona || {};
+    if (bp.avatarSizePx) {
+      this.root.style.setProperty('--qa-avatar-size', bp.avatarSizePx + 'px');
+    }
+    if (bp.gapBelowPx != null) {
+      this.root.style.setProperty('--qa-bot-gap', bp.gapBelowPx + 'px');
+    }
+
+    var pb = common.poweredBy || {};
+    if (pb.color) this.root.style.setProperty('--qa-powered-color', pb.color);
+    if (pb.fontSizePx) {
+      this.root.style.setProperty('--qa-powered-size', pb.fontSizePx + 'px');
+    }
   };
 
   QualityAssistantWidget.prototype.applyLayout = function () {
@@ -160,9 +235,57 @@
     }
 
     var launch = getRootCfg().launcher || {};
-    if (launch.sizePx && launcher) {
-      launcher.style.width = launch.sizePx + 'px';
-      launcher.style.height = launch.sizePx + 'px';
+    if (launcher) {
+      if (launch.sizePx) {
+        launcher.style.width = launch.sizePx + 'px';
+        launcher.style.height = launch.sizePx + 'px';
+      }
+      if (launch.cornerRoundness) {
+        launcher.style.borderRadius = launch.cornerRoundness;
+      }
+      if (launch.iconUrl) {
+        launcher.innerHTML =
+          '<img src="' +
+          launch.iconUrl.replace(/"/g, '') +
+          '" alt="" style="width:55%;height:55%;object-fit:cover;border-radius:inherit"/>';
+      }
+      if (launch.storyRing && launch.storyRing.enabled) {
+        launcher.classList.add('qa-launcher--ring');
+        var ring = launch.storyRing;
+        if (ring.widthPx) {
+          launcher.style.setProperty('--qa-ring-width', ring.widthPx + 'px');
+        }
+        if (ring.rotateSeconds) {
+          launcher.style.setProperty(
+            '--qa-ring-duration',
+            ring.rotateSeconds + 's'
+          );
+        }
+      }
+    }
+
+    var stripCfg = getLauncherStripCfg();
+    var strip = this.root.querySelector('.qa-launcher-strip');
+    if (strip && stripCfg.position) {
+      if (stripCfg.position.bottomPx != null) {
+        strip.style.bottom = stripCfg.position.bottomPx + 'px';
+      }
+      if (stripCfg.position.rightPx != null) {
+        strip.style.right = stripCfg.position.rightPx + 'px';
+      }
+      if (stripCfg.position.leftPx != null) {
+        strip.style.left = stripCfg.position.leftPx + 'px';
+        strip.style.right = 'auto';
+      }
+    }
+    if (strip && stripCfg.style) {
+      var st = stripCfg.style;
+      if (st.fontSizePx) strip.style.fontSize = st.fontSizePx + 'px';
+      if (st.paddingXpx != null || st.paddingYpx != null) {
+        strip.style.padding =
+          (st.paddingYpx || 8) + 'px ' + (st.paddingXpx || 12) + 'px';
+      }
+      if (st.maxWidthPx) strip.style.maxWidth = st.maxWidthPx + 'px';
     }
   };
 
@@ -237,8 +360,7 @@
       (this.apiBase ? this.apiBase + '/widget/logo-powered.svg' : '');
     var poweredHtml = '';
     if (pb.enabled !== false) {
-      poweredHtml =
-        '<div class="qa-powered">' +
+      var inner =
         '<span>' +
         this.escape(pb.prefix || 'Powered by') +
         '</span>' +
@@ -249,12 +371,29 @@
           : '') +
         '<strong>' +
         this.escape(pb.brandName || 'QualityAssistant') +
-        '</strong></div>';
+        '</strong>';
+      poweredHtml = pb.linkUrl
+        ? '<a class="qa-powered qa-powered--link" href="' +
+          this.escape(pb.linkUrl) +
+          '" target="_blank" rel="noopener noreferrer">' +
+          inner +
+          '</a>'
+        : '<div class="qa-powered">' + inner + '</div>';
+    }
+
+    var stripCfg = getLauncherStripCfg();
+    var stripHtml = '';
+    if (stripCfg.enabled !== false && stripCfg.text) {
+      stripHtml =
+        '<div class="qa-launcher-strip" role="note">' +
+        this.escape(stripCfg.text) +
+        '</div>';
     }
 
     return (
+      stripHtml +
       '<button type="button" class="qa-launcher" aria-label="Open chat">' +
-      ICONS.chat +
+      (common.launcher && common.launcher.iconUrl ? '' : ICONS.chat) +
       '</button>' +
       '<div class="qa-panel" role="dialog" aria-label="' +
       this.escape(this.title) +
@@ -400,6 +539,8 @@
     this.isOpen = true;
     this.els.panel.classList.add('qa-panel--open');
     this.els.launcher.classList.add('qa-launcher--hidden');
+    var strip = this.root.querySelector('.qa-launcher-strip');
+    if (strip) strip.classList.add('qa-launcher-strip--hidden');
     this.els.input.focus();
   };
 
@@ -407,6 +548,8 @@
     this.isOpen = false;
     this.els.panel.classList.remove('qa-panel--open');
     this.els.launcher.classList.remove('qa-launcher--hidden');
+    var strip = this.root.querySelector('.qa-launcher-strip');
+    if (strip) strip.classList.remove('qa-launcher-strip--hidden');
     this.stopSpeech();
   };
 
@@ -458,25 +601,53 @@
     avatar.setAttribute('aria-hidden', 'true');
     avatar.innerHTML =
       role === 'bot' ? this.botAvatarHtml() : this.userAvatarHtml();
+    var body = document.createElement('div');
+    body.className = 'qa-msg__body';
     var bubble = document.createElement('div');
     bubble.className = 'qa-msg__bubble';
     bubble.textContent = text;
+    body.appendChild(bubble);
+    var persona =
+      role === 'bot' ? getRootCfg().botPersona : getRootCfg().userPersona;
+    var timeStr = formatPersonaTime(persona);
+    if (timeStr) {
+      var timeEl = document.createElement('div');
+      timeEl.className = 'qa-msg__time';
+      timeEl.textContent = timeStr;
+      body.appendChild(timeEl);
+    }
     row.appendChild(avatar);
-    row.appendChild(bubble);
+    row.appendChild(body);
     this.els.messages.appendChild(row);
     this.els.messages.scrollTop = this.els.messages.scrollHeight;
     return row;
   };
 
   QualityAssistantWidget.prototype.showTyping = function () {
+    var self = this;
+    var header = getRootCfg().header || {};
+    var baseText = header.botWritingText || 'Typing';
+    var interval = header.botWritingDotsIntervalMs || 480;
     var row = document.createElement('div');
     row.className = 'qa-msg qa-msg--bot qa-msg--typing-indicator';
+    var bubble = document.createElement('div');
+    bubble.className = 'qa-msg__bubble qa-msg__typing-text';
+    bubble.textContent = baseText;
     row.innerHTML =
       '<div class="qa-msg__avatar" aria-hidden="true">' +
       this.botAvatarHtml() +
-      '</div><div class="qa-msg__bubble qa-msg__typing"><span></span><span></span><span></span></div>';
+      '</div>';
+    row.appendChild(bubble);
+    var dots = 0;
+    row._typingTimer = setInterval(function () {
+      dots = (dots + 1) % 4;
+      bubble.textContent = baseText + '.'.repeat(dots);
+    }, interval);
     this.els.messages.appendChild(row);
     this.els.messages.scrollTop = this.els.messages.scrollHeight;
+    row._stopTyping = function () {
+      if (row._typingTimer) clearInterval(row._typingTimer);
+    };
     return row;
   };
 
@@ -510,6 +681,7 @@
         });
       })
       .then(function (result) {
+        if (typing._stopTyping) typing._stopTyping();
         typing.remove();
         if (result.ok && result.data.reply) {
           if (result.data.sessionId) self.sessionId = result.data.sessionId;
@@ -524,6 +696,7 @@
         }
       })
       .catch(function () {
+        if (typing._stopTyping) typing._stopTyping();
         typing.remove();
         self.appendMessage(
           'bot',
