@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var QA_ASSET_VERSION = '20260527-info-img-fit';
+  var QA_ASSET_VERSION = '20260527-rich-scroll';
 
   var script = document.currentScript;
   var base = '';

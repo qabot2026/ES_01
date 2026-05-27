@@ -478,9 +478,46 @@
   margin-top: 10px;
   max-width: 100%;
   overflow-x: auto;
-  padding-bottom: 4px;
+  padding-bottom: 8px;
   scroll-snap-type: x proximity;
   -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--qa-primary, #0284c7) 45%, transparent) transparent;
+}
+
+.qa-rich-cards::-webkit-scrollbar {
+  height: 6px;
+}
+
+.qa-rich-cards::-webkit-scrollbar-track {
+  margin: 0 6px;
+  background: color-mix(in srgb, var(--qa-border, #dbe5ec) 35%, transparent);
+  border-radius: 999px;
+}
+
+.qa-rich-cards::-webkit-scrollbar-thumb {
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--qa-primary-dark, #0369a1) 70%, transparent),
+    color-mix(in srgb, var(--qa-accent, #0ea5e9) 85%, transparent)
+  );
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  min-width: 40px;
+}
+
+.qa-rich-cards::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(
+    90deg,
+    var(--qa-primary-dark, #0369a1),
+    var(--qa-accent, #0ea5e9)
+  );
+  background-clip: padding-box;
+}
+
+.qa-rich-cards::-webkit-scrollbar-corner {
+  background: transparent;
 }
 
 .qa-rich-card {
