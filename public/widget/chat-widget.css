@@ -463,6 +463,79 @@
   padding: 8px 14px;
 }
 
+.qa-chip--link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
+/* Dialogflow richContent info cards */
+.qa-rich-cards {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  margin-top: 10px;
+  max-width: 100%;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
+}
+
+.qa-rich-card {
+  flex: 0 0 min(220px, 85vw);
+  scroll-snap-align: start;
+  background: var(--qa-surface);
+  border: 1px solid var(--qa-border);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+}
+
+.qa-rich-card__media {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: var(--qa-bg);
+  overflow: hidden;
+}
+
+.qa-rich-card__media a {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.qa-rich-card__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.qa-rich-card__title {
+  padding: 10px 12px 0;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--qa-text);
+  line-height: 1.3;
+}
+
+.qa-rich-card__subtitle {
+  padding: 4px 12px 0;
+  font-size: 0.75rem;
+  color: var(--qa-muted);
+  line-height: 1.35;
+}
+
+.qa-rich-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px 12px 12px;
+}
+
 /* Footer */
 .qa-footer {
   flex-shrink: 0;

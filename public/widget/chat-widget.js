@@ -134,7 +134,7 @@
     return df.welcomeEvent || {};
   }
 
-  function isRichContentChipsEnabled() {
+  function isRichContentEnabled() {
     var df = getRootCfg().dialogflow || {};
     var rc = df.richContentChips || {};
     return rc.enabled !== false;
@@ -646,7 +646,7 @@
       });
     }
     this.els.messages.addEventListener('click', function (e) {
-      var chip = e.target.closest('.qa-chip');
+      var chip = e.target.closest('.qa-chip[data-message]');
       if (!chip || self.isSending) return;
       var msg = chip.getAttribute('data-message');
       if (msg) self.sendMessageWithText(msg);
@@ -707,16 +707,17 @@
         typing.remove();
         if (result.ok) {
           if (result.data.sessionId) self.sessionId = result.data.sessionId;
-          var chips =
-            isRichContentChipsEnabled() && result.data.chips
-              ? result.data.chips
-              : [];
+          var richOn = isRichContentEnabled();
+          var chips = richOn && result.data.chips ? result.data.chips : [];
+          var infoCards =
+            richOn && result.data.infoCards ? result.data.infoCards : [];
           var reply = (result.data.reply || '').trim();
           var chipHeading = (result.data.chipHeading || '').trim();
-          if (reply || chips.length || chipHeading) {
+          if (reply || chips.length || chipHeading || infoCards.length) {
             self.appendMessage('bot', reply, {
               chips: chips,
               chipHeading: chipHeading,
+              infoCards: infoCards,
             });
           }
         } else {
@@ -908,6 +909,88 @@
     return html;
   };
 
+  QualityAssistantWidget.prototype.buildInfoCardsEl = function (cards) {
+    var wrap = document.createElement('div');
+    wrap.className = 'qa-rich-cards';
+    wrap.setAttribute('role', 'list');
+    var self = this;
+
+    cards.forEach(function (card) {
+      var article = document.createElement('article');
+      article.className = 'qa-rich-card';
+      article.setAttribute('role', 'listitem');
+
+      if (card.imageUrl) {
+        var imgWrap = document.createElement('div');
+        imgWrap.className = 'qa-rich-card__media';
+        var img = document.createElement('img');
+        img.className = 'qa-rich-card__img';
+        img.src = card.imageUrl;
+        img.alt = card.title || '';
+        img.loading = 'lazy';
+        img.onerror = function () {
+          imgWrap.style.display = 'none';
+        };
+        if (card.actionLink) {
+          var imgLink = document.createElement('a');
+          imgLink.href = card.actionLink;
+          imgLink.target = '_blank';
+          imgLink.rel = 'noopener noreferrer';
+          imgLink.appendChild(img);
+          imgWrap.appendChild(imgLink);
+        } else {
+          imgWrap.appendChild(img);
+        }
+        article.appendChild(imgWrap);
+      }
+
+      if (card.title) {
+        var titleEl = document.createElement('div');
+        titleEl.className = 'qa-rich-card__title';
+        titleEl.textContent = card.title;
+        article.appendChild(titleEl);
+      }
+
+      if (card.subtitle) {
+        var subEl = document.createElement('div');
+        subEl.className = 'qa-rich-card__subtitle';
+        subEl.textContent = card.subtitle;
+        article.appendChild(subEl);
+      }
+
+      var buttons = card.buttons || [];
+      if (buttons.length) {
+        var actions = document.createElement('div');
+        actions.className = 'qa-rich-card__actions';
+        buttons.forEach(function (btn) {
+          var label = btn.label || '';
+          if (!label) return;
+          if (btn.href) {
+            var link = document.createElement('a');
+            link.className = 'qa-chip qa-chip--bot qa-chip--link';
+            link.href = btn.href;
+            link.target = '_blank';
+            link.rel = 'noopener noreferrer';
+            link.textContent = label;
+            actions.appendChild(link);
+          } else {
+            var b = document.createElement('button');
+            b.type = 'button';
+            b.className = 'qa-chip qa-chip--bot';
+            b.setAttribute('data-message', btn.message || label);
+            b.textContent = label;
+            actions.appendChild(b);
+          }
+        });
+        if (actions.childNodes.length) article.appendChild(actions);
+      }
+
+      wrap.appendChild(article);
+    });
+
+    return wrap;
+  };
+
   QualityAssistantWidget.prototype.appendMessage = function (role, text, options) {
     options = options || {};
     if (this.els.welcome) {
@@ -952,6 +1035,10 @@
         chipsWrap.appendChild(btn);
       });
       if (chipsWrap.childNodes.length) body.appendChild(chipsWrap);
+    }
+    var infoCards = options.infoCards || [];
+    if (role === 'bot' && infoCards.length) {
+      body.appendChild(this.buildInfoCardsEl(infoCards));
     }
     row.appendChild(body);
     this.els.messages.appendChild(row);
