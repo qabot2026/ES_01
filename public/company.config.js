@@ -43,7 +43,7 @@ window.QA_CHAT_UI_CONFIG = {
 
     welcome: {
       /** false = no welcome title/body/chips when chat opens or after Restart */
-      enabled: true,
+      enabled: false,
       title: 'Welcome',
       body: 'Select an option',
       restartTitle: 'Restarted',
