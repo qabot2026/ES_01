@@ -29,7 +29,17 @@ window.QA_CHAT_UI_CONFIG = {
         triggerOncePerSession: true,
       },
       /** GREEN — chips + info cards from Custom payload richContent */
-      richContentChips: { enabled: true, cost: 'green' },
+      richContentChips: {
+        enabled: true,
+        cost: 'green',
+        /** Info card image — contain = full image visible (no crop); cover = fill & crop */
+        infoCardImage: {
+          cardWidthPx: 220,
+          imageMaxHeightPx: 120,
+          objectFit: 'contain',
+          background: '#e8f4fc',
+        },
+      },
     },
 
     deploy: {

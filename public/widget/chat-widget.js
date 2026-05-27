@@ -304,6 +304,33 @@
     if (pb.fontSizePx) {
       this.root.style.setProperty('--qa-powered-size', pb.fontSizePx + 'px');
     }
+
+    var rc = common.dialogflow && common.dialogflow.richContentChips;
+    var imgCfg = (rc && rc.infoCardImage) || {};
+    if (imgCfg.cardWidthPx != null) {
+      this.root.style.setProperty(
+        '--qa-rich-card-width',
+        imgCfg.cardWidthPx + 'px'
+      );
+    }
+    if (imgCfg.imageMaxHeightPx != null) {
+      this.root.style.setProperty(
+        '--qa-rich-card-img-max-height',
+        imgCfg.imageMaxHeightPx + 'px'
+      );
+    }
+    if (imgCfg.imageHeightPx != null) {
+      this.root.style.setProperty(
+        '--qa-rich-card-img-height',
+        imgCfg.imageHeightPx + 'px'
+      );
+    }
+    if (imgCfg.objectFit) {
+      this.root.style.setProperty('--qa-rich-card-img-fit', imgCfg.objectFit);
+    }
+    if (imgCfg.background) {
+      this.root.style.setProperty('--qa-rich-card-img-bg', imgCfg.background);
+    }
   };
 
   QualityAssistantWidget.prototype.applyLayout = function () {
