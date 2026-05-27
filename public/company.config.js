@@ -16,6 +16,16 @@ window.QA_CHAT_UI_CONFIG = {
     dialogflow: {
       projectId: 'qualityassistant-ygdm',
       agentId: '07ccbfd0-4cad-4898-8323-e6baeec80fc1',
+      /**
+       * Fire a Dialogflow ES event when the chat opens / restarts.
+       * Create the same event name under Dialogflow → Events (e.g. FRESH).
+       */
+      welcomeEvent: {
+        enabled: true,
+        eventName: 'FRESH',
+        triggerOnChatOpen: true,
+        triggerOnRestart: true,
+      },
     },
 
     deploy: {
@@ -50,19 +60,22 @@ window.QA_CHAT_UI_CONFIG = {
       restartBody: 'Select an option.',
       /** Tap chips below welcome/restart text — sends message to bot */
       suggestionChips: {
-        enabled: true,
+        enabled: false,
         items: [
           {
-            label: 'Quality standards',
-            message: 'location',
+            label: 'DisplayName',
+            message: 'TriggerName',
           },
           {
-            label: 'Compliance help',
-            message: 'Hi',
-          },
+            label: 'DisplayName',
+            message: 'TriggerName',
+          }, 
           {
-            label: 'Procedures',
-            message: 'Explain your quality procedures',
+            label: 'DisplayName',
+            message: 'TriggerName',
+          }, {
+            label: 'DisplayName',
+            message: 'TriggerName',
           },
         ],
       },
@@ -214,7 +227,7 @@ window.QA_CHAT_UI_CONFIG = {
       minHeightPx: 520,
       position: { rightPx: 10, bottomPx: 20, leftPx: null },
     },
-    autoOpenChat: { enabled: false, delayMs: 5000 },
+    autoOpenChat: { enabled: true, delayMs: 2000 },
     launcherStrip: { text: '👋Hey, how are you?😊' },
   },
 
@@ -230,7 +243,7 @@ window.QA_CHAT_UI_CONFIG = {
       topInsetPx: 26,
       position: { rightPx: 12, bottomPx: 10, leftPx: null },
     },
-    autoOpenChat: { enabled: false, delayMs: 5000 },
+    autoOpenChat: { enabled: true, delayMs: 2000 },
     launcherStrip: {
       text: '🤖Chat with us',
       position: { rightPx: 12, bottomPx: 60 },

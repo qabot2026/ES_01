@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var QA_ASSET_VERSION = '20260527-welcome-empty';
+  var QA_ASSET_VERSION = '20260527-fresh-event';
 
   var script = document.currentScript;
   var base = '';

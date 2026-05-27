@@ -129,6 +129,11 @@
     return welcome.enabled !== false;
   }
 
+  function getWelcomeEventCfg() {
+    var df = getRootCfg().dialogflow || {};
+    return df.welcomeEvent || {};
+  }
+
   function getWelcomeChips() {
     if (!isWelcomeEnabled()) return [];
     var welcome = getRootCfg().welcome || {};
@@ -663,6 +668,83 @@
       .catch(function () {});
   };
 
+  QualityAssistantWidget.prototype.getDialogflowLang = function () {
+    return this.langMap[this.language]
+      ? this.langMap[this.language].df
+      : 'en';
+  };
+
+  QualityAssistantWidget.prototype.postToDialogflow = function (body) {
+    var self = this;
+    if (!this.apiBase || this.isSending) {
+      return Promise.resolve();
+    }
+    this.hideError();
+    this.isSending = true;
+    this.els.send.disabled = true;
+    var typing = this.showTyping();
+
+    return fetch(this.apiBase + '/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    })
+      .then(function (res) {
+        return res.json().then(function (data) {
+          return { ok: res.ok, data: data };
+        });
+      })
+      .then(function (result) {
+        if (typing._stopTyping) typing._stopTyping();
+        typing.remove();
+        if (result.ok && result.data.reply) {
+          if (result.data.sessionId) self.sessionId = result.data.sessionId;
+          self.appendMessage('bot', result.data.reply);
+        } else {
+          self.appendMessage(
+            'bot',
+            result.data.message ||
+              'Sorry, I could not connect right now. Please try again.'
+          );
+          if (result.data.message) self.showError(result.data.message);
+        }
+      })
+      .catch(function () {
+        if (typing._stopTyping) typing._stopTyping();
+        typing.remove();
+        self.appendMessage(
+          'bot',
+          'Network error. Check your connection and try again.'
+        );
+        self.showError('Could not reach chat server.');
+      })
+      .finally(function () {
+        self.isSending = false;
+        self.els.send.disabled = false;
+      });
+  };
+
+  QualityAssistantWidget.prototype.triggerWelcomeEvent = function () {
+    var cfg = getWelcomeEventCfg();
+    if (cfg.enabled === false) return;
+    var name = (cfg.eventName || 'FRESH').trim();
+    if (!name) return;
+    this.postToDialogflow({
+      event: name,
+      sessionId: this.sessionId,
+      languageCode: this.getDialogflowLang(),
+    });
+  };
+
+  QualityAssistantWidget.prototype.maybeTriggerWelcomeEvent = function () {
+    var cfg = getWelcomeEventCfg();
+    if (cfg.enabled === false || cfg.triggerOnChatOpen === false) return;
+    var self = this;
+    setTimeout(function () {
+      self.triggerWelcomeEvent();
+    }, 0);
+  };
+
   QualityAssistantWidget.prototype.open = function () {
     this.isOpen = true;
     this.els.panel.classList.add('qa-panel--open');
@@ -672,6 +754,7 @@
     var strip = this.root.querySelector('.qa-launcher-strip');
     if (strip) strip.classList.add('qa-launcher-strip--hidden');
     this.els.input.focus();
+    this.maybeTriggerWelcomeEvent();
   };
 
   QualityAssistantWidget.prototype.close = function () {
@@ -696,6 +779,10 @@
       : null;
     this.hideError();
     this.els.input.focus();
+    var ev = getWelcomeEventCfg();
+    if (ev.enabled !== false && ev.triggerOnRestart !== false) {
+      this.triggerWelcomeEvent();
+    }
   };
 
   QualityAssistantWidget.prototype.botAvatarHtml = function () {
@@ -850,58 +937,12 @@
   QualityAssistantWidget.prototype.sendMessageWithText = function (text) {
     text = (text || '').trim();
     if (!text || this.isSending) return;
-    var self = this;
-    this.hideError();
     this.appendMessage('user', text);
-    this.isSending = true;
-    this.els.send.disabled = true;
-    var typing = this.showTyping();
-    var langCode = this.langMap[this.language]
-      ? this.langMap[this.language].df
-      : 'en';
-
-    fetch(this.apiBase + '/api/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        message: text,
-        sessionId: this.sessionId,
-        languageCode: langCode,
-      }),
-    })
-      .then(function (res) {
-        return res.json().then(function (data) {
-          return { ok: res.ok, data: data };
-        });
-      })
-      .then(function (result) {
-        if (typing._stopTyping) typing._stopTyping();
-        typing.remove();
-        if (result.ok && result.data.reply) {
-          if (result.data.sessionId) self.sessionId = result.data.sessionId;
-          self.appendMessage('bot', result.data.reply);
-        } else {
-          self.appendMessage(
-            'bot',
-            result.data.message ||
-              'Sorry, I could not connect right now. Please try again.'
-          );
-          if (result.data.message) self.showError(result.data.message);
-        }
-      })
-      .catch(function () {
-        if (typing._stopTyping) typing._stopTyping();
-        typing.remove();
-        self.appendMessage(
-          'bot',
-          'Network error. Check your connection and try again.'
-        );
-        self.showError('Could not reach chat server.');
-      })
-      .finally(function () {
-        self.isSending = false;
-        self.els.send.disabled = false;
-      });
+    this.postToDialogflow({
+      message: text,
+      sessionId: this.sessionId,
+      languageCode: this.getDialogflowLang(),
+    });
   };
 
   QualityAssistantWidget.prototype.toggleSpeech = function () {

@@ -60,17 +60,21 @@ app.get('/health', async (_req, res) => {
 });
 
 app.post('/api/chat', async (req, res) => {
-  const { message, sessionId, languageCode = 'en' } = req.body || {};
-  if (!message || typeof message !== 'string' || !message.trim()) {
-    return res.status(400).json({ error: 'message is required' });
-  }
+  const { message, sessionId, languageCode = 'en', event } = req.body || {};
   const sid = sessionId || randomUUID();
+  const eventName =
+    typeof event === 'string' && event.trim() ? event.trim() : null;
+
+  if (!eventName) {
+    if (!message || typeof message !== 'string' || !message.trim()) {
+      return res.status(400).json({ error: 'message or event is required' });
+    }
+  }
+
   try {
-    const result = await dialogflow.detectIntent(
-      sid,
-      message.trim(),
-      languageCode
-    );
+    const result = eventName
+      ? await dialogflow.detectEvent(sid, eventName, languageCode)
+      : await dialogflow.detectIntent(sid, message.trim(), languageCode);
     res.json({ sessionId: sid, ...result });
   } catch (err) {
     const detail = dialogflow.formatApiError(err);
