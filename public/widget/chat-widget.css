@@ -394,6 +394,46 @@
   margin-bottom: 6px;
 }
 
+.qa-welcome-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 14px;
+  padding-top: 4px;
+}
+
+.qa-chip {
+  border: 1px solid var(--qa-border);
+  border-radius: 999px;
+  padding: 7px 14px;
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--qa-primary-dark);
+  background: var(--qa-surface);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  line-height: 1.2;
+  max-width: 100%;
+  text-align: center;
+}
+
+.qa-chip:hover {
+  background: var(--qa-bg);
+  border-color: var(--qa-accent);
+  color: var(--qa-primary);
+}
+
+.qa-chip:active {
+  transform: scale(0.98);
+}
+
+.qa-chip:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* Footer */
 .qa-footer {
   flex-shrink: 0;

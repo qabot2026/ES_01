@@ -46,6 +46,24 @@ window.QA_CHAT_UI_CONFIG = {
       body: 'Ask about quality standards, procedures, or compliance.',
       restartTitle: 'Conversation restarted',
       restartBody: 'How can I help you today?',
+      /** Tap chips below welcome/restart text — sends message to bot */
+      suggestionChips: {
+        enabled: true,
+        items: [
+          {
+            label: 'Quality standards',
+            message: 'Tell me about quality standards',
+          },
+          {
+            label: 'Compliance help',
+            message: 'What compliance guidance can you provide?',
+          },
+          {
+            label: 'Procedures',
+            message: 'Explain your quality procedures',
+          },
+        ],
+      },
     },
 
     botPersona: {

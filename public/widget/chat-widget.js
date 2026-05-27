@@ -124,6 +124,24 @@
     return lang.nativeLabel || lang.label || lang.code;
   }
 
+  function getWelcomeChips() {
+    var welcome = getRootCfg().welcome || {};
+    var chips = welcome.suggestionChips;
+    if (!chips || chips.enabled === false) return [];
+    var items = Array.isArray(chips) ? chips : chips.items || [];
+    return items
+      .map(function (c) {
+        if (typeof c === 'string') return { label: c, message: c };
+        return {
+          label: c.label || c.message || '',
+          message: c.message || c.label || '',
+        };
+      })
+      .filter(function (c) {
+        return c.label && c.message;
+      });
+  }
+
   function formatPersonaTime(persona) {
     if (!persona || !persona.showTime) return '';
     var tz = persona.timeZone || 'Asia/Kolkata';
@@ -520,11 +538,8 @@
       ICONS.close +
       '</button></header>' +
       '<div class="qa-messages" role="log" aria-live="polite">' +
-      '<div class="qa-welcome"><strong>' +
-      this.escape(this.welcomeTitle) +
-      '</strong>' +
-      this.escape(this.welcomeBody) +
-      '</div></div>' +
+      this.buildWelcomeHtml(this.welcomeTitle, this.welcomeBody) +
+      '</div>' +
       '<footer class="qa-footer">' +
       '<div class="qa-input-row">' +
       '<textarea class="qa-input" rows="1" placeholder="' +
@@ -609,6 +624,12 @@
         self.restart();
       });
     }
+    this.els.messages.addEventListener('click', function (e) {
+      var chip = e.target.closest('.qa-chip');
+      if (!chip || self.isSending) return;
+      var msg = chip.getAttribute('data-message');
+      if (msg) self.sendMessageWithText(msg);
+    });
     if (this.els.mic) {
       this.els.mic.addEventListener('click', function () {
         self.toggleSpeech();
@@ -658,12 +679,10 @@
 
   QualityAssistantWidget.prototype.restart = function () {
     this.sessionId = this.newSessionId();
-    this.els.messages.innerHTML =
-      '<div class="qa-welcome"><strong>' +
-      this.escape(this.restartTitle) +
-      '</strong>' +
-      this.escape(this.restartBody) +
-      '</div>';
+    this.els.messages.innerHTML = this.buildWelcomeHtml(
+      this.restartTitle,
+      this.restartBody
+    );
     this.els.welcome = this.root.querySelector('.qa-welcome');
     this.hideError();
     this.els.input.focus();
@@ -731,6 +750,31 @@
     return row;
   };
 
+  QualityAssistantWidget.prototype.buildWelcomeHtml = function (title, body) {
+    var html =
+      '<div class="qa-welcome"><strong>' +
+      this.escape(title) +
+      '</strong>' +
+      this.escape(body);
+    var chips = getWelcomeChips();
+    if (chips.length) {
+      html +=
+        '<div class="qa-welcome-chips" role="group" aria-label="Suggested questions">';
+      var self = this;
+      chips.forEach(function (c) {
+        html +=
+          '<button type="button" class="qa-chip" data-message="' +
+          self.escape(c.message) +
+          '">' +
+          self.escape(c.label) +
+          '</button>';
+      });
+      html += '</div>';
+    }
+    html += '</div>';
+    return html;
+  };
+
   QualityAssistantWidget.prototype.appendMessage = function (role, text) {
     if (this.els.welcome) {
       this.els.welcome.remove();
@@ -782,11 +826,17 @@
   QualityAssistantWidget.prototype.sendMessage = function () {
     var text = (this.els.input.value || '').trim();
     if (!text || this.isSending) return;
+    this.els.input.value = '';
+    this.els.input.style.height = 'auto';
+    this.sendMessageWithText(text);
+  };
+
+  QualityAssistantWidget.prototype.sendMessageWithText = function (text) {
+    text = (text || '').trim();
+    if (!text || this.isSending) return;
     var self = this;
     this.hideError();
     this.appendMessage('user', text);
-    this.els.input.value = '';
-    this.els.input.style.height = 'auto';
     this.isSending = true;
     this.els.send.disabled = true;
     var typing = this.showTyping();
