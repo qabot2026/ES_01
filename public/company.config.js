@@ -170,7 +170,7 @@ window.QA_CHAT_UI_CONFIG = {
          * When true, the colored ring animates (uses rotateSeconds).
          * When false, ring stays static (same colors, no motion).
          */
-        colorRingMotionEnabled: false,
+        colorRingMotionEnabled: true,
         /** true = Instagram rainbow ring; false = theme blue ring (from theme colors). */
         instagramStyle: true,
       },
