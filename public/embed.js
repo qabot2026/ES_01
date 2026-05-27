@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var QA_ASSET_VERSION = '20260527-footer-close';
+  var QA_ASSET_VERSION = '20260527-footer-layout';
 
   var script = document.currentScript;
   var base = '';

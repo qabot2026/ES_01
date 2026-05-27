@@ -208,7 +208,13 @@ window.QA_CHAT_UI_CONFIG = {
       logoUrl: "https://www.vhv.rs/dpng/d/6-68550_hanuman-ji-png-transparent-png.png",
       linkUrl: 'www.google.com',
       color: '#0369a1',
-      fontSizePx: 11,
+      fontSizePx: 9,
+      logoHeightPx: 12,
+      offsetDownPx: 15,
+    },
+
+    restartButton: {
+      offsetLeftPx: 30,
     },
 
     theme: {

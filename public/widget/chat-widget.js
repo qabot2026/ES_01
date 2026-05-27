@@ -345,6 +345,16 @@
     if (pb.fontSizePx) {
       this.root.style.setProperty('--qa-powered-size', pb.fontSizePx + 'px');
     }
+    if (pb.offsetDownPx != null) {
+      this.root.style.setProperty('--qa-powered-offset-down', pb.offsetDownPx + 'px');
+    }
+    if (pb.logoHeightPx != null) {
+      this.root.style.setProperty('--qa-powered-logo-height', pb.logoHeightPx + 'px');
+    }
+    var rb = common.restartButton || {};
+    if (rb.offsetLeftPx != null) {
+      this.root.style.setProperty('--qa-restart-offset-left', rb.offsetLeftPx + 'px');
+    }
 
     var rc = common.dialogflow && common.dialogflow.richContentChips;
     var imgCfg = (rc && rc.infoCardImage) || {};

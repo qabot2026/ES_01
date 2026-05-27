@@ -1079,7 +1079,7 @@ body.qa-lightbox-open {
 
 .qa-toolbar__actions {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   flex-wrap: wrap;
   gap: 8px 10px;
   margin-left: auto;
@@ -1121,6 +1121,8 @@ body.qa-lightbox-open {
 .qa-restart {
   height: 36px;
   padding: 0 12px;
+  position: relative;
+  left: calc(-1 * var(--qa-restart-offset-left, 0px));
   border: 1px solid var(--qa-border);
   border-radius: 10px;
   background: var(--qa-surface);
@@ -1238,11 +1240,13 @@ body.qa-lightbox-open {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 6px;
+  gap: 4px;
   margin: 0;
+  margin-top: var(--qa-powered-offset-down, 0px);
   padding: 0;
   border-top: none;
-  font-size: var(--qa-powered-size, 0.6875rem);
+  font-size: var(--qa-powered-size, 0.5625rem);
+  line-height: 1.2;
   color: var(--qa-powered-color, var(--qa-muted));
   text-decoration: none;
 }
@@ -1286,7 +1290,7 @@ body.qa-lightbox-open {
 }
 
 .qa-powered__logo {
-  height: 18px;
+  height: var(--qa-powered-logo-height, 12px);
   width: auto;
   opacity: 0.85;
   pointer-events: none;
