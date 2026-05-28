@@ -67,6 +67,9 @@ window.QA_CHAT_UI_CONFIG = {
           imageHeightPx: 140,
           objectFit: 'cover',
           background: '#e8f4fc',
+          /** Slow auto-scroll in chat panel (right → left); pauses on hover */
+          autoScroll: true,
+          autoScrollSecondsPerItem: 4,
         },
         /** open_gallery — horizontal image strip (urls in Dialogflow payload) */
         galleryImage: {
@@ -74,6 +77,8 @@ window.QA_CHAT_UI_CONFIG = {
           imageHeightPx: 90,
           objectFit: 'cover',
           background: '#e8f4fc',
+          autoScroll: true,
+          autoScrollSecondsPerItem: 4,
         },
         /**
          * Dialogflow options payload (dfchat_inline_select / open_gallery).

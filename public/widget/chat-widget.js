@@ -154,6 +154,22 @@
     return mode === 'dropdown' ? 'dropdown' : 'chips';
   }
 
+  /** Auto-scroll for gallery + card carousel horizontal strips */
+  function getScrollStripOpts(kind) {
+    var rc = (getRootCfg().dialogflow || {}).richContentChips || {};
+    var cfg =
+      kind === 'cardCarousel'
+        ? rc.cardCarousel || {}
+        : rc.galleryImage || {};
+    return {
+      autoScroll: cfg.autoScroll !== false,
+      secondsPerItem:
+        cfg.autoScrollSecondsPerItem != null
+          ? Number(cfg.autoScrollSecondsPerItem) || 4
+          : 4,
+    };
+  }
+
   function getWelcomeChips() {
     if (!isWelcomeEnabled()) return [];
     var welcome = getRootCfg().welcome || {};
@@ -1394,7 +1410,8 @@
     return wrap;
   };
 
-  QualityAssistantWidget.prototype.wrapScrollTrack = function (track) {
+  QualityAssistantWidget.prototype.wrapScrollTrack = function (track, options) {
+    options = options || {};
     var shell = document.createElement('div');
     shell.className = 'qa-scroll-strip';
 
@@ -1418,6 +1435,13 @@
     shell.appendChild(prev);
     shell.appendChild(next);
 
+    var pauseAutoUntil = 0;
+    var hoverPaused = false;
+
+    function pauseAutoScroll(ms) {
+      pauseAutoUntil = Date.now() + (ms != null ? ms : 10000);
+    }
+
     function scrollStep(delta) {
       var first = track.firstElementChild;
       var gap = 10;
@@ -1425,6 +1449,7 @@
         ? first.getBoundingClientRect().width + gap
         : Math.max(100, viewport.clientWidth * 0.8);
       viewport.scrollBy({ left: delta * step, behavior: 'smooth' });
+      pauseAutoScroll();
     }
 
     prev.addEventListener('click', function () {
@@ -1451,6 +1476,77 @@
     }
     setTimeout(updateNav, 0);
     setTimeout(updateNav, 400);
+
+    if (options.autoScroll !== false) {
+      var secondsPerItem =
+        options.secondsPerItem != null ? Number(options.secondsPerItem) : 4;
+      if (!secondsPerItem || secondsPerItem < 0.5) secondsPerItem = 4;
+
+      var reduceMotion =
+        global.matchMedia &&
+        global.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      if (!reduceMotion) {
+        shell.classList.add('qa-scroll-strip--auto');
+        var autoLastTime = 0;
+
+        function itemStepPx() {
+          var first = track.firstElementChild;
+          return first ? first.getBoundingClientRect().width + 10 : 200;
+        }
+
+        function autoScrollTick(now) {
+          global.requestAnimationFrame(autoScrollTick);
+          var maxScroll = Math.max(0, viewport.scrollWidth - viewport.clientWidth);
+          if (maxScroll <= 4) {
+            autoLastTime = 0;
+            return;
+          }
+          if (hoverPaused || Date.now() < pauseAutoUntil) {
+            autoLastTime = 0;
+            return;
+          }
+          if (!autoLastTime) {
+            autoLastTime = now;
+            return;
+          }
+          var dt = Math.min(now - autoLastTime, 48);
+          autoLastTime = now;
+          var step = itemStepPx();
+          var pxPerMs = step / (secondsPerItem * 1000);
+          viewport.scrollLeft += pxPerMs * dt;
+          if (viewport.scrollLeft >= maxScroll - 1) {
+            viewport.scrollLeft = 0;
+          }
+          updateNav();
+        }
+
+        shell.addEventListener('mouseenter', function () {
+          hoverPaused = true;
+          autoLastTime = 0;
+        });
+        shell.addEventListener('mouseleave', function () {
+          hoverPaused = false;
+          autoLastTime = 0;
+        });
+        viewport.addEventListener(
+          'touchstart',
+          function () {
+            pauseAutoScroll(12000);
+          },
+          { passive: true }
+        );
+        viewport.addEventListener(
+          'wheel',
+          function () {
+            pauseAutoScroll(8000);
+          },
+          { passive: true }
+        );
+
+        global.requestAnimationFrame(autoScrollTick);
+      }
+    }
 
     return shell;
   };
@@ -1561,7 +1657,7 @@
     });
 
     if (track.childNodes.length) {
-      wrap.appendChild(this.wrapScrollTrack(track));
+      wrap.appendChild(this.wrapScrollTrack(track, getScrollStripOpts('cardCarousel')));
     }
     return wrap;
   };
@@ -1747,7 +1843,7 @@
       track.appendChild(item);
     });
     if (track.childNodes.length) {
-      wrap.appendChild(this.wrapScrollTrack(track));
+      wrap.appendChild(this.wrapScrollTrack(track, getScrollStripOpts('gallery')));
     }
     return wrap;
   };
