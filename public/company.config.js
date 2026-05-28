@@ -275,7 +275,7 @@ window.QA_CHAT_UI_CONFIG = {
 
   /** Mobile (screen ≤ 768px) — poori UI yahan */
   mob: {
-    showChatbot: false,
+    showChatbot: true,
 
     chatLayout: { side: 'left' },
 
@@ -301,7 +301,7 @@ window.QA_CHAT_UI_CONFIG = {
 
     launcherStrip: {
       enabled: true,
-      text: '🤖Chat with us',
+      text: '👋Hey, how are you?😊',
       position: { leftPx: 12, bottomPx: 60, rightPx: null },
       style: { fontSizePx: 12, paddingYpx: 8, paddingXpx: 12, maxWidthPx: 220 },
     },
@@ -318,7 +318,7 @@ window.QA_CHAT_UI_CONFIG = {
 
     autoOpenChat: { enabled: true, delayMs: 2000 },
 
-    restartButton: { enabled: false },
+    restartButton: { enabled: true },
 
     poweredBy: {
       enabled: true,
@@ -335,7 +335,7 @@ window.QA_CHAT_UI_CONFIG = {
 
     features: {
       speechToText: { enabled: true },
-      restartChat: { enabled: false, label: 'Restart' },
+      restartChat: { enabled: true, label: 'Restart' },
     },
   },
 };
