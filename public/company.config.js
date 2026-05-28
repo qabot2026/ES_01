@@ -226,8 +226,8 @@ window.QA_CHAT_UI_CONFIG = {
       sizePx: 64,
       iconUrl: QA_LOGO_LAUNCHER,
       cornerRoundness: '50%',
-      /** Chat open: true = niche bubble + X | false = bubble bilkul hide (header X se band) */
-      closeBubbleWhenOpen: { enabled: true },
+      /** enabled: true = bubble+X | false = bubble hide, panel niche (panelBottomPx) */
+      closeBubbleWhenOpen: { enabled: true, panelBottomPx: 8 },
       storyRing: {
         enabled: true,
         widthPx: 2.5,

@@ -154,6 +154,22 @@
     return true;
   }
 
+  function getLauncherCloseBubbleCfg() {
+    var launch = getEffectiveCfg().launcher || {};
+    return launch.closeBubbleWhenOpen || {};
+  }
+
+  /** Chat open: panel kitni upar — bubble+X on = launcher ke upar; off = niche (panelBottomPx) */
+  function getLauncherStackPx(isChatOpen) {
+    var launch = getEffectiveCfg().launcher || {};
+    var size = launch.sizePx != null ? launch.sizePx : 60;
+    var cfg = getLauncherCloseBubbleCfg();
+    if (isChatOpen && cfg.enabled === false) {
+      return cfg.panelBottomPx != null ? cfg.panelBottomPx : 8;
+    }
+    return size + 12;
+  }
+
   function hasLauncherStripTextAnywhere() {
     var root = global.QA_CHAT_UI_CONFIG || {};
     var d = (root.desk || {}).launcherStrip || {};

@@ -153,6 +153,10 @@
   transform: translateY(0) scale(1);
 }
 
+.qa-widget--chat-open.qa-widget--no-close-bubble .qa-panel {
+  bottom: var(--qa-launcher-stack, 8px);
+}
+
 .qa-widget--chat-open .qa-panel {
   bottom: var(--qa-launcher-stack, 72px);
   height: min(

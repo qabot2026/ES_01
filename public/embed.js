@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var QA_ASSET_VERSION = '20260529-close-bubble-hide-fix';
+  var QA_ASSET_VERSION = '20260529-panel-lower-no-close-bubble';
 
   var script = document.currentScript;
   var base = '';
