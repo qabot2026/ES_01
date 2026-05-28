@@ -157,16 +157,25 @@
   /** Auto-scroll for gallery + card carousel horizontal strips */
   function getScrollStripOpts(kind) {
     var rc = (getRootCfg().dialogflow || {}).richContentChips || {};
+    var shared = rc.scrollStrip || {};
     var cfg =
       kind === 'cardCarousel'
         ? rc.cardCarousel || {}
         : rc.galleryImage || {};
+    var stopOnInteract =
+      cfg.stopAutoScrollOnInteraction != null
+        ? cfg.stopAutoScrollOnInteraction !== false
+        : shared.stopAutoScrollOnInteraction !== false;
     return {
-      autoScroll: cfg.autoScroll !== false,
+      autoScroll:
+        cfg.autoScroll !== false && shared.autoScroll !== false,
       secondsPerItem:
         cfg.autoScrollSecondsPerItem != null
           ? Number(cfg.autoScrollSecondsPerItem) || 4
-          : 4,
+          : shared.autoScrollSecondsPerItem != null
+            ? Number(shared.autoScrollSecondsPerItem) || 4
+            : 4,
+      stopAutoScrollOnInteraction: stopOnInteract,
     };
   }
 
@@ -1437,8 +1446,23 @@
 
     var pauseAutoUntil = 0;
     var hoverPaused = false;
+    var autoScrollStopped = false;
+    var programmaticScroll = false;
+    var stopOnInteraction = options.stopAutoScrollOnInteraction !== false;
+
+    function stopAutoScrollPermanent() {
+      if (autoScrollStopped) return;
+      autoScrollStopped = true;
+      shell.classList.remove('qa-scroll-strip--auto');
+    }
+
+    shell.stopAutoScrollPermanent = stopAutoScrollPermanent;
 
     function pauseAutoScroll(ms) {
+      if (stopOnInteraction) {
+        stopAutoScrollPermanent();
+        return;
+      }
       pauseAutoUntil = Date.now() + (ms != null ? ms : 10000);
     }
 
@@ -1459,6 +1483,12 @@
       scrollStep(1);
     });
 
+    if (stopOnInteraction) {
+      track.addEventListener('click', function () {
+        stopAutoScrollPermanent();
+      });
+    }
+
     function updateNav() {
       var maxScroll = Math.max(0, viewport.scrollWidth - viewport.clientWidth);
       var show = maxScroll > 4;
@@ -1468,7 +1498,20 @@
       next.disabled = viewport.scrollLeft >= maxScroll - 2;
     }
 
-    viewport.addEventListener('scroll', updateNav, { passive: true });
+    viewport.addEventListener(
+      'scroll',
+      function () {
+        updateNav();
+        if (
+          stopOnInteraction &&
+          !autoScrollStopped &&
+          !programmaticScroll
+        ) {
+          stopAutoScrollPermanent();
+        }
+      },
+      { passive: true }
+    );
     if (typeof ResizeObserver !== 'undefined') {
       var ro = new ResizeObserver(updateNav);
       ro.observe(viewport);
@@ -1510,6 +1553,7 @@
 
         function autoScrollTick(now) {
           global.requestAnimationFrame(autoScrollTick);
+          if (autoScrollStopped) return;
           var maxScroll = getMaxScroll();
           if (maxScroll <= 4) {
             autoLastTime = 0;
@@ -1527,10 +1571,14 @@
           autoLastTime = now;
           var step = itemStepPx();
           var pxPerMs = step / (secondsPerItem * 1000);
+          programmaticScroll = true;
           viewport.scrollLeft += pxPerMs * dt;
           if (viewport.scrollLeft >= maxScroll - 1) {
             viewport.scrollLeft = 0;
           }
+          global.requestAnimationFrame(function () {
+            programmaticScroll = false;
+          });
           updateNav();
         }
 
@@ -1563,6 +1611,9 @@
           { passive: true }
         );
         viewport.addEventListener('mousedown', function () {
+          pauseAutoScroll(8000);
+        });
+        viewport.addEventListener('pointerdown', function () {
           pauseAutoScroll(8000);
         });
 

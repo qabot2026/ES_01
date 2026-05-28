@@ -61,15 +61,25 @@ window.QA_CHAT_UI_CONFIG = {
           objectFit: 'contain',
           background: '#e8f4fc',
         },
+        /**
+         * Shared horizontal strip behavior (gallery + card carousel).
+         * stopAutoScrollOnInteraction: after user taps image, arrows, or scrolls
+         * that message’s strip, auto-scroll stops for good (until next bot reply).
+         */
+        scrollStrip: {
+          autoScroll: true,
+          autoScrollSecondsPerItem: 4,
+          stopAutoScrollOnInteraction: true,
+        },
         /** open_card_carousel — swipeable property/product cards */
         cardCarousel: {
           cardWidthPx: 200,
           imageHeightPx: 140,
           objectFit: 'cover',
           background: '#e8f4fc',
-          /** Slow auto-scroll in chat panel (right → left); pauses on hover */
           autoScroll: true,
           autoScrollSecondsPerItem: 4,
+          stopAutoScrollOnInteraction: true,
         },
         /** open_gallery — horizontal image strip (urls in Dialogflow payload) */
         galleryImage: {
@@ -79,6 +89,7 @@ window.QA_CHAT_UI_CONFIG = {
           background: '#e8f4fc',
           autoScroll: true,
           autoScrollSecondsPerItem: 4,
+          stopAutoScrollOnInteraction: true,
         },
         /**
          * Dialogflow options payload (dfchat_inline_select / open_gallery).
