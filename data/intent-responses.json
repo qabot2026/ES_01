@@ -1,6 +1,15 @@
 {
   "_help": "Keys must match Dialogflow intent Display Name exactly (Console → Intents → name). Or use @event:FRESH for welcome events.",
   "_help2": "Only add en / hi / mr text you need. Missing language falls back to English from this file, then Dialogflow reply.",
+  "_help3": "Copy the Project Location block for each intent — change the key to Dialogflow Display Name.",
+
+  "Project Location": {
+    "reply": {
+      "en": "Project is located in Hyderabad.",
+      "hi": "यह प्रोजैक्ट हैदराबाद में स्थित है।",
+      "mr": "प्रकल्प हैदराबादमध्ये स्थित आहे."
+    }
+  },
 
   "Default Welcome Intent": {
     "reply": {
