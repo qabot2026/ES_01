@@ -292,7 +292,7 @@ window.QA_CHAT_UI_CONFIG = {
       sizePx: 58,
       iconUrl: QA_LOGO_LAUNCHER,
       cornerRoundness: '50%',
-      closeBubbleWhenOpen: { enabled: true },
+      closeBubbleWhenOpen: { enabled: false },
       storyRing: {
         enabled: true,
         widthPx: 2.5,
