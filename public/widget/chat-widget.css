@@ -153,39 +153,23 @@
   transform: translateY(0) scale(1);
 }
 
-.qa-widget--chat-open.qa-widget--no-close-bubble .qa-panel {
-  bottom: var(--qa-launcher-stack, 8px);
+.qa-widget--chat-open .qa-panel {
+  bottom: var(--qa-launcher-stack, 72px);
   height: min(
     calc(var(--qa-panel-height, 520px) + var(--qa-panel-height-boost, 0px)),
     calc(
-      100vh - var(--qa-panel-top-inset, 16px) - var(--qa-launcher-stack, 8px) -
+      100vh - var(--qa-panel-top-inset, 16px) - var(--qa-launcher-stack, 72px) -
         var(--qa-widget-bottom, 24px) - 8px + var(--qa-panel-height-boost, 0px)
     )
   );
   max-height: calc(
-    100vh - var(--qa-panel-top-inset, 16px) - var(--qa-launcher-stack, 8px) -
+    100vh - var(--qa-panel-top-inset, 16px) - var(--qa-launcher-stack, 72px) -
       var(--qa-widget-bottom, 24px) - 8px + var(--qa-panel-height-boost, 0px)
   );
   min-height: min(
     calc(var(--qa-panel-min-height, 320px) + var(--qa-panel-height-boost, 0px)),
     calc(100vh - 140px + var(--qa-panel-height-boost, 0px))
   );
-}
-
-.qa-widget--chat-open .qa-panel {
-  bottom: var(--qa-launcher-stack, 72px);
-  height: min(
-    var(--qa-panel-height, 520px),
-    calc(
-      100vh - var(--qa-panel-top-inset, 16px) - var(--qa-launcher-stack, 72px) -
-        var(--qa-widget-bottom, 24px) - 8px
-    )
-  );
-  max-height: calc(
-    100vh - var(--qa-panel-top-inset, 16px) - var(--qa-launcher-stack, 72px) -
-      var(--qa-widget-bottom, 24px) - 8px
-  );
-  min-height: min(var(--qa-panel-min-height, 320px), calc(100vh - 140px));
 }
 
 /* Header */
@@ -1643,9 +1627,16 @@ body.qa-lightbox-open {
 
   .qa-widget--chat-open .qa-panel {
     bottom: var(--qa-launcher-stack, 72px);
+    height: min(
+      calc(var(--qa-panel-height, 520px) + var(--qa-panel-height-boost, 0px)),
+      calc(
+        100vh - var(--qa-panel-top-inset, 26px) - var(--qa-launcher-stack, 72px) -
+          var(--qa-widget-bottom, 16px) - 8px + var(--qa-panel-height-boost, 0px)
+      )
+    );
     max-height: calc(
       100vh - var(--qa-panel-top-inset, 26px) - var(--qa-launcher-stack, 72px) -
-        var(--qa-widget-bottom, 16px) - 8px
+        var(--qa-widget-bottom, 16px) - 8px + var(--qa-panel-height-boost, 0px)
     );
   }
 }

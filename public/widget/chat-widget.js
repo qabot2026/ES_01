@@ -170,12 +170,35 @@
     return size + 12;
   }
 
-  function getPanelHeightExtraPx() {
+  function getPanelHeightExtraPx(whenChatOpen) {
     var cfg = getLauncherCloseBubbleCfg();
-    if (cfg.enabled === false && cfg.panelHeightExtraPx != null) {
-      return cfg.panelHeightExtraPx;
+    if (cfg.enabled !== false) return 0;
+    if (whenChatOpen && !isMobileViewport()) return 0;
+    if (cfg.panelHeightExtraPx == null) return 0;
+    return cfg.panelHeightExtraPx;
+  }
+
+  function computeOpenPanelHeightPx() {
+    var eff = getEffectiveCfg();
+    var win = eff.chatWindow || {};
+    var topInset = win.topInsetPx != null ? win.topInsetPx : 16;
+    var pos = win.position || {};
+    var widgetBottom = pos.bottomPx != null ? pos.bottomPx : 24;
+    var stackPx = getLauncherStackPx(true);
+    var boost = getPanelHeightExtraPx(true);
+    var viewportMax =
+      (global.innerHeight || 800) -
+      topInset -
+      stackPx -
+      widgetBottom -
+      8 +
+      boost;
+    if (win.heightPx) {
+      return Math.min(win.heightPx + boost, viewportMax);
     }
-    return 0;
+    var minH =
+      (win.minHeightPx != null ? win.minHeightPx : 360) + boost;
+    return Math.max(minH, viewportMax);
   }
 
   function hasLauncherStripTextAnywhere() {
@@ -649,7 +672,7 @@
       this.root.style.setProperty('--qa-panel-height', win.heightPx + 'px');
     }
     var minH = win.minHeightPx != null ? win.minHeightPx : 360;
-    minH += getPanelHeightExtraPx();
+    minH += getPanelHeightExtraPx(false);
     this.root.style.setProperty('--qa-panel-min-height', minH + 'px');
     var isMob = isMobileViewport();
     if (isMob && win.horizontalInsetPx != null) {
@@ -1647,9 +1670,19 @@
     this.root.style.setProperty('--qa-launcher-stack', stackPx + 'px');
     var noCloseBubble = !!this.isOpen && !isLauncherCloseBubbleEnabled();
     this.root.classList.toggle('qa-widget--no-close-bubble', noCloseBubble);
-    var boostPx =
-      noCloseBubble && getPanelHeightExtraPx() ? getPanelHeightExtraPx() : 0;
+    var boostPx = noCloseBubble ? getPanelHeightExtraPx(true) : 0;
     this.root.style.setProperty('--qa-panel-height-boost', boostPx + 'px');
+
+    var panel = this.els.panel || this.root.querySelector('.qa-panel');
+    if (!panel) return;
+    if (this.isOpen && boostPx > 0) {
+      var openH = computeOpenPanelHeightPx();
+      panel.style.height = openH + 'px';
+      panel.style.maxHeight = openH + 'px';
+    } else {
+      panel.style.height = '';
+      panel.style.maxHeight = '';
+    }
   };
 
   QualityAssistantWidget.prototype.updateLauncherCloseBubble = function () {
