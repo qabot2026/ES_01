@@ -598,7 +598,13 @@ window.QA_CHAT_UI_CONFIG = {
 
 
 
-    chatLayout: { cost: 'green', side: 'right' },
+    /** Launcher + panel side: desk vs mobile (viewport ≤768px) */
+    chatLayout: {
+      cost: 'green',
+      side: 'right',
+      desk: 'right',
+      mob: 'left',
+    },
 
 
 
@@ -732,11 +738,14 @@ window.QA_CHAT_UI_CONFIG = {
 
       topInsetPx: 26,
 
-      position: { rightPx: 12, bottomPx: 10, leftPx: null },
+      position: { leftPx: 12, bottomPx: 10, rightPx: null },
 
     },
 
     autoOpenChat: { cost: 'green', enabled: true, delayMs: 2000 },
+
+    /** Optional: mob.chatLayout.side overrides common.chatLayout.mob */
+    chatLayout: { side: 'left' },
 
     launcherStrip: {
 
@@ -744,7 +753,7 @@ window.QA_CHAT_UI_CONFIG = {
 
       text: '🤖Chat with us',
 
-      position: { rightPx: 12, bottomPx: 60 },
+      position: { leftPx: 12, bottomPx: 60, rightPx: null },
 
     },
 

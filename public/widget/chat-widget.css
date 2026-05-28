@@ -1413,6 +1413,16 @@ body.qa-lightbox-open {
   left: 24px;
 }
 
+.qa-widget--left .qa-panel {
+  right: auto;
+  left: 0;
+}
+
+.qa-widget--left .qa-launcher-strip {
+  right: auto;
+  left: 0;
+}
+
 .qa-restart {
   height: 36px;
   padding: 0 12px;

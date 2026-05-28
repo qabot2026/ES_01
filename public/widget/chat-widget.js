@@ -16,11 +16,29 @@
     return (global.QA_CHAT_UI_CONFIG && global.QA_CHAT_UI_CONFIG.common) || {};
   }
 
+  function isMobileViewport() {
+    return !!(global.matchMedia && global.matchMedia('(max-width: 768px)').matches);
+  }
+
   function getViewportCfg() {
     var root = global.QA_CHAT_UI_CONFIG || {};
-    var mob =
-      global.matchMedia && global.matchMedia('(max-width: 768px)').matches;
-    return mob ? root.mob || {} : root.desk || {};
+    return isMobileViewport() ? root.mob || {} : root.desk || {};
+  }
+
+  /** common.chatLayout + desk/mob overrides → 'left' | 'right' */
+  function getChatLayoutSide() {
+    var root = global.QA_CHAT_UI_CONFIG || {};
+    var common = root.common || {};
+    var cl = common.chatLayout || {};
+    var vp = getViewportCfg();
+    if (vp.chatLayout && vp.chatLayout.side) {
+      return String(vp.chatLayout.side).toLowerCase() === 'left' ? 'left' : 'right';
+    }
+    var key = isMobileViewport() ? 'mob' : 'desk';
+    if (cl[key]) {
+      return String(cl[key]).toLowerCase() === 'left' ? 'left' : 'right';
+    }
+    return String(cl.side || 'right').toLowerCase() === 'left' ? 'left' : 'right';
   }
 
   /** Restart footer button — desk.restartButton / mob.restartButton override features.restartChat */
@@ -340,6 +358,12 @@
     this.els.restart.style.display = getRestartCfg().enabled ? '' : 'none';
   };
 
+  QualityAssistantWidget.prototype.applyChatSide = function () {
+    if (!this.root) return;
+    var side = getChatLayoutSide();
+    this.root.classList.toggle('qa-widget--left', side === 'left');
+  };
+
   QualityAssistantWidget.prototype.bindViewportRestartToggle = function () {
     var self = this;
     this.updateRestartVisibility();
@@ -347,6 +371,8 @@
     var mq = global.matchMedia('(max-width: 768px)');
     var onChange = function () {
       self.updateRestartVisibility();
+      self.applyChatSide();
+      self.applyLayout();
     };
     if (mq.addEventListener) mq.addEventListener('change', onChange);
     else if (mq.addListener) mq.addListener(onChange);
@@ -375,8 +401,7 @@
         this.root.classList.add('qa-lang--no-border');
       }
     }
-    var side = (common.chatLayout && common.chatLayout.side) || 'right';
-    if (side === 'left') this.root.classList.add('qa-widget--left');
+    this.applyChatSide();
 
     var panel = common.chatPanel && common.chatPanel.borderRadius;
     if (panel) {
@@ -553,21 +578,34 @@
     if (win.minHeightPx) {
       this.root.style.setProperty('--qa-panel-min-height', win.minHeightPx + 'px');
     }
-    var isMob =
-      global.matchMedia && global.matchMedia('(max-width: 768px)').matches;
+    var isMob = isMobileViewport();
     if (isMob && win.horizontalInsetPx != null) {
       panel.style.width = 'calc(100vw - ' + win.horizontalInsetPx * 2 + 'px)';
       panel.style.maxWidth = 'calc(100vw - ' + win.horizontalInsetPx * 2 + 'px)';
     }
 
-    if (pos.rightPx != null) {
-      this.root.style.right = pos.rightPx + 'px';
-      if (launcher) launcher.style.right = '0';
+    this.root.style.left = '';
+    this.root.style.right = '';
+    if (launcher) {
+      launcher.style.left = '';
+      launcher.style.right = '';
     }
     if (pos.leftPx != null) {
       this.root.style.left = pos.leftPx + 'px';
       this.root.style.right = 'auto';
+      if (launcher) {
+        launcher.style.left = '0';
+        launcher.style.right = 'auto';
+      }
+    } else if (pos.rightPx != null) {
+      this.root.style.right = pos.rightPx + 'px';
+      this.root.style.left = 'auto';
+      if (launcher) {
+        launcher.style.right = '0';
+        launcher.style.left = 'auto';
+      }
     }
+    this.applyChatSide();
     if (pos.bottomPx != null) {
       this.root.style.bottom = pos.bottomPx + 'px';
     }

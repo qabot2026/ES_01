@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var QA_ASSET_VERSION = '20260529-intent-file-off';
+  var QA_ASSET_VERSION = '20260529-layout-desk-right-mob-left';
 
   var script = document.currentScript;
   var base = '';
