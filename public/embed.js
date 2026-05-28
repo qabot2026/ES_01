@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var QA_ASSET_VERSION = '20260529-hand-pop-right';
+  var QA_ASSET_VERSION = '20260529-chip-text-width';
 
   var script = document.currentScript;
   var base = '';

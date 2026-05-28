@@ -495,6 +495,13 @@
 }
 
 .qa-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: auto;
+  max-width: 100%;
+  flex: 0 1 auto;
   border: 1px solid var(--qa-border);
   border-radius: 999px;
   padding: 7px 14px;
@@ -506,7 +513,7 @@
   cursor: pointer;
   transition: background 0.15s, border-color 0.15s, color 0.15s;
   line-height: 1.2;
-  max-width: 100%;
+  white-space: nowrap;
   text-align: center;
 }
 
@@ -843,10 +850,9 @@
 }
 
 .qa-card-carousel__cta {
-  flex: 1 1 calc(50% - 4px);
-  min-width: 0;
-  justify-content: center;
-  text-align: center;
+  flex: 0 1 auto;
+  width: auto;
+  max-width: 100%;
 }
 
 /* Document / file download buttons (Dialogflow files, button, link chips) */
