@@ -492,6 +492,22 @@
     host.classList.toggle('qa-launcher-strip--hidden', !!this.isOpen);
   };
 
+  QualityAssistantWidget.prototype.scheduleStripHandPop = function () {
+    var self = this;
+    if (self._stripHandPopTimer) {
+      clearTimeout(self._stripHandPopTimer);
+      self._stripHandPopTimer = null;
+    }
+    var stripCfg = getLauncherStripCfg();
+    var waveCfg = stripCfg.wavePopup || {};
+    if (waveCfg.enabled === false || !stripCfg.text) return;
+    var delay = Math.max(0, parseInt(waveCfg.delayMs, 10) || 0);
+    self._stripHandPopTimer = setTimeout(function () {
+      self._stripHandPopTimer = null;
+      self.playStripHandPop();
+    }, delay);
+  };
+
   QualityAssistantWidget.prototype.playStripHandPop = function () {
     if (this._stripHandPopPlayed) return;
     var stripCfg = getLauncherStripCfg();
