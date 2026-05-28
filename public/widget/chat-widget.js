@@ -146,6 +146,14 @@
     return getViewportCfg().launcherStrip || {};
   }
 
+  /** Chat open hone par niche launcher bubble par X — desk/mob launcher.closeBubbleWhenOpen */
+  function isLauncherCloseBubbleEnabled() {
+    var launch = getEffectiveCfg().launcher || {};
+    var cfg = launch.closeBubbleWhenOpen;
+    if (cfg && cfg.enabled === false) return false;
+    return true;
+  }
+
   function hasLauncherStripTextAnywhere() {
     var root = global.QA_CHAT_UI_CONFIG || {};
     var d = (root.desk || {}).launcherStrip || {};
@@ -415,6 +423,7 @@
       self.applyChatSide();
       self.applyLayout();
       self.applyFeatureToggles();
+      self.updateLauncherCloseBubble();
     };
     if (mq.addEventListener) mq.addEventListener('change', onChange);
     else if (mq.addListener) mq.addListener(onChange);
@@ -1550,7 +1559,7 @@
     this.isOpen = false;
     this.root.classList.remove('qa-widget--chat-open');
     this.els.panel.classList.remove('qa-panel--open');
-    this.setLauncherCloseMode(false);
+    this.updateLauncherCloseBubble();
     this.updateLauncherStripVisibility();
     this.stopSpeech();
   };
@@ -1581,11 +1590,28 @@
     btn.setAttribute('aria-label', isClose ? 'Close chat' : 'Open chat');
   };
 
+  QualityAssistantWidget.prototype.updateLauncherCloseBubble = function () {
+    var wrap = this.els.launcherWrap;
+    if (!wrap) return;
+    var showCloseBubble = isLauncherCloseBubbleEnabled();
+    if (this.isOpen && !showCloseBubble) {
+      wrap.classList.add('qa-launcher-wrap--hidden');
+      this.setLauncherCloseMode(false);
+      return;
+    }
+    wrap.classList.remove('qa-launcher-wrap--hidden');
+    if (this.isOpen) {
+      this.setLauncherCloseMode(true);
+    } else {
+      this.setLauncherCloseMode(false);
+    }
+  };
+
   QualityAssistantWidget.prototype.open = function () {
     this.isOpen = true;
     this.root.classList.add('qa-widget--chat-open');
     this.els.panel.classList.add('qa-panel--open');
-    this.setLauncherCloseMode(true);
+    this.updateLauncherCloseBubble();
     this.updateLauncherStripVisibility();
     this.els.input.focus();
     this.maybeTriggerWelcomeEvent();
