@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var QA_ASSET_VERSION = '20260529-hand-pop-delay';
+  var QA_ASSET_VERSION = '20260529-hand-pop-right';
 
   var script = document.currentScript;
   var base = '';
