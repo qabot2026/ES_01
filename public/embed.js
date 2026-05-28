@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var QA_ASSET_VERSION = '20260529-panel-height-extra-fix';
+  var QA_ASSET_VERSION = '20260529-revert-wave-popup';
 
   var script = document.currentScript;
   var base = '';
