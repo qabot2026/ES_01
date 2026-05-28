@@ -94,3 +94,11 @@ Or delete / rename `data/intent-responses.json`.
 1. `GET /health` → `intentResponsesFile: true`
 2. Chat in **Marathi** → reply should show Marathi from JSON
 3. Remove an intent from JSON → user sees English from Dialogflow
+
+## No reply for Location?
+
+1. Dialogflow Console → Intents → open **Location** → copy **Display name** → use as JSON key (or add to `aliases`).
+2. Location intent must have **training phrases** (e.g. `location`, `where is the project`, `Hyderabad`).
+3. Add a **Text response** in Dialogflow (English) — can be same line as JSON `en`.
+4. Browser **F12 → Network → `/api/chat`** → check JSON field `"intent"`. JSON key must match that name.
+5. If `"intentResponseMiss": true` → wrong key name in `intent-responses.json`.

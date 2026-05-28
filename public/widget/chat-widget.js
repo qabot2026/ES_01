@@ -1111,7 +1111,7 @@
       var reply = (payload.reply || '').trim();
       var replyParts = payload.replyParts || [];
       var chipHeading = (payload.chipHeading || '').trim();
-      if (
+      var hasContent =
         reply ||
         replyParts.length ||
         chips.length ||
@@ -1120,8 +1120,12 @@
         downloads.length ||
         dropdowns.length ||
         galleries.length ||
-        cardCarousels.length
-      ) {
+        cardCarousels.length;
+      if (!hasContent) {
+        reply = 'No response.';
+        hasContent = true;
+      }
+      if (hasContent) {
         self.appendMessage('bot', reply, {
           replyParts: replyParts,
           chips: chips,
