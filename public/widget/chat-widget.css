@@ -1500,8 +1500,8 @@ body.qa-lightbox-open {
   transform: scale(1);
   transform-origin: center center;
   will-change: transform;
-  --qa-hand-pop-x: -15px;
-  --qa-hand-pop-y: -15px;
+  --qa-hand-pop-x: -5px;
+  --qa-hand-pop-y: -5px;
 }
 
 .qa-launcher-strip__wave--pop {
