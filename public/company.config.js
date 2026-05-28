@@ -1,4 +1,4 @@
-/** Yahi file edit karo — chatbot ki theme, language, layout aur Dialogflow settings. Hindi/Marathi text: data/phrase-translations.json */
+/** Yahi file edit karo. common = Dialogflow/language. desk/mob = har device ki alag UI. showChatbot: false = us device par chatbot hide. */
 
 var QA_LOGO_LAUNCHER =
   'https://storage.googleapis.com/companybucket/Images/cat.png';
@@ -55,9 +55,7 @@ window.QA_CHAT_UI_CONFIG = {
           objectFit: 'cover',
           background: '#e8f4fc',
         },
-        inlineSelect: {
-          display: 'dropdown',
-        },
+        inlineSelect: { display: 'dropdown' },
       },
     },
 
@@ -76,9 +74,6 @@ window.QA_CHAT_UI_CONFIG = {
       chatIconUrl: QA_LOGO_LAUNCHER,
       chatTitleIconUrl: QA_LOGO_HEADER,
       headerIconUrl: QA_LOGO_HEADER,
-      titlebarIconSizePx: 40,
-      titleFontSizePx: 17,
-      subtitleFontSizePx: 12,
       showHeaderIcon: true,
       botWritingText: 'Typing',
       botWritingDotsIntervalMs: 480,
@@ -175,22 +170,7 @@ window.QA_CHAT_UI_CONFIG = {
       },
     },
 
-    poweredBy: {
-      enabled: true,
-      prefix: '⚡by ',
-      brandName: 'QualityAssistant',
-      logoUrl:
-        'https://www.vhv.rs/dpng/d/6-68550_hanuman-ji-png-transparent-png.png',
-      linkUrl: 'www.google.com',
-      color: '#0369a1',
-      fontSizePx: 9,
-      logoHeightPx: 12,
-      offsetDownPx: 15,
-    },
-
-    restartButton: {
-      gapAfterLanguagePx: 10,
-    },
+    restartButton: { gapAfterLanguagePx: 10 },
 
     theme: {
       '--qa-primary': '#0284c7',
@@ -227,11 +207,19 @@ window.QA_CHAT_UI_CONFIG = {
         bottomRight: '20px',
       },
     },
+  },
 
-    chatLayout: {
-      side: 'right',
-      desk: 'right',
-      mob: 'left',
+  /** Desktop (screen > 768px) — poori UI yahan */
+  desk: {
+    showChatbot: true,
+
+    chatLayout: { side: 'right' },
+
+    header: {
+      titleFontSizePx: 18,
+      subtitleFontSizePx: 13,
+      iconSizePx: 44,
+      titlebarIconSizePx: 40,
     },
 
     launcher: {
@@ -253,17 +241,7 @@ window.QA_CHAT_UI_CONFIG = {
       position: { rightPx: 10, bottomPx: 66 },
       style: { fontSizePx: 13, paddingYpx: 10, paddingXpx: 14, maxWidthPx: 260 },
     },
-  },
 
-  desk: {
-    showChatbot: true,
-    titlebarIconSizePx: 40,
-    header: {
-      titleFontSizePx: 18,
-      subtitleFontSizePx: 13,
-      iconSizePx: 44,
-    },
-    restartButton: { enabled: true },
     chatWindow: {
       widthPx: 400,
       heightPx: 520,
@@ -271,19 +249,63 @@ window.QA_CHAT_UI_CONFIG = {
       topInsetPx: 16,
       position: { rightPx: 10, bottomPx: 20, leftPx: null },
     },
+
     autoOpenChat: { enabled: true, delayMs: 2000 },
-    launcherStrip: { enabled: true, text: '👋Hey, how are you?😊' },
+
+    restartButton: { enabled: true },
+
+    poweredBy: {
+      enabled: true,
+      prefix: '⚡by ',
+      brandName: 'QualityAssistant',
+      logoUrl:
+        'https://www.vhv.rs/dpng/d/6-68550_hanuman-ji-png-transparent-png.png',
+      linkUrl: 'www.google.com',
+      color: '#0369a1',
+      fontSizePx: 9,
+      logoHeightPx: 12,
+      offsetDownPx: 15,
+    },
+
+    features: {
+      speechToText: { enabled: true },
+      restartChat: { enabled: false, label: 'Restart' },
+    },
   },
 
+  /** Mobile (screen ≤ 768px) — poori UI yahan */
   mob: {
     showChatbot: true,
-    titlebarIconSizePx: 36,
+
+    chatLayout: { side: 'left' },
+
     header: {
       titleFontSizePx: 15,
       subtitleFontSizePx: 11,
       iconSizePx: 32,
+      titlebarIconSizePx: 36,
     },
-    restartButton: { enabled: false },
+
+    launcher: {
+      sizePx: 58,
+      iconUrl: QA_LOGO_LAUNCHER,
+      cornerRoundness: '50%',
+      storyRing: {
+        enabled: true,
+        widthPx: 2.5,
+        rotateSeconds: 3,
+        colorRingMotionEnabled: true,
+        instagramStyle: true,
+      },
+    },
+
+    launcherStrip: {
+      enabled: true,
+      text: '🤖Chat with us',
+      position: { leftPx: 12, bottomPx: 60, rightPx: null },
+      style: { fontSizePx: 12, paddingYpx: 8, paddingXpx: 12, maxWidthPx: 220 },
+    },
+
     chatWindow: {
       widthPx: null,
       heightPx: null,
@@ -293,12 +315,27 @@ window.QA_CHAT_UI_CONFIG = {
       topInsetPx: 26,
       position: { leftPx: 12, bottomPx: 10, rightPx: null },
     },
+
     autoOpenChat: { enabled: true, delayMs: 2000 },
-    chatLayout: { side: 'left' },
-    launcherStrip: {
+
+    restartButton: { enabled: false },
+
+    poweredBy: {
       enabled: true,
-      text: '👋Hey, how are you?😊',
-      position: { leftPx: 12, bottomPx: 60, rightPx: null },
+      prefix: '⚡by ',
+      brandName: 'QualityAssistant',
+      logoUrl:
+        'https://www.vhv.rs/dpng/d/6-68550_hanuman-ji-png-transparent-png.png',
+      linkUrl: 'www.google.com',
+      color: '#0369a1',
+      fontSizePx: 9,
+      logoHeightPx: 12,
+      offsetDownPx: 15,
+    },
+
+    features: {
+      speechToText: { enabled: true },
+      restartChat: { enabled: false, label: 'Restart' },
     },
   },
 };

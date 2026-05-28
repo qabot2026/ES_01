@@ -25,54 +25,67 @@
     return isMobileViewport() ? root.mob || {} : root.desk || {};
   }
 
-  /** common.chatLayout + desk/mob overrides → 'left' | 'right' */
-  function getChatLayoutSide() {
+  function isPlainObject(v) {
+    return v && typeof v === 'object' && !Array.isArray(v);
+  }
+
+  function deepMerge(base, over) {
+    var out = {};
+    var b = base || {};
+    var o = over || {};
+    Object.keys(b).forEach(function (k) {
+      out[k] = b[k];
+    });
+    Object.keys(o).forEach(function (k) {
+      if (isPlainObject(b[k]) && isPlainObject(o[k])) {
+        out[k] = deepMerge(b[k], o[k]);
+      } else {
+        out[k] = o[k];
+      }
+    });
+    return out;
+  }
+
+  /** common + current device (desk | mob) */
+  function getEffectiveCfg() {
+    return deepMerge(getRootCfg(), getViewportCfg());
+  }
+
+  function isChatbotEnabledForViewport() {
+    return getViewportCfg().showChatbot !== false;
+  }
+
+  function isChatbotEnabledAnywhere() {
     var root = global.QA_CHAT_UI_CONFIG || {};
-    var common = root.common || {};
-    var cl = common.chatLayout || {};
-    var vp = getViewportCfg();
-    if (vp.chatLayout && vp.chatLayout.side) {
-      return String(vp.chatLayout.side).toLowerCase() === 'left' ? 'left' : 'right';
-    }
-    var key = isMobileViewport() ? 'mob' : 'desk';
-    if (cl[key]) {
-      return String(cl[key]).toLowerCase() === 'left' ? 'left' : 'right';
-    }
+    var desk = root.desk || {};
+    var mob = root.mob || {};
+    return desk.showChatbot !== false || mob.showChatbot !== false;
+  }
+
+  function getChatLayoutSide() {
+    var cl = getViewportCfg().chatLayout || {};
     return String(cl.side || 'right').toLowerCase() === 'left' ? 'left' : 'right';
   }
 
-  /** Restart footer button — desk.restartButton / mob.restartButton override features.restartChat */
   function getRestartCfg() {
-    var feats = (getRootCfg().features || {}).restartChat || {};
-    var vp = getViewportCfg();
-    var vpRb = vp.restartButton || {};
+    var eff = getEffectiveCfg();
+    var feats = eff.features || {};
+    var rb = eff.restartButton || {};
+    var restart = feats.restartChat || {};
     var enabled =
-      vpRb.enabled != null ? vpRb.enabled !== false : feats.enabled !== false;
+      rb.enabled != null ? rb.enabled !== false : restart.enabled !== false;
     var label = String(
-      vpRb.label != null ? vpRb.label : feats.label != null ? feats.label : 'Restart'
+      rb.label != null ? rb.label : restart.label != null ? restart.label : 'Restart'
     ).trim() || 'Restart';
     return { enabled: enabled, label: label };
   }
 
-  /** Header title / subtitle / icon sizes — desk or mob overrides common.header */
   function getHeaderLayoutCfg() {
-    var hdr = getRootCfg().header || {};
-    var vp = getViewportCfg();
-    var vpHdr = vp.header || {};
-    function pick(vpVal, deskMobVal, commonVal) {
-      if (vpHdr[vpVal] != null) return vpHdr[vpVal];
-      if (vp[deskMobVal] != null) return vp[deskMobVal];
-      if (hdr[commonVal] != null) return hdr[commonVal];
-      return null;
-    }
+    var hdr = getEffectiveCfg().header || {};
     return {
-      titleFontSizePx: pick('titleFontSizePx', null, 'titleFontSizePx'),
-      subtitleFontSizePx: pick('subtitleFontSizePx', null, 'subtitleFontSizePx'),
-      iconSizePx: pick(
-        'iconSizePx',
-        'titlebarIconSizePx',
-        'titlebarIconSizePx'
-      ),
+      titleFontSizePx: hdr.titleFontSizePx,
+      subtitleFontSizePx: hdr.subtitleFontSizePx,
+      iconSizePx: hdr.iconSizePx != null ? hdr.iconSizePx : hdr.titlebarIconSizePx,
     };
   }
 
@@ -130,18 +143,14 @@
   }
 
   function getLauncherStripCfg() {
-    return shallowMerge(
-      getRootCfg().launcherStrip || {},
-      getViewportCfg().launcherStrip || {}
-    );
+    return getViewportCfg().launcherStrip || {};
   }
 
   function hasLauncherStripTextAnywhere() {
     var root = global.QA_CHAT_UI_CONFIG || {};
-    var c = (root.common || {}).launcherStrip || {};
     var d = (root.desk || {}).launcherStrip || {};
     var m = (root.mob || {}).launcherStrip || {};
-    return !!(c.text || d.text || m.text);
+    return !!(d.text || m.text);
   }
 
   var QA_RING_GRADIENT_INSTAGRAM =
@@ -344,13 +353,13 @@
   };
 
   QualityAssistantWidget.prototype.init = function () {
-    var vp = getViewportCfg();
-    if (vp.showChatbot === false) return;
+    if (!isChatbotEnabledAnywhere()) return;
 
     this.root = document.createElement('div');
     this.root.className = 'qa-widget';
     this.root.innerHTML = this.template();
     document.body.appendChild(this.root);
+    this.updateChatbotVisibility();
     this.applyTheme();
     this.applyLayout();
     this.cacheElements();
@@ -365,6 +374,11 @@
   QualityAssistantWidget.prototype.updateRestartVisibility = function () {
     if (!this.els || !this.els.restart) return;
     this.els.restart.style.display = getRestartCfg().enabled ? '' : 'none';
+  };
+
+  QualityAssistantWidget.prototype.updateChatbotVisibility = function () {
+    if (!this.root) return;
+    this.root.style.display = isChatbotEnabledForViewport() ? '' : 'none';
   };
 
   QualityAssistantWidget.prototype.updateLauncherStripVisibility = function () {
@@ -391,9 +405,11 @@
     var self = this;
     this.updateRestartVisibility();
     this.updateLauncherStripVisibility();
+    this.updateChatbotVisibility();
     if (!global.matchMedia) return;
     var mq = global.matchMedia('(max-width: 768px)');
     var onChange = function () {
+      self.updateChatbotVisibility();
       self.updateRestartVisibility();
       self.updateLauncherStripVisibility();
       self.applyChatSide();
@@ -579,8 +595,8 @@
   };
 
   QualityAssistantWidget.prototype.applyLayout = function () {
-    var vp = getViewportCfg();
-    var win = vp.chatWindow || {};
+    var eff = getEffectiveCfg();
+    var win = eff.chatWindow || {};
     var panel = this.root.querySelector('.qa-panel');
     var launcher = this.root.querySelector('.qa-launcher');
     if (!panel) return;
@@ -635,8 +651,8 @@
       this.root.style.bottom = pos.bottomPx + 'px';
     }
 
-    var launch = getRootCfg().launcher || {};
-    var hdr = getRootCfg().header || {};
+    var launch = eff.launcher || {};
+    var hdr = eff.header || {};
     var launcherImg =
       launch.iconUrl || hdr.chatIconUrl || hdr.headerIconUrl || '';
     if (launcher) {
@@ -707,7 +723,8 @@
   };
 
   QualityAssistantWidget.prototype.applyFeatureToggles = function () {
-    var feats = (getRootCfg().features) || {};
+    var eff = getEffectiveCfg();
+    var feats = eff.features || {};
     if (feats.speechToText && feats.speechToText.enabled === false && this.els.mic) {
       this.els.mic.style.display = 'none';
     }
@@ -719,7 +736,7 @@
     ) {
       this.els.lang.style.display = 'none';
     }
-    var pb = getRootCfg().poweredBy;
+    var pb = eff.poweredBy;
     var powered = this.root.querySelector('.qa-powered');
     if (pb && pb.enabled === false && powered) {
       powered.style.display = 'none';
@@ -727,8 +744,8 @@
   };
 
   QualityAssistantWidget.prototype.maybeAutoOpen = function () {
-    var vp = getViewportCfg();
-    var ao = vp.autoOpenChat;
+    if (!isChatbotEnabledForViewport()) return;
+    var ao = getViewportCfg().autoOpenChat;
     if (!ao || !ao.enabled) return;
     var self = this;
     setTimeout(function () {
@@ -737,12 +754,12 @@
   };
 
   QualityAssistantWidget.prototype.template = function () {
-    var common = getRootCfg();
-    var header = common.header || {};
-    var feats = common.features || {};
+    var eff = getEffectiveCfg();
+    var header = eff.header || {};
+    var feats = eff.features || {};
     var ml = feats.multiLanguage || {};
     var restart = getRestartCfg();
-    var pb = common.poweredBy || {};
+    var pb = eff.poweredBy || {};
     var placeholders = feats.inputPlaceholderByLanguage || {};
 
     var langOptions = this.langList
@@ -820,7 +837,7 @@
     var stripHtml = '';
     if (hasLauncherStripTextAnywhere()) {
       var stripText =
-        stripCfg.text || (getRootCfg().launcherStrip || {}).text || '';
+        stripCfg.text || '';
       stripHtml =
         '<div class="qa-launcher-strip" role="note">' +
         this.escape(stripText) +
@@ -833,7 +850,7 @@
       '<span class="qa-launcher-ring-bg" aria-hidden="true"></span>' +
       '<button type="button" class="qa-launcher" aria-label="Open chat">' +
       '<span class="qa-launcher__state qa-launcher__state--open">' +
-      (common.launcher && common.launcher.iconUrl ? '' : ICONS.chat) +
+      (eff.launcher && eff.launcher.iconUrl ? '' : ICONS.chat) +
       '</span>' +
       '<span class="qa-launcher__state qa-launcher__state--close" hidden aria-hidden="true">' +
       ICONS.close +

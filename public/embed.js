@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var QA_ASSET_VERSION = '20260529-launcher-strip-per-device';
+  var QA_ASSET_VERSION = '20260529-desk-mob-full-ui';
 
   var script = document.currentScript;
   var base = '';
