@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var QA_ASSET_VERSION = '20260529-strip-wave-popup';
+  var QA_ASSET_VERSION = '20260529-panel-height-extra-fix';
 
   var script = document.currentScript;
   var base = '';
