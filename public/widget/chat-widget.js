@@ -926,6 +926,11 @@
   };
 
   QualityAssistantWidget.prototype.getDialogflowLang = function () {
+    var ml = (getRootCfg().features || {}).multiLanguage || {};
+    var fixed = String(
+      ml.alwaysUseDialogflowLanguage || ml.intentLanguage || ''
+    ).trim();
+    if (fixed) return fixed;
     return this.langMap[this.language]
       ? this.langMap[this.language].df
       : 'en';
