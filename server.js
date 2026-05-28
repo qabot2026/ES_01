@@ -3,6 +3,7 @@ const path = require('path');
 const { randomUUID } = require('crypto');
 const dialogflow = require('./lib/dialogflow');
 const translate = require('./lib/translate');
+const intentResponses = require('./lib/intent-responses');
 
 const app = express();
 const PORT = process.env.PORT || 4567;
@@ -61,10 +62,17 @@ app.get('/health', async (_req, res) => {
 });
 
 app.post('/api/chat', async (req, res) => {
-  const { message, sessionId, languageCode = 'en', event } = req.body || {};
+  const {
+    message,
+    sessionId,
+    languageCode = 'en',
+    uiLanguageCode,
+    event,
+  } = req.body || {};
   const sid = sessionId || randomUUID();
   const eventName =
     typeof event === 'string' && event.trim() ? event.trim() : null;
+  const uiLang = uiLanguageCode || languageCode;
 
   if (!eventName) {
     if (!message || typeof message !== 'string' || !message.trim()) {
@@ -73,9 +81,12 @@ app.post('/api/chat', async (req, res) => {
   }
 
   try {
-    const result = eventName
+    let result = eventName
       ? await dialogflow.detectEvent(sid, eventName, languageCode)
       : await dialogflow.detectIntent(sid, message.trim(), languageCode);
+    if (intentResponses.isEnabled()) {
+      result = intentResponses.applyToResult(result, uiLang, eventName);
+    }
     res.json({ sessionId: sid, ...result });
   } catch (err) {
     const detail = dialogflow.formatApiError(err);
@@ -139,6 +150,7 @@ app.get('/api/config', (_req, res) => {
     agentId: '07ccbfd0-4cad-4898-8323-e6baeec80fc1',
     dialogflowReady: dialogflow.isConfigured(),
     translateReady: translate.isConfigured(),
+    intentResponsesFile: intentResponses.isEnabled(),
     publicBaseUrl: PUBLIC_BASE_URL,
     embedScript: `${PUBLIC_BASE_URL}/embed.js`,
   });

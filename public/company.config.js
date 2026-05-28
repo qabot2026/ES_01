@@ -389,10 +389,15 @@ window.QA_CHAT_UI_CONFIG = {
         alwaysUseDialogflowLanguage: 'en',
 
         /**
-         * 🔴 Bot reply English se UI language me auto-translate (Google Cloud Translation API).
-         * GCP par "Cloud Translation API" enable karo (same credentials as Dialogflow).
+         * 🟢 One file for en/hi/mr — data/intent-responses.json (server applies after Dialogflow).
+         * Intent name must match Dialogflow Display Name. See INTENT-RESPONSES.md.
          */
-        autoTranslateBotReplies: true,
+        useIntentResponseFile: true,
+
+        /**
+         * 🔴 Google Translate API — off when useIntentResponseFile is true (saves cost).
+         */
+        autoTranslateBotReplies: false,
         translationSourceLanguage: 'en',
         translationOverridesByLanguage: {
           hi: {},

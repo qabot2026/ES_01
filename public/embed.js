@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var QA_ASSET_VERSION = '20260528-auto-translate';
+  var QA_ASSET_VERSION = '20260528-intent-responses';
 
   var script = document.currentScript;
   var base = '';

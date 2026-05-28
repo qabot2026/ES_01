@@ -1,0 +1,38 @@
+{
+  "_help": "Keys must match Dialogflow intent Display Name exactly (Console → Intents → name). Or use @event:FRESH for welcome events.",
+  "_help2": "Only add en / hi / mr text you need. Missing language falls back to English from this file, then Dialogflow reply.",
+
+  "Default Welcome Intent": {
+    "reply": {
+      "en": "Hello! How can I help you today?",
+      "hi": "नमस्ते! आज मैं आपकी कैसे मदद कर सकता हूँ?",
+      "mr": "नमस्कार! आज मी तुम्हाला कशी मदत करू शकतो?"
+    },
+    "chipHeading": {
+      "en": "Choose an option:",
+      "hi": "एक विकल्प चुनें:",
+      "mr": "एक पर्याय निवडा:"
+    },
+    "chips": {
+      "en": ["Products", "Support", "Contact"],
+      "hi": ["उत्पाद", "सहायता", "संपर्क"],
+      "mr": ["उत्पादने", "मदत", "संपर्क"]
+    }
+  },
+
+  "@event:FRESH": {
+    "reply": {
+      "en": "Welcome back! What would you like to do?",
+      "hi": "वापसी पर स्वागत है! आप क्या करना चाहेंगे?",
+      "mr": "पुन्हा स्वागत आहे! तुम्हाला काय करायचे आहे?"
+    }
+  },
+
+  "Default Fallback Intent": {
+    "reply": {
+      "en": "Sorry, I did not understand. Please try again or pick an option.",
+      "hi": "क्षमा करें, मैं समझ नहीं पाया। कृपया दोबारा लिखें या कोई विकल्प चुनें।",
+      "mr": "माफ करा, मला समजले नाही. कृपया पुन्हा लिहा किंवा पर्याय निवडा."
+    }
+  }
+}

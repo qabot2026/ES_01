@@ -945,6 +945,7 @@
 
   QualityAssistantWidget.prototype.shouldAutoTranslateReplies = function () {
     var ml = getMultiLanguageCfg();
+    if (ml.useIntentResponseFile === true) return false;
     if (ml.autoTranslateBotReplies !== true) return false;
     var ui = this.language || 'en';
     return ui !== 'en';
@@ -952,7 +953,7 @@
 
   QualityAssistantWidget.prototype.maybeTranslateBotPayload = function (data) {
     var self = this;
-    if (!data || !this.shouldAutoTranslateReplies() || !this.apiBase) {
+    if (!data || data.localizedFromFile || !this.shouldAutoTranslateReplies() || !this.apiBase) {
       return Promise.resolve(data);
     }
     var ml = getMultiLanguageCfg();
@@ -1140,6 +1141,10 @@
     var self = this;
     if (!this.apiBase) {
       return Promise.resolve();
+    }
+    body.uiLanguageCode = body.uiLanguageCode || this.language || 'en';
+    if (!body.languageCode) {
+      body.languageCode = this.getDialogflowLang();
     }
     if (opts.skipIfSending && this.isSending) {
       return Promise.resolve();
