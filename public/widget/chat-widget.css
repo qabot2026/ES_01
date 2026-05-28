@@ -206,7 +206,7 @@
 
 .qa-header__title {
   margin: 0;
-  font-size: 1.0625rem;
+  font-size: var(--qa-header-title-size, 1.0625rem);
   font-weight: 700;
   letter-spacing: -0.02em;
   line-height: 1.2;
@@ -240,7 +240,7 @@
 
 .qa-header__subtitle {
   margin: 2px 0 0;
-  font-size: 0.75rem;
+  font-size: var(--qa-header-subtitle-size, 0.75rem);
   color: var(--qa-accent-light, #bae6fd);
   opacity: 1;
   font-weight: 400;

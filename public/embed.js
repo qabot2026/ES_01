@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var QA_ASSET_VERSION = '20260527-composer-buttons';
+  var QA_ASSET_VERSION = '20260528-header-sizes';
 
   var script = document.currentScript;
   var base = '';

@@ -23,6 +23,28 @@
     return mob ? root.mob || {} : root.desk || {};
   }
 
+  /** Header title / subtitle / icon sizes — desk or mob overrides common.header */
+  function getHeaderLayoutCfg() {
+    var hdr = getRootCfg().header || {};
+    var vp = getViewportCfg();
+    var vpHdr = vp.header || {};
+    function pick(vpVal, deskMobVal, commonVal) {
+      if (vpHdr[vpVal] != null) return vpHdr[vpVal];
+      if (vp[deskMobVal] != null) return vp[deskMobVal];
+      if (hdr[commonVal] != null) return hdr[commonVal];
+      return null;
+    }
+    return {
+      titleFontSizePx: pick('titleFontSizePx', null, 'titleFontSizePx'),
+      subtitleFontSizePx: pick('subtitleFontSizePx', null, 'subtitleFontSizePx'),
+      iconSizePx: pick(
+        'iconSizePx',
+        'titlebarIconSizePx',
+        'titlebarIconSizePx'
+      ),
+    };
+  }
+
   function getLangList() {
     var ml = getRootCfg().features && getRootCfg().features.multiLanguage;
     if (ml && ml.languages && ml.languages.length) return ml.languages;
@@ -333,11 +355,20 @@
       this.root.style.setProperty('--qa-panel-br', panel.bottomRight || '16px');
     }
 
-    var vp = getViewportCfg();
-    var iconPx =
-      vp.titlebarIconSizePx ||
-      (common.header && common.header.titlebarIconSizePx) ||
-      44;
+    var hdrLayout = getHeaderLayoutCfg();
+    if (hdrLayout.titleFontSizePx != null) {
+      this.root.style.setProperty(
+        '--qa-header-title-size',
+        hdrLayout.titleFontSizePx + 'px'
+      );
+    }
+    if (hdrLayout.subtitleFontSizePx != null) {
+      this.root.style.setProperty(
+        '--qa-header-subtitle-size',
+        hdrLayout.subtitleFontSizePx + 'px'
+      );
+    }
+    var iconPx = hdrLayout.iconSizePx != null ? hdrLayout.iconSizePx : 40;
     this.root.style.setProperty('--qa-header-icon-size', iconPx + 'px');
 
     var bp = common.botPersona || {};

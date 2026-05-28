@@ -255,6 +255,9 @@ window.QA_CHAT_UI_CONFIG = {
       headerIconUrl: QA_LOGO_HEADER,
 
       titlebarIconSizePx: 40,
+      /** Default font sizes (px) — overridden by desk.header / mob.header */
+      titleFontSizePx: 17,
+      subtitleFontSizePx: 12,
 
       showHeaderIcon: true,
 
@@ -634,6 +637,13 @@ window.QA_CHAT_UI_CONFIG = {
 
     titlebarIconSizePx: 40,
 
+    /** Desktop header sizes (px) */
+    header: {
+      titleFontSizePx: 18,
+      subtitleFontSizePx: 13,
+      iconSizePx: 44,
+    },
+
     chatWindow: {
 
       cost: 'green',
@@ -667,6 +677,13 @@ window.QA_CHAT_UI_CONFIG = {
     showChatbot: true,
 
     titlebarIconSizePx: 36,
+
+    /** Mobile header sizes (px) */
+    header: {
+      titleFontSizePx: 15,
+      subtitleFontSizePx: 11,
+      iconSizePx: 32,
+    },
 
     chatWindow: {
 
