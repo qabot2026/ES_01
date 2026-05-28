@@ -72,6 +72,44 @@ If welcome uses event **FRESH** (not an intent name), use:
 
 ---
 
+## Text + chips together (Location example)
+
+**One Dialogflow response** = text + custom payload chips (not two steps).
+
+1. User types `location` → **1** `/api/chat` call.
+2. Dialogflow **Location** intent → returns **text + richContent chips** in same fulfillment.
+3. Server replaces `reply` / `chipHeading` / chip **labels** from this file (hi/mr/en).
+4. Widget shows **message + chips** together.
+
+**Chips structure** (what happens on click) must be in **Dialogflow custom payload**.  
+File only changes **visible labels** (same order as Dialogflow `options`).
+
+### Dialogflow → Location intent → Custom payload (example)
+
+```json
+{
+  "richContent": [
+    [
+      {
+        "type": "list",
+        "title": "What would you like next?"
+      },
+      {
+        "type": "chips",
+        "options": [
+          { "text": "View on map", "message": "show map" },
+          { "text": "Contact us", "message": "contact" },
+          { "text": "Back to menu", "message": "menu" }
+        ]
+      }
+    ]
+  ]
+}
+```
+
+`message` = what is sent when user taps chip (train intents for these).  
+`text` = English label (file can override for hi/mr).
+
 ## What is translated from the file?
 
 | Yes | Not yet (stays English from Dialogflow) |

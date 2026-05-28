@@ -7,8 +7,18 @@
     "aliases": ["location", "Location Intent", "project location", "location search"],
     "reply": {
       "en": "Project is located in Gachibowli, Hyderabad.",
-      "hi": "यह प्रोजैक्ट हैदराबाद में स्थित है।",
-      "mr": "प्रकल्प हैदराबादमध्ये स्थित आहे."
+      "hi": "यह प्रोजैक्ट गच्चीबोवली, हैदराबाद में स्थित है।",
+      "mr": "प्रकल्प गच्चीबोवली, हैदराबादमध्ये स्थित आहे."
+    },
+    "chipHeading": {
+      "en": "What would you like next?",
+      "hi": "आगे क्या जानना चाहेंगे?",
+      "mr": "पुढे काय जाणून घ्यायचे?"
+    },
+    "chips": {
+      "en": ["View on map", "Contact us", "Back to menu"],
+      "hi": ["मानचित्र पर देखें", "संपर्क करें", "मेनू पर वापस"],
+      "mr": ["नकाशावर पहा", "संपर्क करा", "मेनूवर परत"]
     }
   },
 
