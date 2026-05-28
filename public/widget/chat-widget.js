@@ -463,42 +463,17 @@
   };
 
   QualityAssistantWidget.prototype.updateLauncherStripVisibility = function () {
-    var wrap =
-      this.root && this.root.querySelector('.qa-launcher-strip-wrap');
     var strip = this.root && this.root.querySelector('.qa-launcher-strip');
-    var host = wrap || strip;
-    if (!host) return;
+    if (!strip) return;
     var stripCfg = getLauncherStripCfg();
     var active = stripCfg.enabled !== false && stripCfg.text;
     if (!active) {
-      host.style.display = 'none';
+      strip.style.display = 'none';
       return;
     }
-    host.style.display = '';
-    if (strip) strip.textContent = String(stripCfg.text);
-    host.classList.toggle('qa-launcher-strip--hidden', !!this.isOpen);
-    var wave = this.root.querySelector('.qa-launcher-strip-wave');
-    if (wave) {
-      wave.classList.toggle('qa-launcher-strip--hidden', !!this.isOpen);
-    }
-  };
-
-  QualityAssistantWidget.prototype.playStripWavePopup = function () {
-    if (this._stripWavePlayed) return;
-    var stripCfg = getLauncherStripCfg();
-    if (stripCfg.enabled === false || !stripCfg.text) return;
-    var waveCfg = stripCfg.wavePopup || {};
-    if (waveCfg.enabled === false) return;
-    var wave = this.root && this.root.querySelector('.qa-launcher-strip-wave');
-    if (!wave) return;
-    this._stripWavePlayed = true;
-    var ms = Math.max(200, parseInt(waveCfg.durationMs, 10) || 1000);
-    wave.classList.remove('qa-launcher-strip-wave--play');
-    void wave.offsetWidth;
-    wave.classList.add('qa-launcher-strip-wave--play');
-    setTimeout(function () {
-      wave.classList.remove('qa-launcher-strip-wave--play');
-    }, ms);
+    strip.style.display = '';
+    strip.textContent = String(stripCfg.text);
+    strip.classList.toggle('qa-launcher-strip--hidden', !!this.isOpen);
   };
 
   QualityAssistantWidget.prototype.applyChatSide = function () {
@@ -818,10 +793,7 @@
     }
 
     var stripCfg = getLauncherStripCfg();
-    var stripHost =
-      this.root.querySelector('.qa-launcher-strip-wrap') ||
-      this.root.querySelector('.qa-launcher-strip');
-    var strip = stripHost;
+    var strip = this.root.querySelector('.qa-launcher-strip');
     if (strip && stripCfg.position) {
       var sp = stripCfg.position;
       if (sp.bottomPx != null) {
@@ -975,20 +947,12 @@
     var stripCfg = getLauncherStripCfg();
     var stripHtml = '';
     if (hasLauncherStripTextAnywhere()) {
-      var stripText = stripCfg.text || '';
-      var waveEmoji = extractLeadingEmoji(stripText);
-      var waveCfg = stripCfg.wavePopup || {};
-      var waveOn = waveCfg.enabled !== false && waveEmoji;
+      var stripText =
+        stripCfg.text || '';
       stripHtml =
-        '<div class="qa-launcher-strip-wrap">' +
-        (waveOn
-          ? '<div class="qa-launcher-strip-wave" aria-hidden="true">' +
-            this.escape(waveEmoji) +
-            '</div>'
-          : '') +
         '<div class="qa-launcher-strip" role="note">' +
         this.escape(stripText) +
-        '</div></div>';
+        '</div>';
     }
 
     return (

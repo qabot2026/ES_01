@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var QA_ASSET_VERSION = '20260529-strip-wave-popup-v2';
+  var QA_ASSET_VERSION = '20260529-strip-wave-popup';
 
   var script = document.currentScript;
   var base = '';
