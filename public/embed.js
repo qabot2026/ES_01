@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var QA_ASSET_VERSION = '20260529-strip-hand-pop-inline';
+  var QA_ASSET_VERSION = '20260529-strip-hand-shake';
 
   var script = document.currentScript;
   var base = '';

@@ -1501,23 +1501,51 @@ body.qa-lightbox-open {
 }
 
 .qa-launcher-strip__wave--pop {
-  animation: qa-strip-hand-pop 1s ease-out forwards;
+  animation: qa-strip-hand-pop 1s ease-in-out forwards;
   z-index: 3;
   position: relative;
 }
 
+/* Bahar aake hilna (wave) — upar nahi, bubble ke edge se */
 @keyframes qa-strip-hand-pop {
   0% {
-    transform: scale(1);
+    transform: scale(1) rotate(0deg);
   }
-  22% {
-    transform: scale(var(--qa-hand-pop-scale, 3));
+  10% {
+    transform: scale(var(--qa-hand-pop-scale, 3)) rotate(0deg);
   }
-  72% {
-    transform: scale(var(--qa-hand-pop-scale, 3));
+  18% {
+    transform: scale(var(--qa-hand-pop-scale, 3)) rotate(-22deg);
+  }
+  26% {
+    transform: scale(var(--qa-hand-pop-scale, 3)) rotate(22deg);
+  }
+  34% {
+    transform: scale(var(--qa-hand-pop-scale, 3)) rotate(-18deg);
+  }
+  42% {
+    transform: scale(var(--qa-hand-pop-scale, 3)) rotate(18deg);
+  }
+  50% {
+    transform: scale(var(--qa-hand-pop-scale, 3)) rotate(-14deg);
+  }
+  58% {
+    transform: scale(var(--qa-hand-pop-scale, 3)) rotate(14deg);
+  }
+  66% {
+    transform: scale(var(--qa-hand-pop-scale, 3)) rotate(-10deg);
+  }
+  74% {
+    transform: scale(var(--qa-hand-pop-scale, 3)) rotate(10deg);
+  }
+  82% {
+    transform: scale(var(--qa-hand-pop-scale, 3)) rotate(-5deg);
+  }
+  90% {
+    transform: scale(var(--qa-hand-pop-scale, 3)) rotate(0deg);
   }
   100% {
-    transform: scale(1);
+    transform: scale(1) rotate(0deg);
   }
 }
 
