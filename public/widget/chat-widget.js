@@ -414,6 +414,7 @@
       self.updateLauncherStripVisibility();
       self.applyChatSide();
       self.applyLayout();
+      self.applyFeatureToggles();
     };
     if (mq.addEventListener) mq.addEventListener('change', onChange);
     else if (mq.addListener) mq.addListener(onChange);
@@ -725,8 +726,9 @@
   QualityAssistantWidget.prototype.applyFeatureToggles = function () {
     var eff = getEffectiveCfg();
     var feats = eff.features || {};
-    if (feats.speechToText && feats.speechToText.enabled === false && this.els.mic) {
-      this.els.mic.style.display = 'none';
+    if (this.els.mic) {
+      this.els.mic.style.display =
+        feats.speechToText && feats.speechToText.enabled === false ? 'none' : '';
     }
     this.updateRestartVisibility();
     if (
@@ -738,8 +740,8 @@
     }
     var pb = eff.poweredBy;
     var powered = this.root.querySelector('.qa-powered');
-    if (pb && pb.enabled === false && powered) {
-      powered.style.display = 'none';
+    if (powered) {
+      powered.style.display = pb && pb.enabled === false ? 'none' : '';
     }
   };
 

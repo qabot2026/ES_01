@@ -275,7 +275,7 @@ window.QA_CHAT_UI_CONFIG = {
 
   /** Mobile (screen ≤ 768px) — poori UI yahan */
   mob: {
-    showChatbot: true,
+    showChatbot: false,
 
     chatLayout: { side: 'left' },
 
