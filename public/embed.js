@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var QA_ASSET_VERSION = '20260527-carousel-lightbox';
+  var QA_ASSET_VERSION = '20260527-scroll-arrows';
 
   var script = document.currentScript;
   var base = '';

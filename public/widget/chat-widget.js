@@ -1394,6 +1394,67 @@
     return wrap;
   };
 
+  QualityAssistantWidget.prototype.wrapScrollTrack = function (track) {
+    var shell = document.createElement('div');
+    shell.className = 'qa-scroll-strip';
+
+    var viewport = document.createElement('div');
+    viewport.className = 'qa-scroll-strip__viewport';
+    viewport.appendChild(track);
+
+    var prev = document.createElement('button');
+    prev.type = 'button';
+    prev.className = 'qa-scroll-strip__nav qa-scroll-strip__prev';
+    prev.setAttribute('aria-label', 'Previous');
+    prev.innerHTML = '&#8249;';
+
+    var next = document.createElement('button');
+    next.type = 'button';
+    next.className = 'qa-scroll-strip__nav qa-scroll-strip__next';
+    next.setAttribute('aria-label', 'Next');
+    next.innerHTML = '&#8250;';
+
+    shell.appendChild(viewport);
+    shell.appendChild(prev);
+    shell.appendChild(next);
+
+    function scrollStep(delta) {
+      var first = track.firstElementChild;
+      var gap = 10;
+      var step = first
+        ? first.getBoundingClientRect().width + gap
+        : Math.max(100, viewport.clientWidth * 0.8);
+      viewport.scrollBy({ left: delta * step, behavior: 'smooth' });
+    }
+
+    prev.addEventListener('click', function () {
+      scrollStep(-1);
+    });
+    next.addEventListener('click', function () {
+      scrollStep(1);
+    });
+
+    function updateNav() {
+      var maxScroll = Math.max(0, viewport.scrollWidth - viewport.clientWidth);
+      var show = maxScroll > 4;
+      prev.hidden = !show;
+      next.hidden = !show;
+      prev.disabled = viewport.scrollLeft <= 2;
+      next.disabled = viewport.scrollLeft >= maxScroll - 2;
+    }
+
+    viewport.addEventListener('scroll', updateNav, { passive: true });
+    if (typeof ResizeObserver !== 'undefined') {
+      var ro = new ResizeObserver(updateNav);
+      ro.observe(viewport);
+      ro.observe(track);
+    }
+    setTimeout(updateNav, 0);
+    setTimeout(updateNav, 400);
+
+    return shell;
+  };
+
   QualityAssistantWidget.prototype.buildCardCarouselEl = function (carousel) {
     var wrap = document.createElement('div');
     wrap.className = 'qa-card-carousel';
@@ -1499,7 +1560,9 @@
       track.appendChild(article);
     });
 
-    wrap.appendChild(track);
+    if (track.childNodes.length) {
+      wrap.appendChild(this.wrapScrollTrack(track));
+    }
     return wrap;
   };
 
@@ -1683,7 +1746,9 @@
       }
       track.appendChild(item);
     });
-    if (track.childNodes.length) wrap.appendChild(track);
+    if (track.childNodes.length) {
+      wrap.appendChild(this.wrapScrollTrack(track));
+    }
     return wrap;
   };
 
