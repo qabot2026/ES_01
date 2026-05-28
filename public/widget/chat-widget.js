@@ -452,10 +452,7 @@
     this.bindEvents();
     this.bindViewportRestartToggle();
     this.fetchConfig();
-    var self = this;
-    setTimeout(function () {
-      self.playStripHandPop();
-    }, 100);
+    this.scheduleStripHandPop();
     this.maybeAutoOpen();
   };
 

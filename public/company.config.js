@@ -240,8 +240,8 @@ window.QA_CHAT_UI_CONFIG = {
     launcherStrip: {
       enabled: true,
       text: '👋Hey, how are you?😊',
-      /** Haath strip ke paas se bahar — upar nahi */
-      wavePopup: { enabled: true, durationMs: 3000, scale: 3 },
+      /** delayMs = page load ke kitne sec baad haath wave; durationMs = wave kitni der */
+      wavePopup: { enabled: true, delayMs: 3000, durationMs: 3000, scale: 3 },
       position: { rightPx: 10, bottomPx: 66 },
       style: { fontSizePx: 13, paddingYpx: 10, paddingXpx: 14, maxWidthPx: 260 },
     },
