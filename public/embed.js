@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var QA_ASSET_VERSION = '20260529-revert-wave-popup';
+  var QA_ASSET_VERSION = '20260529-strip-hand-pop-inline';
 
   var script = document.currentScript;
   var base = '';

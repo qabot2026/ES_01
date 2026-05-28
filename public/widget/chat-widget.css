@@ -1450,10 +1450,24 @@ body.qa-lightbox-open {
   color: var(--qa-primary);
 }
 
-.qa-launcher-strip {
+.qa-widget--left .qa-launcher-strip-wrap {
+  right: auto;
+  left: 0;
+}
+
+.qa-launcher-strip-wrap {
   position: absolute;
   right: 0;
   bottom: 48px;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.qa-launcher-strip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
   max-width: 220px;
   padding: 8px 12px;
   background: var(--qa-surface);
@@ -1465,10 +1479,49 @@ body.qa-lightbox-open {
   box-shadow: var(--qa-shadow);
   pointer-events: none;
   white-space: nowrap;
+  overflow: visible;
+}
+
+.qa-launcher-strip__text {
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
+.qa-launcher-strip__wave {
+  display: inline-block;
+  flex-shrink: 0;
+  line-height: 1;
+  transform: scale(1);
+  transform-origin: right center;
+  will-change: transform;
+}
+
+.qa-widget--left .qa-launcher-strip__wave {
+  transform-origin: left center;
+}
+
+.qa-launcher-strip__wave--pop {
+  animation: qa-strip-hand-pop 1s ease-out forwards;
+  z-index: 3;
+  position: relative;
+}
+
+@keyframes qa-strip-hand-pop {
+  0% {
+    transform: scale(1);
+  }
+  22% {
+    transform: scale(var(--qa-hand-pop-scale, 3));
+  }
+  72% {
+    transform: scale(var(--qa-hand-pop-scale, 3));
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.qa-launcher-strip-wrap.qa-launcher-strip--hidden,
 .qa-launcher-strip--hidden {
   display: none;
 }

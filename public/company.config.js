@@ -240,6 +240,8 @@ window.QA_CHAT_UI_CONFIG = {
     launcherStrip: {
       enabled: true,
       text: '👋Hey, how are you?😊',
+      /** Haath strip ke paas se bahar — upar nahi */
+      wavePopup: { enabled: true, durationMs: 1000, scale: 3 },
       position: { rightPx: 10, bottomPx: 66 },
       style: { fontSizePx: 13, paddingYpx: 10, paddingXpx: 14, maxWidthPx: 260 },
     },
@@ -252,7 +254,7 @@ window.QA_CHAT_UI_CONFIG = {
       position: { rightPx: 10, bottomPx: 20, leftPx: null },
     },
 
-    autoOpenChat: { enabled: true, delayMs: 2000 },
+    autoOpenChat: { enabled: true, delayMs: 5000 },
 
     restartButton: { enabled: true },
 
@@ -309,6 +311,7 @@ window.QA_CHAT_UI_CONFIG = {
     launcherStrip: {
       enabled: true,
       text: '👋Hey, how are you?😊',
+      wavePopup: { enabled: true, durationMs: 1000, scale: 3 },
       position: { rightPx: 10, bottomPx: 60, leftPx: null },
       style: { fontSizePx: 12, paddingYpx: 8, paddingXpx: 12, maxWidthPx: 220 },
     },

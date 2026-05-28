@@ -208,6 +208,35 @@
     return !!(d.text || m.text);
   }
 
+  function extractLeadingEmoji(text) {
+    var s = String(text || '').trim();
+    if (!s) return '';
+    try {
+      if (typeof Intl !== 'undefined' && Intl.Segmenter) {
+        var parts = Array.from(
+          new Intl.Segmenter(undefined, { granularity: 'grapheme' }).segment(s),
+          function (x) {
+            return x.segment;
+          }
+        );
+        if (parts.length && /\p{Extended_Pictographic}/u.test(parts[0])) {
+          return parts[0];
+        }
+        return '';
+      }
+    } catch (e) {
+      /* Intl not available */
+    }
+    var m = s.match(/^(\p{Extended_Pictographic})/u);
+    return m ? m[1] : '';
+  }
+
+  function stripTextWithoutLeadingEmoji(text) {
+    var emoji = extractLeadingEmoji(text);
+    if (!emoji) return String(text || '');
+    return String(text).slice(emoji.length).trimStart();
+  }
+
   var QA_RING_GRADIENT_INSTAGRAM =
     'conic-gradient(from 180deg, #f09433 0deg, #e6683c 72deg, #dc2743 144deg, #cc2366 216deg, #bc1888 252deg, #833ab4 288deg, #5851db 324deg, #405de6 360deg, #f09433 360deg)';
 
@@ -423,6 +452,10 @@
     this.bindEvents();
     this.bindViewportRestartToggle();
     this.fetchConfig();
+    var self = this;
+    setTimeout(function () {
+      self.playStripHandPop();
+    }, 100);
     this.maybeAutoOpen();
   };
 
@@ -437,17 +470,49 @@
   };
 
   QualityAssistantWidget.prototype.updateLauncherStripVisibility = function () {
+    var wrap =
+      this.root && this.root.querySelector('.qa-launcher-strip-wrap');
     var strip = this.root && this.root.querySelector('.qa-launcher-strip');
-    if (!strip) return;
+    var host = wrap || strip;
+    if (!host) return;
     var stripCfg = getLauncherStripCfg();
     var active = stripCfg.enabled !== false && stripCfg.text;
     if (!active) {
-      strip.style.display = 'none';
+      host.style.display = 'none';
       return;
     }
-    strip.style.display = '';
-    strip.textContent = String(stripCfg.text);
-    strip.classList.toggle('qa-launcher-strip--hidden', !!this.isOpen);
+    host.style.display = '';
+    var fullText = String(stripCfg.text);
+    var waveEmoji = extractLeadingEmoji(fullText);
+    var waveCfg = stripCfg.wavePopup || {};
+    var waveOn = waveCfg.enabled !== false && waveEmoji;
+    var waveEl = strip && strip.querySelector('.qa-launcher-strip__wave');
+    var textEl = strip && strip.querySelector('.qa-launcher-strip__text');
+    if (textEl) {
+      textEl.textContent = waveOn ? stripTextWithoutLeadingEmoji(fullText) : fullText;
+    }
+    if (waveEl) waveEl.textContent = waveEmoji;
+    host.classList.toggle('qa-launcher-strip--hidden', !!this.isOpen);
+  };
+
+  QualityAssistantWidget.prototype.playStripHandPop = function () {
+    if (this._stripHandPopPlayed) return;
+    var stripCfg = getLauncherStripCfg();
+    if (stripCfg.enabled === false || !stripCfg.text) return;
+    var waveCfg = stripCfg.wavePopup || {};
+    if (waveCfg.enabled === false) return;
+    var wave = this.root && this.root.querySelector('.qa-launcher-strip__wave');
+    if (!wave) return;
+    this._stripHandPopPlayed = true;
+    var scale = Math.max(1.5, parseFloat(waveCfg.scale) || 3);
+    var ms = Math.max(200, parseInt(waveCfg.durationMs, 10) || 1000);
+    wave.style.setProperty('--qa-hand-pop-scale', String(scale));
+    wave.classList.remove('qa-launcher-strip__wave--pop');
+    void wave.offsetWidth;
+    wave.classList.add('qa-launcher-strip__wave--pop');
+    setTimeout(function () {
+      wave.classList.remove('qa-launcher-strip__wave--pop');
+    }, ms);
   };
 
   QualityAssistantWidget.prototype.applyChatSide = function () {
@@ -767,7 +832,10 @@
     }
 
     var stripCfg = getLauncherStripCfg();
-    var strip = this.root.querySelector('.qa-launcher-strip');
+    var stripHost =
+      this.root.querySelector('.qa-launcher-strip-wrap') ||
+      this.root.querySelector('.qa-launcher-strip');
+    var strip = stripHost;
     if (strip && stripCfg.position) {
       var sp = stripCfg.position;
       if (sp.bottomPx != null) {
@@ -921,12 +989,22 @@
     var stripCfg = getLauncherStripCfg();
     var stripHtml = '';
     if (hasLauncherStripTextAnywhere()) {
-      var stripText =
-        stripCfg.text || '';
+      var stripText = stripCfg.text || '';
+      var waveEmoji = extractLeadingEmoji(stripText);
+      var waveCfg = stripCfg.wavePopup || {};
+      var waveOn = waveCfg.enabled !== false && waveEmoji;
+      var bodyText = waveOn ? stripTextWithoutLeadingEmoji(stripText) : stripText;
       stripHtml =
+        '<div class="qa-launcher-strip-wrap">' +
         '<div class="qa-launcher-strip" role="note">' +
-        this.escape(stripText) +
-        '</div>';
+        (waveOn
+          ? '<span class="qa-launcher-strip__wave" aria-hidden="true">' +
+            this.escape(waveEmoji) +
+            '</span>'
+          : '') +
+        '<span class="qa-launcher-strip__text">' +
+        this.escape(bodyText) +
+        '</span></div></div>';
     }
 
     return (
