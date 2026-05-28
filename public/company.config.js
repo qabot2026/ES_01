@@ -646,6 +646,11 @@ window.QA_CHAT_UI_CONFIG = {
       iconSizePx: 44,
     },
 
+    /** Desktop footer Restart button */
+    restartButton: {
+      enabled: true,
+    },
+
     chatWindow: {
 
       cost: 'green',
@@ -685,6 +690,11 @@ window.QA_CHAT_UI_CONFIG = {
       titleFontSizePx: 15,
       subtitleFontSizePx: 11,
       iconSizePx: 32,
+    },
+
+    /** Mobile footer Restart button */
+    restartButton: {
+      enabled: false,
     },
 
     chatWindow: {

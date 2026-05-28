@@ -648,9 +648,7 @@
     if (feats.speechToText && feats.speechToText.enabled === false && this.els.mic) {
       this.els.mic.style.display = 'none';
     }
-    if (feats.restartChat && feats.restartChat.enabled === false && this.els.restart) {
-      this.els.restart.style.display = 'none';
-    }
+    this.updateRestartVisibility();
     if (
       feats.multiLanguage &&
       feats.multiLanguage.enabled === false &&
@@ -680,7 +678,7 @@
     var header = common.header || {};
     var feats = common.features || {};
     var ml = feats.multiLanguage || {};
-    var restart = feats.restartChat || {};
+    var restart = getRestartCfg();
     var pb = common.poweredBy || {};
     var placeholders = feats.inputPlaceholderByLanguage || {};
 
@@ -812,13 +810,11 @@
       (ml.enabled !== false
         ? '<select class="qa-lang" aria-label="Language">' + langOptions + '</select>'
         : '') +
-      (restart.enabled !== false
-        ? '<button type="button" class="qa-restart">' +
-          ICONS.restart +
-          ' ' +
-          this.escape(restart.label || 'Restart') +
-          '</button>'
-        : '') +
+      '<button type="button" class="qa-restart" style="display:none">' +
+      ICONS.restart +
+      ' ' +
+      this.escape(restart.label) +
+      '</button>' +
       '</div>' +
       (poweredHtml ? '<div class="qa-toolbar__end">' + poweredHtml + '</div>' : '') +
       '</div>' +
