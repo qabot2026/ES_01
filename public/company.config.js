@@ -442,7 +442,7 @@ window.QA_CHAT_UI_CONFIG = {
 
       /** 🔴 clears session UI + FRESH when welcomeEvent.triggerOnRestart */
 
-      restartChat: { cost: 'red', enabled: true, label: 'Restart' },
+      restartChat: { cost: 'red', enabled: false, label: 'Restart' },
 
       inputPlaceholderByLanguage: {
 
