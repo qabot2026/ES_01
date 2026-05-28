@@ -227,7 +227,7 @@ window.QA_CHAT_UI_CONFIG = {
       iconUrl: QA_LOGO_LAUNCHER,
       cornerRoundness: '50%',
       /** enabled: true = bubble+X | false = bubble hide, panel niche (panelBottomPx) */
-      closeBubbleWhenOpen: { enabled: true, panelBottomPx: 8 },
+      closeBubbleWhenOpen: { enabled: false, panelBottomPx: 8 },
       storyRing: {
         enabled: true,
         widthPx: 2.5,
@@ -293,7 +293,7 @@ window.QA_CHAT_UI_CONFIG = {
       iconUrl: QA_LOGO_LAUNCHER,
       cornerRoundness: '50%',
       closeBubbleWhenOpen: {
-        enabled: false,
+        enabled: true,
         panelBottomPx: 10,
         panelHeightExtraPx: 35,
       },
