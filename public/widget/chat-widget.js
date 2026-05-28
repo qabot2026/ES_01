@@ -208,6 +208,28 @@
     return !!(d.text || m.text);
   }
 
+  /** Pehla emoji strip text se — e.g. "👋Hey…" → "👋" */
+  function extractLeadingEmoji(text) {
+    var s = String(text || '').trim();
+    if (!s) return '';
+    try {
+      if (typeof Intl !== 'undefined' && Intl.Segmenter) {
+        var seg = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
+        var parts = Array.from(seg.segment(s), function (x) {
+          return x.segment;
+        });
+        if (parts.length && /\p{Extended_Pictographic}/u.test(parts[0])) {
+          return parts[0];
+        }
+        return '';
+      }
+    } catch (e) {
+      /* Intl not available */
+    }
+    var m = s.match(/^(\p{Extended_Pictographic})/u);
+    return m ? m[1] : '';
+  }
+
   var QA_RING_GRADIENT_INSTAGRAM =
     'conic-gradient(from 180deg, #f09433 0deg, #e6683c 72deg, #dc2743 144deg, #cc2366 216deg, #bc1888 252deg, #833ab4 288deg, #5851db 324deg, #405de6 360deg, #f09433 360deg)';
 
@@ -423,6 +445,10 @@
     this.bindEvents();
     this.bindViewportRestartToggle();
     this.fetchConfig();
+    var self = this;
+    setTimeout(function () {
+      self.playStripWavePopup();
+    }, 80);
     this.maybeAutoOpen();
   };
 
