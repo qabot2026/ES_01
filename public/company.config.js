@@ -305,7 +305,7 @@ window.QA_CHAT_UI_CONFIG = {
     launcherStrip: {
       enabled: true,
       text: '👋Hey, how are you?😊',
-      position: { leftPx: 12, bottomPx: 60, rightPx: null },
+      position: { rightPx: 10, bottomPx: 60, leftPx: null },
       style: { fontSizePx: 12, paddingYpx: 8, paddingXpx: 12, maxWidthPx: 220 },
     },
 
@@ -316,7 +316,7 @@ window.QA_CHAT_UI_CONFIG = {
       horizontalInsetPx: 12,
       bottomInsetPx: 10,
       topInsetPx: 26,
-      position: { leftPx: 12, bottomPx: 10, rightPx: null },
+      position: { rightPx: 12, bottomPx: 10, leftPx: null },
     },
 
     autoOpenChat: { enabled: true, delayMs: 2000 },

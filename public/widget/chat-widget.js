@@ -635,21 +635,35 @@
       panel.style.maxWidth = 'calc(100vw - ' + win.horizontalInsetPx * 2 + 'px)';
     }
 
+    var side = getChatLayoutSide();
+    var inset =
+      win.horizontalInsetPx != null ? win.horizontalInsetPx : 12;
+    var anchorPx =
+      side === 'left'
+        ? pos.leftPx != null
+          ? pos.leftPx
+          : inset
+        : pos.rightPx != null
+          ? pos.rightPx
+          : pos.leftPx != null
+            ? pos.leftPx
+            : inset;
+
     this.root.style.left = '';
     this.root.style.right = '';
     if (launcher) {
       launcher.style.left = '';
       launcher.style.right = '';
     }
-    if (pos.leftPx != null) {
-      this.root.style.left = pos.leftPx + 'px';
+    if (side === 'left') {
+      this.root.style.left = anchorPx + 'px';
       this.root.style.right = 'auto';
       if (launcher) {
         launcher.style.left = '0';
         launcher.style.right = 'auto';
       }
-    } else if (pos.rightPx != null) {
-      this.root.style.right = pos.rightPx + 'px';
+    } else {
+      this.root.style.right = anchorPx + 'px';
       this.root.style.left = 'auto';
       if (launcher) {
         launcher.style.right = '0';
@@ -710,15 +724,29 @@
     var stripCfg = getLauncherStripCfg();
     var strip = this.root.querySelector('.qa-launcher-strip');
     if (strip && stripCfg.position) {
-      if (stripCfg.position.bottomPx != null) {
-        strip.style.bottom = stripCfg.position.bottomPx + 'px';
+      var sp = stripCfg.position;
+      if (sp.bottomPx != null) {
+        strip.style.bottom = sp.bottomPx + 'px';
       }
-      if (stripCfg.position.rightPx != null) {
-        strip.style.right = stripCfg.position.rightPx + 'px';
-      }
-      if (stripCfg.position.leftPx != null) {
-        strip.style.left = stripCfg.position.leftPx + 'px';
+      strip.style.left = '';
+      strip.style.right = '';
+      var stripSide = getChatLayoutSide();
+      var stripPx =
+        stripSide === 'left'
+          ? sp.leftPx != null
+            ? sp.leftPx
+            : inset
+          : sp.rightPx != null
+            ? sp.rightPx
+            : sp.leftPx != null
+              ? sp.leftPx
+              : 10;
+      if (stripSide === 'left') {
+        strip.style.left = stripPx + 'px';
         strip.style.right = 'auto';
+      } else {
+        strip.style.right = stripPx + 'px';
+        strip.style.left = 'auto';
       }
     }
     if (strip && stripCfg.style) {
