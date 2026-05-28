@@ -8,6 +8,21 @@ All Hindi and Marathi text lives in **`data/intent-responses.json`**.
 
 ---
 
+## JSON rules (no new code for each intent)
+
+| Field | You can write | Example |
+|-------|----------------|---------|
+| `reply` | text **or** list of lines | `"en": "Hello"` or `"en": ["Line 1", "Line 2"]` |
+| `chipHeading` | text **or** list of lines | `"mr": ["पुढे?", "निवडा"]` → 2 lines above chips |
+| `chips` | **list only** (one label per chip) | `"hi": ["A", "B", "C"]` |
+| New intent | copy block, change key name | `"My Intent": { ... }` |
+
+**No extra code** when you add intents or more chip labels — only edit this JSON file.
+
+**Still needs Dialogflow (not JSON):** card carousel, gallery images, dropdown structure, chip `message` on click.
+
+---
+
 ## How to add a new intent
 
 ### Step 1 — Get the intent name

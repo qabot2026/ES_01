@@ -2,6 +2,12 @@
   "_help": "Keys must match Dialogflow intent Display Name exactly (Console → Intents → name). Or use @event:FRESH for welcome events.",
   "_help2": "Only add en / hi / mr text you need. Missing language falls back to English from this file, then Dialogflow reply.",
   "_help3": "Copy the Project Location block for each intent — change the key to Dialogflow Display Name.",
+  "_schema": {
+    "reply": "string OR string[] per language — main bot message",
+    "chipHeading": "string OR string[] — line(s) above chips",
+    "chips": "string[] only — labels in same order as Dialogflow payload options",
+    "aliases": "optional string[] — extra intent display names"
+  },
 
   "Location": {
     "aliases": ["location", "Location Intent", "project location", "location search"],
