@@ -241,7 +241,7 @@ window.QA_CHAT_UI_CONFIG = {
       enabled: true,
       text: '👋Hey, how are you?😊',
       /** Haath strip ke paas se bahar — upar nahi */
-      wavePopup: { enabled: true, durationMs: 1000, scale: 3 },
+      wavePopup: { enabled: true, durationMs: 3000, scale: 3 },
       position: { rightPx: 10, bottomPx: 66 },
       style: { fontSizePx: 13, paddingYpx: 10, paddingXpx: 14, maxWidthPx: 260 },
     },
