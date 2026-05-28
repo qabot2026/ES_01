@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var QA_ASSET_VERSION = '20260529-phrase-fix-all';
+  var QA_ASSET_VERSION = '20260529-intent-file-off';
 
   var script = document.currentScript;
   var base = '';
