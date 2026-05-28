@@ -1645,10 +1645,11 @@
     if (!this.root) return;
     var stackPx = getLauncherStackPx(!!this.isOpen);
     this.root.style.setProperty('--qa-launcher-stack', stackPx + 'px');
-    this.root.classList.toggle(
-      'qa-widget--no-close-bubble',
-      !!this.isOpen && !isLauncherCloseBubbleEnabled()
-    );
+    var noCloseBubble = !!this.isOpen && !isLauncherCloseBubbleEnabled();
+    this.root.classList.toggle('qa-widget--no-close-bubble', noCloseBubble);
+    var boostPx =
+      noCloseBubble && getPanelHeightExtraPx() ? getPanelHeightExtraPx() : 0;
+    this.root.style.setProperty('--qa-panel-height-boost', boostPx + 'px');
   };
 
   QualityAssistantWidget.prototype.updateLauncherCloseBubble = function () {
