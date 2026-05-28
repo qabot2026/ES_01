@@ -170,6 +170,14 @@
     return size + 12;
   }
 
+  function getPanelHeightExtraPx() {
+    var cfg = getLauncherCloseBubbleCfg();
+    if (cfg.enabled === false && cfg.panelHeightExtraPx != null) {
+      return cfg.panelHeightExtraPx;
+    }
+    return 0;
+  }
+
   function hasLauncherStripTextAnywhere() {
     var root = global.QA_CHAT_UI_CONFIG || {};
     var d = (root.desk || {}).launcherStrip || {};
@@ -630,10 +638,8 @@
     var pos = win.position || {};
     var topInset = win.topInsetPx != null ? win.topInsetPx : 16;
     var widgetBottom = pos.bottomPx != null ? pos.bottomPx : 24;
-    var launcherStack = 72;
     this.root.style.setProperty('--qa-panel-top-inset', topInset + 'px');
     this.root.style.setProperty('--qa-widget-bottom', widgetBottom + 'px');
-    this.root.style.setProperty('--qa-launcher-stack', launcherStack + 'px');
 
     if (win.widthPx) {
       panel.style.width = win.widthPx + 'px';
@@ -642,9 +648,9 @@
     if (win.heightPx) {
       this.root.style.setProperty('--qa-panel-height', win.heightPx + 'px');
     }
-    if (win.minHeightPx) {
-      this.root.style.setProperty('--qa-panel-min-height', win.minHeightPx + 'px');
-    }
+    var minH = win.minHeightPx != null ? win.minHeightPx : 360;
+    minH += getPanelHeightExtraPx();
+    this.root.style.setProperty('--qa-panel-min-height', minH + 'px');
     var isMob = isMobileViewport();
     if (isMob && win.horizontalInsetPx != null) {
       panel.style.width = 'calc(100vw - ' + win.horizontalInsetPx * 2 + 'px)';
@@ -774,6 +780,7 @@
       }
       if (st.maxWidthPx) strip.style.maxWidth = st.maxWidthPx + 'px';
     }
+    this.syncLauncherStack();
   };
 
   QualityAssistantWidget.prototype.applyFeatureToggles = function () {

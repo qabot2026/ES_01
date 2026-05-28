@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var QA_ASSET_VERSION = '20260529-panel-lower-no-close-bubble';
+  var QA_ASSET_VERSION = '20260529-panel-height-plus-35';
 
   var script = document.currentScript;
   var base = '';
