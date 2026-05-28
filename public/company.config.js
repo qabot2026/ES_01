@@ -311,7 +311,7 @@ window.QA_CHAT_UI_CONFIG = {
     launcherStrip: {
       enabled: true,
       text: '👋Hey, how are you?😊',
-      wavePopup: { enabled: true, delayMs: 3000, durationMs: 1000, scale: 3 },
+      wavePopup: { enabled: true, delayMs: 3000, durationMs: 3000, scale: 3 },
       position: { rightPx: 10, bottomPx: 60, leftPx: null },
       style: { fontSizePx: 12, paddingYpx: 8, paddingXpx: 12, maxWidthPx: 220 },
     },
