@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var QA_ASSET_VERSION = '20260529-hand-pop-in-place';
+  var QA_ASSET_VERSION = '20260529-hand-pop-offset';
 
   var script = document.currentScript;
   var base = '';

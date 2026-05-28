@@ -1500,6 +1500,8 @@ body.qa-lightbox-open {
   transform: scale(1);
   transform-origin: center center;
   will-change: transform;
+  --qa-hand-pop-x: -15px;
+  --qa-hand-pop-y: -15px;
 }
 
 .qa-launcher-strip__wave--pop {
@@ -1508,46 +1510,57 @@ body.qa-lightbox-open {
   position: relative;
 }
 
-/* Apni jagah par bada + shake — left/right side se koi farq nahi */
+/* Apni jagah se 15px left + 15px up, bada + shake */
 @keyframes qa-strip-hand-pop {
   0% {
-    transform: scale(1) rotate(0deg);
+    transform: scale(1) rotate(0deg) translate(0, 0);
   }
   10% {
-    transform: scale(var(--qa-hand-pop-scale, 3)) rotate(0deg);
+    transform: scale(var(--qa-hand-pop-scale, 3)) rotate(0deg)
+      translate(var(--qa-hand-pop-x), var(--qa-hand-pop-y));
   }
   18% {
-    transform: scale(var(--qa-hand-pop-scale, 3)) rotate(-22deg);
+    transform: scale(var(--qa-hand-pop-scale, 3)) rotate(-22deg)
+      translate(var(--qa-hand-pop-x), var(--qa-hand-pop-y));
   }
   26% {
-    transform: scale(var(--qa-hand-pop-scale, 3)) rotate(22deg);
+    transform: scale(var(--qa-hand-pop-scale, 3)) rotate(22deg)
+      translate(var(--qa-hand-pop-x), var(--qa-hand-pop-y));
   }
   34% {
-    transform: scale(var(--qa-hand-pop-scale, 3)) rotate(-18deg);
+    transform: scale(var(--qa-hand-pop-scale, 3)) rotate(-18deg)
+      translate(var(--qa-hand-pop-x), var(--qa-hand-pop-y));
   }
   42% {
-    transform: scale(var(--qa-hand-pop-scale, 3)) rotate(18deg);
+    transform: scale(var(--qa-hand-pop-scale, 3)) rotate(18deg)
+      translate(var(--qa-hand-pop-x), var(--qa-hand-pop-y));
   }
   50% {
-    transform: scale(var(--qa-hand-pop-scale, 3)) rotate(-14deg);
+    transform: scale(var(--qa-hand-pop-scale, 3)) rotate(-14deg)
+      translate(var(--qa-hand-pop-x), var(--qa-hand-pop-y));
   }
   58% {
-    transform: scale(var(--qa-hand-pop-scale, 3)) rotate(14deg);
+    transform: scale(var(--qa-hand-pop-scale, 3)) rotate(14deg)
+      translate(var(--qa-hand-pop-x), var(--qa-hand-pop-y));
   }
   66% {
-    transform: scale(var(--qa-hand-pop-scale, 3)) rotate(-10deg);
+    transform: scale(var(--qa-hand-pop-scale, 3)) rotate(-10deg)
+      translate(var(--qa-hand-pop-x), var(--qa-hand-pop-y));
   }
   74% {
-    transform: scale(var(--qa-hand-pop-scale, 3)) rotate(10deg);
+    transform: scale(var(--qa-hand-pop-scale, 3)) rotate(10deg)
+      translate(var(--qa-hand-pop-x), var(--qa-hand-pop-y));
   }
   82% {
-    transform: scale(var(--qa-hand-pop-scale, 3)) rotate(-5deg);
+    transform: scale(var(--qa-hand-pop-scale, 3)) rotate(-5deg)
+      translate(var(--qa-hand-pop-x), var(--qa-hand-pop-y));
   }
   90% {
-    transform: scale(var(--qa-hand-pop-scale, 3)) rotate(0deg);
+    transform: scale(var(--qa-hand-pop-scale, 3)) rotate(0deg)
+      translate(var(--qa-hand-pop-x), var(--qa-hand-pop-y));
   }
   100% {
-    transform: scale(1) rotate(0deg);
+    transform: scale(1) rotate(0deg) translate(0, 0);
   }
 }
 
