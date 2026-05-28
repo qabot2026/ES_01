@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var QA_ASSET_VERSION = '20260527-autoscroll-stop';
+  var QA_ASSET_VERSION = '20260527-autoscroll-user-stop';
 
   var script = document.currentScript;
   var base = '';

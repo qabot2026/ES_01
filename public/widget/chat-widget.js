@@ -154,7 +154,11 @@
     return mode === 'dropdown' ? 'dropdown' : 'chips';
   }
 
-  /** Auto-scroll for gallery + card carousel horizontal strips */
+  /**
+   * autoScroll — turn slow strip scrolling on/off.
+   * stopAutoScrollOnInteraction — when autoScroll is on, user tap/arrow/scrollbar
+   * stops auto-scroll for that one gallery/carousel only (default true).
+   */
   function getScrollStripOpts(kind) {
     var rc = (getRootCfg().dialogflow || {}).richContentChips || {};
     var shared = rc.scrollStrip || {};
@@ -162,20 +166,23 @@
       kind === 'cardCarousel'
         ? rc.cardCarousel || {}
         : rc.galleryImage || {};
-    var stopOnInteract =
-      cfg.stopAutoScrollOnInteraction != null
-        ? cfg.stopAutoScrollOnInteraction !== false
-        : shared.stopAutoScrollOnInteraction !== false;
+    var autoScrollEnabled =
+      cfg.autoScroll !== false && shared.autoScroll !== false;
+    var stopOnInteract = true;
+    if (cfg.stopAutoScrollOnInteraction === false) {
+      stopOnInteract = false;
+    } else if (shared.stopAutoScrollOnInteraction === false) {
+      stopOnInteract = false;
+    }
     return {
-      autoScroll:
-        cfg.autoScroll !== false && shared.autoScroll !== false,
+      autoScroll: autoScrollEnabled,
       secondsPerItem:
         cfg.autoScrollSecondsPerItem != null
           ? Number(cfg.autoScrollSecondsPerItem) || 4
           : shared.autoScrollSecondsPerItem != null
             ? Number(shared.autoScrollSecondsPerItem) || 4
             : 4,
-      stopAutoScrollOnInteraction: stopOnInteract,
+      stopAutoScrollOnInteraction: autoScrollEnabled && stopOnInteract,
     };
   }
 
@@ -1444,36 +1451,32 @@
     shell.appendChild(prev);
     shell.appendChild(next);
 
-    var pauseAutoUntil = 0;
-    var hoverPaused = false;
+    var autoScrollActive = options.autoScroll !== false;
+    var stopOnInteraction = options.stopAutoScrollOnInteraction === true;
     var autoScrollStopped = false;
     var programmaticScroll = false;
-    var stopOnInteraction = options.stopAutoScrollOnInteraction !== false;
 
     function stopAutoScrollPermanent() {
-      if (autoScrollStopped) return;
+      if (!autoScrollActive || autoScrollStopped) return;
       autoScrollStopped = true;
       shell.classList.remove('qa-scroll-strip--auto');
+      shell.setAttribute('data-auto-scroll', 'stopped');
     }
 
     shell.stopAutoScrollPermanent = stopAutoScrollPermanent;
 
-    function pauseAutoScroll(ms) {
-      if (stopOnInteraction) {
-        stopAutoScrollPermanent();
-        return;
-      }
-      pauseAutoUntil = Date.now() + (ms != null ? ms : 10000);
+    function onUserInteraction() {
+      if (stopOnInteraction) stopAutoScrollPermanent();
     }
 
     function scrollStep(delta) {
+      onUserInteraction();
       var first = track.firstElementChild;
       var gap = 10;
       var step = first
         ? first.getBoundingClientRect().width + gap
         : Math.max(100, viewport.clientWidth * 0.8);
       viewport.scrollBy({ left: delta * step, behavior: 'smooth' });
-      pauseAutoScroll();
     }
 
     prev.addEventListener('click', function () {
@@ -1484,9 +1487,16 @@
     });
 
     if (stopOnInteraction) {
-      track.addEventListener('click', function () {
-        stopAutoScrollPermanent();
-      });
+      track.addEventListener('click', onUserInteraction);
+      viewport.addEventListener('pointerdown', onUserInteraction);
+      viewport.addEventListener(
+        'wheel',
+        function (e) {
+          if (e && e.isTrusted !== false) onUserInteraction();
+        },
+        { passive: true }
+      );
+      viewport.addEventListener('touchstart', onUserInteraction, { passive: true });
     }
 
     function updateNav() {
@@ -1498,20 +1508,7 @@
       next.disabled = viewport.scrollLeft >= maxScroll - 2;
     }
 
-    viewport.addEventListener(
-      'scroll',
-      function () {
-        updateNav();
-        if (
-          stopOnInteraction &&
-          !autoScrollStopped &&
-          !programmaticScroll
-        ) {
-          stopAutoScrollPermanent();
-        }
-      },
-      { passive: true }
-    );
+    viewport.addEventListener('scroll', updateNav, { passive: true });
     if (typeof ResizeObserver !== 'undefined') {
       var ro = new ResizeObserver(updateNav);
       ro.observe(viewport);
@@ -1520,7 +1517,8 @@
     setTimeout(updateNav, 0);
     setTimeout(updateNav, 400);
 
-    if (options.autoScroll !== false) {
+    if (autoScrollActive) {
+      shell.setAttribute('data-auto-scroll', 'on');
       var secondsPerItem =
         options.secondsPerItem != null ? Number(options.secondsPerItem) : 4;
       if (!secondsPerItem || secondsPerItem < 0.5) secondsPerItem = 4;
@@ -1534,7 +1532,6 @@
       if (!reduceMotion) {
         shell.classList.add('qa-scroll-strip--auto');
         var autoLastTime = 0;
-        var hoverPauseEnabled = false;
 
         function getMaxScroll() {
           return Math.max(
@@ -1559,10 +1556,6 @@
             autoLastTime = 0;
             return;
           }
-          if (hoverPaused || Date.now() < pauseAutoUntil) {
-            autoLastTime = 0;
-            return;
-          }
           if (!autoLastTime) {
             autoLastTime = now;
             return;
@@ -1582,48 +1575,9 @@
           updateNav();
         }
 
-        setTimeout(function () {
-          hoverPauseEnabled = true;
-        }, 600);
-
-        shell.addEventListener('mouseenter', function () {
-          if (hoverPauseEnabled) {
-            hoverPaused = true;
-            autoLastTime = 0;
-          }
-        });
-        shell.addEventListener('mouseleave', function () {
-          hoverPaused = false;
-          autoLastTime = 0;
-        });
-        viewport.addEventListener(
-          'touchstart',
-          function () {
-            pauseAutoScroll(12000);
-          },
-          { passive: true }
-        );
-        viewport.addEventListener(
-          'wheel',
-          function () {
-            pauseAutoScroll(8000);
-          },
-          { passive: true }
-        );
-        viewport.addEventListener('mousedown', function () {
-          pauseAutoScroll(8000);
-        });
-        viewport.addEventListener('pointerdown', function () {
-          pauseAutoScroll(8000);
-        });
-
         global.requestAnimationFrame(autoScrollTick);
-        setTimeout(function () {
-          updateNav();
-        }, 100);
-        setTimeout(function () {
-          updateNav();
-        }, 800);
+        setTimeout(updateNav, 100);
+        setTimeout(updateNav, 800);
       }
     }
 
@@ -1666,6 +1620,10 @@
           'View full image' + (card.title ? ': ' + card.title : '')
         );
         mediaBtn.addEventListener('click', function () {
+          var strip = mediaBtn.closest('.qa-scroll-strip');
+          if (strip && strip.stopAutoScrollPermanent) {
+            strip.stopAutoScrollPermanent();
+          }
           self.openGalleryLightbox(lightboxImages, currentLbIndex);
         });
         var img = document.createElement('img');
@@ -1901,6 +1859,10 @@
       item.setAttribute('role', 'listitem');
       item.title = img.name || 'View image';
       item.addEventListener('click', function () {
+        var strip = item.closest('.qa-scroll-strip');
+        if (strip && strip.stopAutoScrollPermanent) {
+          strip.stopAutoScrollPermanent();
+        }
         self.openGalleryLightbox(images, index);
       });
       var image = document.createElement('img');
