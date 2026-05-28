@@ -40,10 +40,36 @@ User selects **Marathi** → that sentence becomes Marathi **on every intent** t
 
 **Spelling / punctuation must match** Dialogflow exactly.
 
+## What gets translated (whole bot)
+
+| Part | Translated? |
+|------|-------------|
+| Reply text | Yes |
+| Chip **label** (visible) | Yes |
+| Chip **click** (`message` / value) | **No** — stays English for Dialogflow |
+| Dropdown label | Yes |
+| Dropdown value (on click) | **No** — stays English |
+| Gallery / image **title** (`name`) | Yes — add exact English to file |
+| Card title, subtitle, buttons | Yes |
+| Download link text | Yes |
+
 ## Chip click (`message`)
 
-Keep chip `message` in Dialogflow in **English** (for intent matching).  
-Only the **visible label** is translated from this file.
+Dialogflow payload: `"text": "View on map"` (show user), `"message": "show map"` (send on click).  
+Add **both** to the file if labels differ:
+
+```json
+"View on map": { "hi": "...", "mr": "..." },
+"show map": { "hi": "...", "mr": "..." }
+```
+
+Only **label** must match what user sees; click text can stay English only.
+
+## Exact match tips
+
+- Copy text from chat with **English** UI selected.
+- Same spelling: `Image 1` ≠ `Chitr 1` — add **both** keys if Dialogflow uses both.
+- Extra spaces / `:` / `.` must match (small differences = no translate).
 
 ## Config
 

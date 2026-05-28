@@ -887,6 +887,8 @@
         var ph =
           placeholders[self.language] || placeholders.en || self.els.input.placeholder;
         self.els.input.placeholder = ph;
+        self._phraseMapLang = null;
+        self.ensurePhraseMap();
       });
     }
     if (this.els.restart) {
@@ -923,6 +925,7 @@
         }
       })
       .catch(function () {});
+    this.ensurePhraseMap();
   };
 
   function getMultiLanguageCfg() {
@@ -942,6 +945,119 @@
     if (overrides && overrides[t] != null) return String(overrides[t]);
     return text;
   }
+
+  function usePhraseTranslationFile() {
+    var ml = getMultiLanguageCfg();
+    return ml.usePhraseTranslationFile === true;
+  }
+
+  function clientPhraseLine(text, map) {
+    if (!map || text == null) return text;
+    var k = String(text).trim().replace(/\s+/g, ' ');
+    if (!k) return text;
+    if (map[k] != null) return String(map[k]);
+    var lower = k.toLowerCase();
+    if (map[lower] != null) return String(map[lower]);
+    return text;
+  }
+
+  QualityAssistantWidget.prototype.ensurePhraseMap = function () {
+    var self = this;
+    var lang = this.language || 'en';
+    if (!usePhraseTranslationFile() || lang === 'en' || !this.apiBase) {
+      this._phraseMap = null;
+      this._phraseMapLang = null;
+      return Promise.resolve();
+    }
+    if (this._phraseMapLang === lang && this._phraseMap) {
+      return Promise.resolve();
+    }
+    return fetch(
+      this.apiBase +
+        '/api/phrase-translations?lang=' +
+        encodeURIComponent(lang)
+    )
+      .then(function (r) {
+        return r.json();
+      })
+      .then(function (data) {
+        self._phraseMap = (data && data.map) || {};
+        self._phraseMapLang = lang;
+      })
+      .catch(function () {
+        self._phraseMap = null;
+        self._phraseMapLang = null;
+      });
+  };
+
+  QualityAssistantWidget.prototype.applyClientPhrasePayload = function (data) {
+    if (!data || !this._phraseMap || this.language === 'en') return data;
+    var map = this._phraseMap;
+    var t = function (s) {
+      return clientPhraseLine(s, map);
+    };
+
+    if (data.reply) data.reply = String(data.reply).split('\n').map(t).join('\n');
+    if (data.chipHeading) data.chipHeading = t(data.chipHeading);
+
+    (data.chips || []).forEach(function (c) {
+      var send = c.sendMessage || c.message || c.label || '';
+      c.sendMessage = send;
+      c.message = send;
+      c.label = t(c.label || c.message || '');
+    });
+
+    (data.dropdowns || []).forEach(function (d) {
+      if (d.message) d.message = t(d.message);
+      if (d.placeholder) d.placeholder = t(d.placeholder);
+      (d.options || []).forEach(function (opt) {
+        opt.label = t(opt.label || opt.value || '');
+      });
+    });
+
+    (data.galleries || []).forEach(function (g) {
+      if (g.message) g.message = t(g.message);
+      (g.images || []).forEach(function (img) {
+        if (img.name) img.name = t(img.name);
+        if (img.title) img.title = t(img.title);
+      });
+    });
+
+    (data.cardCarousels || []).forEach(function (car) {
+      if (car.message) car.message = t(car.message);
+      (car.cards || []).forEach(function (card) {
+        if (card.title) card.title = t(card.title);
+        if (card.subtitle) card.subtitle = t(card.subtitle);
+        if (card.ctaLabel) card.ctaLabel = t(card.ctaLabel);
+        (card.buttons || []).forEach(function (btn) {
+          var send = btn.message || btn.label || '';
+          btn.message = send;
+          btn.label = t(btn.label || '');
+        });
+      });
+    });
+
+    (data.infoCards || []).forEach(function (card) {
+      if (card.title) card.title = t(card.title);
+      if (card.subtitle) card.subtitle = t(card.subtitle);
+      if (card.body) card.body = t(card.body);
+      (card.buttons || []).forEach(function (btn) {
+        var send = btn.message || btn.label || '';
+        btn.message = send;
+        btn.label = t(btn.label || '');
+      });
+    });
+
+    (data.downloads || []).forEach(function (d) {
+      if (d.label) d.label = t(d.label);
+    });
+
+    (data.replyParts || []).forEach(function (p) {
+      if (p.text) p.text = t(p.text);
+    });
+
+    return data;
+  };
 
   QualityAssistantWidget.prototype.shouldAutoTranslateReplies = function () {
     var ml = getMultiLanguageCfg();
@@ -1106,7 +1222,14 @@
     }
     if (result.data.sessionId) this.sessionId = result.data.sessionId;
 
-    this.maybeTranslateBotPayload(result.data).then(function (payload) {
+    this.ensurePhraseMap()
+      .then(function () {
+        if (!result.data.localizedFromPhrases) {
+          self.applyClientPhrasePayload(result.data);
+        }
+        return self.maybeTranslateBotPayload(result.data);
+      })
+      .then(function (payload) {
       var richOn = isRichContentEnabled();
       var chips = richOn && payload.chips ? payload.chips : [];
       var infoCards = richOn && payload.infoCards ? payload.infoCards : [];
@@ -2146,7 +2269,7 @@
 
     (dropdown.options || []).forEach(function (opt) {
       var label = opt.label || opt.value || '';
-      var message = opt.value || opt.label || '';
+      var message = opt.value || opt.sendValue || opt.label || '';
       if (!label) return;
       var btn = document.createElement('button');
       btn.type = 'button';
@@ -2340,7 +2463,7 @@
       var self = this;
       chips.forEach(function (c) {
         var label = c.label || c.message || '';
-        var message = c.message || c.label || '';
+        var message = c.sendMessage || c.message || c.label || '';
         if (!label) return;
         if (
           c.href &&

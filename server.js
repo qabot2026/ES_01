@@ -148,6 +148,18 @@ app.post('/api/translate', async (req, res) => {
   }
 });
 
+app.get('/api/phrase-translations', (req, res) => {
+  const lang = String(req.query.lang || 'en').trim();
+  if (lang === 'en') {
+    return res.json({ lang, map: {}, enabled: phraseTranslations.isEnabled() });
+  }
+  res.json({
+    lang,
+    map: phraseTranslations.getFlatMapForLang(lang),
+    enabled: phraseTranslations.isEnabled(),
+  });
+});
+
 app.get('/api/config', (_req, res) => {
   res.json({
     projectId: dialogflow.PROJECT_ID,
@@ -156,6 +168,7 @@ app.get('/api/config', (_req, res) => {
     translateReady: translate.isConfigured(),
     intentResponsesFile: intentResponses.isEnabled(),
     phraseTranslationsFile: phraseTranslations.isEnabled(),
+    phraseTranslationsPath: phraseTranslations.DATA_PATH,
     publicBaseUrl: PUBLIC_BASE_URL,
     embedScript: `${PUBLIC_BASE_URL}/embed.js`,
   });
