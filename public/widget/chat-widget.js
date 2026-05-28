@@ -945,6 +945,7 @@
 
   QualityAssistantWidget.prototype.shouldAutoTranslateReplies = function () {
     var ml = getMultiLanguageCfg();
+    if (ml.usePhraseTranslationFile === true) return false;
     if (ml.useIntentResponseFile === true) return false;
     if (ml.autoTranslateBotReplies !== true) return false;
     var ui = this.language || 'en';
@@ -953,7 +954,13 @@
 
   QualityAssistantWidget.prototype.maybeTranslateBotPayload = function (data) {
     var self = this;
-    if (!data || data.localizedFromFile || !this.shouldAutoTranslateReplies() || !this.apiBase) {
+    if (
+      !data ||
+      data.localizedFromFile ||
+      data.localizedFromPhrases ||
+      !this.shouldAutoTranslateReplies() ||
+      !this.apiBase
+    ) {
       return Promise.resolve(data);
     }
     var ml = getMultiLanguageCfg();

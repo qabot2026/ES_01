@@ -389,13 +389,18 @@ window.QA_CHAT_UI_CONFIG = {
         alwaysUseDialogflowLanguage: 'en',
 
         /**
-         * 🟢 One file for en/hi/mr — data/intent-responses.json (server applies after Dialogflow).
-         * Intent name must match Dialogflow Display Name. See INTENT-RESPONSES.md.
+         * 🟢 Whole bot: English phrase → hi/mr (data/phrase-translations.json).
+         * Same line works on ANY intent, chips, dropdown. See PHRASE-TRANSLATIONS.md.
          */
-        useIntentResponseFile: true,
+        usePhraseTranslationFile: true,
 
         /**
-         * 🔴 Google Translate API — off when useIntentResponseFile is true (saves cost).
+         * Optional per-intent file (data/intent-responses.json). Off when using phrase file.
+         */
+        useIntentResponseFile: false,
+
+        /**
+         * 🔴 Google Translate API — off when phrase file is used.
          */
         autoTranslateBotReplies: false,
         translationSourceLanguage: 'en',

@@ -4,6 +4,7 @@ const { randomUUID } = require('crypto');
 const dialogflow = require('./lib/dialogflow');
 const translate = require('./lib/translate');
 const intentResponses = require('./lib/intent-responses');
+const phraseTranslations = require('./lib/phrase-translations');
 
 const app = express();
 const PORT = process.env.PORT || 4567;
@@ -87,6 +88,9 @@ app.post('/api/chat', async (req, res) => {
     if (intentResponses.isEnabled()) {
       result = intentResponses.applyToResult(result, uiLang, eventName);
     }
+    if (phraseTranslations.isEnabled()) {
+      result = phraseTranslations.applyToResult(result, uiLang);
+    }
     res.json({ sessionId: sid, ...result });
   } catch (err) {
     const detail = dialogflow.formatApiError(err);
@@ -151,6 +155,7 @@ app.get('/api/config', (_req, res) => {
     dialogflowReady: dialogflow.isConfigured(),
     translateReady: translate.isConfigured(),
     intentResponsesFile: intentResponses.isEnabled(),
+    phraseTranslationsFile: phraseTranslations.isEnabled(),
     publicBaseUrl: PUBLIC_BASE_URL,
     embedScript: `${PUBLIC_BASE_URL}/embed.js`,
   });

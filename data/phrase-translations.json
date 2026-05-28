@@ -1,0 +1,61 @@
+{
+  "_help": "Key = EXACT English text from Dialogflow (reply, chip, dropdown, any intent). Works for whole bot — not per intent.",
+  "_help2": "Add one line once. Wherever that English appears, hi/mr will show after user selects language.",
+
+  "Welcome back! What would you like to do?": {
+    "hi": "वापसी पर स्वागत है! आप क्या करना चाहेंगे?",
+    "mr": "पुन्हा स्वागत आहे! तुम्हाला काय करायचे आहे?"
+  },
+  "Hello! How can I help you today?": {
+    "hi": "नमस्ते! आज मैं आपकी कैसे मदद कर सकता हूँ?",
+    "mr": "नमस्कार! आज मी तुम्हाला कशी मदत करू शकतो?"
+  },
+  "Project is located in Gachibowli, Hyderabad.": {
+    "hi": "यह प्रोजैक्ट गच्चीबोवली, हैदराबाद में स्थित है।",
+    "mr": "प्रकल्प गच्चीबोवली, हैदराबादमध्ये स्थित आहे."
+  },
+  "What would you like next?": {
+    "hi": "आगे क्या जानना चाहेंगे?",
+    "mr": "पुढे काय जाणून घ्यायचे?"
+  },
+  "Please choose": {
+    "hi": "कृपया चुनें",
+    "mr": "कृपया निवडा"
+  },
+  "Choose an option:": {
+    "hi": "एक विकल्प चुनें:",
+    "mr": "एक पर्याय निवडा:"
+  },
+  "View on map": {
+    "hi": "मानचित्र पर देखें",
+    "mr": "नकाशावर पहा"
+  },
+  "Contact us": {
+    "hi": "संपर्क करें",
+    "mr": "संपर्क करा"
+  },
+  "Back to menu": {
+    "hi": "मेनू पर वापस",
+    "mr": "मेनूवर परत"
+  },
+  "Image 1": {
+    "hi": "चित्र १",
+    "mr": "चित्र १"
+  },
+  "Sorry, I did not understand. Please try again or pick an option.": {
+    "hi": "क्षमा करें, मैं समझ नहीं पाया। कृपया दोबारा लिखें या कोई विकल्प चुनें।",
+    "mr": "माफ करा, मला समजले नाही. कृपया पुन्हा लिहा किंवा पर्याय निवडा."
+  },
+  "Products": {
+    "hi": "उत्पाद",
+    "mr": "उत्पादने"
+  },
+  "Support": {
+    "hi": "सहायता",
+    "mr": "मदत"
+  },
+  "Contact": {
+    "hi": "संपर्क",
+    "mr": "संपर्क"
+  }
+}

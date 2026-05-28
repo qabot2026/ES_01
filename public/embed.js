@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var QA_ASSET_VERSION = '20260529-location-fix';
+  var QA_ASSET_VERSION = '20260529-phrase-translations';
 
   var script = document.currentScript;
   var base = '';
