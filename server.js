@@ -2,6 +2,7 @@ const express = require('express');
 const path = require('path');
 const { randomUUID } = require('crypto');
 const dialogflow = require('./lib/dialogflow');
+const translate = require('./lib/translate');
 
 const app = express();
 const PORT = process.env.PORT || 4567;
@@ -100,11 +101,44 @@ app.post('/api/chat', async (req, res) => {
   }
 });
 
+app.post('/api/translate', async (req, res) => {
+  const { texts, targetLanguageCode, sourceLanguageCode = 'en' } = req.body || {};
+  const target = translate.normalizeLang(targetLanguageCode);
+  const source = translate.normalizeLang(sourceLanguageCode);
+  const list = Array.isArray(texts) ? texts.map((t) => String(t == null ? '' : t)) : [];
+
+  if (!target || target === source) {
+    return res.json({ translations: list, translated: false });
+  }
+
+  if (!translate.isConfigured()) {
+    return res.status(503).json({
+      error: 'translate_not_configured',
+      message:
+        'Enable Cloud Translation API and use GOOGLE_CREDENTIALS_JSON (same as Dialogflow).',
+      translations: list,
+    });
+  }
+
+  try {
+    const translations = await translate.translateTexts(list, target, source);
+    res.json({ translations, translated: true, target, source });
+  } catch (err) {
+    console.error('[translate]', err.message);
+    res.status(500).json({
+      error: 'translate_error',
+      message: err.message,
+      translations: list,
+    });
+  }
+});
+
 app.get('/api/config', (_req, res) => {
   res.json({
     projectId: dialogflow.PROJECT_ID,
     agentId: '07ccbfd0-4cad-4898-8323-e6baeec80fc1',
     dialogflowReady: dialogflow.isConfigured(),
+    translateReady: translate.isConfigured(),
     publicBaseUrl: PUBLIC_BASE_URL,
     embedScript: `${PUBLIC_BASE_URL}/embed.js`,
   });

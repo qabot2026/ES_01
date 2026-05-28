@@ -388,6 +388,17 @@ window.QA_CHAT_UI_CONFIG = {
         /** UI Marathi/Hindi — Dialogflow hamesha en (English training phrases) */
         alwaysUseDialogflowLanguage: 'en',
 
+        /**
+         * 🔴 Bot reply English se UI language me auto-translate (Google Cloud Translation API).
+         * GCP par "Cloud Translation API" enable karo (same credentials as Dialogflow).
+         */
+        autoTranslateBotReplies: true,
+        translationSourceLanguage: 'en',
+        translationOverridesByLanguage: {
+          hi: {},
+          mr: {},
+        },
+
         selectWidthCh: 10,
 
         selectWidthExtraPx: 15,

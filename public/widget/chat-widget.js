@@ -925,6 +925,155 @@
       .catch(function () {});
   };
 
+  function getMultiLanguageCfg() {
+    return (getRootCfg().features || {}).multiLanguage || {};
+  }
+
+  function getTranslationOverrides(lang) {
+    var ml = getMultiLanguageCfg();
+    var map = ml.translationOverridesByLanguage || {};
+    return map[lang] || null;
+  }
+
+  function applyTranslationOverride(text, lang) {
+    var t = String(text == null ? '' : text).trim();
+    if (!t || lang === 'en' || !lang) return text;
+    var overrides = getTranslationOverrides(lang);
+    if (overrides && overrides[t] != null) return String(overrides[t]);
+    return text;
+  }
+
+  QualityAssistantWidget.prototype.shouldAutoTranslateReplies = function () {
+    var ml = getMultiLanguageCfg();
+    if (ml.autoTranslateBotReplies !== true) return false;
+    var ui = this.language || 'en';
+    return ui !== 'en';
+  };
+
+  QualityAssistantWidget.prototype.maybeTranslateBotPayload = function (data) {
+    var self = this;
+    if (!data || !this.shouldAutoTranslateReplies() || !this.apiBase) {
+      return Promise.resolve(data);
+    }
+    var ml = getMultiLanguageCfg();
+    var lang = this.language;
+    var source =
+      String(
+        ml.translationSourceLanguage ||
+          ml.alwaysUseDialogflowLanguage ||
+          ml.intentLanguage ||
+          'en'
+      ).trim() || 'en';
+    var jobs = [];
+
+    function queue(text, applyFn) {
+      var raw = String(text == null ? '' : text);
+      if (!raw.trim()) return;
+      var overridden = applyTranslationOverride(raw, lang);
+      if (overridden !== raw) {
+        applyFn(overridden);
+        return;
+      }
+      jobs.push({ text: raw.trim(), apply: applyFn });
+    }
+
+    queue(data.reply, function (t) {
+      data.reply = t;
+    });
+    (data.replyParts || []).forEach(function (p, i) {
+      if (p.type === 'text' && p.text) {
+        queue(p.text, function (t) {
+          data.replyParts[i].text = t;
+        });
+      }
+      if (p.type === 'link' && p.text) {
+        queue(p.text, function (t) {
+          data.replyParts[i].text = t;
+        });
+      }
+    });
+    queue(data.chipHeading, function (t) {
+      data.chipHeading = t;
+    });
+    (data.chips || []).forEach(function (c, i) {
+      queue(c.label, function (t) {
+        data.chips[i].label = t;
+      });
+    });
+    (data.dropdowns || []).forEach(function (d, i) {
+      queue(d.message, function (t) {
+        data.dropdowns[i].message = t;
+      });
+      queue(d.placeholder, function (t) {
+        data.dropdowns[i].placeholder = t;
+      });
+      (d.options || []).forEach(function (opt, j) {
+        queue(opt.label, function (t) {
+          data.dropdowns[i].options[j].label = t;
+        });
+      });
+    });
+    (data.galleries || []).forEach(function (g, i) {
+      queue(g.message, function (t) {
+        data.galleries[i].message = t;
+      });
+    });
+    (data.cardCarousels || []).forEach(function (car, ci) {
+      queue(car.message, function (t) {
+        data.cardCarousels[ci].message = t;
+      });
+      (car.cards || []).forEach(function (card, ki) {
+        queue(card.title, function (t) {
+          data.cardCarousels[ci].cards[ki].title = t;
+        });
+        queue(card.subtitle, function (t) {
+          data.cardCarousels[ci].cards[ki].subtitle = t;
+        });
+        queue(card.ctaLabel, function (t) {
+          data.cardCarousels[ci].cards[ki].ctaLabel = t;
+        });
+        (card.buttons || []).forEach(function (btn, bi) {
+          queue(btn.label, function (t) {
+            data.cardCarousels[ci].cards[ki].buttons[bi].label = t;
+          });
+        });
+      });
+    });
+
+    if (!jobs.length) return Promise.resolve(data);
+
+    var texts = jobs.map(function (j) {
+      return j.text;
+    });
+
+    return fetch(self.apiBase + '/api/translate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        texts: texts,
+        targetLanguageCode: lang,
+        sourceLanguageCode: source,
+      }),
+    })
+      .then(function (res) {
+        return res.json().then(function (body) {
+          return { ok: res.ok, body: body };
+        });
+      })
+      .then(function (result) {
+        if (!result.ok || !result.body || !Array.isArray(result.body.translations)) {
+          return data;
+        }
+        result.body.translations.forEach(function (translated, idx) {
+          if (jobs[idx]) jobs[idx].apply(String(translated));
+        });
+        return data;
+      })
+      .catch(function () {
+        return data;
+      });
+  };
+
   QualityAssistantWidget.prototype.getDialogflowLang = function () {
     var ml = (getRootCfg().features || {}).multiLanguage || {};
     var fixed = String(
@@ -937,6 +1086,7 @@
   };
 
   QualityAssistantWidget.prototype.applyDialogflowResult = function (result) {
+    var self = this;
     if (!result.ok) {
       this.appendMessage(
         'bot',
@@ -947,38 +1097,42 @@
       return;
     }
     if (result.data.sessionId) this.sessionId = result.data.sessionId;
-    var richOn = isRichContentEnabled();
-    var chips = richOn && result.data.chips ? result.data.chips : [];
-    var infoCards = richOn && result.data.infoCards ? result.data.infoCards : [];
-    var downloads = richOn && result.data.downloads ? result.data.downloads : [];
-    var dropdowns = result.data.dropdowns || [];
-    var galleries = result.data.galleries || [];
-    var cardCarousels = richOn && result.data.cardCarousels ? result.data.cardCarousels : [];
-    var reply = (result.data.reply || '').trim();
-    var replyParts = result.data.replyParts || [];
-    var chipHeading = (result.data.chipHeading || '').trim();
-    if (
-      reply ||
-      replyParts.length ||
-      chips.length ||
-      chipHeading ||
-      infoCards.length ||
-      downloads.length ||
-      dropdowns.length ||
-      galleries.length ||
-      cardCarousels.length
-    ) {
-      this.appendMessage('bot', reply, {
-        replyParts: replyParts,
-        chips: chips,
-        chipHeading: chipHeading,
-        infoCards: infoCards,
-        downloads: downloads,
-        dropdowns: dropdowns,
-        galleries: galleries,
-        cardCarousels: cardCarousels,
-      });
-    }
+
+    this.maybeTranslateBotPayload(result.data).then(function (payload) {
+      var richOn = isRichContentEnabled();
+      var chips = richOn && payload.chips ? payload.chips : [];
+      var infoCards = richOn && payload.infoCards ? payload.infoCards : [];
+      var downloads = richOn && payload.downloads ? payload.downloads : [];
+      var dropdowns = payload.dropdowns || [];
+      var galleries = payload.galleries || [];
+      var cardCarousels =
+        richOn && payload.cardCarousels ? payload.cardCarousels : [];
+      var reply = (payload.reply || '').trim();
+      var replyParts = payload.replyParts || [];
+      var chipHeading = (payload.chipHeading || '').trim();
+      if (
+        reply ||
+        replyParts.length ||
+        chips.length ||
+        chipHeading ||
+        infoCards.length ||
+        downloads.length ||
+        dropdowns.length ||
+        galleries.length ||
+        cardCarousels.length
+      ) {
+        self.appendMessage('bot', reply, {
+          replyParts: replyParts,
+          chips: chips,
+          chipHeading: chipHeading,
+          infoCards: infoCards,
+          downloads: downloads,
+          dropdowns: dropdowns,
+          galleries: galleries,
+          cardCarousels: cardCarousels,
+        });
+      }
+    });
   };
 
   QualityAssistantWidget.prototype.postToDialogflow = function (body, opts) {
