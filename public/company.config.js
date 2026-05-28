@@ -1,345 +1,363 @@
-/**
- * QualityAssistant — EDIT ONLY THIS FILE (same idea as refer company.config.js).
- * All 🟢 GREEN — UI / browser only.
- *
- * Logos: set your HTTPS image URLs below (refer uses chatIconUrl + chatTitleIconUrl).
- */
-
-var QA_LOGO_LAUNCHER =
-  'https://storage.googleapis.com/companybucket/Images/cat.png';
-var QA_LOGO_HEADER =
-  'https://storage.googleapis.com/companybucket/Images/cat-icon.png';
-
-window.QA_CHAT_UI_CONFIG = {
-  common: {
-    cost: 'green',
-    dialogflow: {
-      projectId: 'qualityassistant-ygdm',
-      agentId: '07ccbfd0-4cad-4898-8323-e6baeec80fc1',
-      /**
-       * Fire a Dialogflow ES event when the chat opens / restarts.
-       * Create the same event name under Dialogflow → Events (e.g. FRESH).
-       */
-      welcomeEvent: {
-        enabled: true,
-        eventName: 'FRESH',
-        triggerOnChatOpen: true,
-        triggerOnRestart: true,
-        /** One FRESH per page load until Restart (stops duplicate bot replies) */
-        triggerOncePerSession: true,
-      },
-      /**
-       * ENDCHAT — end conversation (Dialogflow → Events + intent with event ENDCHAT).
-       * Set idleTimeoutMs to how long the user can be inactive before ENDCHAT fires.
-       */
-      endChatEvent: {
-        enabled: true,
-        eventName: 'ENDCHAT',
-        /** Fire after user is idle this many ms (you decide — e.g. 20000 = 20 seconds) */
-        triggerOnIdle: true,
-        idleTimeoutMs: 20000,
-        /** Fire when user clicks close (usually false if you only want idle) */
-        triggerOnChatClose: false,
-        triggerOnRestart: false,
-        showBotResponse: true,
-        /** After goodbye: close panel automatically (optional) */
-        closePanelAfterEnd: false,
-        closePanelAfterMs: 2500,
-        /** One auto ENDCHAT per chat open until Restart */
-        triggerOncePerSession: true,
-        /** Idle ENDCHAT only after user sent a message / chip / dropdown once */
-        requireUserInteraction: true,
-      },
-      /** GREEN — chips + info cards from Custom payload richContent */
-      richContentChips: {
-        enabled: true,
-        cost: 'green',
-        /** Info card image — contain = full image visible (no crop); cover = fill & crop */
-        infoCardImage: {
-          cardWidthPx: 220,
-          imageMaxHeightPx: 220,
-          objectFit: 'contain',
-          background: '#e8f4fc',
-        },
-        /**
-         * Horizontal strips (gallery + card carousel):
-         * - autoScroll: true/false — slow scroll on/off
-         * - stopAutoScrollOnInteraction: when autoScroll is on, image/arrow/scrollbar
-         *   stops auto-scroll for that one strip only (set false to keep scrolling)
-         */
-        scrollStrip: {
-          autoScroll: true,
-          autoScrollSecondsPerItem: 4,
-          stopAutoScrollOnInteraction: true,
-        },
-        /** open_card_carousel — swipeable property/product cards */
-        cardCarousel: {
-          cardWidthPx: 200,
-          imageHeightPx: 140,
-          objectFit: 'cover',
-          background: '#e8f4fc',
-        },
-        /** open_gallery — horizontal image strip (urls in Dialogflow payload) */
-        galleryImage: {
-          itemWidthPx: 120,
-          imageHeightPx: 90,
-          objectFit: 'cover',
-          background: '#e8f4fc',
-        },
-        /**
-         * Dialogflow options payload (dfchat_inline_select / open_gallery).
-         * display: 'chips' = clickable chips | 'dropdown' = select menu
-         */
-        inlineSelect: {
-          display: 'dropdown',
-        },
-      },
-    },
-
-    deploy: {
-      publicBaseUrl: 'https://es-based-chatbot-production.up.railway.app',
-      embedScript:
-        'https://es-based-chatbot-production.up.railway.app/embed.js',
-    },
-
-    typography: {
-      fontFamily: '"Segoe UI", system-ui, -apple-system, sans-serif',
-    },
-
-    // Chat panel top bar — title + subtitle (only edit here, not server.js)
-    header: {
-      title: 'Quality Testing Assistant',
-      subtitle: '🟢 We are online to help',
-      chatIconUrl: QA_LOGO_LAUNCHER,
-      chatTitleIconUrl: QA_LOGO_HEADER,
-      headerIconUrl: QA_LOGO_HEADER,
-      titlebarIconSizePx: 40,
-      showHeaderIcon: true,
-      botWritingText: 'Typing',
-      botWritingDotsIntervalMs: 480,
-    },
-
-    welcome: {
-      /** false = no welcome title/body/chips when chat opens or after Restart */
-      enabled: false,
-      title: 'Welcome',
-      body: 'Select an option',
-      restartTitle: 'Restarted',
-      restartBody: 'Select an option.',
-      /** Tap chips below welcome/restart text — sends message to bot */
-      suggestionChips: {
-        enabled: false,
-        items: [
-          {
-            label: 'DisplayName',
-            message: 'TriggerName',
-          },
-          {
-            label: 'DisplayName',
-            message: 'TriggerName',
-          }, 
-          {
-            label: 'DisplayName',
-            message: 'TriggerName',
-          }, {
-            label: 'DisplayName',
-            message: 'TriggerName',
-          },
-        ],
-      },
-    },
-
-    botPersona: {
-      mode: 'image',
-      imageUrl: QA_LOGO_HEADER,
-      label: 'Quality',
-      avatarSizePx: 32,
-      gapBelowPx: 4,
-      showTime: true,
-      showSeconds: true,
-      timeZone: 'Asia/Kolkata',
-      messageTimeIncludesDate: false,
-    },
-
-    userPersona: {
-      label: 'You',
-      avatarSizePx: 18,
-      gapBelowPx: 4,
-      showTime: true,
-      showSeconds: true,
-      timeZone: 'Asia/Kolkata',
-      messageTimeIncludesDate: false,
-    },
-
-    /** Name + time above each message (Quality / You + 12:11:55 am) */
-    personaDisplay: {
-      nameFontSizePx: 11,
-      timeFontSizePx: 10,
-      blurPx: 0.35,
-      opacity: 0.82,
-    },
-
-    features: {
-      multiLanguage: {
-        enabled: true,
-        defaultLanguage: 'en',
-        selectWidthCh: 10,
-        selectWidthExtraPx: 15,
-        showSelectBorder: false,
-        languages: [
-          {
-            code: 'en',
-            label: 'English',
-            nativeLabel: 'English',
-            speech: 'en-IN',
-            dialogflow: 'en',
-          },
-          {
-            code: 'hi',
-            label: 'Hindi',
-            nativeLabel: 'हिन्दी',
-            speech: 'hi-IN',
-            dialogflow: 'hi',
-          },
-          {
-            code: 'mr',
-            label: 'Marathi',
-            nativeLabel: 'मराठी',
-            speech: 'mr-IN',
-            dialogflow: 'mr',
-          },
-        ],
-      },
-      speechToText: { enabled: true },
-      restartChat: { enabled: true, label: 'Restart' },
-      inputPlaceholderByLanguage: {
-        en: 'Type your message here…',
-        hi: 'अपना संदेश लिखें…',
-        mr: 'तुमचा संदेश लिहा…',
-      },
-    },
-
-    poweredBy: {
-      enabled: true,
-      prefix: '⚡by ',
-      brandName: 'QualityAssistant',
-      logoUrl: "https://www.vhv.rs/dpng/d/6-68550_hanuman-ji-png-transparent-png.png",
-      linkUrl: 'www.google.com',
-      color: '#0369a1',
-      fontSizePx: 9,
-      logoHeightPx: 12,
-      offsetDownPx: 15,
-    },
-
-    restartButton: {
-      /** Space between language dropdown and Restart (px). */
-      gapAfterLanguagePx: 10,
-    },
-
-    theme: {
-      '--qa-primary': '#0284c7',
-      '--qa-primary-dark': '#0369a1',
-      '--qa-primary-deep': '#075985',
-      '--qa-accent': '#0ea5e9',
-      '--qa-accent-light': '#bae6fd',
-      '--qa-bg': '#e8f4fc',
-      '--qa-bg-2': '#f7fbff',
-      '--qa-surface': '#ffffff',
-      '--qa-text': '#0f172a',
-      '--qa-text-soft': '#475569',
-      '--qa-muted': '#475569',
-      '--qa-border': '#dbe5ec',
-      '--qa-bot-bg': 'linear-gradient(168deg, #e8f6ff 0%, #bae6fd 100%)',
-      '--qa-bot-text': '#0c4a6e',
-      '--qa-user-bg': 'linear-gradient(145deg, #0284c7 0%, #0ea5e9 100%)',
-      '--qa-user-text': '#f0f9ff',
-      '--qa-header-bg':
-        'linear-gradient(180deg, rgba(255,255,255,0.38) 0%, rgba(255,255,255,0.1) 24%, transparent 46%), linear-gradient(168deg, #38bdf8 0%, #0284c7 42%, #075985 100%)',
-      '--qa-shadow':
-        '0 10px 28px -6px rgba(15, 23, 42, 0.1), 0 20px 40px -14px rgba(14, 165, 233, 0.12)',
-      '--qa-launcher-shadow': '0 3px 10px -2px rgba(14, 165, 233, 0.2)',
-      '--qa-launcher-shadow-hover': '0 5px 14px -2px rgba(14, 165, 233, 0.28)',
-      '--qa-radius': '22px',
-      '--qa-ring-color': '#0ea5e9',
-    },
-
-    chatPanel: {
-      borderRadius: {
-        topLeft: '22px',
-        topRight: '22px',
-        bottomLeft: '20px',
-        bottomRight: '20px',
-      },
-    },
-
-    chatLayout: { side: 'right' },
-
-    launcher: {
-      sizePx: 64,
-      iconUrl: QA_LOGO_LAUNCHER,
-      cornerRoundness: '50%',
-      storyRing: {
-        enabled: true,
-        widthPx: 2.5,
-        /** Spin the gradient around the ring (Instagram-style). Icon stays still. */
-        rotateSeconds: 3,
-        /**
-         * When true, the colored ring animates (uses rotateSeconds).
-         * When false, ring stays static (same colors, no motion).
-         */
-        colorRingMotionEnabled: true,
-        /** true = Instagram rainbow ring; false = theme blue ring (from theme colors). */
-        instagramStyle: true,
-      },
-    },
-
-    launcherStrip: {
-      enabled: true,
-      text: '👋Hey, how are you?😊',
-      position: { rightPx: 10, bottomPx: 66 },
-      style: { fontSizePx: 13, paddingYpx: 10, paddingXpx: 14, maxWidthPx: 260 },
-    },
-  },
-
-  desk: {
-    showChatbot: true,
-    titlebarIconSizePx: 40,
-    chatWindow: {
-      widthPx: 400,
-      heightPx: 520,
-      minHeightPx: 360,
-      topInsetPx: 16,
-      position: { rightPx: 10, bottomPx: 20, leftPx: null },
-    },
-    autoOpenChat: { enabled: true, delayMs: 2000 },
-    launcherStrip: { text: '👋Hey, how are you?😊' },
-  },
-
-  mob: {
-    showChatbot: true,
-    titlebarIconSizePx: 36,
-    chatWindow: {
-      widthPx: null,
-      heightPx: null,
-      minHeightPx: 480,
-      horizontalInsetPx: 12,
-      bottomInsetPx: 10,
-      topInsetPx: 26,
-      position: { rightPx: 12, bottomPx: 10, leftPx: null },
-    },
-    autoOpenChat: { enabled: true, delayMs: 2000 },
-    launcherStrip: {
-      text: '🤖Chat with us',
-      position: { rightPx: 12, bottomPx: 60 },
-    },
-  },
-};
-
-(function () {
-  var c = window.QA_CHAT_UI_CONFIG;
-  if (!c || !c.common) return;
-  window.QA_CONFIG = {
-    apiBase: c.common.deploy.publicBaseUrl,
-    embedScript: c.common.deploy.embedScript,
-  };
-})();
+/**
+ * QualityAssistant — EDIT ONLY THIS FILE.
+ *
+ * COST LEGEND (Dialogflow ES)
+ *   🟢 green = no extra detectIntent charge (UI / browser / data already in bot reply)
+ *   🔴 red   = billable Dialogflow request via /api/chat (text or event)
+ *
+ * Full table: FEATURE-COSTS.md in project root.
+ *
+ * Logos: HTTPS image URLs below.
+ */
+
+var QA_LOGO_LAUNCHER =
+  'https://storage.googleapis.com/companybucket/Images/cat.png';
+var QA_LOGO_HEADER =
+  'https://storage.googleapis.com/companybucket/Images/cat-icon.png';
+
+window.QA_CHAT_UI_CONFIG = {
+  common: {
+    /** 🟢 This config file itself does not call APIs */
+    cost: 'green',
+
+  /**
+   * Quick reference — match keys to sections below.
+   * cost: 'green' | 'red'
+   */
+    featureCostGuide: [
+      { id: 'userMessage', cost: 'red', label: 'User Send / typed message' },
+      { id: 'welcomeEvent', cost: 'red', label: 'FRESH event (open / restart)' },
+      { id: 'endChatEvent', cost: 'red', label: 'ENDCHAT event (idle / close)' },
+      { id: 'chipsAndButtons', cost: 'red', label: 'Chip / card CTA / dropdown selection' },
+      { id: 'restartChat', cost: 'red', label: 'Restart (+ FRESH if enabled)' },
+      { id: 'speechToText', cost: 'green', label: 'Mic (browser STT)' },
+      { id: 'speechSend', cost: 'red', label: 'Sending mic transcript' },
+      { id: 'multiLanguage', cost: 'green', label: 'Language picker UI' },
+      { id: 'richContent', cost: 'green', label: 'Cards, gallery, carousel, chips display' },
+      { id: 'carouselAutoScroll', cost: 'green', label: 'Auto-scroll / arrows / lightbox' },
+      { id: 'themeLayout', cost: 'green', label: 'Theme, launcher, header, personas' },
+      { id: 'hostedImages', cost: 'green', label: 'Show images (GCS bandwidth only, not Dialogflow)' },
+    ],
+
+    dialogflow: {
+      projectId: 'qualityassistant-ygdm',
+      agentId: '07ccbfd0-4cad-4898-8323-e6baeec80fc1',
+      /** 🔴 FRESH — 1 detectIntent per open/restart (when enabled) */
+      welcomeEvent: {
+        cost: 'red',
+        enabled: true,
+        eventName: 'FRESH',
+        triggerOnChatOpen: true,
+        triggerOnRestart: true,
+        triggerOncePerSession: true,
+      },
+      /** 🔴 ENDCHAT — 1 detectIntent per idle/close (when enabled) */
+      endChatEvent: {
+        cost: 'red',
+        enabled: true,
+        eventName: 'ENDCHAT',
+        triggerOnIdle: true,
+        idleTimeoutMs: 20000,
+        triggerOnChatClose: false,
+        triggerOnRestart: false,
+        showBotResponse: true,
+        closePanelAfterEnd: false,
+        closePanelAfterMs: 2500,
+        triggerOncePerSession: true,
+        requireUserInteraction: true,
+      },
+      /**
+       * 🟢 Display only — parsed from fulfillment JSON (no extra API).
+       * 🔴 User taps chip / card button / dropdown → sends message (billable).
+       */
+      richContentChips: {
+        enabled: true,
+        cost: 'green',
+        infoCardImage: {
+          cost: 'green',
+          cardWidthPx: 220,
+          imageMaxHeightPx: 220,
+          objectFit: 'contain',
+          background: '#e8f4fc',
+        },
+        scrollStrip: {
+          cost: 'green',
+          autoScroll: true,
+          autoScrollSecondsPerItem: 4,
+          stopAutoScrollOnInteraction: true,
+        },
+        cardCarousel: {
+          cost: 'green',
+          cardWidthPx: 200,
+          imageHeightPx: 140,
+          objectFit: 'cover',
+          background: '#e8f4fc',
+        },
+        galleryImage: {
+          cost: 'green',
+          itemWidthPx: 120,
+          imageHeightPx: 90,
+          objectFit: 'cover',
+          background: '#e8f4fc',
+        },
+        inlineSelect: {
+          cost: 'green',
+          display: 'dropdown',
+        },
+      },
+    },
+
+    deploy: {
+      cost: 'green',
+      publicBaseUrl: 'https://es-based-chatbot-production.up.railway.app',
+      embedScript:
+        'https://es-based-chatbot-production.up.railway.app/embed.js',
+    },
+
+    typography: {
+      cost: 'green',
+      fontFamily: '"Segoe UI", system-ui, -apple-system, sans-serif',
+    },
+
+    header: {
+      cost: 'green',
+      title: 'Quality Testing Assistant',
+      subtitle: '🟢 UI only · 🔴 = each message/event to Dialogflow',
+      chatIconUrl: QA_LOGO_LAUNCHER,
+      chatTitleIconUrl: QA_LOGO_HEADER,
+      headerIconUrl: QA_LOGO_HEADER,
+      titlebarIconSizePx: 40,
+      showHeaderIcon: true,
+      botWritingText: 'Typing',
+      botWritingDotsIntervalMs: 480,
+    },
+
+    welcome: {
+      cost: 'green',
+      enabled: false,
+      title: 'Welcome',
+      body: 'Select an option',
+      restartTitle: 'Restarted',
+      restartBody: 'Select an option.',
+      /** 🟢 show chips · 🔴 each chip tap sends message */
+      suggestionChips: {
+        cost: 'red',
+        enabled: false,
+        items: [
+          { label: 'DisplayName', message: 'TriggerName' },
+          { label: 'DisplayName', message: 'TriggerName' },
+          { label: 'DisplayName', message: 'TriggerName' },
+          { label: 'DisplayName', message: 'TriggerName' },
+        ],
+      },
+    },
+
+    botPersona: {
+      cost: 'green',
+      mode: 'image',
+      imageUrl: QA_LOGO_HEADER,
+      label: 'Quality',
+      avatarSizePx: 32,
+      gapBelowPx: 4,
+      showTime: true,
+      showSeconds: true,
+      timeZone: 'Asia/Kolkata',
+      messageTimeIncludesDate: false,
+    },
+
+    userPersona: {
+      cost: 'green',
+      label: 'You',
+      avatarSizePx: 18,
+      gapBelowPx: 4,
+      showTime: true,
+      showSeconds: true,
+      timeZone: 'Asia/Kolkata',
+      messageTimeIncludesDate: false,
+    },
+
+    personaDisplay: {
+      cost: 'green',
+      nameFontSizePx: 11,
+      timeFontSizePx: 10,
+      blurPx: 0.35,
+      opacity: 0.82,
+    },
+
+    features: {
+      /** 🟢 picker only — does not call Dialogflow until user sends */
+      multiLanguage: {
+        cost: 'green',
+        enabled: true,
+        defaultLanguage: 'en',
+        selectWidthCh: 10,
+        selectWidthExtraPx: 15,
+        showSelectBorder: false,
+        languages: [
+          {
+            code: 'en',
+            label: 'English',
+            nativeLabel: 'English',
+            speech: 'en-IN',
+            dialogflow: 'en',
+          },
+          {
+            code: 'hi',
+            label: 'Hindi',
+            nativeLabel: 'हिन्दी',
+            speech: 'hi-IN',
+            dialogflow: 'hi',
+          },
+          {
+            code: 'mr',
+            label: 'Marathi',
+            nativeLabel: 'मराठी',
+            speech: 'mr-IN',
+            dialogflow: 'mr',
+          },
+        ],
+      },
+      /** 🟢 mic · 🔴 sending recognized text */
+      speechToText: { cost: 'green', enabled: true },
+      /** 🔴 clears session UI + FRESH when welcomeEvent.triggerOnRestart */
+      restartChat: { cost: 'red', enabled: true, label: 'Restart' },
+      inputPlaceholderByLanguage: {
+        cost: 'green',
+        en: 'Type your message here…',
+        hi: 'अपना संदेश लिखें…',
+        mr: 'तुमचा संदेश लिहा…',
+      },
+    },
+
+    poweredBy: {
+      cost: 'green',
+      enabled: true,
+      prefix: '⚡by ',
+      brandName: 'QualityAssistant',
+      logoUrl:
+        'https://www.vhv.rs/dpng/d/6-68550_hanuman-ji-png-transparent-png.png',
+      linkUrl: 'www.google.com',
+      color: '#0369a1',
+      fontSizePx: 9,
+      logoHeightPx: 12,
+      offsetDownPx: 15,
+    },
+
+    restartButton: {
+      cost: 'green',
+      gapAfterLanguagePx: 10,
+    },
+
+    theme: {
+      cost: 'green',
+      '--qa-primary': '#0284c7',
+      '--qa-primary-dark': '#0369a1',
+      '--qa-primary-deep': '#075985',
+      '--qa-accent': '#0ea5e9',
+      '--qa-accent-light': '#bae6fd',
+      '--qa-bg': '#e8f4fc',
+      '--qa-bg-2': '#f7fbff',
+      '--qa-surface': '#ffffff',
+      '--qa-text': '#0f172a',
+      '--qa-text-soft': '#475569',
+      '--qa-muted': '#475569',
+      '--qa-border': '#dbe5ec',
+      '--qa-bot-bg': 'linear-gradient(168deg, #e8f6ff 0%, #bae6fd 100%)',
+      '--qa-bot-text': '#0c4a6e',
+      '--qa-user-bg': 'linear-gradient(145deg, #0284c7 0%, #0ea5e9 100%)',
+      '--qa-user-text': '#f0f9ff',
+      '--qa-header-bg':
+        'linear-gradient(180deg, rgba(255,255,255,0.38) 0%, rgba(255,255,255,0.1) 24%, transparent 46%), linear-gradient(168deg, #38bdf8 0%, #0284c7 42%, #075985 100%)',
+      '--qa-shadow':
+        '0 10px 28px -6px rgba(15, 23, 42, 0.1), 0 20px 40px -14px rgba(14, 165, 233, 0.12)',
+      '--qa-launcher-shadow': '0 3px 10px -2px rgba(14, 165, 233, 0.2)',
+      '--qa-launcher-shadow-hover': '0 5px 14px -2px rgba(14, 165, 233, 0.28)',
+      '--qa-radius': '22px',
+      '--qa-ring-color': '#0ea5e9',
+    },
+
+    chatPanel: {
+      cost: 'green',
+      borderRadius: {
+        topLeft: '22px',
+        topRight: '22px',
+        bottomLeft: '20px',
+        bottomRight: '20px',
+      },
+    },
+
+    chatLayout: { cost: 'green', side: 'right' },
+
+    launcher: {
+      cost: 'green',
+      sizePx: 64,
+      iconUrl: QA_LOGO_LAUNCHER,
+      cornerRoundness: '50%',
+      storyRing: {
+        cost: 'green',
+        enabled: true,
+        widthPx: 2.5,
+        rotateSeconds: 3,
+        colorRingMotionEnabled: true,
+        instagramStyle: true,
+      },
+    },
+
+    launcherStrip: {
+      cost: 'green',
+      enabled: true,
+      text: '👋Hey, how are you?😊',
+      position: { rightPx: 10, bottomPx: 66 },
+      style: { fontSizePx: 13, paddingYpx: 10, paddingXpx: 14, maxWidthPx: 260 },
+    },
+  },
+
+  desk: {
+    cost: 'green',
+    showChatbot: true,
+    titlebarIconSizePx: 40,
+    chatWindow: {
+      cost: 'green',
+      widthPx: 400,
+      heightPx: 520,
+      minHeightPx: 360,
+      topInsetPx: 16,
+      position: { rightPx: 10, bottomPx: 20, leftPx: null },
+    },
+    /** 🟢 opens panel · 🔴 +1 if welcomeEvent on open */
+    autoOpenChat: { cost: 'green', enabled: true, delayMs: 2000 },
+    launcherStrip: { cost: 'green', text: '👋Hey, how are you?😊' },
+  },
+
+  mob: {
+    cost: 'green',
+    showChatbot: true,
+    titlebarIconSizePx: 36,
+    chatWindow: {
+      cost: 'green',
+      widthPx: null,
+      heightPx: null,
+      minHeightPx: 480,
+      horizontalInsetPx: 12,
+      bottomInsetPx: 10,
+      topInsetPx: 26,
+      position: { rightPx: 12, bottomPx: 10, leftPx: null },
+    },
+    autoOpenChat: { cost: 'green', enabled: true, delayMs: 2000 },
+    launcherStrip: {
+      cost: 'green',
+      text: '🤖Chat with us',
+      position: { rightPx: 12, bottomPx: 60 },
+    },
+  },
+};
+
+(function () {
+  var c = window.QA_CHAT_UI_CONFIG;
+  if (!c || !c.common) return;
+  window.QA_CONFIG = {
+    apiBase: c.common.deploy.publicBaseUrl,
+    embedScript: c.common.deploy.embedScript,
+  };
+})();
+
