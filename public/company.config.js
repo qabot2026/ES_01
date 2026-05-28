@@ -385,6 +385,9 @@ window.QA_CHAT_UI_CONFIG = {
 
         defaultLanguage: 'en',
 
+        /** UI Marathi/Hindi — Dialogflow hamesha en (English training phrases) */
+        alwaysUseDialogflowLanguage: 'en',
+
         selectWidthCh: 10,
 
         selectWidthExtraPx: 15,
@@ -417,7 +420,7 @@ window.QA_CHAT_UI_CONFIG = {
 
             speech: 'hi-IN',
 
-            dialogflow: 'hi',
+            dialogflow: 'en',
 
           },
 
@@ -431,7 +434,7 @@ window.QA_CHAT_UI_CONFIG = {
 
             speech: 'mr-IN',
 
-            dialogflow: 'mr',
+            dialogflow: 'en',
 
           },
 
