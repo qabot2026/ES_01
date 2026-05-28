@@ -1482,22 +1482,35 @@
         options.secondsPerItem != null ? Number(options.secondsPerItem) : 4;
       if (!secondsPerItem || secondsPerItem < 0.5) secondsPerItem = 4;
 
+      var respectReducedMotion = options.respectReducedMotion === true;
       var reduceMotion =
+        respectReducedMotion &&
         global.matchMedia &&
         global.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
       if (!reduceMotion) {
         shell.classList.add('qa-scroll-strip--auto');
         var autoLastTime = 0;
+        var hoverPauseEnabled = false;
+
+        function getMaxScroll() {
+          return Math.max(
+            0,
+            track.scrollWidth - viewport.clientWidth,
+            viewport.scrollWidth - viewport.clientWidth
+          );
+        }
 
         function itemStepPx() {
           var first = track.firstElementChild;
-          return first ? first.getBoundingClientRect().width + 10 : 200;
+          if (!first) return 200;
+          var w = first.offsetWidth || first.getBoundingClientRect().width;
+          return (w > 0 ? w : 200) + 10;
         }
 
         function autoScrollTick(now) {
           global.requestAnimationFrame(autoScrollTick);
-          var maxScroll = Math.max(0, viewport.scrollWidth - viewport.clientWidth);
+          var maxScroll = getMaxScroll();
           if (maxScroll <= 4) {
             autoLastTime = 0;
             return;
@@ -1521,9 +1534,15 @@
           updateNav();
         }
 
+        setTimeout(function () {
+          hoverPauseEnabled = true;
+        }, 600);
+
         shell.addEventListener('mouseenter', function () {
-          hoverPaused = true;
-          autoLastTime = 0;
+          if (hoverPauseEnabled) {
+            hoverPaused = true;
+            autoLastTime = 0;
+          }
         });
         shell.addEventListener('mouseleave', function () {
           hoverPaused = false;
@@ -1543,8 +1562,17 @@
           },
           { passive: true }
         );
+        viewport.addEventListener('mousedown', function () {
+          pauseAutoScroll(8000);
+        });
 
         global.requestAnimationFrame(autoScrollTick);
+        setTimeout(function () {
+          updateNav();
+        }, 100);
+        setTimeout(function () {
+          updateNav();
+        }, 800);
       }
     }
 

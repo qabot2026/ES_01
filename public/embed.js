@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var QA_ASSET_VERSION = '20260527-auto-scroll';
+  var QA_ASSET_VERSION = '20260527-auto-scroll-fix';
 
   var script = document.currentScript;
   var base = '';

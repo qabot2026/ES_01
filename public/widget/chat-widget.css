@@ -686,12 +686,17 @@
 
 .qa-scroll-strip__viewport {
   overflow-x: auto;
+  overflow-y: hidden;
   max-width: 100%;
   scroll-snap-type: x proximity;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;
   scrollbar-color: color-mix(in srgb, var(--qa-primary, #0284c7) 45%, transparent) transparent;
   padding-bottom: 8px;
+}
+
+.qa-scroll-strip--auto .qa-scroll-strip__viewport {
+  scroll-snap-type: none;
 }
 
 .qa-scroll-strip__viewport::-webkit-scrollbar {
@@ -757,8 +762,10 @@
 .qa-card-carousel__track {
   display: flex;
   flex-direction: row;
+  flex-wrap: nowrap;
   gap: 10px;
-  max-width: 100%;
+  width: max-content;
+  min-width: 100%;
 }
 
 .qa-card-carousel__card {
@@ -984,7 +991,10 @@
 .qa-gallery__track {
   display: flex;
   flex-direction: row;
+  flex-wrap: nowrap;
   gap: 10px;
+  width: max-content;
+  min-width: 100%;
 }
 
 .qa-gallery__item {
