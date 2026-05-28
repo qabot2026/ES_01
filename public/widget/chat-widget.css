@@ -1501,7 +1501,7 @@ body.qa-lightbox-open {
 }
 
 .qa-launcher-strip__wave--pop {
-  animation: qa-strip-hand-pop 1s ease-in-out forwards;
+  animation: qa-strip-hand-pop var(--qa-hand-pop-duration, 1s) ease-in-out forwards;
   z-index: 3;
   position: relative;
 }

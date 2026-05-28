@@ -507,6 +507,7 @@
     var scale = Math.max(1.5, parseFloat(waveCfg.scale) || 3);
     var ms = Math.max(200, parseInt(waveCfg.durationMs, 10) || 1000);
     wave.style.setProperty('--qa-hand-pop-scale', String(scale));
+    wave.style.setProperty('--qa-hand-pop-duration', ms / 1000 + 's');
     wave.classList.remove('qa-launcher-strip__wave--pop');
     void wave.offsetWidth;
     wave.classList.add('qa-launcher-strip__wave--pop');

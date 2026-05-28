@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var QA_ASSET_VERSION = '20260529-strip-hand-shake';
+  var QA_ASSET_VERSION = '20260529-hand-pop-duration-sync';
 
   var script = document.currentScript;
   var base = '';
