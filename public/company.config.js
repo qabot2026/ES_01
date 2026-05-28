@@ -279,7 +279,7 @@ window.QA_CHAT_UI_CONFIG = {
   mob: {
     showChatbot: true,
 
-    chatLayout: { side: 'right' },
+    chatLayout: { side: 'left' },
 
     header: {
       titleFontSizePx: 15,
