@@ -1634,6 +1634,16 @@
     btn.setAttribute('aria-label', isClose ? 'Close chat' : 'Open chat');
   };
 
+  QualityAssistantWidget.prototype.syncLauncherStack = function () {
+    if (!this.root) return;
+    var stackPx = getLauncherStackPx(!!this.isOpen);
+    this.root.style.setProperty('--qa-launcher-stack', stackPx + 'px');
+    this.root.classList.toggle(
+      'qa-widget--no-close-bubble',
+      !!this.isOpen && !isLauncherCloseBubbleEnabled()
+    );
+  };
+
   QualityAssistantWidget.prototype.updateLauncherCloseBubble = function () {
     var wrap = this.els.launcherWrap;
     if (!wrap) return;
@@ -1643,15 +1653,18 @@
 
     if (!this.isOpen) {
       this.setLauncherCloseMode(false);
+      this.syncLauncherStack();
       return;
     }
 
     if (!showCloseBubble) {
       wrap.classList.add('qa-launcher--hidden');
+      this.syncLauncherStack();
       return;
     }
 
     this.setLauncherCloseMode(true);
+    this.syncLauncherStack();
   };
 
   QualityAssistantWidget.prototype.open = function () {
