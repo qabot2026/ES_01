@@ -1454,7 +1454,6 @@
     var autoScrollActive = options.autoScroll !== false;
     var stopOnInteraction = options.stopAutoScrollOnInteraction === true;
     var autoScrollStopped = false;
-    var programmaticScroll = false;
 
     function stopAutoScrollPermanent() {
       if (!autoScrollActive || autoScrollStopped) return;
@@ -1564,14 +1563,10 @@
           autoLastTime = now;
           var step = itemStepPx();
           var pxPerMs = step / (secondsPerItem * 1000);
-          programmaticScroll = true;
           viewport.scrollLeft += pxPerMs * dt;
           if (viewport.scrollLeft >= maxScroll - 1) {
             viewport.scrollLeft = 0;
           }
-          global.requestAnimationFrame(function () {
-            programmaticScroll = false;
-          });
           updateNav();
         }
 
