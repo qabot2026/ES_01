@@ -499,6 +499,8 @@ window.QA_CHAT_UI_CONFIG = {
 
     },
 
+    /** Default on/off — overridden by desk.restartButton / mob.restartButton */
+
 
 
     theme: {

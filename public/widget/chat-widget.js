@@ -23,6 +23,19 @@
     return mob ? root.mob || {} : root.desk || {};
   }
 
+  /** Restart footer button — desk.restartButton / mob.restartButton override features.restartChat */
+  function getRestartCfg() {
+    var feats = (getRootCfg().features || {}).restartChat || {};
+    var vp = getViewportCfg();
+    var vpRb = vp.restartButton || {};
+    var enabled =
+      vpRb.enabled != null ? vpRb.enabled !== false : feats.enabled !== false;
+    var label = String(
+      vpRb.label != null ? vpRb.label : feats.label != null ? feats.label : 'Restart'
+    ).trim() || 'Restart';
+    return { enabled: enabled, label: label };
+  }
+
   /** Header title / subtitle / icon sizes — desk or mob overrides common.header */
   function getHeaderLayoutCfg() {
     var hdr = getRootCfg().header || {};
@@ -317,8 +330,26 @@
     this.cacheElements();
     this.applyFeatureToggles();
     this.bindEvents();
+    this.bindViewportRestartToggle();
     this.fetchConfig();
     this.maybeAutoOpen();
+  };
+
+  QualityAssistantWidget.prototype.updateRestartVisibility = function () {
+    if (!this.els || !this.els.restart) return;
+    this.els.restart.style.display = getRestartCfg().enabled ? '' : 'none';
+  };
+
+  QualityAssistantWidget.prototype.bindViewportRestartToggle = function () {
+    var self = this;
+    this.updateRestartVisibility();
+    if (!global.matchMedia) return;
+    var mq = global.matchMedia('(max-width: 768px)');
+    var onChange = function () {
+      self.updateRestartVisibility();
+    };
+    if (mq.addEventListener) mq.addEventListener('change', onChange);
+    else if (mq.addListener) mq.addListener(onChange);
   };
 
   QualityAssistantWidget.prototype.applyTheme = function () {
