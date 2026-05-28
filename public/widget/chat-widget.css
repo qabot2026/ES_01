@@ -109,8 +109,9 @@
 }
 
 .qa-launcher--hidden,
-.qa-launcher-wrap.qa-launcher--hidden {
-  display: none;
+.qa-launcher-wrap.qa-launcher--hidden,
+.qa-launcher-wrap--hidden {
+  display: none !important;
 }
 
 /* Panel — sits above launcher; close X stays on the bubble */

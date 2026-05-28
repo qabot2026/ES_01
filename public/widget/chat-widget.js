@@ -1622,17 +1622,20 @@
     var wrap = this.els.launcherWrap;
     if (!wrap) return;
     var showCloseBubble = isLauncherCloseBubbleEnabled();
-    if (this.isOpen && !showCloseBubble) {
-      wrap.classList.add('qa-launcher-wrap--hidden');
+
+    wrap.classList.remove('qa-launcher--hidden');
+
+    if (!this.isOpen) {
       this.setLauncherCloseMode(false);
       return;
     }
-    wrap.classList.remove('qa-launcher-wrap--hidden');
-    if (this.isOpen) {
-      this.setLauncherCloseMode(true);
-    } else {
-      this.setLauncherCloseMode(false);
+
+    if (!showCloseBubble) {
+      wrap.classList.add('qa-launcher--hidden');
+      return;
     }
+
+    this.setLauncherCloseMode(true);
   };
 
   QualityAssistantWidget.prototype.open = function () {

@@ -226,7 +226,7 @@ window.QA_CHAT_UI_CONFIG = {
       sizePx: 64,
       iconUrl: QA_LOGO_LAUNCHER,
       cornerRoundness: '50%',
-      /** Chat open hone par niche bubble par X — false = sirf header se band */
+      /** Chat open: true = niche bubble + X | false = bubble bilkul hide (header X se band) */
       closeBubbleWhenOpen: { enabled: true },
       storyRing: {
         enabled: true,
