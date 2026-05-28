@@ -272,7 +272,7 @@ window.QA_CHAT_UI_CONFIG = {
       position: { rightPx: 10, bottomPx: 20, leftPx: null },
     },
     autoOpenChat: { enabled: true, delayMs: 2000 },
-    launcherStrip: { text: '👋Hey, how are you?😊' },
+    launcherStrip: { enabled: true, text: '👋Hey, how are you?😊' },
   },
 
   mob: {
@@ -296,7 +296,8 @@ window.QA_CHAT_UI_CONFIG = {
     autoOpenChat: { enabled: true, delayMs: 2000 },
     chatLayout: { side: 'left' },
     launcherStrip: {
-      text: '🤖Chat with us',
+      enabled: true,
+      text: '👋Hey, how are you?😊',
       position: { leftPx: 12, bottomPx: 60, rightPx: null },
     },
   },

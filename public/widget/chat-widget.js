@@ -136,6 +136,14 @@
     );
   }
 
+  function hasLauncherStripTextAnywhere() {
+    var root = global.QA_CHAT_UI_CONFIG || {};
+    var c = (root.common || {}).launcherStrip || {};
+    var d = (root.desk || {}).launcherStrip || {};
+    var m = (root.mob || {}).launcherStrip || {};
+    return !!(c.text || d.text || m.text);
+  }
+
   var QA_RING_GRADIENT_INSTAGRAM =
     'conic-gradient(from 180deg, #f09433 0deg, #e6683c 72deg, #dc2743 144deg, #cc2366 216deg, #bc1888 252deg, #833ab4 288deg, #5851db 324deg, #405de6 360deg, #f09433 360deg)';
 
@@ -346,6 +354,7 @@
     this.applyTheme();
     this.applyLayout();
     this.cacheElements();
+    this.updateLauncherStripVisibility();
     this.applyFeatureToggles();
     this.bindEvents();
     this.bindViewportRestartToggle();
@@ -358,6 +367,20 @@
     this.els.restart.style.display = getRestartCfg().enabled ? '' : 'none';
   };
 
+  QualityAssistantWidget.prototype.updateLauncherStripVisibility = function () {
+    var strip = this.root && this.root.querySelector('.qa-launcher-strip');
+    if (!strip) return;
+    var stripCfg = getLauncherStripCfg();
+    var active = stripCfg.enabled !== false && stripCfg.text;
+    if (!active) {
+      strip.style.display = 'none';
+      return;
+    }
+    strip.style.display = '';
+    strip.textContent = String(stripCfg.text);
+    strip.classList.toggle('qa-launcher-strip--hidden', !!this.isOpen);
+  };
+
   QualityAssistantWidget.prototype.applyChatSide = function () {
     if (!this.root) return;
     var side = getChatLayoutSide();
@@ -367,10 +390,12 @@
   QualityAssistantWidget.prototype.bindViewportRestartToggle = function () {
     var self = this;
     this.updateRestartVisibility();
+    this.updateLauncherStripVisibility();
     if (!global.matchMedia) return;
     var mq = global.matchMedia('(max-width: 768px)');
     var onChange = function () {
       self.updateRestartVisibility();
+      self.updateLauncherStripVisibility();
       self.applyChatSide();
       self.applyLayout();
     };
@@ -793,10 +818,12 @@
 
     var stripCfg = getLauncherStripCfg();
     var stripHtml = '';
-    if (stripCfg.enabled !== false && stripCfg.text) {
+    if (hasLauncherStripTextAnywhere()) {
+      var stripText =
+        stripCfg.text || (getRootCfg().launcherStrip || {}).text || '';
       stripHtml =
         '<div class="qa-launcher-strip" role="note">' +
-        this.escape(stripCfg.text) +
+        this.escape(stripText) +
         '</div>';
     }
 
@@ -1505,8 +1532,7 @@
     this.root.classList.remove('qa-widget--chat-open');
     this.els.panel.classList.remove('qa-panel--open');
     this.setLauncherCloseMode(false);
-    var strip = this.root.querySelector('.qa-launcher-strip');
-    if (strip) strip.classList.remove('qa-launcher-strip--hidden');
+    this.updateLauncherStripVisibility();
     this.stopSpeech();
   };
 
@@ -1541,8 +1567,7 @@
     this.root.classList.add('qa-widget--chat-open');
     this.els.panel.classList.add('qa-panel--open');
     this.setLauncherCloseMode(true);
-    var strip = this.root.querySelector('.qa-launcher-strip');
-    if (strip) strip.classList.add('qa-launcher-strip--hidden');
+    this.updateLauncherStripVisibility();
     this.els.input.focus();
     this.maybeTriggerWelcomeEvent();
   };
