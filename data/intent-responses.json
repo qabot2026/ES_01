@@ -3,7 +3,7 @@
   "_help2": "Only add en / hi / mr text you need. Missing language falls back to English from this file, then Dialogflow reply.",
   "_help3": "Copy the Project Location block for each intent — change the key to Dialogflow Display Name.",
 
-  "Project Location": {
+  "Location": {
     "reply": {
       "en": "Project is located in Hyderabad.",
       "hi": "यह प्रोजैक्ट हैदराबाद में स्थित है।",
