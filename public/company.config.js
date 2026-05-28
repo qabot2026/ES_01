@@ -227,7 +227,7 @@ window.QA_CHAT_UI_CONFIG = {
       iconUrl: QA_LOGO_LAUNCHER,
       cornerRoundness: '50%',
       /** enabled: true = bubble+X | false = bubble hide, panel niche (panelBottomPx) */
-      closeBubbleWhenOpen: { enabled: false, panelBottomPx: 8 },
+      closeBubbleWhenOpen: { enabled: true, panelBottomPx: 8 },
       storyRing: {
         enabled: true,
         widthPx: 2.5,
@@ -254,7 +254,7 @@ window.QA_CHAT_UI_CONFIG = {
       position: { rightPx: 10, bottomPx: 20, leftPx: null },
     },
 
-    autoOpenChat: { enabled: true, delayMs: 5000 },
+    autoOpenChat: { enabled: true, delayMs: 10000 },
 
     restartButton: { enabled: true },
 
@@ -326,7 +326,7 @@ window.QA_CHAT_UI_CONFIG = {
       position: { rightPx: 12, bottomPx: 10, leftPx: null },
     },
 
-    autoOpenChat: { enabled: true, delayMs: 2000 },
+    autoOpenChat: { enabled: true, delayMs: 7000 },
 
     restartButton: { enabled: true },
 
