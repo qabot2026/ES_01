@@ -1422,9 +1422,15 @@ body.qa-lightbox-open {
   left: 0;
 }
 
+.qa-widget--left .qa-launcher-strip-wrap,
 .qa-widget--left .qa-launcher-strip {
   right: auto;
   left: 0;
+}
+
+.qa-widget--left .qa-launcher-strip-wave {
+  right: auto;
+  left: 4px;
 }
 
 .qa-restart {
