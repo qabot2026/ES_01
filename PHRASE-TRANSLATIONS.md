@@ -76,7 +76,6 @@ Only **label** must match what user sees; click text can stay English only.
 `company.config.js`:
 
 - `usePhraseTranslationFile: true`  
-- `useIntentResponseFile: false` (optional per-intent file)  
 - `autoTranslateBotReplies: false`
 
 ## Turn off

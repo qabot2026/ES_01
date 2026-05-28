@@ -1062,7 +1062,6 @@
   QualityAssistantWidget.prototype.shouldAutoTranslateReplies = function () {
     var ml = getMultiLanguageCfg();
     if (ml.usePhraseTranslationFile === true) return false;
-    if (ml.useIntentResponseFile === true) return false;
     if (ml.autoTranslateBotReplies !== true) return false;
     var ui = this.language || 'en';
     return ui !== 'en';

@@ -395,11 +395,6 @@ window.QA_CHAT_UI_CONFIG = {
         usePhraseTranslationFile: true,
 
         /**
-         * Optional per-intent file (data/intent-responses.json). Off when using phrase file.
-         */
-        useIntentResponseFile: false,
-
-        /**
          * 🔴 Google Translate API — off when phrase file is used.
          */
         autoTranslateBotReplies: false,
