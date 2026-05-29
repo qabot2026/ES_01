@@ -61,7 +61,14 @@ window.QA_CHAT_UI_CONFIG = {
         inlineSelect: { display: 'dropdown' },
       },
       /** In-chat forms — definitions in /public/forms/*.js */
-      forms: { enabled: true },
+      forms: {
+        enabled: true,
+        appointment: {
+          dayStart: '09:00',
+          dayEnd: '18:00',
+          slotMinutes: 30,
+        },
+      },
     },
 
     deploy: {

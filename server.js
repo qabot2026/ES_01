@@ -4,6 +4,7 @@ const { randomUUID } = require('crypto');
 const dialogflow = require('./lib/dialogflow');
 const translate = require('./lib/translate');
 const phraseTranslations = require('./lib/phrase-translations');
+const formApi = require('./lib/form-api');
 
 const app = express();
 const PORT = process.env.PORT || 4567;
@@ -142,6 +143,26 @@ app.post('/api/translate', async (req, res) => {
       translations: list,
     });
   }
+});
+
+app.get('/api/nearest-branches', (req, res) => {
+  const lat = req.query.lat;
+  const lng = req.query.lng;
+  const limit = req.query.limit;
+  res.json(formApi.nearestBranches(lat, lng, limit));
+});
+
+app.get('/api/appointment-slots', (req, res) => {
+  const scope = String(req.query.scope || req.query.type || 'general').trim();
+  const doctorId = String(req.query.doctorId || req.query.doctor_id || '').trim();
+  const date = String(req.query.date || '').trim();
+  res.json(
+    formApi.appointmentSlots(scope, doctorId, date, {
+      dayStart: process.env.APPOINTMENT_DAY_START || '09:00',
+      dayEnd: process.env.APPOINTMENT_DAY_END || '18:00',
+      slotMinutes: process.env.APPOINTMENT_SLOT_MINUTES || 30,
+    })
+  );
 });
 
 app.get('/api/phrase-translations', (req, res) => {

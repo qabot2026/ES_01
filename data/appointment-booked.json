@@ -1,0 +1,8 @@
+{
+  "_help": "Booked slots for appointment calendars. Red days / disabled times come from here.",
+  "general": {
+    "fullyBookedDates": [],
+    "slotsByDate": {}
+  },
+  "doctors": {}
+}

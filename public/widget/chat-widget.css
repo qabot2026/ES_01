@@ -1796,11 +1796,10 @@ body.qa-lightbox-open {
   border-color: #dc2626;
 }
 
-.qa-form__icon {
-  display: none;
-}
-
 .qa-form__control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   width: 100%;
 }
 
@@ -1871,4 +1870,197 @@ textarea.qa-form__input {
 
 .qa-form--submitted {
   opacity: 0.92;
+}
+
+.qa-form__icon {
+  display: flex;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  color: var(--qa-primary);
+}
+
+.qa-form__icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.qa-form__control .qa-form__input {
+  flex: 1;
+  min-width: 0;
+  width: auto;
+}
+
+/* Geolocation branch picker */
+.qa-form__geo-intro,
+.qa-form__geo-status,
+.qa-form__geo-picked,
+.qa-form__geo-prompt {
+  font-size: 0.8125rem;
+  color: var(--qa-text-soft, var(--qa-muted));
+  margin: 0 0 8px;
+  line-height: 1.4;
+}
+
+.qa-form__geo-btn {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--qa-primary);
+  background: var(--qa-bg-2, #f0f9ff);
+  color: var(--qa-primary-dark, var(--qa-primary));
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.qa-form__geo-btn:hover {
+  background: var(--qa-accent-light, #e0f2fe);
+}
+
+.qa-form__geo-list {
+  margin-top: 10px;
+}
+
+.qa-form__geo-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--qa-border);
+  font-size: 0.8125rem;
+}
+
+.qa-form__geo-pick {
+  flex-shrink: 0;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: none;
+  background: var(--qa-primary);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+/* Appointment calendar */
+.qa-form-cal__legend {
+  font-size: 0.75rem;
+  color: var(--qa-text-soft, var(--qa-muted));
+  margin: 0 0 8px;
+}
+
+.qa-form-cal__nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.qa-form-cal__month {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--qa-text);
+}
+
+.qa-form-cal__nav-btn {
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--qa-border);
+  border-radius: 8px;
+  background: var(--qa-surface);
+  cursor: pointer;
+  font-size: 1.125rem;
+  line-height: 1;
+  color: var(--qa-primary);
+}
+
+.qa-form-cal__grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  margin-bottom: 10px;
+}
+
+.qa-form-cal__dow {
+  text-align: center;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: var(--qa-muted);
+  padding: 4px 0;
+}
+
+.qa-form-cal__pad {
+  aspect-ratio: 1;
+}
+
+.qa-form-cal__day {
+  aspect-ratio: 1;
+  border: 1px solid var(--qa-border);
+  border-radius: 8px;
+  background: var(--qa-surface);
+  font-size: 0.75rem;
+  cursor: pointer;
+  font-family: inherit;
+  color: var(--qa-text);
+}
+
+.qa-form-cal__day--past {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.qa-form-cal__day--booked {
+  background: #fee2e2;
+  border-color: #fca5a5;
+  color: #991b1b;
+}
+
+.qa-form-cal__day--active {
+  background: var(--qa-primary);
+  border-color: var(--qa-primary);
+  color: #fff;
+}
+
+.qa-form-cal__slots-title {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  margin: 8px 0 6px;
+  color: var(--qa-text);
+}
+
+.qa-form-cal__slots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.qa-form-cal__slots--loading {
+  opacity: 0.6;
+}
+
+.qa-form-cal__slot {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--qa-border);
+  background: var(--qa-surface);
+  font-size: 0.8125rem;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.qa-form-cal__slot--booked {
+  background: #fee2e2;
+  color: #991b1b;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.qa-form-cal__slot--active {
+  background: var(--qa-primary);
+  border-color: var(--qa-primary);
+  color: #fff;
 }

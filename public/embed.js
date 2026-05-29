@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var QA_ASSET_VERSION = '20260529-chat-forms';
+  var QA_ASSET_VERSION = '20260530-forms-reference';
 
   var QA_FORM_SCRIPTS = [
     'contact.js',
@@ -11,6 +11,8 @@
     'appointment.js',
     'appointment-doctor.js',
     'appointment-general.js',
+    'birthform.js',
+    'nearest-branch.js',
   ];
 
   var script = document.currentScript;

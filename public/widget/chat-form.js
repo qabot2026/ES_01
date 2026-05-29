@@ -1,6 +1,5 @@
 /**
- * Dialogflow ES open_form UI — reads definitions from window.__DFCHAT_FORMS__.
- * Load /forms/*.js before this script (see embed.js).
+ * Dialogflow ES open_form UI — reads window.__DFCHAT_FORMS__ (see /public/forms/).
  */
 (function (global) {
   'use strict';
@@ -24,6 +23,8 @@
       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 11-7.778 7.778 5.5 5.5 0 017.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>',
     file:
       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg>',
+    location:
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 21s7-4.35 7-11a7 7 0 10-14 0c0 6.65 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>',
   };
 
   var STRINGS = {
@@ -33,19 +34,29 @@
       invalidEmail: 'Enter a valid email.',
       invalidPhone: 'Enter a valid mobile number.',
       invalidOtp: 'Enter a valid OTP code.',
+      invalidPastBirthDate: 'Choose a date before today.',
       namePlaceholder: 'Your name',
       mobilePlaceholder: 'Mobile number',
       emailPlaceholder: 'Email address',
+      dialCodePlaceholder: 'Country code',
       otpCodePlaceholder: 'OTP code',
+      birthDatePlaceholder: 'Date of birth',
       summaryNameLabel: 'Name',
       summaryMobileLabel: 'Mobile',
       summaryEmailLabel: 'Email',
+      summaryDialCodeLabel: 'Code',
       summaryOtpLabel: 'OTP',
       summaryDateLabel: 'Date',
       summaryTimeLabel: 'Time',
       summaryDocumentLabel: 'Document',
       summaryDoctorIdLabel: 'Doctor',
+      summaryBirthDateLabel: 'Birth date',
       chooseFiles: 'Choose file(s)…',
+      calPrev: 'Previous month',
+      calNext: 'Next month',
+      calPickTime: 'Pick a time',
+      calBookedLegend: 'Red = unavailable',
+      calLoading: 'Loading…',
     },
     hi: {
       submit: 'जमा करें',
@@ -53,19 +64,29 @@
       invalidEmail: 'मान्य ईमेल दर्ज करें।',
       invalidPhone: 'मान्य मोबाइल नंबर दर्ज करें।',
       invalidOtp: 'मान्य OTP दर्ज करें।',
+      invalidPastBirthDate: 'आज से पहले की तारीख चुनें।',
       namePlaceholder: 'आपका नाम',
       mobilePlaceholder: 'मोबाइल नंबर',
       emailPlaceholder: 'ईमेल पता',
+      dialCodePlaceholder: 'देश कोड',
       otpCodePlaceholder: 'OTP कोड',
+      birthDatePlaceholder: 'जन्म तिथि',
       summaryNameLabel: 'नाम',
       summaryMobileLabel: 'मोबाइल',
       summaryEmailLabel: 'ईमेल',
+      summaryDialCodeLabel: 'कोड',
       summaryOtpLabel: 'OTP',
       summaryDateLabel: 'तिथि',
       summaryTimeLabel: 'समय',
       summaryDocumentLabel: 'दस्तावेज़',
       summaryDoctorIdLabel: 'डॉक्टर',
+      summaryBirthDateLabel: 'जन्म तिथि',
       chooseFiles: 'फ़ाइल(ें) चुनें…',
+      calPrev: 'पिछला महीना',
+      calNext: 'अगला महीना',
+      calPickTime: 'समय चुनें',
+      calBookedLegend: 'लाल = उपलब्ध नहीं',
+      calLoading: 'लोड हो रहा है…',
     },
     mr: {
       submit: 'सबमिट करा',
@@ -73,19 +94,29 @@
       invalidEmail: 'वैध ईमेल टाका.',
       invalidPhone: 'वैध मोबाईल नंबर टाका.',
       invalidOtp: 'वैध OTP टाका.',
+      invalidPastBirthDate: 'आजपूर्वीची तारीख निवडा.',
       namePlaceholder: 'तुमचे नाव',
       mobilePlaceholder: 'मोबाईल नंबर',
       emailPlaceholder: 'ईमेल पत्ता',
+      dialCodePlaceholder: 'देश कोड',
       otpCodePlaceholder: 'OTP कोड',
+      birthDatePlaceholder: 'जन्मतारीख',
       summaryNameLabel: 'नाव',
       summaryMobileLabel: 'मोबाईल',
       summaryEmailLabel: 'ईमेल',
+      summaryDialCodeLabel: 'कोड',
       summaryOtpLabel: 'OTP',
       summaryDateLabel: 'तारीख',
       summaryTimeLabel: 'वेळ',
       summaryDocumentLabel: 'दस्तऐवज',
       summaryDoctorIdLabel: 'डॉक्टर',
+      summaryBirthDateLabel: 'जन्मतारीख',
       chooseFiles: 'फाइल(्स) निवडा…',
+      calPrev: 'मागील महिना',
+      calNext: 'पुढील महिना',
+      calPickTime: 'वेळ निवडा',
+      calBookedLegend: 'लाल = उपलब्ध नाही',
+      calLoading: 'लोड होत आहे…',
     },
   };
 
@@ -99,36 +130,59 @@
     return String(map[lang] || map.en || '').trim();
   }
 
+  function isMobileViewport() {
+    return !!(global.matchMedia && global.matchMedia('(max-width: 768px)').matches);
+  }
+
+  function getFormsCfg() {
+    var c =
+      global.QA_CHAT_UI_CONFIG &&
+      global.QA_CHAT_UI_CONFIG.common &&
+      global.QA_CHAT_UI_CONFIG.common.dialogflow &&
+      global.QA_CHAT_UI_CONFIG.common.dialogflow.forms;
+    return c || {};
+  }
+
   function getFormDef(formId) {
     var registry = global.__DFCHAT_FORMS__ || {};
     return registry[String(formId || '').trim()] || null;
   }
 
   function isFormsEnabled() {
-    var cfg =
-      (global.QA_CHAT_UI_CONFIG &&
-        global.QA_CHAT_UI_CONFIG.common &&
-        global.QA_CHAT_UI_CONFIG.common.dialogflow &&
-        global.QA_CHAT_UI_CONFIG.common.dialogflow.forms) ||
-      {};
-    return cfg.enabled !== false;
+    return getFormsCfg().enabled !== false;
+  }
+
+  function apiBase(widget) {
+    return (widget && widget.apiBase) || '';
   }
 
   function resolveNextFormId(def, request) {
-    var fromReq =
-      request.nextFormId ||
-      (Array.isArray(request.nextFormIds) && request.nextFormIds[0]) ||
-      '';
-    if (fromReq) return String(fromReq).trim();
-    if (def && def.nextFormId) return String(def.nextFormId).trim();
-    if (def && Array.isArray(def.nextFormIds) && def.nextFormIds.length) {
-      return String(def.nextFormIds[0]).trim();
+    request = request || {};
+    var ids = [];
+    function push(id) {
+      id = String(id || '').trim();
+      if (id && ids.indexOf(id) < 0) ids.push(id);
     }
-    return '';
+    push(request.nextFormId);
+    if (Array.isArray(request.nextFormIds)) {
+      request.nextFormIds.forEach(push);
+    }
+    push(request.followingFormId);
+    push(request.following_form_id);
+    push(request.thirdFormId);
+    push(request.third_form_id);
+    if (def) {
+      push(def.nextFormId);
+      if (Array.isArray(def.nextFormIds)) def.nextFormIds.forEach(push);
+    }
+    return ids[0] || '';
   }
 
   function formatSubmission(formId, values, def, lang) {
     var lines = ['[form:' + formId + ']'];
+    if (def && def.staffFormLabel) {
+      lines.push('staff:' + String(def.staffFormLabel));
+    }
     var names = (def && def.chatSummaryFieldNames) || Object.keys(values);
     names.forEach(function (name) {
       if (values[name] == null || values[name] === '') return;
@@ -174,17 +228,36 @@
     return '';
   }
 
+  function yesterdayIso() {
+    var d = new Date();
+    d.setDate(d.getDate() - 1);
+    return d.toISOString().slice(0, 10);
+  }
+
+  function validatePastDate(val, field, lang) {
+    if (!val) return t(lang, 'required');
+    var max = yesterdayIso();
+    if (field.pastDateMin && val < field.pastDateMin) {
+      return t(lang, 'invalidPastBirthDate');
+    }
+    if (val > max) return t(lang, 'invalidPastBirthDate');
+    return '';
+  }
+
   function validateValue(field, raw, lang) {
     var val = raw == null ? '' : String(raw).trim();
     if (field.required !== false && field.type !== 'hidden' && !val) {
       return t(lang, 'required');
     }
     if (!val) return '';
+    if (field.pastDateOnly && field.type === 'date') {
+      return validatePastDate(val, field, lang) || '';
+    }
     if (field.validateAs === 'email' || field.type === 'email') {
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) return t(lang, 'invalidEmail');
     }
     if (field.validateAs === 'phone' || field.type === 'tel') {
-      if (!/^[+]?[\d\s-]{8,15}$/.test(val)) return t(lang, 'invalidPhone');
+      if (!/^[0-9\s-]{8,15}$/.test(val)) return t(lang, 'invalidPhone');
     }
     if (field.i18nInvalidMessage) {
       if (field.pattern && !new RegExp(field.pattern).test(val)) {
@@ -201,6 +274,645 @@
       return t(lang, field.i18nInvalidMessage || 'required');
     }
     return '';
+  }
+
+  function showFieldError(input, msg) {
+    var field = input.closest('.qa-form__field');
+    if (!field) return;
+    var err = field.querySelector('.qa-form__error');
+    if (!err) return;
+    if (msg) {
+      err.textContent = msg;
+      err.hidden = false;
+      field.classList.add('qa-form__field--invalid');
+    } else {
+      err.hidden = true;
+      field.classList.remove('qa-form__field--invalid');
+    }
+  }
+
+  function applyDateConstraints(input, field) {
+    if (field.pastDateOnly) {
+      input.max = yesterdayIso();
+      if (field.pastDateMin) input.min = field.pastDateMin;
+    }
+  }
+
+  function applyAutoDetectDialCode(select) {
+    var preferred = '+91';
+    try {
+      var loc =
+        global.navigator &&
+        (global.navigator.language || global.navigator.userLanguage || '');
+      if (/^en-(US|CA)\b/i.test(loc)) preferred = '+1';
+      else if (/^en-GB\b/i.test(loc)) preferred = '+44';
+    } catch (e) {}
+    var found = false;
+    Array.prototype.forEach.call(select.options, function (opt) {
+      if (opt.value === preferred) {
+        opt.selected = true;
+        found = true;
+      }
+    });
+    if (!found && select.options.length > 1) {
+      select.options[1].selected = true;
+    }
+  }
+
+  function buildControlRow(field, lang, prefill) {
+    prefill = prefill || {};
+    var wrap = document.createElement('div');
+    wrap.className = 'qa-form__field';
+    var type = String(field.type || 'text').toLowerCase();
+
+    var controlWrap = document.createElement('div');
+    controlWrap.className = 'qa-form__control';
+    if (field.icon && ICONS[field.icon]) {
+      var icon = document.createElement('span');
+      icon.className = 'qa-form__icon';
+      icon.innerHTML = ICONS[field.icon];
+      controlWrap.appendChild(icon);
+    }
+
+    var input;
+    if (type === 'textarea') {
+      input = document.createElement('textarea');
+      input.rows = field.rows || 3;
+    } else if (type === 'select') {
+      input = document.createElement('select');
+      (field.options || []).forEach(function (opt) {
+        var o = document.createElement('option');
+        o.value = opt.value != null ? opt.value : opt.label;
+        o.textContent = opt.label != null ? opt.label : opt.value;
+        input.appendChild(o);
+      });
+      if (field.autoDetectDialCode) {
+        applyAutoDetectDialCode(input);
+      }
+    } else if (type === 'file') {
+      input = document.createElement('input');
+      input.type = 'file';
+      if (field.accept) input.accept = field.accept;
+      if (field.multiple) input.multiple = true;
+    } else {
+      input = document.createElement('input');
+      input.type = type === 'tel' ? 'tel' : type;
+    }
+
+    input.className = 'qa-form__input';
+    input.id = field.id || 'qa-f-' + field.name;
+    if (field.name) input.name = field.name;
+    if (field.required) input.required = true;
+    if (field.autocomplete) input.autocomplete = field.autocomplete;
+    if (field.inputMode) input.inputMode = field.inputMode;
+    if (field.maxLength) input.maxLength = field.maxLength;
+    if (field.minLength) input.minLength = field.minLength;
+    if (field.pattern) input.pattern = field.pattern;
+    applyDateConstraints(input, field);
+
+    var phText = fieldPlaceholder(field, lang);
+    if (phText && type !== 'select' && type !== 'file') {
+      input.placeholder = phText;
+    }
+
+    if (prefill[field.name] != null) {
+      input.value = String(prefill[field.name]);
+    } else if (field.value != null && type !== 'file') {
+      input.value = String(field.value);
+    }
+
+    controlWrap.appendChild(input);
+    wrap.appendChild(controlWrap);
+
+    var err = document.createElement('span');
+    err.className = 'qa-form__error';
+    err.hidden = true;
+    wrap.appendChild(err);
+
+    return { wrap: wrap, input: input };
+  }
+
+  function fetchJson(url) {
+    return fetch(url)
+      .then(function (r) {
+        return r.json();
+      })
+      .catch(function () {
+        return null;
+      });
+  }
+
+  function renderGeolocationField(field, form, lang, widget, prefill) {
+    var wrap = document.createElement('div');
+    wrap.className = 'qa-form__field qa-form__field--geo';
+
+    function hidden(id, name, val) {
+      var h = document.createElement('input');
+      h.type = 'hidden';
+      h.id = id;
+      h.name = name;
+      h.value = val != null ? String(val) : '';
+      form.appendChild(h);
+      return h;
+    }
+
+    var hLat = hidden(field.hiddenLatId || 'geo-lat', 'lat', prefill.lat);
+    var hLng = hidden(field.hiddenLngId || 'geo-lng', 'lng', prefill.lng);
+    var hBranchId = hidden(
+      field.hiddenBranchIdId || 'geo-branchId',
+      'branchId',
+      prefill.branchId
+    );
+    var hBranchName = hidden(
+      field.hiddenBranchNameId || 'geo-branchName',
+      'branchName',
+      prefill.branchName
+    );
+    var hBranchCity = hidden(
+      field.hiddenBranchCityId || 'geo-branchCity',
+      'branchCity',
+      prefill.branchCity
+    );
+    var hBranchArea = hidden(
+      field.hiddenBranchAreaId || 'geo-branchArea',
+      'branchArea',
+      prefill.branchArea
+    );
+    var hDist = hidden(
+      field.hiddenBranchDistanceKmId || 'geo-branchDistanceKm',
+      'branchDistanceKm',
+      prefill.branchDistanceKm
+    );
+
+    var intro = document.createElement('p');
+    intro.className = 'qa-form__geo-intro';
+    intro.textContent = langPick(field.introByLanguage, lang);
+    wrap.appendChild(intro);
+
+    var status = document.createElement('p');
+    status.className = 'qa-form__geo-status';
+    status.hidden = true;
+    wrap.appendChild(status);
+
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'qa-form__geo-btn';
+    btn.textContent = langPick(field.buttonLabelByLanguage, lang) || 'Use my location';
+    wrap.appendChild(btn);
+
+    var list = document.createElement('div');
+    list.className = 'qa-form__geo-list';
+    list.hidden = true;
+    wrap.appendChild(list);
+
+    var picked = document.createElement('p');
+    picked.className = 'qa-form__geo-picked';
+    picked.hidden = true;
+    wrap.appendChild(picked);
+
+    var err = document.createElement('span');
+    err.className = 'qa-form__error';
+    err.hidden = true;
+    wrap.appendChild(err);
+
+    function showStatus(msg) {
+      status.textContent = msg;
+      status.hidden = !msg;
+    }
+
+    function selectBranch(b) {
+      hBranchId.value = b.id || '';
+      hBranchName.value = b.name || '';
+      hBranchCity.value = b.city || '';
+      hBranchArea.value = b.area || '';
+      hDist.value = b.distanceKm != null ? String(b.distanceKm) : '';
+      picked.textContent =
+        (b.name || '') +
+        (b.area ? ' — ' + b.area : '') +
+        (b.city ? ', ' + b.city : '') +
+        (b.distanceKm != null ? ' (' + b.distanceKm + ' km)' : '');
+      picked.hidden = false;
+      list.hidden = true;
+      err.hidden = true;
+      wrap.classList.remove('qa-form__field--invalid');
+    }
+
+    btn.addEventListener('click', function () {
+      if (!global.navigator || !navigator.geolocation) {
+        showStatus(langPick(field.unsupportedByLanguage, lang));
+        return;
+      }
+      showStatus(langPick(field.locatingByLanguage, lang));
+      list.hidden = true;
+      picked.hidden = true;
+      navigator.geolocation.getCurrentPosition(
+        function (pos) {
+          var lat = pos.coords.latitude;
+          var lng = pos.coords.longitude;
+          hLat.value = String(lat);
+          hLng.value = String(lng);
+          var base = apiBase(widget);
+          if (!base) {
+            showStatus(langPick(field.fetchFailedByLanguage, lang));
+            return;
+          }
+          var limit = field.resultLimit || 5;
+          fetchJson(
+            base +
+              '/api/nearest-branches?lat=' +
+              encodeURIComponent(lat) +
+              '&lng=' +
+              encodeURIComponent(lng) +
+              '&limit=' +
+              encodeURIComponent(limit)
+          ).then(function (data) {
+            showStatus('');
+            var branches = (data && data.branches) || [];
+            list.innerHTML = '';
+            if (!branches.length) {
+              showStatus(langPick(field.noResultsByLanguage, lang));
+              return;
+            }
+            var prompt = document.createElement('p');
+            prompt.className = 'qa-form__geo-prompt';
+            prompt.textContent = langPick(field.pickPromptByLanguage, lang);
+            list.appendChild(prompt);
+            branches.forEach(function (b) {
+              var row = document.createElement('div');
+              row.className = 'qa-form__geo-item';
+              var label = document.createElement('span');
+              label.textContent =
+                b.name +
+                ' — ' +
+                (b.area || b.city || '') +
+                (b.distanceKm != null ? ' · ' + b.distanceKm + ' km' : '');
+              var pickBtn = document.createElement('button');
+              pickBtn.type = 'button';
+              pickBtn.className = 'qa-form__geo-pick';
+              pickBtn.textContent = langPick(field.bookButtonLabelByLanguage, lang) || 'Select';
+              pickBtn.addEventListener('click', function () {
+                selectBranch(b);
+              });
+              row.appendChild(label);
+              row.appendChild(pickBtn);
+              list.appendChild(row);
+            });
+            list.hidden = false;
+            btn.textContent = langPick(field.retryButtonLabelByLanguage, lang) || btn.textContent;
+          });
+        },
+        function () {
+          showStatus(langPick(field.permissionDeniedByLanguage, lang));
+        },
+        { enableHighAccuracy: false, timeout: 15000, maximumAge: 60000 }
+      );
+    });
+
+    wrap._validateGeo = function () {
+      if (!hBranchId.value) {
+        err.textContent = t(lang, 'required');
+        err.hidden = false;
+        wrap.classList.add('qa-form__field--invalid');
+        return false;
+      }
+      return true;
+    };
+
+    return wrap;
+  }
+
+  function renderAppointmentCalendar(field, form, lang, widget, prefill, scope) {
+    var wrap = document.createElement('div');
+    wrap.className = 'qa-form__field qa-form__field--calendar';
+
+    var dateHidden = document.createElement('input');
+    dateHidden.type = 'hidden';
+    dateHidden.name = 'appointmentdate';
+    dateHidden.id = field.hiddenDateId || field.id + '-date';
+    dateHidden.value = prefill.appointmentdate || '';
+
+    var timeHidden = document.createElement('input');
+    timeHidden.type = 'hidden';
+    timeHidden.name = 'appointmenttime';
+    timeHidden.id = field.hiddenTimeId || field.id + '-time';
+    timeHidden.value = prefill.appointmenttime || '';
+
+    form.appendChild(dateHidden);
+    form.appendChild(timeHidden);
+
+    var legend = document.createElement('p');
+    legend.className = 'qa-form-cal__legend';
+    legend.textContent = t(lang, 'calBookedLegend');
+    wrap.appendChild(legend);
+
+    var nav = document.createElement('div');
+    nav.className = 'qa-form-cal__nav';
+    var prevBtn = document.createElement('button');
+    prevBtn.type = 'button';
+    prevBtn.className = 'qa-form-cal__nav-btn';
+    prevBtn.setAttribute('aria-label', t(lang, 'calPrev'));
+    prevBtn.textContent = '‹';
+    var monthLabel = document.createElement('span');
+    monthLabel.className = 'qa-form-cal__month';
+    var nextBtn = document.createElement('button');
+    nextBtn.type = 'button';
+    nextBtn.className = 'qa-form-cal__nav-btn';
+    nextBtn.setAttribute('aria-label', t(lang, 'calNext'));
+    nextBtn.textContent = '›';
+    nav.appendChild(prevBtn);
+    nav.appendChild(monthLabel);
+    nav.appendChild(nextBtn);
+    wrap.appendChild(nav);
+
+    var grid = document.createElement('div');
+    grid.className = 'qa-form-cal__grid';
+    wrap.appendChild(grid);
+
+    var slotsTitle = document.createElement('p');
+    slotsTitle.className = 'qa-form-cal__slots-title';
+    slotsTitle.textContent = t(lang, 'calPickTime');
+    slotsTitle.hidden = true;
+    wrap.appendChild(slotsTitle);
+
+    var slotsWrap = document.createElement('div');
+    slotsWrap.className = 'qa-form-cal__slots';
+    slotsWrap.hidden = true;
+    wrap.appendChild(slotsWrap);
+
+    var err = document.createElement('span');
+    err.className = 'qa-form__error';
+    err.hidden = true;
+    wrap.appendChild(err);
+
+    var view = new Date();
+    view.setDate(1);
+    var bookedDates = [];
+    var selectedDate = dateHidden.value || '';
+
+    function monthKey(d) {
+      return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+    }
+
+    function fetchMonthBooked() {
+      var base = apiBase(widget);
+      if (!base) return Promise.resolve();
+      var y = view.getFullYear();
+      var m = view.getMonth();
+      var daysInMonth = new Date(y, m + 1, 0).getDate();
+      bookedDates = [];
+      var promises = [];
+      for (var day = 1; day <= daysInMonth; day += 1) {
+        var iso =
+          y +
+          '-' +
+          String(m + 1).padStart(2, '0') +
+          '-' +
+          String(day).padStart(2, '0');
+        promises.push(
+          (function (dayIso) {
+            return fetchJson(
+              base +
+                '/api/appointment-slots?scope=' +
+                encodeURIComponent(scope) +
+                '&date=' +
+                encodeURIComponent(dayIso) +
+                (scope === 'doctor'
+                  ? '&doctorId=' +
+                    encodeURIComponent(
+                      (form.querySelector('[name="doctorId"]') || {}).value || ''
+                    )
+                  : '')
+            ).then(function (data) {
+              return { iso: dayIso, data: data };
+            });
+          })(iso)
+        );
+      }
+      return Promise.all(promises).then(function (results) {
+        results.forEach(function (r) {
+          if (!r || !r.data) return;
+          var avail = r.data.availableTimes || [];
+          var all = r.data.allSlots || [];
+          if (all.length && avail.length === 0) {
+            bookedDates.push(r.iso);
+          }
+          if (
+            Array.isArray(r.data.fullyBookedDates) &&
+            r.data.fullyBookedDates.indexOf(r.iso) >= 0
+          ) {
+            bookedDates.push(r.iso);
+          }
+        });
+      });
+    }
+
+    function renderSlots(iso) {
+      slotsWrap.innerHTML = '';
+      slotsTitle.hidden = false;
+      slotsWrap.hidden = false;
+      var base = apiBase(widget);
+      if (!base) return;
+      slotsWrap.classList.add('qa-form-cal__slots--loading');
+      fetchJson(
+        base +
+          '/api/appointment-slots?scope=' +
+          encodeURIComponent(scope) +
+          '&date=' +
+          encodeURIComponent(iso) +
+          (scope === 'doctor'
+            ? '&doctorId=' +
+              encodeURIComponent(
+                (form.querySelector('[name="doctorId"]') || {}).value || ''
+              )
+            : '')
+      ).then(function (data) {
+        slotsWrap.classList.remove('qa-form-cal__slots--loading');
+        var all = (data && data.allSlots) || [];
+        var booked = (data && data.bookedTimes) || [];
+        all.forEach(function (slot) {
+          var b = document.createElement('button');
+          b.type = 'button';
+          b.className = 'qa-form-cal__slot';
+          b.textContent = slot;
+          var isBooked = booked.indexOf(slot) >= 0;
+          if (isBooked) {
+            b.disabled = true;
+            b.classList.add('qa-form-cal__slot--booked');
+          }
+          if (timeHidden.value === slot && dateHidden.value === iso) {
+            b.classList.add('qa-form-cal__slot--active');
+          }
+          b.addEventListener('click', function () {
+            if (isBooked) return;
+            dateHidden.value = iso;
+            timeHidden.value = slot;
+            selectedDate = iso;
+            slotsWrap.querySelectorAll('.qa-form-cal__slot').forEach(function (el) {
+              el.classList.remove('qa-form-cal__slot--active');
+            });
+            b.classList.add('qa-form-cal__slot--active');
+            err.hidden = true;
+          });
+          slotsWrap.appendChild(b);
+        });
+      });
+    }
+
+    function renderGrid() {
+      var y = view.getFullYear();
+      var m = view.getMonth();
+      monthLabel.textContent = view.toLocaleString(lang === 'hi' ? 'hi-IN' : lang === 'mr' ? 'mr-IN' : 'en-IN', {
+        month: 'long',
+        year: 'numeric',
+      });
+      grid.innerHTML = '';
+      ['S', 'M', 'T', 'W', 'T', 'F', 'S'].forEach(function (d) {
+        var h = document.createElement('span');
+        h.className = 'qa-form-cal__dow';
+        h.textContent = d;
+        grid.appendChild(h);
+      });
+      var first = new Date(y, m, 1).getDay();
+      var days = new Date(y, m + 1, 0).getDate();
+      var today = new Date().toISOString().slice(0, 10);
+      for (var i = 0; i < first; i += 1) {
+        var pad = document.createElement('span');
+        pad.className = 'qa-form-cal__pad';
+        grid.appendChild(pad);
+      }
+      for (var day = 1; day <= days; day += 1) {
+        var iso =
+          y +
+          '-' +
+          String(m + 1).padStart(2, '0') +
+          '-' +
+          String(day).padStart(2, '0');
+        var cell = document.createElement('button');
+        cell.type = 'button';
+        cell.className = 'qa-form-cal__day';
+        cell.textContent = String(day);
+        if (iso < today) {
+          cell.disabled = true;
+          cell.classList.add('qa-form-cal__day--past');
+        }
+        if (bookedDates.indexOf(iso) >= 0) {
+          cell.classList.add('qa-form-cal__day--booked');
+        }
+        if (iso === selectedDate) {
+          cell.classList.add('qa-form-cal__day--active');
+        }
+        cell.addEventListener('click', function (d) {
+          return function () {
+            if (d < today) return;
+            selectedDate = d;
+            grid.querySelectorAll('.qa-form-cal__day').forEach(function (el) {
+              el.classList.remove('qa-form-cal__day--active');
+            });
+            cell.classList.add('qa-form-cal__day--active');
+            renderSlots(d);
+          };
+        }(iso));
+        grid.appendChild(cell);
+      }
+    }
+
+    prevBtn.addEventListener('click', function () {
+      view.setMonth(view.getMonth() - 1);
+      fetchMonthBooked().then(renderGrid);
+    });
+    nextBtn.addEventListener('click', function () {
+      view.setMonth(view.getMonth() + 1);
+      fetchMonthBooked().then(renderGrid);
+    });
+
+    fetchMonthBooked().then(function () {
+      renderGrid();
+      if (dateHidden.value) renderSlots(dateHidden.value);
+    });
+
+    wrap._validateAppt = function () {
+      if (!dateHidden.value || !timeHidden.value) {
+        err.textContent = t(lang, 'required');
+        err.hidden = false;
+        wrap.classList.add('qa-form__field--invalid');
+        return false;
+      }
+      return true;
+    };
+
+    return wrap;
+  }
+
+  function collectFieldValues(def, form, lang, hiddenStore) {
+    var values = {};
+    var valid = true;
+
+    (def.fields || []).forEach(function (field) {
+      if (!field || !field.name) return;
+      var type = String(field.type || 'text').toLowerCase();
+
+      if (type === 'hidden') {
+        values[field.name] = hiddenStore[field.name]
+          ? hiddenStore[field.name].value
+          : '';
+        return;
+      }
+
+      if (type === 'geolocation') {
+        values.branchId = (form.querySelector('[name="branchId"]') || {}).value || '';
+        values.branchName = (form.querySelector('[name="branchName"]') || {}).value || '';
+        values.branchCity = (form.querySelector('[name="branchCity"]') || {}).value || '';
+        values.branchArea = (form.querySelector('[name="branchArea"]') || {}).value || '';
+        values.branchDistanceKm =
+          (form.querySelector('[name="branchDistanceKm"]') || {}).value || '';
+        values.lat = (form.querySelector('[name="lat"]') || {}).value || '';
+        values.lng = (form.querySelector('[name="lng"]') || {}).value || '';
+        var geoWrap = form.querySelector('.qa-form__field--geo');
+        if (field.required !== false && geoWrap && geoWrap._validateGeo && !geoWrap._validateGeo()) {
+          valid = false;
+        }
+        return;
+      }
+
+      if (type === 'appointmentdoctor' || type === 'appointmentgeneral') {
+        values.appointmentdate =
+          (form.querySelector('[name="appointmentdate"]') || {}).value || '';
+        values.appointmenttime =
+          (form.querySelector('[name="appointmenttime"]') || {}).value || '';
+        var calWrap = form.querySelector('.qa-form__field--calendar');
+        if (field.required !== false && calWrap && calWrap._validateAppt && !calWrap._validateAppt()) {
+          valid = false;
+        }
+        return;
+      }
+
+      if (type === 'file') {
+        var fileInput = form.querySelector('#' + (field.id || 'qa-f-' + field.name));
+        var names = [];
+        if (fileInput && fileInput.files && fileInput.files.length) {
+          for (var i = 0; i < fileInput.files.length; i++) {
+            names.push(fileInput.files[i].name);
+          }
+        }
+        values[field.name] = names.join(', ');
+        if (field.required && !names.length) {
+          valid = false;
+          if (fileInput) showFieldError(fileInput, t(lang, 'required'));
+        }
+        return;
+      }
+
+      var input = form.querySelector('[name="' + field.name + '"]');
+      var raw = input ? (input.tagName === 'SELECT' ? input.value : input.value) : '';
+      values[field.name] = raw;
+      var errMsg = validateValue(field, raw, lang);
+      if (errMsg) {
+        valid = false;
+        if (input) showFieldError(input, errMsg);
+      }
+    });
+
+    return { values: values, valid: valid };
   }
 
   function buildFormEl(request, widget) {
@@ -235,10 +947,13 @@
     titleEl.textContent = langPick(def.titleByLanguage, lang);
     header.appendChild(titleEl);
     if (def.showSubtitle !== false) {
-      var subText =
-        langPick(def.subtitleByLanguage, lang) ||
-        (request && request.message) ||
-        '';
+      var subText = '';
+      if (isMobileViewport() && def.subtitleMobileByLanguage) {
+        subText = langPick(def.subtitleMobileByLanguage, lang);
+      } else {
+        subText = langPick(def.subtitleByLanguage, lang);
+      }
+      if (!subText && request && request.message) subText = request.message;
       if (subText) {
         var sub = document.createElement('p');
         sub.className = 'qa-form__subtitle';
@@ -272,63 +987,26 @@
         return;
       }
 
-      if (type === 'appointmentdoctor' || type === 'appointmentgeneral') {
-        var dateHidden = document.createElement('input');
-        dateHidden.type = 'hidden';
-        dateHidden.name = 'appointmentdate';
-        dateHidden.id = field.hiddenDateId || field.id + '-date';
-        dateHidden.value = prefill.appointmentdate || '';
-
-        var timeHidden = document.createElement('input');
-        timeHidden.type = 'hidden';
-        timeHidden.name = 'appointmenttime';
-        timeHidden.id = field.hiddenTimeId || field.id + '-time';
-        timeHidden.value = prefill.appointmenttime || '';
-
-        var apptWrap = document.createElement('div');
-        apptWrap.className = 'qa-form__field qa-form__field--appt';
-
-        var dateRow = buildControlRow(
-          field,
-          {
-            id: (field.hiddenDateId || field.id + '-date') + '-ui',
-            name: 'appointmentdate_ui',
-            type: 'date',
-            required: field.required,
-            icon: 'calendar',
-            value: prefill.appointmentdate || '',
-          },
-          lang
-        );
-        var timeRow = buildControlRow(
-          field,
-          {
-            id: (field.hiddenTimeId || field.id + '-time') + '-ui',
-            name: 'appointmenttime_ui',
-            type: 'time',
-            required: field.required,
-            icon: 'clock',
-            value: prefill.appointmenttime || '',
-          },
-          lang
-        );
-
-        apptWrap.appendChild(dateRow.wrap);
-        apptWrap.appendChild(timeRow.wrap);
-        form.appendChild(dateHidden);
-        form.appendChild(timeHidden);
-        form.appendChild(apptWrap);
-
-        dateRow.input.addEventListener('change', function () {
-          dateHidden.value = dateRow.input.value || '';
-        });
-        timeRow.input.addEventListener('change', function () {
-          timeHidden.value = timeRow.input.value || '';
-        });
+      if (type === 'geolocation') {
+        form.appendChild(renderGeolocationField(field, form, lang, widget, prefill));
         return;
       }
 
-      var built = buildControlRow(field, field, lang, prefill);
+      if (type === 'appointmentgeneral') {
+        form.appendChild(
+          renderAppointmentCalendar(field, form, lang, widget, prefill, 'general')
+        );
+        return;
+      }
+
+      if (type === 'appointmentdoctor') {
+        form.appendChild(
+          renderAppointmentCalendar(field, form, lang, widget, prefill, 'doctor')
+        );
+        return;
+      }
+
+      var built = buildControlRow(field, lang, prefill);
       form.appendChild(built.wrap);
     });
 
@@ -343,61 +1021,16 @@
       e.preventDefault();
       if (wrap.classList.contains('qa-form--submitted')) return;
 
-      var values = {};
-      var valid = true;
-      wrap.querySelectorAll('.qa-form__error').forEach(function (el) {
+      form.querySelectorAll('.qa-form__error').forEach(function (el) {
         el.hidden = true;
         el.textContent = '';
       });
-
-      (def.fields || []).forEach(function (field) {
-        if (!field || !field.name) return;
-        var type = String(field.type || 'text').toLowerCase();
-        if (type === 'hidden') {
-          values[field.name] = hiddenStore[field.name]
-            ? hiddenStore[field.name].value
-            : prefill[field.name] || field.value || '';
-          return;
-        }
-        if (type === 'appointmentdoctor' || type === 'appointmentgeneral') {
-          var dEl = form.querySelector('[name="appointmentdate"]');
-          var tEl = form.querySelector('[name="appointmenttime"]');
-          values.appointmentdate = dEl ? dEl.value : '';
-          values.appointmenttime = tEl ? tEl.value : '';
-          ['appointmentdate', 'appointmenttime'].forEach(function (k) {
-            var err = validateValue({ required: field.required, type: k === 'appointmentdate' ? 'date' : 'time' }, values[k], lang);
-            if (err) valid = false;
-            var ui = form.querySelector('[name="' + k + '_ui"]');
-            if (ui) showFieldError(ui, err);
-          });
-          return;
-        }
-        if (type === 'file') {
-          var fileInput = form.querySelector('#' + (field.id || 'qa-f-' + field.name));
-          var names = [];
-          if (fileInput && fileInput.files && fileInput.files.length) {
-            for (var i = 0; i < fileInput.files.length; i++) {
-              names.push(fileInput.files[i].name);
-            }
-          }
-          values[field.name] = names.join(', ');
-          var fileErr = field.required && !names.length ? t(lang, 'required') : '';
-          if (fileErr) valid = false;
-          if (fileInput) showFieldError(fileInput, fileErr);
-          return;
-        }
-
-        var input = form.querySelector('[name="' + field.name + '"]');
-        var raw = input ? (input.tagName === 'SELECT' ? input.value : input.value) : '';
-        values[field.name] = raw;
-        var errMsg = validateValue(field, raw, lang);
-        if (errMsg) {
-          valid = false;
-          if (input) showFieldError(input, errMsg);
-        }
+      form.querySelectorAll('.qa-form__field--invalid').forEach(function (el) {
+        el.classList.remove('qa-form__field--invalid');
       });
 
-      if (!valid) return;
+      var result = collectFieldValues(def, form, lang, hiddenStore);
+      if (!result.valid) return;
 
       wrap.classList.add('qa-form--submitted');
       form.querySelectorAll('input, select, textarea, button').forEach(function (el) {
@@ -408,112 +1041,18 @@
       if (widget && typeof widget.handleFormSubmit === 'function') {
         widget.handleFormSubmit({
           formId: formId,
-          values: values,
+          values: result.values,
           def: def,
           request: request,
           nextFormId: nextFormId,
-          summaryText: buildSummaryText(formId, values, def, lang),
-          dialogflowText: formatSubmission(formId, values, def, lang),
+          summaryText: buildSummaryText(formId, result.values, def, lang),
+          dialogflowText: formatSubmission(formId, result.values, def, lang),
         });
       }
     });
 
     wrap.appendChild(form);
     return wrap;
-  }
-
-  function showFieldError(input, msg) {
-    var field = input.closest('.qa-form__field');
-    if (!field) return;
-    var err = field.querySelector('.qa-form__error');
-    if (!err) return;
-    if (msg) {
-      err.textContent = msg;
-      err.hidden = false;
-      field.classList.add('qa-form__field--invalid');
-    } else {
-      err.hidden = true;
-      field.classList.remove('qa-form__field--invalid');
-    }
-  }
-
-  function buildControlRow(fieldDef, field, lang, prefill) {
-    prefill = prefill || {};
-    var wrap = document.createElement('div');
-    wrap.className = 'qa-form__field';
-    var type = String(field.type || 'text').toLowerCase();
-
-    if (field.icon && ICONS[field.icon]) {
-      var icon = document.createElement('span');
-      icon.className = 'qa-form__icon';
-      icon.innerHTML = ICONS[field.icon];
-      wrap.appendChild(icon);
-    }
-
-    var controlWrap = document.createElement('div');
-    controlWrap.className = 'qa-form__control';
-
-    var input;
-    if (type === 'textarea') {
-      input = document.createElement('textarea');
-      input.rows = field.rows || 3;
-    } else if (type === 'select') {
-      input = document.createElement('select');
-      var ph = document.createElement('option');
-      ph.value = '';
-      ph.textContent = fieldPlaceholder(field, lang) || '—';
-      ph.disabled = true;
-      ph.selected = true;
-      input.appendChild(ph);
-      (field.options || []).forEach(function (opt) {
-        var o = document.createElement('option');
-        o.value = opt.value != null ? opt.value : opt.label;
-        o.textContent = opt.label != null ? opt.label : opt.value;
-        input.appendChild(o);
-      });
-    } else if (type === 'file') {
-      input = document.createElement('input');
-      input.type = 'file';
-      if (field.accept) input.accept = field.accept;
-      if (field.multiple) input.multiple = true;
-    } else {
-      input = document.createElement('input');
-      input.type = type === 'tel' ? 'tel' : type;
-    }
-
-    input.className = 'qa-form__input';
-    input.id = field.id || 'qa-f-' + field.name;
-    input.name = field.name;
-    if (field.required) input.required = true;
-    if (field.autocomplete) input.autocomplete = field.autocomplete;
-    if (field.inputMode) input.inputMode = field.inputMode;
-    if (field.maxLength) input.maxLength = field.maxLength;
-    if (field.minLength) input.minLength = field.minLength;
-    if (field.pattern) input.pattern = field.pattern;
-
-    var phText = fieldPlaceholder(field, lang);
-    if (phText && type !== 'select' && type !== 'file') {
-      input.placeholder = phText;
-    }
-    if (type === 'file' && phText) {
-      input.setAttribute('data-placeholder', phText);
-    }
-
-    if (prefill[field.name] != null) {
-      input.value = String(prefill[field.name]);
-    } else if (field.value != null && type !== 'file') {
-      input.value = String(field.value);
-    }
-
-    controlWrap.appendChild(input);
-    wrap.appendChild(controlWrap);
-
-    var err = document.createElement('span');
-    err.className = 'qa-form__error';
-    err.hidden = true;
-    wrap.appendChild(err);
-
-    return { wrap: wrap, input: input };
   }
 
   global.QAChatForm = {
