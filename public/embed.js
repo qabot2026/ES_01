@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var QA_ASSET_VERSION = '20260528-upload-multi-clear';
+  var QA_ASSET_VERSION = '20260528-upload-btn-icon';
 
   var QA_FORM_SCRIPTS = [
     'contact.js',

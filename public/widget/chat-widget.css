@@ -2144,9 +2144,35 @@ textarea.qa-form__input {
 }
 
 .qa-form__upload-pick {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   border: 1px solid var(--qa-primary);
   background: var(--qa-bg-2, #f0f9ff);
   color: var(--qa-primary-dark, var(--qa-primary));
+}
+
+.qa-form__upload-pick-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  color: var(--qa-primary);
+}
+
+.qa-form__upload-pick-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.qa-form__upload-pick-label {
+  line-height: 1.25;
+  text-align: center;
+}
+
+.qa-form__field--upload .qa-form__control {
+  display: block;
 }
 
 .qa-form__upload-pick:hover {

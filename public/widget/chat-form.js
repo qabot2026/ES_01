@@ -56,7 +56,7 @@
       summaryDocumentLabel: 'Document',
       summaryDoctorIdLabel: 'Doctor',
       summaryBirthDateLabel: 'Birth date',
-      chooseFiles: 'Choose files…',
+      chooseFiles: 'Add one or more files',
       addMoreFiles: 'Add more files',
       clearFileSelection: 'Clear selection',
       removeFile: 'Remove file',
@@ -798,13 +798,6 @@
 
     var controlWrap = document.createElement('div');
     controlWrap.className = 'qa-form__upload';
-
-    if (field.icon && ICONS[field.icon]) {
-      var icon = document.createElement('span');
-      icon.className = 'qa-form__icon';
-      icon.innerHTML = ICONS[field.icon];
-      controlWrap.appendChild(icon);
-    }
 
     var input = document.createElement('input');
     input.type = 'file';
