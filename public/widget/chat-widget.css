@@ -406,6 +406,11 @@
   word-break: break-word;
 }
 
+.qa-msg__bubble--multiline {
+  white-space: normal;
+  line-height: 1.5;
+}
+
 .qa-msg--bot .qa-msg__bubble {
   background: var(--qa-bot-bg);
   color: var(--qa-bot-text, var(--qa-text));

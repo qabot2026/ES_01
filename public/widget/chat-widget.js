@@ -2729,7 +2729,16 @@
     var parts = replyParts && replyParts.length ? replyParts : null;
     if (!parts) {
       var textStr = text == null ? '' : String(text).trim();
-      if (textStr) bubble.textContent = textStr;
+      if (!textStr) return;
+      if (textStr.indexOf('\n') >= 0) {
+        bubble.classList.add('qa-msg__bubble--multiline');
+        textStr.split('\n').forEach(function (line, i) {
+          if (i > 0) bubble.appendChild(document.createElement('br'));
+          bubble.appendChild(document.createTextNode(line));
+        });
+      } else {
+        bubble.textContent = textStr;
+      }
       return;
     }
     var self = this;

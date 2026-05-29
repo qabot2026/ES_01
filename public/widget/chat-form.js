@@ -57,6 +57,7 @@
       calPickTime: 'Pick a time',
       calBookedLegend: 'Red = unavailable',
       calLoading: 'Loading…',
+      formSubmitThanks: 'Thank you for sharing.',
     },
     hi: {
       submit: 'जमा करें',
@@ -87,6 +88,7 @@
       calPickTime: 'समय चुनें',
       calBookedLegend: 'लाल = उपलब्ध नहीं',
       calLoading: 'लोड हो रहा है…',
+      formSubmitThanks: 'साझा करने के लिए धन्यवाद।',
     },
     mr: {
       submit: 'सबमिट करा',
@@ -117,8 +119,35 @@
       calPickTime: 'वेळ निवडा',
       calBookedLegend: 'लाल = उपलब्ध नाही',
       calLoading: 'लोड होत आहे…',
+      formSubmitThanks: 'माहिती शेअर केल्याबद्दल धन्यवाद.',
     },
   };
+
+  function summaryFieldLabel(field, name, lang) {
+    if (field && field.i18nSummaryLabel) {
+      return t(lang, field.i18nSummaryLabel);
+    }
+    if (field && field.placeholderByLanguage) {
+      return langPick(field.placeholderByLanguage, lang) || name;
+    }
+    return name;
+  }
+
+  function findFieldDef(def, name) {
+    return (def && def.fields || []).find(function (f) {
+      return f.name === name;
+    });
+  }
+
+  function combinedMobileLine(values, def, lang) {
+    var dial = values.dial_code != null ? String(values.dial_code).trim() : '';
+    var mobile = values.mobile != null ? String(values.mobile).trim() : '';
+    if (!mobile) return '';
+    var field = findFieldDef(def, 'mobile');
+    var label = summaryFieldLabel(field, 'mobile', lang);
+    var num = dial ? dial + ' ' + mobile : mobile;
+    return label + ': ' + num;
+  }
 
   function t(lang, key) {
     var pack = STRINGS[lang] || STRINGS.en;
@@ -199,22 +228,29 @@
   }
 
   function buildSummaryText(formId, values, def, lang) {
+    var lines = [t(lang, 'formSubmitThanks')];
     var title = def ? langPick(def.titleByLanguage, lang) : formId;
-    var lines = [title];
+    if (title) lines.push(title);
+
     var names = (def && def.chatSummaryFieldNames) || Object.keys(values);
+    var hasMobile = values.mobile != null && String(values.mobile).trim() !== '';
+    var hasDial = values.dial_code != null && String(values.dial_code).trim() !== '';
+
     names.forEach(function (name) {
-      if (values[name] == null || values[name] === '') return;
-      var field = (def && def.fields || []).find(function (f) {
-        return f.name === name;
-      });
-      var label = name;
-      if (field && field.i18nSummaryLabel) {
-        label = t(lang, field.i18nSummaryLabel);
-      } else if (field && field.placeholderByLanguage) {
-        label = langPick(field.placeholderByLanguage, lang) || name;
+      if (name === 'dial_code' && hasMobile) return;
+      if (values[name] == null || String(values[name]).trim() === '') return;
+
+      if (name === 'mobile' && hasDial) {
+        var combined = combinedMobileLine(values, def, lang);
+        if (combined) lines.push(combined);
+        return;
       }
-      lines.push(label + ': ' + String(values[name]));
+
+      var field = findFieldDef(def, name);
+      var label = summaryFieldLabel(field, name, lang);
+      lines.push(label + ': ' + String(values[name]).trim());
     });
+
     return lines.join('\n');
   }
 
