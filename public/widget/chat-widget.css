@@ -1764,6 +1764,7 @@ body.qa-lightbox-open {
   margin-top: 8px;
   width: 100%;
   max-width: 100%;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   background: var(--qa-surface);

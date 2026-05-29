@@ -30,9 +30,9 @@
         icon: "file",
         i18nSummaryLabel: "summaryDocumentLabel",
         placeholderByLanguage: {
-          en: "Upload files",
-          hi: "फ़ाइल अपलोड करें",
-          mr: "फाइल अपलोड करा"
+          en: "Upload",
+          hi: "अपलोड",
+          mr: "अपलोड"
         }
       }
     ]

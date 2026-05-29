@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var QA_ASSET_VERSION = '20260528-upload-all-files';
+  var QA_ASSET_VERSION = '20260528-upload-toolbar-row';
 
   var QA_FORM_SCRIPTS = [
     'contact.js',
