@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var QA_ASSET_VERSION = '20260530-forms-reference';
+  var QA_ASSET_VERSION = '20260530-dial-flag-code';
 
   var QA_FORM_SCRIPTS = [
     'contact.js',
