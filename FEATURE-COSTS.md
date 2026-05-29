@@ -20,6 +20,7 @@ Use this when adding or enabling features in `public/company.config.js`.
 | Suggestion / reply chips | Each chip tap sends `message` to Dialogflow |
 | Card carousel **View / Book** buttons | Each button sends `ctaValue` as a message |
 | Inline select / dropdown | Each selection sends `value` to Dialogflow |
+| `open_form` (contact, upload, etc.) | Each form submit sends `[form:id]` text to Dialogflow |
 | `welcomeEvent` (FRESH) | Chat open and/or Restart (if enabled) |
 | `endChatEvent` (ENDCHAT) | Idle timeout and/or close (if enabled) |
 | Welcome **suggestionChips** | Each chip tap (display is 🟢; tap is 🔴) |
@@ -44,6 +45,7 @@ Use this when adding or enabling features in `public/company.config.js`.
 | `open_card_carousel` + lightbox | Display, arrows, auto-scroll |
 | Auto-scroll / stop on interaction | Client-side only |
 | Scroll arrows on gallery/carousel | Client-side only |
+| In-chat forms (`open_form`) | Display is 🟢; **Submit** is 🔴 |
 | Markdown links in bot text | Render only |
 | File download buttons | Opens URL; no Dialogflow |
 | Powered by footer | UI only |

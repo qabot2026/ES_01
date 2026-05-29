@@ -1,7 +1,17 @@
 (function () {
   'use strict';
 
-  var QA_ASSET_VERSION = '20260529-restart-config-cleanup';
+  var QA_ASSET_VERSION = '20260529-chat-forms';
+
+  var QA_FORM_SCRIPTS = [
+    'contact.js',
+    'feedback.js',
+    'otp.js',
+    'upload.js',
+    'appointment.js',
+    'appointment-doctor.js',
+    'appointment-general.js',
+  ];
 
   var script = document.currentScript;
   var base = '';
@@ -45,18 +55,32 @@
     document.head.appendChild(s);
   }
 
+  function loadFormScripts(index, cb) {
+    if (index >= QA_FORM_SCRIPTS.length) {
+      if (cb) cb();
+      return;
+    }
+    loadJs(assetUrl(base + '/forms/' + QA_FORM_SCRIPTS[index]), function () {
+      loadFormScripts(index + 1, cb);
+    });
+  }
+
   function boot() {
     if (window.__qaWidgetLoaded) return;
     loadJs(assetUrl(base + '/company.config.js'), function () {
-      loadCss(base + '/widget/chat-widget.css');
-      loadJs(assetUrl(base + '/widget/chat-widget.js'), function () {
-        if (window.QualityAssistantWidget) {
-          window.__qaWidgetLoaded = true;
-          new window.QualityAssistantWidget({
-            apiBase:
-              (window.QA_CONFIG && window.QA_CONFIG.apiBase) || base,
+      loadFormScripts(0, function () {
+        loadCss(base + '/widget/chat-widget.css');
+        loadJs(assetUrl(base + '/widget/chat-form.js'), function () {
+          loadJs(assetUrl(base + '/widget/chat-widget.js'), function () {
+            if (window.QualityAssistantWidget) {
+              window.__qaWidgetLoaded = true;
+              new window.QualityAssistantWidget({
+                apiBase:
+                  (window.QA_CONFIG && window.QA_CONFIG.apiBase) || base,
+              });
+            }
           });
-        }
+        });
       });
     });
   }

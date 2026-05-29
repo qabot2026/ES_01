@@ -420,7 +420,7 @@
     this._idleTimer = null;
     this._idleActivityAt = 0;
     /** true after user sends a message / chip / dropdown (not just opening chat) */
-    this._userHasInteracted = false;
+    this.clientContext = {};
     this.recognition = null;
     this.root = null;
     this.els = {};
@@ -1494,6 +1494,7 @@
       var galleries = payload.galleries || [];
       var cardCarousels =
         richOn && payload.cardCarousels ? payload.cardCarousels : [];
+      var forms = richOn && payload.forms ? payload.forms : [];
       var reply = (payload.reply || '').trim();
       var replyParts = payload.replyParts || [];
       var chipHeading = (payload.chipHeading || '').trim();
@@ -1506,7 +1507,8 @@
         downloads.length ||
         dropdowns.length ||
         galleries.length ||
-        cardCarousels.length;
+        cardCarousels.length ||
+        forms.length;
       if (!hasContent) {
         reply = 'No response.';
         hasContent = true;
@@ -1521,6 +1523,7 @@
           dropdowns: dropdowns,
           galleries: galleries,
           cardCarousels: cardCarousels,
+          forms: forms,
         });
       }
     });
@@ -1860,6 +1863,7 @@
       self._endChatEventSent = false;
       self._endChatEventInFlight = false;
       self._userHasInteracted = false;
+      self.clientContext = {};
       self.els.messages.innerHTML = self.buildWelcomeHtml(
         self.restartTitle,
         self.restartBody
@@ -2693,6 +2697,33 @@
     return true;
   };
 
+  QualityAssistantWidget.prototype.handleFormSubmit = function (payload) {
+    var self = this;
+    this.clientContext = Object.assign({}, this.clientContext || {}, payload.values || {});
+    this._userHasInteracted = true;
+    this.appendMessage('user', payload.summaryText || payload.dialogflowText);
+    if (payload.nextFormId && global.QAChatForm && global.QAChatForm.isFormsEnabled()) {
+      this.appendMessage('bot', '', {
+        forms: [
+          {
+            formId: payload.nextFormId,
+            prefill: this.clientContext,
+          },
+        ],
+      });
+    }
+    this.postToDialogflow({
+      message: payload.dialogflowText,
+      sessionId: this.sessionId,
+      languageCode: this.getDialogflowLang(),
+    });
+  };
+
+  QualityAssistantWidget.prototype.buildFormEl = function (formRequest) {
+    if (!global.QAChatForm || !global.QAChatForm.isFormsEnabled()) return null;
+    return global.QAChatForm.buildFormEl(formRequest, this);
+  };
+
   QualityAssistantWidget.prototype.fillMessageBubble = function (bubble, text, replyParts) {
     bubble.textContent = '';
     var parts = replyParts && replyParts.length ? replyParts : null;
@@ -2737,6 +2768,7 @@
     var dropdowns = options.dropdowns || [];
     var galleries = options.galleries || [];
     var cardCarousels = options.cardCarousels || [];
+    var forms = options.forms || [];
     var skipBubbleForDropdown =
       role === 'bot' &&
       textStr &&
@@ -2748,6 +2780,9 @@
         }) ||
         cardCarousels.some(function (c) {
           return String(c.message || '').trim() === textStr;
+        }) ||
+        forms.some(function (f) {
+          return String(f.message || '').trim() === textStr;
         }));
     if ((textStr || replyParts.length) && !skipBubbleForDropdown) {
       var bubble = document.createElement('div');
@@ -2823,6 +2858,13 @@
           sharedGalleryMsg &&
           String(dropdown.message || '').trim() === sharedGalleryMsg;
         body.appendChild(selfDropdown.buildInlineSelectEl(dropdown, { hideLabel: hideLabel }));
+      });
+    }
+    if (role === 'bot' && forms.length) {
+      var selfForm = this;
+      forms.forEach(function (formReq) {
+        var el = selfForm.buildFormEl(formReq);
+        if (el) body.appendChild(el);
       });
     }
     row.appendChild(body);

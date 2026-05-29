@@ -60,6 +60,8 @@ window.QA_CHAT_UI_CONFIG = {
         },
         inlineSelect: { display: 'dropdown' },
       },
+      /** In-chat forms — definitions in /public/forms/*.js */
+      forms: { enabled: true },
     },
 
     deploy: {

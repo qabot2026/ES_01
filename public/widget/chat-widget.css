@@ -1736,3 +1736,139 @@ body.qa-lightbox-open {
     );
   }
 }
+
+/* In-chat forms (open_form) */
+.qa-form {
+  margin-top: 10px;
+  max-width: 100%;
+  background: var(--qa-surface);
+  border: 1px solid var(--qa-border);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+}
+
+.qa-form--missing {
+  padding: 12px 14px;
+  font-size: 0.8125rem;
+  color: #b45309;
+  background: #fffbeb;
+}
+
+.qa-form__header {
+  padding: 12px 14px 8px;
+  border-bottom: 1px solid var(--qa-border);
+  background: var(--qa-bg-2, #f8fafc);
+}
+
+.qa-form__title {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--qa-text);
+  line-height: 1.3;
+}
+
+.qa-form__subtitle {
+  margin: 6px 0 0;
+  font-size: 0.75rem;
+  color: var(--qa-text-soft, var(--qa-muted));
+  line-height: 1.4;
+}
+
+.qa-form__body {
+  padding: 12px 14px 14px;
+  overflow-y: auto;
+}
+
+.qa-form__field {
+  position: relative;
+  margin-bottom: 10px;
+}
+
+.qa-form__field--appt {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.qa-form__field--invalid .qa-form__input {
+  border-color: #dc2626;
+}
+
+.qa-form__icon {
+  display: none;
+}
+
+.qa-form__control {
+  width: 100%;
+}
+
+.qa-form__input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--qa-border);
+  background: var(--qa-surface);
+  color: var(--qa-text);
+  font-size: 0.875rem;
+  font-family: inherit;
+  line-height: 1.35;
+}
+
+.qa-form__input:focus {
+  outline: none;
+  border-color: var(--qa-primary);
+  box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.15);
+}
+
+textarea.qa-form__input {
+  resize: vertical;
+  min-height: 72px;
+}
+
+.qa-form__input[type='file'] {
+  padding: 8px 10px;
+  font-size: 0.8125rem;
+}
+
+.qa-form__error {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.75rem;
+  color: #dc2626;
+}
+
+.qa-form__error[hidden] {
+  display: none !important;
+}
+
+.qa-form__submit {
+  width: 100%;
+  margin-top: 4px;
+  padding: 11px 16px;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(145deg, var(--qa-primary) 0%, var(--qa-accent) 100%);
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.15s;
+}
+
+.qa-form__submit:hover:not(:disabled) {
+  opacity: 0.95;
+  transform: translateY(-1px);
+}
+
+.qa-form__submit:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.qa-form--submitted {
+  opacity: 0.92;
+}
