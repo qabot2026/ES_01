@@ -1784,6 +1784,44 @@ body.qa-lightbox-open {
   background: linear-gradient(180deg, var(--qa-bg-2, #f8fafc) 0%, var(--qa-surface) 100%);
 }
 
+.qa-form__header--with-close {
+  position: relative;
+  padding-right: 44px;
+}
+
+.qa-form__close {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  z-index: 2;
+  width: 28px;
+  height: 28px;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--qa-bg-2, #f1f5f9) 70%, transparent);
+  color: var(--qa-muted);
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.qa-form__close:hover {
+  background: var(--qa-bg-2, #e2e8f0);
+  color: var(--qa-text);
+}
+
+.qa-form--closed {
+  display: none;
+}
+
 .qa-form__title {
   margin: 0;
   font-size: 0.875rem;

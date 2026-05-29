@@ -58,6 +58,7 @@
       calBookedLegend: 'Red = unavailable',
       calLoading: 'Loading…',
       formSubmitThanks: 'Thank you for sharing.',
+      closeForm: 'Close form',
     },
     hi: {
       submit: 'जमा करें',
@@ -89,6 +90,7 @@
       calBookedLegend: 'लाल = उपलब्ध नहीं',
       calLoading: 'लोड हो रहा है…',
       formSubmitThanks: 'साझा करने के लिए धन्यवाद।',
+      closeForm: 'फ़ॉर्म बंद करें',
     },
     mr: {
       submit: 'सबमिट करा',
@@ -120,8 +122,22 @@
       calBookedLegend: 'लाल = उपलब्ध नाही',
       calLoading: 'लोड होत आहे…',
       formSubmitThanks: 'माहिती शेअर केल्याबद्दल धन्यवाद.',
+      closeForm: 'फॉर्म बंद करा',
     },
   };
+
+  /** Dialogflow open_form actions: query:INTENT_NAME or event:EVENT_NAME */
+  function resolveFormAction(action) {
+    var s = String(action || '').trim();
+    if (!s) return null;
+    if (/^query:/i.test(s)) {
+      return { type: 'message', message: s.replace(/^query:/i, '').trim() || s };
+    }
+    if (/^event:/i.test(s)) {
+      return { type: 'event', event: s.replace(/^event:/i, '').trim() };
+    }
+    return { type: 'message', message: s };
+  }
 
   function summaryFieldLabel(field, name, lang) {
     if (field && field.i18nSummaryLabel) {
@@ -1413,7 +1429,26 @@
     wrap.style.maxHeight = scaledFormMaxHeight(def, formId) + 'px';
 
     var header = document.createElement('div');
-    header.className = 'qa-form__header';
+    header.className = 'qa-form__header qa-form__header--with-close';
+
+    var closeBtn = document.createElement('button');
+    closeBtn.type = 'button';
+    closeBtn.className = 'qa-form__close';
+    closeBtn.setAttribute('aria-label', t(lang, 'closeForm'));
+    closeBtn.innerHTML = '&times;';
+    closeBtn.addEventListener('click', function () {
+      if (widget && typeof widget.handleFormClose === 'function') {
+        widget.handleFormClose({
+          formId: formId,
+          request: request,
+          formEl: wrap,
+        });
+      } else {
+        wrap.classList.add('qa-form--closed');
+      }
+    });
+    header.appendChild(closeBtn);
+
     var titleEl = document.createElement('h3');
     titleEl.className = 'qa-form__title';
     titleEl.textContent = langPick(def.titleByLanguage, lang);
@@ -1534,6 +1569,7 @@
           values: result.values,
           def: def,
           request: request,
+          formEl: wrap,
           nextFormId: nextFormId,
           summaryText: buildSummaryText(formId, result.values, def, lang),
           dialogflowText: formatSubmission(formId, result.values, def, lang),
@@ -1549,6 +1585,7 @@
     buildFormEl: buildFormEl,
     formatSubmission: formatSubmission,
     buildSummaryText: buildSummaryText,
+    resolveFormAction: resolveFormAction,
     resolveNextFormId: resolveNextFormId,
     getFormDef: getFormDef,
     isFormsEnabled: isFormsEnabled,

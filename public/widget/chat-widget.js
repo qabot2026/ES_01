@@ -2697,26 +2697,89 @@
     return true;
   };
 
-  QualityAssistantWidget.prototype.handleFormSubmit = function (payload) {
-    var self = this;
-    this.clientContext = Object.assign({}, this.clientContext || {}, payload.values || {});
-    this._userHasInteracted = true;
-    this.appendMessage('user', payload.summaryText || payload.dialogflowText);
-    if (payload.nextFormId && global.QAChatForm && global.QAChatForm.isFormsEnabled()) {
-      this.appendMessage('bot', '', {
-        forms: [
-          {
-            formId: payload.nextFormId,
-            prefill: this.clientContext,
-          },
-        ],
-      });
-    }
-    this.postToDialogflow({
-      message: payload.dialogflowText,
+  QualityAssistantWidget.prototype.removeFormCard = function (formEl) {
+    if (!formEl) return;
+    formEl.classList.add('qa-form--closed');
+    var row = formEl.closest('.qa-msg');
+    if (row) row.remove();
+  };
+
+  QualityAssistantWidget.prototype.runFormDialogflowAction = function (action) {
+    if (!action) return Promise.resolve();
+    var body = {
       sessionId: this.sessionId,
       languageCode: this.getDialogflowLang(),
-    });
+    };
+    if (action.type === 'event' && action.event) {
+      body.event = action.event;
+    } else if (action.message) {
+      body.message = action.message;
+    } else {
+      return Promise.resolve();
+    }
+    return this.postToDialogflow(body);
+  };
+
+  QualityAssistantWidget.prototype.handleFormClose = function (payload) {
+    payload = payload || {};
+    this.removeFormCard(payload.formEl);
+    var req = payload.request || {};
+    var action =
+      global.QAChatForm && global.QAChatForm.resolveFormAction
+        ? global.QAChatForm.resolveFormAction(req.onCancel)
+        : null;
+    if (action) {
+      this._userHasInteracted = true;
+      this.runFormDialogflowAction(action);
+    }
+  };
+
+  QualityAssistantWidget.prototype.handleFormSubmit = function (payload) {
+    var self = this;
+    payload = payload || {};
+    this.clientContext = Object.assign({}, this.clientContext || {}, payload.values || {});
+    this._userHasInteracted = true;
+
+    var ack = payload.summaryText || '';
+    if (ack) {
+      this.appendMessage('bot', ack);
+    }
+
+    this.removeFormCard(payload.formEl);
+
+    var req = payload.request || {};
+    var onSubmit =
+      global.QAChatForm && global.QAChatForm.resolveFormAction
+        ? global.QAChatForm.resolveFormAction(req.onSubmit)
+        : null;
+
+    var chainPromise = this.postToDialogflow(
+      {
+        message: payload.dialogflowText,
+        sessionId: this.sessionId,
+        languageCode: this.getDialogflowLang(),
+      },
+      { applyResponse: !onSubmit, showTyping: !onSubmit }
+    );
+
+    if (onSubmit) {
+      chainPromise = chainPromise.then(function () {
+        return self.runFormDialogflowAction(onSubmit);
+      });
+    } else if (payload.nextFormId && global.QAChatForm && global.QAChatForm.isFormsEnabled()) {
+      chainPromise = chainPromise.then(function () {
+        self.appendMessage('bot', '', {
+          forms: [
+            {
+              formId: payload.nextFormId,
+              prefill: self.clientContext,
+            },
+          ],
+        });
+      });
+    }
+
+    return chainPromise;
   };
 
   QualityAssistantWidget.prototype.buildFormEl = function (formRequest) {

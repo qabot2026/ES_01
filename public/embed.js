@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var QA_ASSET_VERSION = '20260528-form-summary-lines';
+  var QA_ASSET_VERSION = '20260528-form-submit-routing';
 
   var QA_FORM_SCRIPTS = [
     'contact.js',
