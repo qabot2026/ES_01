@@ -245,8 +245,6 @@
 
   function buildSummaryText(formId, values, def, lang) {
     var lines = [t(lang, 'formSubmitThanks')];
-    var title = def ? langPick(def.titleByLanguage, lang) : formId;
-    if (title) lines.push(title);
 
     var names = (def && def.chatSummaryFieldNames) || Object.keys(values);
     var hasMobile = values.mobile != null && String(values.mobile).trim() !== '';
