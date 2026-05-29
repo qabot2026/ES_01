@@ -19,7 +19,7 @@
     maxCardHeightPx: 380,
     chatSummaryFieldNames: ["name", "dial_code", "mobile", "email"],
     fields: [
-      { id: "c-name", name: "name", type: "text", required: true, icon: "user", i18nPlaceholder: "namePlaceholder", i18nSummaryLabel: "summaryNameLabel", autocomplete: "name" },
+      { id: "c-name", name: "name", type: "text", required: false, icon: "user", i18nPlaceholder: "namePlaceholder", i18nSummaryLabel: "summaryNameLabel", autocomplete: "name" },
       {
         id: "c-dial-code",
         name: "dial_code",
