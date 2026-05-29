@@ -1,6 +1,5 @@
 /**
  * Form: contact — default `open_form` / `form_id`: "contact".
- * Load before `company.config.js` (see `chat-frame.html`).
  */
 (function (w) {
   w.__DFCHAT_FORMS__ = w.__DFCHAT_FORMS__ || {};
@@ -18,8 +17,6 @@
     },
     showSubtitle: true,
     maxCardHeightPx: 300,
-    // Optional static chaining. Prefer Dialogflow `open_form`: `next_form_id` + `following_form_id` + `third_form_id`, or `next_form_ids` array.
-    // nextFormId: "uploadDocument",
     chatSummaryFieldNames: ["name", "dial_code", "mobile", "email"],
     fields: [
       { id: "c-name", name: "name", type: "text", required: true, icon: "user", i18nPlaceholder: "namePlaceholder", i18nSummaryLabel: "summaryNameLabel", autocomplete: "name" },
@@ -28,32 +25,31 @@
         name: "dial_code",
         type: "select",
         required: true,
-        icon: "phone",
-        i18nPlaceholder: "dialCodePlaceholder",
         i18nSummaryLabel: "summaryDialCodeLabel",
         autoDetectDialCode: true,
+        detectFromLocation: true,
         options: [
-          { flag: "🇮🇳", value: "+91" },
-          { flag: "🇺🇸", value: "+1" },
-          { flag: "🇨🇦", value: "+1" },
-          { flag: "🇬🇧", value: "+44" },
-          { flag: "🇦🇪", value: "+971" },
-          { flag: "🇦🇺", value: "+61" },
-          { flag: "🇸🇬", value: "+65" },
-          { flag: "🇸🇦", value: "+966" },
-          { flag: "🇶🇦", value: "+974" },
-          { flag: "🇴🇲", value: "+968" },
-          { flag: "🇰🇼", value: "+965" },
-          { flag: "🇧🇭", value: "+973" },
-          { flag: "🇳🇵", value: "+977" },
-          { flag: "🇧🇩", value: "+880" },
-          { flag: "🇱🇰", value: "+94" },
-          { flag: "🇵🇰", value: "+92" },
-          { flag: "🇲🇾", value: "+60" },
-          { flag: "🇩🇪", value: "+49" },
-          { flag: "🇫🇷", value: "+33" },
-          { flag: "🇮🇹", value: "+39" },
-          { flag: "🇪🇸", value: "+34" }
+          { flag: "🇮🇳", country: "IN", value: "+91" },
+          { flag: "🇺🇸", country: "US", value: "+1" },
+          { flag: "🇨🇦", country: "CA", value: "+1" },
+          { flag: "🇬🇧", country: "GB", value: "+44" },
+          { flag: "🇦🇪", country: "AE", value: "+971" },
+          { flag: "🇦🇺", country: "AU", value: "+61" },
+          { flag: "🇸🇬", country: "SG", value: "+65" },
+          { flag: "🇸🇦", country: "SA", value: "+966" },
+          { flag: "🇶🇦", country: "QA", value: "+974" },
+          { flag: "🇴🇲", country: "OM", value: "+968" },
+          { flag: "🇰🇼", country: "KW", value: "+965" },
+          { flag: "🇧🇭", country: "BH", value: "+973" },
+          { flag: "🇳🇵", country: "NP", value: "+977" },
+          { flag: "🇧🇩", country: "BD", value: "+880" },
+          { flag: "🇱🇰", country: "LK", value: "+94" },
+          { flag: "🇵🇰", country: "PK", value: "+92" },
+          { flag: "🇲🇾", country: "MY", value: "+60" },
+          { flag: "🇩🇪", country: "DE", value: "+49" },
+          { flag: "🇫🇷", country: "FR", value: "+33" },
+          { flag: "🇮🇹", country: "IT", value: "+39" },
+          { flag: "🇪🇸", country: "ES", value: "+34" }
         ]
       },
       { id: "c-mobile", name: "mobile", type: "tel", required: true, icon: "phone", i18nPlaceholder: "mobilePlaceholder", i18nSummaryLabel: "summaryMobileLabel", autocomplete: "tel", inputMode: "tel" },

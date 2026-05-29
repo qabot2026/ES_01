@@ -145,6 +145,15 @@ app.post('/api/translate', async (req, res) => {
   }
 });
 
+app.get('/api/detect-country', async (req, res) => {
+  try {
+    const result = await formApi.detectCountryFromCoords(req.query.lat, req.query.lng);
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: 'detect_country_failed', message: err.message });
+  }
+});
+
 app.get('/api/nearest-branches', (req, res) => {
   const lat = req.query.lat;
   const lng = req.query.lng;

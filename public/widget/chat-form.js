@@ -298,11 +298,30 @@
     }
   }
 
-  function dialOptionLabel(opt) {
+  function dialOptionLabel(opt, compact) {
     var flag = opt.flag ? String(opt.flag) : '';
+    var country = opt.country ? String(opt.country).toUpperCase() : '';
+    if (compact) {
+      if (flag && country) return flag + ' ' + country;
+      if (flag) return flag;
+      if (country) return country;
+    }
     var val = String(opt.value != null ? opt.value : opt.label || '').trim();
-    if (flag && val) return flag + val;
+    if (flag && country) return flag + ' ' + country;
+    if (flag && val) return flag + ' ' + val;
     return opt.label != null ? String(opt.label) : val;
+  }
+
+  function flagForCountry(select, countryCode) {
+    var cc = String(countryCode || '').toUpperCase();
+    if (!cc) return '';
+    var found = '';
+    Array.prototype.forEach.call(select.options, function (opt) {
+      if (String(opt.getAttribute('data-country') || '').toUpperCase() === cc) {
+        found = opt.getAttribute('data-flag') || opt.textContent || '';
+      }
+    });
+    return found;
   }
 
   function detectPreferredDialCode(lang) {
@@ -360,6 +379,59 @@
     return '+91';
   }
 
+  function detectPreferredCountryCode(lang) {
+    lang = String(lang || '').toLowerCase();
+    if (lang === 'hi' || lang === 'mr') return 'IN';
+
+    var localeCountry = {
+      in: 'IN',
+      us: 'US',
+      ca: 'CA',
+      gb: 'GB',
+      ae: 'AE',
+      au: 'AU',
+      sg: 'SG',
+      sa: 'SA',
+      qa: 'QA',
+      om: 'OM',
+      kw: 'KW',
+      bh: 'BH',
+      np: 'NP',
+      bd: 'BD',
+      lk: 'LK',
+      pk: 'PK',
+      my: 'MY',
+      de: 'DE',
+      fr: 'FR',
+      it: 'IT',
+      es: 'ES',
+    };
+
+    try {
+      var langs = [];
+      if (global.navigator) {
+        if (Array.isArray(global.navigator.languages)) {
+          langs = global.navigator.languages.slice();
+        } else if (global.navigator.language) {
+          langs = [global.navigator.language];
+        }
+      }
+      for (var i = 0; i < langs.length; i++) {
+        var part = String(langs[i] || '')
+          .split('-')[1]
+          .toLowerCase();
+        if (part && localeCountry[part]) return localeCountry[part];
+      }
+      var tz =
+        global.Intl &&
+        global.Intl.DateTimeFormat &&
+        global.Intl.DateTimeFormat().resolvedOptions().timeZone;
+      if (tz && /Asia\/Kolkata|Asia\/Calcutta/.test(tz)) return 'IN';
+    } catch (e) {}
+
+    return 'IN';
+  }
+
   function detectPreferredDialFlag(lang) {
     try {
       var langs = [];
@@ -379,18 +451,25 @@
     return '';
   }
 
-  function selectDialCode(select, code, flagHint) {
+  function selectDialCode(select, code, flagHint, countryHint) {
     var want = String(code || '').trim();
     var flag = flagHint ? String(flagHint) : '';
+    var country = countryHint ? String(countryHint).toUpperCase() : '';
     Array.prototype.forEach.call(select.options, function (opt) {
       opt.selected = false;
     });
     var fallback = null;
     Array.prototype.forEach.call(select.options, function (opt) {
       if (opt.value !== want) return;
-      if (flag && opt.getAttribute('data-flag') === flag) {
+      var optCountry = String(opt.getAttribute('data-country') || '').toUpperCase();
+      if (country && optCountry === country) {
         opt.selected = true;
         fallback = opt;
+      } else if (flag && opt.getAttribute('data-flag') === flag) {
+        if (!fallback || !country) {
+          opt.selected = true;
+          fallback = opt;
+        }
       } else if (!fallback) {
         fallback = opt;
       }
@@ -408,20 +487,90 @@
     }
     var preferred = detectPreferredDialCode(lang);
     var flagHint = detectPreferredDialFlag(lang);
-    if (!selectDialCode(select, preferred, flagHint) && select.options.length) {
+    var countryHint = detectPreferredCountryCode(lang);
+    if (!selectDialCode(select, preferred, flagHint, countryHint) && select.options.length) {
       select.options[0].selected = true;
     }
   }
 
-  function buildControlRow(field, lang, prefill) {
+  function detectDialFromLocation(select, dialField, lang, prefill, widget) {
+    if (prefill && prefill.dial_code != null && String(prefill.dial_code).trim()) {
+      return;
+    }
+    applyAutoDetectDialCode(select, lang, prefill);
+
+    if (!dialField.detectFromLocation) return;
+    if (!global.navigator || !navigator.geolocation) return;
+
+    navigator.geolocation.getCurrentPosition(
+      function (pos) {
+        var base = apiBase(widget);
+        if (!base) return;
+        fetchJson(
+          base +
+            '/api/detect-country?lat=' +
+            encodeURIComponent(pos.coords.latitude) +
+            '&lng=' +
+            encodeURIComponent(pos.coords.longitude)
+        ).then(function (data) {
+          if (!data || !data.dialCode) return;
+          var flag = data.flag || flagForCountry(select, data.countryCode);
+          selectDialCode(select, data.dialCode, flag, data.countryCode);
+        });
+      },
+      function () {},
+      { enableHighAccuracy: false, timeout: 12000, maximumAge: 300000 }
+    );
+  }
+
+  function isPhonePairField(field, next) {
+    if (!field || !next) return false;
+    var t1 = String(field.type || '').toLowerCase();
+    var t2 = String(next.type || '').toLowerCase();
+    return (
+      (field.name === 'dial_code' || field.autoDetectDialCode) &&
+      t1 === 'select' &&
+      (next.name === 'mobile' || t2 === 'tel')
+    );
+  }
+
+  function buildPhoneRow(dialField, mobileField, lang, prefill, widget) {
+    var row = document.createElement('div');
+    row.className = 'qa-form__phone-row';
+
+    var dialBuilt = buildControlRow(dialField, lang, prefill, {
+      role: 'dial',
+      compactDial: true,
+      hideIcon: true,
+      skipAutoDetect: true,
+    });
+    var mobileBuilt = buildControlRow(mobileField, lang, prefill, {
+      role: 'mobile',
+      hideIcon: false,
+    });
+
+    row.appendChild(dialBuilt.wrap);
+    row.appendChild(mobileBuilt.wrap);
+
+    if (dialField.autoDetectDialCode && dialBuilt.input) {
+      detectDialFromLocation(dialBuilt.input, dialField, lang, prefill, widget);
+    }
+
+    return row;
+  }
+
+  function buildControlRow(field, lang, prefill, rowOpts) {
+    rowOpts = rowOpts || {};
     prefill = prefill || {};
     var wrap = document.createElement('div');
     wrap.className = 'qa-form__field';
+    if (rowOpts.role === 'dial') wrap.classList.add('qa-form__field--dial');
+    if (rowOpts.role === 'mobile') wrap.classList.add('qa-form__field--mobile');
     var type = String(field.type || 'text').toLowerCase();
 
     var controlWrap = document.createElement('div');
     controlWrap.className = 'qa-form__control';
-    if (field.icon && ICONS[field.icon]) {
+    if (field.icon && ICONS[field.icon] && !rowOpts.hideIcon) {
       var icon = document.createElement('span');
       icon.className = 'qa-form__icon';
       icon.innerHTML = ICONS[field.icon];
@@ -435,15 +584,22 @@
     } else if (type === 'select') {
       input = document.createElement('select');
       var isDialCode = field.name === 'dial_code' || field.autoDetectDialCode;
+      var compactDial = isDialCode && rowOpts.compactDial !== false;
       (field.options || []).forEach(function (opt) {
         var o = document.createElement('option');
         o.value = opt.value != null ? opt.value : opt.label;
-        o.textContent = isDialCode ? dialOptionLabel(opt) : opt.label != null ? opt.label : opt.value;
+        o.textContent = isDialCode
+          ? dialOptionLabel(opt, compactDial)
+          : opt.label != null
+            ? opt.label
+            : opt.value;
         if (isDialCode && opt.flag) o.setAttribute('data-flag', opt.flag);
+        if (isDialCode && opt.country) o.setAttribute('data-country', opt.country);
         input.appendChild(o);
       });
       if (isDialCode) {
         input.classList.add('qa-form__input--dial-code');
+        input.setAttribute('aria-label', t(lang, 'dialCodePlaceholder'));
       }
     } else if (type === 'file') {
       input = document.createElement('input');
@@ -477,7 +633,7 @@
       input.value = String(field.value);
     }
 
-    if (type === 'select' && field.autoDetectDialCode && prefill[field.name] == null) {
+    if (type === 'select' && field.autoDetectDialCode && prefill[field.name] == null && !rowOpts.skipAutoDetect) {
       applyAutoDetectDialCode(input, lang, prefill);
     }
 
@@ -1068,10 +1224,19 @@
     form.noValidate = true;
 
     var hiddenStore = {};
+    var fieldsList = def.fields || [];
 
-    (def.fields || []).forEach(function (field) {
-      if (!field || !field.name) return;
+    for (var fi = 0; fi < fieldsList.length; fi += 1) {
+      var field = fieldsList[fi];
+      if (!field || !field.name) continue;
       var type = String(field.type || 'text').toLowerCase();
+      var nextField = fieldsList[fi + 1];
+
+      if (isPhonePairField(field, nextField)) {
+        form.appendChild(buildPhoneRow(field, nextField, lang, prefill, widget));
+        fi += 1;
+        continue;
+      }
 
       if (type === 'hidden') {
         var hidden = document.createElement('input');
@@ -1084,31 +1249,31 @@
             : String(field.value || '');
         hiddenStore[field.name] = hidden;
         form.appendChild(hidden);
-        return;
+        continue;
       }
 
       if (type === 'geolocation') {
         form.appendChild(renderGeolocationField(field, form, lang, widget, prefill));
-        return;
+        continue;
       }
 
       if (type === 'appointmentgeneral') {
         form.appendChild(
           renderAppointmentCalendar(field, form, lang, widget, prefill, 'general')
         );
-        return;
+        continue;
       }
 
       if (type === 'appointmentdoctor') {
         form.appendChild(
           renderAppointmentCalendar(field, form, lang, widget, prefill, 'doctor')
         );
-        return;
+        continue;
       }
 
       var built = buildControlRow(field, lang, prefill);
       form.appendChild(built.wrap);
-    });
+    }
 
     var submit = document.createElement('button');
     submit.type = 'submit';
