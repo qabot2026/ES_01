@@ -27,7 +27,7 @@
         required: true,
         i18nSummaryLabel: "summaryDialCodeLabel",
         autoDetectDialCode: true,
-        detectFromLocation: true,
+        detectFromIp: true,
         options: [
           { flag: "🇮🇳", country: "IN", value: "+91" },
           { flag: "🇺🇸", country: "US", value: "+1" },

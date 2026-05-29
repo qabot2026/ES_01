@@ -147,7 +147,12 @@ app.post('/api/translate', async (req, res) => {
 
 app.get('/api/detect-country', async (req, res) => {
   try {
-    const result = await formApi.detectCountryFromCoords(req.query.lat, req.query.lng);
+    const lat = req.query.lat;
+    const lng = req.query.lng;
+    const result =
+      lat != null && lng != null && String(lat) !== '' && String(lng) !== ''
+        ? await formApi.detectCountryFromCoords(lat, lng)
+        : await formApi.detectCountryFromIp(formApi.getClientIp(req));
     res.json(result);
   } catch (err) {
     res.status(500).json({ error: 'detect_country_failed', message: err.message });

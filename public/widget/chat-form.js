@@ -353,8 +353,9 @@
 
   function updateDialPickerUi(picker, opt) {
     if (!picker || !opt) return;
-    var img = picker.querySelector('.qa-dial-picker__flag-img');
-    var iso = picker.querySelector('.qa-dial-picker__iso');
+    var img = picker.querySelector('.qa-dial-picker__trigger .qa-dial-picker__flag-img');
+    var iso = picker.querySelector('.qa-dial-picker__trigger .qa-dial-picker__iso');
+    var code = picker.querySelector('.qa-dial-picker__trigger .qa-dial-picker__code');
     var url = flagCdnUrl(opt.country, 40);
     if (img) {
       img.src = url || '';
@@ -362,6 +363,7 @@
       img.style.visibility = url ? 'visible' : 'hidden';
     }
     if (iso) iso.textContent = opt.country || '';
+    if (code) code.textContent = opt.value || '';
   }
 
   function setDialPickerValue(picker, hidden, options, code, flagHint, countryHint) {
@@ -402,8 +404,11 @@
 
     var iso = document.createElement('span');
     iso.className = 'qa-dial-picker__iso';
+    var dialCode = document.createElement('span');
+    dialCode.className = 'qa-dial-picker__code';
     trigger.appendChild(flagImg);
     trigger.appendChild(iso);
+    trigger.appendChild(dialCode);
 
     var menu = document.createElement('ul');
     menu.className = 'qa-dial-picker__menu';
@@ -424,8 +429,12 @@
       var liIso = document.createElement('span');
       liIso.className = 'qa-dial-picker__iso';
       liIso.textContent = opt.country;
+      var liCode = document.createElement('span');
+      liCode.className = 'qa-dial-picker__code';
+      liCode.textContent = opt.value;
       li.appendChild(liImg);
       li.appendChild(liIso);
+      li.appendChild(liCode);
       li.addEventListener('click', function (ev) {
         ev.stopPropagation();
         setDialPickerValue(picker, hidden, options, opt.value, opt.flag, opt.country);
@@ -628,36 +637,27 @@
     }
   }
 
-  function detectDialFromLocation(picker, hidden, dialField, lang, prefill, widget) {
+  function detectDialFromIp(picker, hidden, dialField, lang, prefill, widget) {
     var options = picker._dialOptions || [];
     if (prefill && prefill.dial_code != null && String(prefill.dial_code).trim()) {
       return;
     }
     applyAutoDetectDialCode(picker, hidden, options, lang, prefill);
 
-    if (!dialField.detectFromLocation) return;
-    if (!global.navigator || !navigator.geolocation) return;
+    var useIp =
+      dialField.detectFromIp ||
+      dialField.detectFromLocation ||
+      dialField.autoDetectDialCode;
+    if (!useIp) return;
 
-    navigator.geolocation.getCurrentPosition(
-      function (pos) {
-        var base = apiBase(widget);
-        if (!base) return;
-        fetchJson(
-          base +
-            '/api/detect-country?lat=' +
-            encodeURIComponent(pos.coords.latitude) +
-            '&lng=' +
-            encodeURIComponent(pos.coords.longitude)
-        ).then(function (data) {
-          if (!data || !data.dialCode) return;
-          var flag =
-            data.flag || flagForCountryFromOptions(options, data.countryCode);
-          setDialPickerValue(picker, hidden, options, data.dialCode, flag, data.countryCode);
-        });
-      },
-      function () {},
-      { enableHighAccuracy: false, timeout: 12000, maximumAge: 300000 }
-    );
+    var base = apiBase(widget);
+    if (!base) return;
+
+    fetchJson(base + '/api/detect-country').then(function (data) {
+      if (!data || !data.dialCode) return;
+      var flag = flagForCountryFromOptions(options, data.countryCode);
+      setDialPickerValue(picker, hidden, options, data.dialCode, flag, data.countryCode);
+    });
   }
 
   function isPhonePairField(field, next) {
@@ -690,7 +690,7 @@
     row.appendChild(mobileBuilt.wrap);
 
     if (dialField.autoDetectDialCode && dialBuilt.input && dialBuilt.picker) {
-      detectDialFromLocation(
+      detectDialFromIp(
         dialBuilt.picker,
         dialBuilt.input,
         dialField,
@@ -1328,6 +1328,12 @@
     return { values: values, valid: valid };
   }
 
+  function scaledFormMaxHeight(def) {
+    var n = def && def.maxCardHeightPx;
+    if (!n || n <= 0) return 260;
+    return Math.min(Math.round(Number(n) * 0.55), 300);
+  }
+
   function buildFormEl(request, widget) {
     if (!isFormsEnabled()) return null;
     var formId = String((request && request.formId) || 'contact').trim();
@@ -1349,9 +1355,7 @@
     var wrap = document.createElement('div');
     wrap.className = 'qa-form';
     wrap.setAttribute('data-form-id', formId);
-    if (def.maxCardHeightPx) {
-      wrap.style.maxHeight = def.maxCardHeightPx + 'px';
-    }
+    wrap.style.maxHeight = scaledFormMaxHeight(def) + 'px';
 
     var header = document.createElement('div');
     header.className = 'qa-form__header';
@@ -1377,8 +1381,11 @@
     wrap.appendChild(header);
 
     var form = document.createElement('form');
-    form.className = 'qa-form__body';
+    form.className = 'qa-form__form';
     form.noValidate = true;
+
+    var scroll = document.createElement('div');
+    scroll.className = 'qa-form__scroll';
 
     var hiddenStore = {};
     var fieldsList = def.fields || [];
@@ -1390,7 +1397,7 @@
       var nextField = fieldsList[fi + 1];
 
       if (isPhonePairField(field, nextField)) {
-        form.appendChild(buildPhoneRow(field, nextField, lang, prefill, widget));
+        scroll.appendChild(buildPhoneRow(field, nextField, lang, prefill, widget));
         fi += 1;
         continue;
       }
@@ -1410,34 +1417,40 @@
       }
 
       if (type === 'geolocation') {
-        form.appendChild(renderGeolocationField(field, form, lang, widget, prefill));
+        scroll.appendChild(renderGeolocationField(field, form, lang, widget, prefill));
         continue;
       }
 
       if (type === 'appointmentgeneral') {
-        form.appendChild(
+        scroll.appendChild(
           renderAppointmentCalendar(field, form, lang, widget, prefill, 'general')
         );
         continue;
       }
 
       if (type === 'appointmentdoctor') {
-        form.appendChild(
+        scroll.appendChild(
           renderAppointmentCalendar(field, form, lang, widget, prefill, 'doctor')
         );
         continue;
       }
 
       var built = buildControlRow(field, lang, prefill);
-      form.appendChild(built.wrap);
+      scroll.appendChild(built.wrap);
     }
+
+    var footer = document.createElement('div');
+    footer.className = 'qa-form__footer';
 
     var submit = document.createElement('button');
     submit.type = 'submit';
     submit.className = 'qa-form__submit';
     submit.textContent =
       langPick(def.submitLabelByLanguage, lang) || t(lang, 'submit');
-    form.appendChild(submit);
+    footer.appendChild(submit);
+
+    form.appendChild(scroll);
+    form.appendChild(footer);
 
     form.addEventListener('submit', function (e) {
       e.preventDefault();
