@@ -2741,45 +2741,59 @@
     this._userHasInteracted = true;
 
     var ack = payload.summaryText || '';
-    if (ack) {
-      this.appendMessage('bot', ack);
-    }
-
-    this.removeFormCard(payload.formEl);
-
     var req = payload.request || {};
     var onSubmit =
       global.QAChatForm && global.QAChatForm.resolveFormAction
         ? global.QAChatForm.resolveFormAction(req.onSubmit)
         : null;
 
-    var chainPromise = this.postToDialogflow(
-      {
-        message: payload.dialogflowText,
-        sessionId: this.sessionId,
-        languageCode: this.getDialogflowLang(),
-      },
-      { applyResponse: !onSubmit, showTyping: !onSubmit }
-    );
+    /* Remove form before ack or any Dialogflow reply so agent text never stacks on the card */
+    this.removeFormCard(payload.formEl);
 
-    if (onSubmit) {
-      chainPromise = chainPromise.then(function () {
-        return self.runFormDialogflowAction(onSubmit);
-      });
-    } else if (payload.nextFormId && global.QAChatForm && global.QAChatForm.isFormsEnabled()) {
-      chainPromise = chainPromise.then(function () {
-        self.appendMessage('bot', '', {
-          forms: [
-            {
-              formId: payload.nextFormId,
-              prefill: self.clientContext,
-            },
-          ],
+    var runAfterFormGone = function () {
+      if (ack) {
+        self.appendMessage('bot', ack);
+      }
+
+      /* Form data to Dialogflow is silent when we show our own ack */
+      var chainPromise = self.postToDialogflow(
+        {
+          message: payload.dialogflowText,
+          sessionId: self.sessionId,
+          languageCode: self.getDialogflowLang(),
+        },
+        { applyResponse: false, showTyping: false }
+      );
+
+      if (onSubmit) {
+        chainPromise = chainPromise.then(function () {
+          return self.runFormDialogflowAction(onSubmit);
         });
-      });
-    }
+      } else if (
+        payload.nextFormId &&
+        global.QAChatForm &&
+        global.QAChatForm.isFormsEnabled()
+      ) {
+        chainPromise = chainPromise.then(function () {
+          self.appendMessage('bot', '', {
+            forms: [
+              {
+                formId: payload.nextFormId,
+                prefill: self.clientContext,
+              },
+            ],
+          });
+        });
+      }
 
-    return chainPromise;
+      return chainPromise;
+    };
+
+    if (typeof requestAnimationFrame === 'function') {
+      requestAnimationFrame(runAfterFormGone);
+    } else {
+      setTimeout(runAfterFormGone, 0);
+    }
   };
 
   QualityAssistantWidget.prototype.buildFormEl = function (formRequest) {
