@@ -29,7 +29,6 @@
         multiple: true,
         icon: "file",
         i18nSummaryLabel: "summaryDocumentLabel",
-        accept: "image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.rtf,.odt,.ods,.odp,.zip,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,text/plain,text/csv,application/zip,application/x-zip-compressed",
         placeholderByLanguage: {
           en: "Upload files",
           hi: "फ़ाइल अपलोड करें",
