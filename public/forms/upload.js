@@ -1,9 +1,9 @@
 /**
- * Form: document upload — `form_id`: "uploadDocument".
+ * Form: document upload — `form_id`: "upload" or "uploadDocument".
  */
 (function (w) {
   w.__DFCHAT_FORMS__ = w.__DFCHAT_FORMS__ || {};
-  w.__DFCHAT_FORMS__.uploadDocument = {
+  var uploadFormDef = {
     /** Staff script / Sheets / API id (not the registry key `uploadDocument`). */
     staffFormLabel: "upload",
     titleByLanguage: {
@@ -37,4 +37,6 @@
       }
     ]
   };
+  w.__DFCHAT_FORMS__.upload = uploadFormDef;
+  w.__DFCHAT_FORMS__.uploadDocument = uploadFormDef;
 })(typeof window !== "undefined" ? window : globalThis);
