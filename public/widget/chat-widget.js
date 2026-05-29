@@ -1212,7 +1212,10 @@
 
   function clientPhraseLine(text, map) {
     if (!map || text == null) return text;
-    var k = String(text).trim().replace(/\s+/g, ' ');
+    var k = String(text)
+      .trim()
+      .replace(/\u2026/g, '...')
+      .replace(/\s+/g, ' ');
     if (!k) return text;
     if (map[k] != null) return String(map[k]);
     var lower = k.toLowerCase();
@@ -2608,7 +2611,14 @@
     var selectId =
       'qa-select-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
 
-    if (dropdown.message && !opts.hideLabel) {
+    var selectPrompt =
+      dropdown.message || dropdown.placeholder || 'Choose…';
+    var showLabel =
+      dropdown.message &&
+      !opts.hideLabel &&
+      String(dropdown.message).trim() !== String(selectPrompt).trim();
+
+    if (showLabel) {
       var label = document.createElement('label');
       label.className = 'qa-inline-select__label';
       label.setAttribute('for', selectId);
@@ -2619,11 +2629,14 @@
     var select = document.createElement('select');
     select.id = selectId;
     select.className = 'qa-inline-select__control';
-    select.setAttribute('aria-label', dropdown.message || 'Select an option');
+    select.setAttribute(
+      'aria-label',
+      dropdown.message || selectPrompt || 'Select an option'
+    );
 
     var placeholder = document.createElement('option');
     placeholder.value = '';
-    placeholder.textContent = dropdown.placeholder || 'Choose…';
+    placeholder.textContent = selectPrompt;
     placeholder.disabled = true;
     placeholder.selected = true;
     placeholder.hidden = true;

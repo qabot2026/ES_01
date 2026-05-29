@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var QA_ASSET_VERSION = '20260529-hand-pop-offset-5px';
+  var QA_ASSET_VERSION = '20260529-dropdown-message-first';
 
   var script = document.currentScript;
   var base = '';
