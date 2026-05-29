@@ -16,7 +16,7 @@ window.QA_CHAT_UI_CONFIG = {
         eventName: 'FRESH',
         triggerOnChatOpen: true,
         /** User clicks ↻ Restart: send FRESH to Dialogflow? */
-        triggerOnRestart: false,
+        triggerOnRestart: true,
         triggerOncePerSession: true,
       },
       endChatEvent: {
@@ -83,13 +83,13 @@ window.QA_CHAT_UI_CONFIG = {
     },
 
     welcome: {
-      enabled: true,
+      enabled: false,
       title: 'Welcome',
       body: 'Select an option',
       restartTitle: 'Restarted',
       restartBody: 'Select an option.',
       suggestionChips: {
-        enabled: true,
+        enabled: false,
         items: [
           { label: 'DisplayName', message: 'TriggerName' },
           { label: 'DisplayName', message: 'TriggerName' },
@@ -259,8 +259,7 @@ window.QA_CHAT_UI_CONFIG = {
 
     autoOpenChat: { enabled: true, delayMs: 10000 },
 
-    /** ↻ Restart button in header (desktop) */
-    restartButton: { enabled: true, label: 'Restart' },
+    restartButton: { enabled: true },
 
     poweredBy: {
       enabled: true,
@@ -277,6 +276,7 @@ window.QA_CHAT_UI_CONFIG = {
 
     features: {
       speechToText: { enabled: true },
+      restartChat: { enabled: false, label: 'Restart' },
     },
   },
 
@@ -331,8 +331,7 @@ window.QA_CHAT_UI_CONFIG = {
 
     autoOpenChat: { enabled: true, delayMs: 7000 },
 
-    /** ↻ Restart button in header (mobile) */
-    restartButton: { enabled: true, label: 'Restart' },
+    restartButton: { enabled: true },
 
     poweredBy: {
       enabled: true,
@@ -349,6 +348,7 @@ window.QA_CHAT_UI_CONFIG = {
 
     features: {
       speechToText: { enabled: true },
+      restartChat: { enabled: true, label: 'Restart' },
     },
   },
 };
