@@ -16,7 +16,7 @@ window.QA_CHAT_UI_CONFIG = {
         eventName: 'FRESH',
         triggerOnChatOpen: true,
         /** User clicks ↻ Restart: send FRESH to Dialogflow? */
-        triggerOnRestart: true,
+        triggerOnRestart: false,
         triggerOncePerSession: true,
       },
       endChatEvent: {
@@ -83,13 +83,13 @@ window.QA_CHAT_UI_CONFIG = {
     },
 
     welcome: {
-      enabled: false,
+      enabled: true,
       title: 'Welcome',
       body: 'Select an option',
       restartTitle: 'Restarted',
       restartBody: 'Select an option.',
       suggestionChips: {
-        enabled: false,
+        enabled: true,
         items: [
           { label: 'DisplayName', message: 'TriggerName' },
           { label: 'DisplayName', message: 'TriggerName' },
