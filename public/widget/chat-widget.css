@@ -2104,6 +2104,137 @@ textarea.qa-form__input {
   min-height: 36px;
 }
 
+.qa-form__upload {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.qa-form__file-input-native {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.qa-form__upload-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  width: 100%;
+}
+
+.qa-form__upload-pick,
+.qa-form__upload-clear {
+  flex: 1 1 auto;
+  min-height: 40px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    opacity 0.15s ease;
+}
+
+.qa-form__upload-pick {
+  border: 1px solid var(--qa-primary);
+  background: var(--qa-bg-2, #f0f9ff);
+  color: var(--qa-primary-dark, var(--qa-primary));
+}
+
+.qa-form__upload-pick:hover {
+  background: color-mix(in srgb, var(--qa-primary) 12%, var(--qa-surface));
+}
+
+.qa-form__upload-clear {
+  border: 1px solid var(--qa-border);
+  background: var(--qa-surface);
+  color: var(--qa-text);
+}
+
+.qa-form__upload-clear:hover {
+  border-color: #dc2626;
+  color: #dc2626;
+  background: #fef2f2;
+}
+
+.qa-form__upload-clear[hidden] {
+  display: none !important;
+}
+
+.qa-form__upload-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 140px;
+  overflow-y: auto;
+}
+
+.qa-form__upload-list[hidden] {
+  display: none !important;
+}
+
+.qa-form__upload-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--qa-border);
+  background: var(--qa-bg-2, #f8fafc);
+}
+
+.qa-form__upload-item-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--qa-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.qa-form__upload-item-meta {
+  flex-shrink: 0;
+  font-size: 0.6875rem;
+  color: var(--qa-muted);
+}
+
+.qa-form__upload-remove {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--qa-muted);
+  font-size: 1.125rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.qa-form__upload-remove:hover {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.qa-form[data-form-id='upload'],
+.qa-form[data-form-id='uploadDocument'] {
+  max-height: 320px;
+}
+
 .qa-form__error {
   display: block;
   margin-top: 3px;

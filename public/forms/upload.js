@@ -6,6 +6,7 @@
   var uploadFormDef = {
     /** Staff script / Sheets / API id (not the registry key `uploadDocument`). */
     staffFormLabel: "upload",
+    formType: "upload",
     titleByLanguage: {
       en: "Upload document",
       hi: "दस्तावेज़ अपलोड करें",

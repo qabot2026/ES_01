@@ -56,7 +56,10 @@
       summaryDocumentLabel: 'Document',
       summaryDoctorIdLabel: 'Doctor',
       summaryBirthDateLabel: 'Birth date',
-      chooseFiles: 'Choose file(s)…',
+      chooseFiles: 'Choose files…',
+      addMoreFiles: 'Add more files',
+      clearFileSelection: 'Clear selection',
+      removeFile: 'Remove file',
       calPrev: 'Previous month',
       calNext: 'Next month',
       calPickTime: 'Pick a time',
@@ -93,7 +96,10 @@
       summaryDocumentLabel: 'दस्तावेज़',
       summaryDoctorIdLabel: 'डॉक्टर',
       summaryBirthDateLabel: 'जन्म तिथि',
-      chooseFiles: 'फ़ाइल(ें) चुनें…',
+      chooseFiles: 'फ़ाइलें चुनें…',
+      addMoreFiles: 'और फ़ाइलें जोड़ें',
+      clearFileSelection: 'चयन साफ़ करें',
+      removeFile: 'फ़ाइल हटाएं',
       calPrev: 'पिछला महीना',
       calNext: 'अगला महीना',
       calPickTime: 'समय चुनें',
@@ -130,7 +136,10 @@
       summaryDocumentLabel: 'दस्तऐवज',
       summaryDoctorIdLabel: 'डॉक्टर',
       summaryBirthDateLabel: 'जन्मतारीख',
-      chooseFiles: 'फाइल(्स) निवडा…',
+      chooseFiles: 'फाइल निवडा…',
+      addMoreFiles: 'अधिक फाइल जोडा',
+      clearFileSelection: 'निवड रद्द करा',
+      removeFile: 'फाइल काढा',
       calPrev: 'मागील महिना',
       calNext: 'पुढील महिना',
       calPickTime: 'वेळ निवडा',
@@ -743,6 +752,176 @@
       var flag = flagForCountryFromOptions(options, data.countryCode);
       setDialPickerValue(picker, hidden, options, data.dialCode, flag, data.countryCode);
     });
+  }
+
+  function isUploadForm(def, formId) {
+    var id = String(formId || '').toLowerCase();
+    return (
+      String((def && def.formType) || '').toLowerCase() === 'upload' ||
+      id === 'upload' ||
+      id === 'uploaddocument'
+    );
+  }
+
+  function formatFileSize(bytes) {
+    var n = Number(bytes) || 0;
+    if (n < 1024) return n + ' B';
+    if (n < 1024 * 1024) return (n / 1024).toFixed(1) + ' KB';
+    return (n / (1024 * 1024)).toFixed(1) + ' MB';
+  }
+
+  function fileAlreadySelected(list, file) {
+    for (var i = 0; i < list.length; i += 1) {
+      if (list[i].name === file.name && list[i].size === file.size && list[i].lastModified === file.lastModified) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  function syncUploadInputFiles(form, input) {
+    if (!input || typeof DataTransfer === 'undefined') return;
+    var dt = new DataTransfer();
+    (form._selectedFiles || []).forEach(function (file) {
+      try {
+        dt.items.add(file);
+      } catch (e) {}
+    });
+    input.files = dt.files;
+  }
+
+  function renderUploadFileField(field, lang, form) {
+    if (!form._selectedFiles) form._selectedFiles = [];
+
+    var wrap = document.createElement('div');
+    wrap.className = 'qa-form__field qa-form__field--upload';
+
+    var controlWrap = document.createElement('div');
+    controlWrap.className = 'qa-form__upload';
+
+    if (field.icon && ICONS[field.icon]) {
+      var icon = document.createElement('span');
+      icon.className = 'qa-form__icon';
+      icon.innerHTML = ICONS[field.icon];
+      controlWrap.appendChild(icon);
+    }
+
+    var input = document.createElement('input');
+    input.type = 'file';
+    input.className = 'qa-form__file-input-native';
+    input.id = field.id || 'qa-f-' + field.name;
+    input.name = field.name;
+    if (field.accept) input.accept = field.accept;
+    if (field.multiple !== false) input.multiple = true;
+    input.setAttribute('aria-hidden', 'true');
+    input.tabIndex = -1;
+
+    var toolbar = document.createElement('div');
+    toolbar.className = 'qa-form__upload-toolbar';
+
+    var pickBtn = document.createElement('button');
+    pickBtn.type = 'button';
+    pickBtn.className = 'qa-form__upload-pick';
+    pickBtn.textContent = fieldPlaceholder(field, lang) || t(lang, 'chooseFiles');
+
+    var clearBtn = document.createElement('button');
+    clearBtn.type = 'button';
+    clearBtn.className = 'qa-form__upload-clear';
+    clearBtn.textContent = t(lang, 'clearFileSelection');
+    clearBtn.hidden = true;
+
+    var list = document.createElement('ul');
+    list.className = 'qa-form__upload-list';
+    list.setAttribute('role', 'list');
+
+    function updatePickLabel() {
+      pickBtn.textContent =
+        form._selectedFiles.length > 0 ? t(lang, 'addMoreFiles') : fieldPlaceholder(field, lang) || t(lang, 'chooseFiles');
+    }
+
+    function renderFileList() {
+      list.innerHTML = '';
+      form._selectedFiles.forEach(function (file, idx) {
+        var li = document.createElement('li');
+        li.className = 'qa-form__upload-item';
+        li.setAttribute('role', 'listitem');
+
+        var nameEl = document.createElement('span');
+        nameEl.className = 'qa-form__upload-item-name';
+        nameEl.textContent = file.name;
+        nameEl.title = file.name;
+
+        var meta = document.createElement('span');
+        meta.className = 'qa-form__upload-item-meta';
+        meta.textContent = formatFileSize(file.size);
+
+        var removeBtn = document.createElement('button');
+        removeBtn.type = 'button';
+        removeBtn.className = 'qa-form__upload-remove';
+        removeBtn.setAttribute('aria-label', t(lang, 'removeFile') + ': ' + file.name);
+        removeBtn.innerHTML = '&times;';
+        removeBtn.addEventListener('click', function (e) {
+          e.preventDefault();
+          form._selectedFiles.splice(idx, 1);
+          refreshUploadUi();
+        });
+
+        li.appendChild(nameEl);
+        li.appendChild(meta);
+        li.appendChild(removeBtn);
+        list.appendChild(li);
+      });
+      list.hidden = form._selectedFiles.length === 0;
+    }
+
+    function refreshUploadUi() {
+      syncUploadInputFiles(form, input);
+      renderFileList();
+      clearBtn.hidden = form._selectedFiles.length === 0;
+      updatePickLabel();
+      showFieldError(input, '');
+    }
+
+    pickBtn.addEventListener('click', function (e) {
+      e.preventDefault();
+      input.click();
+    });
+
+    input.addEventListener('change', function () {
+      if (!input.files || !input.files.length) return;
+      for (var i = 0; i < input.files.length; i += 1) {
+        var file = input.files[i];
+        if (!fileAlreadySelected(form._selectedFiles, file)) {
+          form._selectedFiles.push(file);
+        }
+      }
+      input.value = '';
+      refreshUploadUi();
+    });
+
+    clearBtn.addEventListener('click', function (e) {
+      e.preventDefault();
+      form._selectedFiles = [];
+      input.value = '';
+      refreshUploadUi();
+    });
+
+    toolbar.appendChild(pickBtn);
+    toolbar.appendChild(clearBtn);
+    controlWrap.appendChild(toolbar);
+    controlWrap.appendChild(list);
+    controlWrap.appendChild(input);
+    wrap.appendChild(controlWrap);
+
+    var err = document.createElement('span');
+    err.className = 'qa-form__error';
+    err.hidden = true;
+    wrap.appendChild(err);
+
+    form._uploadInput = input;
+    refreshUploadUi();
+
+    return { wrap: wrap, input: input };
   }
 
   function isOtpForm(def, formId) {
@@ -1509,11 +1688,18 @@
       }
 
       if (type === 'file') {
-        var fileInput = form.querySelector('#' + (field.id || 'qa-f-' + field.name));
+        var fileInput =
+          form._uploadInput ||
+          form.querySelector('#' + (field.id || 'qa-f-' + field.name));
         var names = [];
-        if (fileInput && fileInput.files && fileInput.files.length) {
-          for (var i = 0; i < fileInput.files.length; i++) {
-            names.push(fileInput.files[i].name);
+        var files = form._selectedFiles;
+        if (files && files.length) {
+          files.forEach(function (f) {
+            names.push(f.name);
+          });
+        } else if (fileInput && fileInput.files && fileInput.files.length) {
+          for (var fi = 0; fi < fileInput.files.length; fi += 1) {
+            names.push(fileInput.files[fi].name);
           }
         }
         values[field.name] = names.join(', ');
@@ -1554,6 +1740,9 @@
     formId = String(formId || '').toLowerCase();
     if (formId === 'contact') {
       return Math.max(n, 380);
+    }
+    if (formId === 'upload' || formId === 'uploaddocument') {
+      return Math.max(n, 320);
     }
     if (!formHasHeavyFields(def)) {
       return Math.max(n, 300);
@@ -1684,6 +1873,11 @@
         scroll.appendChild(
           renderAppointmentCalendar(field, form, lang, widget, prefill, 'doctor')
         );
+        continue;
+      }
+
+      if (type === 'file' && isUploadForm(def, formId)) {
+        scroll.appendChild(renderUploadFileField(field, lang, form).wrap);
         continue;
       }
 
