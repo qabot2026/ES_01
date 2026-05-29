@@ -815,6 +815,9 @@
     var toolbar = document.createElement('div');
     toolbar.className = 'qa-form__upload-toolbar';
 
+    var toolbarRow = document.createElement('div');
+    toolbarRow.className = 'qa-form__upload-toolbar-row';
+
     var pickBtn = document.createElement('button');
     pickBtn.type = 'button';
     pickBtn.className = 'qa-form__upload-pick';
@@ -845,6 +848,10 @@
     list.className = 'qa-form__upload-list';
     list.setAttribute('role', 'list');
 
+    function formatFilesSelected(n) {
+      return String(t(lang, 'filesSelected') || '{n} selected').replace('{n}', String(n));
+    }
+
     function updatePickLabel() {
       var n = form._selectedFiles.length;
       pickLabel.textContent =
@@ -852,9 +859,10 @@
       pickBtn.classList.toggle('qa-form__upload-pick--secondary', n > 0);
       if (n > 0) {
         countBadge.hidden = false;
-        countBadge.textContent = n + (n === 1 ? ' file' : ' files');
+        countBadge.textContent = formatFilesSelected(n);
       } else {
         countBadge.hidden = true;
+        countBadge.textContent = '';
       }
     }
 
@@ -925,8 +933,9 @@
       refreshUploadUi();
     });
 
-    toolbar.appendChild(pickBtn);
-    toolbar.appendChild(countBadge);
+    toolbarRow.appendChild(pickBtn);
+    toolbarRow.appendChild(countBadge);
+    toolbar.appendChild(toolbarRow);
     toolbar.appendChild(clearBtn);
     controlWrap.appendChild(toolbar);
     controlWrap.appendChild(list);
@@ -1793,6 +1802,7 @@
     var wrap = document.createElement('div');
     wrap.className = 'qa-form';
     wrap.setAttribute('data-form-id', formId);
+    if (isUploadForm(def, formId)) wrap.classList.add('qa-form--upload');
     wrap.style.maxHeight = scaledFormMaxHeight(def, formId) + 'px';
 
     var header = document.createElement('div');

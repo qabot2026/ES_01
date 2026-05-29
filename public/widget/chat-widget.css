@@ -1920,6 +1920,8 @@ body.qa-lightbox-open {
   padding: 6px 12px 10px;
   border-top: 1px solid var(--qa-border);
   background: var(--qa-surface);
+  position: relative;
+  z-index: 2;
 }
 
 .qa-form__field {
@@ -2130,18 +2132,22 @@ textarea.qa-form__input {
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: 5px;
+  gap: 4px;
   width: 100%;
+}
+
+.qa-form__upload-toolbar-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
 }
 
 .qa-form__upload-pick,
 .qa-form__upload-clear {
-  width: 100%;
-  min-height: var(--qa-form-control-h, 34px);
-  padding: var(--qa-form-btn-pad, 6px 10px);
   border-radius: var(--qa-form-btn-radius, 10px);
-  font-size: var(--qa-form-btn-fs, 0.75rem);
-  font-weight: 600;
   font-family: inherit;
   cursor: pointer;
   transition:
@@ -2154,11 +2160,19 @@ textarea.qa-form__input {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  flex: 0 0 auto;
+  width: auto;
+  max-width: 55%;
+  min-height: 28px;
+  padding: 4px 8px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  gap: 4px;
   border: 1px solid var(--qa-border);
   background: var(--qa-form-btn-bg, #fff);
   color: var(--qa-primary-dark, var(--qa-primary));
   box-shadow: none;
+  white-space: nowrap;
 }
 
 .qa-form__upload-pick--secondary {
@@ -2170,14 +2184,14 @@ textarea.qa-form__input {
 .qa-form__upload-pick-icon {
   display: inline-flex;
   flex-shrink: 0;
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
   color: var(--qa-primary);
 }
 
 .qa-form__upload-pick-icon svg {
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
 }
 
 .qa-form__upload-pick-label {
@@ -2208,12 +2222,15 @@ textarea.qa-form__input {
 }
 
 .qa-form__upload-clear {
+  align-self: flex-end;
+  width: auto;
+  min-height: 24px;
+  padding: 2px 8px;
   border: 1px solid var(--qa-border);
   background: var(--qa-form-btn-bg, #fff);
   color: var(--qa-text-soft, var(--qa-muted));
   font-weight: 500;
-  font-size: 0.6875rem;
-  min-height: 30px;
+  font-size: 0.625rem;
 }
 
 .qa-form__upload-clear:hover {
@@ -2287,9 +2304,33 @@ textarea.qa-form__input {
   color: #dc2626;
 }
 
+.qa-form--upload,
 .qa-form[data-form-id='upload'],
 .qa-form[data-form-id='uploadDocument'] {
   max-height: 320px;
+}
+
+.qa-form--upload .qa-form__form,
+.qa-form[data-form-id='upload'] .qa-form__form,
+.qa-form[data-form-id='uploadDocument'] .qa-form__form {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.qa-form--upload .qa-form__scroll,
+.qa-form[data-form-id='upload'] .qa-form__scroll,
+.qa-form[data-form-id='uploadDocument'] .qa-form__scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.qa-form--upload .qa-form__upload-list,
+.qa-form[data-form-id='upload'] .qa-form__upload-list,
+.qa-form[data-form-id='uploadDocument'] .qa-form__upload-list {
+  max-height: 68px;
 }
 
 .qa-form__error {
