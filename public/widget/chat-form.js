@@ -96,7 +96,7 @@
       summaryDocumentLabel: 'दस्तावेज़',
       summaryDoctorIdLabel: 'डॉक्टर',
       summaryBirthDateLabel: 'जन्म तिथि',
-      chooseFiles: 'फ़ाइलें चुनें…',
+      chooseFiles: 'एक या अधिक फ़ाइलें जोड़ें',
       addMoreFiles: 'और फ़ाइलें जोड़ें',
       clearFileSelection: 'चयन साफ़ करें',
       removeFile: 'फ़ाइल हटाएं',
@@ -136,7 +136,7 @@
       summaryDocumentLabel: 'दस्तऐवज',
       summaryDoctorIdLabel: 'डॉक्टर',
       summaryBirthDateLabel: 'जन्मतारीख',
-      chooseFiles: 'फाइल निवडा…',
+      chooseFiles: 'एक किंवा अनेक फाइल जोडा',
       addMoreFiles: 'अधिक फाइल जोडा',
       clearFileSelection: 'निवड रद्द करा',
       removeFile: 'फाइल काढा',
@@ -815,7 +815,18 @@
     var pickBtn = document.createElement('button');
     pickBtn.type = 'button';
     pickBtn.className = 'qa-form__upload-pick';
-    pickBtn.textContent = fieldPlaceholder(field, lang) || t(lang, 'chooseFiles');
+
+    var pickIcon = null;
+    if (field.icon && ICONS[field.icon]) {
+      pickIcon = document.createElement('span');
+      pickIcon.className = 'qa-form__upload-pick-icon';
+      pickIcon.innerHTML = ICONS[field.icon];
+      pickIcon.setAttribute('aria-hidden', 'true');
+      pickBtn.appendChild(pickIcon);
+    }
+    var pickLabel = document.createElement('span');
+    pickLabel.className = 'qa-form__upload-pick-label';
+    pickBtn.appendChild(pickLabel);
 
     var clearBtn = document.createElement('button');
     clearBtn.type = 'button';
@@ -828,8 +839,10 @@
     list.setAttribute('role', 'list');
 
     function updatePickLabel() {
-      pickBtn.textContent =
-        form._selectedFiles.length > 0 ? t(lang, 'addMoreFiles') : fieldPlaceholder(field, lang) || t(lang, 'chooseFiles');
+      pickLabel.textContent =
+        form._selectedFiles.length > 0
+          ? t(lang, 'addMoreFiles')
+          : fieldPlaceholder(field, lang) || t(lang, 'chooseFiles');
     }
 
     function renderFileList() {
@@ -912,6 +925,7 @@
     wrap.appendChild(err);
 
     form._uploadInput = input;
+    updatePickLabel();
     refreshUploadUi();
 
     return { wrap: wrap, input: input };
