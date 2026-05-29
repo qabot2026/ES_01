@@ -56,8 +56,8 @@
       summaryDocumentLabel: 'Document',
       summaryDoctorIdLabel: 'Doctor',
       summaryBirthDateLabel: 'Birth date',
-      chooseFiles: 'Add one or more files',
-      addMoreFiles: 'Add more files',
+      chooseFiles: 'Upload files',
+      addMoreFiles: 'Upload more',
       clearFileSelection: 'Clear selection',
       removeFile: 'Remove file',
       calPrev: 'Previous month',
@@ -96,8 +96,8 @@
       summaryDocumentLabel: 'दस्तावेज़',
       summaryDoctorIdLabel: 'डॉक्टर',
       summaryBirthDateLabel: 'जन्म तिथि',
-      chooseFiles: 'एक या अधिक फ़ाइलें जोड़ें',
-      addMoreFiles: 'और फ़ाइलें जोड़ें',
+      chooseFiles: 'फ़ाइल अपलोड करें',
+      addMoreFiles: 'और अपलोड करें',
       clearFileSelection: 'चयन साफ़ करें',
       removeFile: 'फ़ाइल हटाएं',
       calPrev: 'पिछला महीना',
@@ -136,8 +136,8 @@
       summaryDocumentLabel: 'दस्तऐवज',
       summaryDoctorIdLabel: 'डॉक्टर',
       summaryBirthDateLabel: 'जन्मतारीख',
-      chooseFiles: 'एक किंवा अनेक फाइल जोडा',
-      addMoreFiles: 'अधिक फाइल जोडा',
+      chooseFiles: 'फाइल अपलोड करा',
+      addMoreFiles: 'अधिक अपलोड करा',
       clearFileSelection: 'निवड रद्द करा',
       removeFile: 'फाइल काढा',
       calPrev: 'मागील महिना',
@@ -834,15 +834,25 @@
     clearBtn.textContent = t(lang, 'clearFileSelection');
     clearBtn.hidden = true;
 
+    var countBadge = document.createElement('span');
+    countBadge.className = 'qa-form__upload-count';
+    countBadge.hidden = true;
+
     var list = document.createElement('ul');
     list.className = 'qa-form__upload-list';
     list.setAttribute('role', 'list');
 
     function updatePickLabel() {
+      var n = form._selectedFiles.length;
       pickLabel.textContent =
-        form._selectedFiles.length > 0
-          ? t(lang, 'addMoreFiles')
-          : fieldPlaceholder(field, lang) || t(lang, 'chooseFiles');
+        n > 0 ? t(lang, 'addMoreFiles') : fieldPlaceholder(field, lang) || t(lang, 'chooseFiles');
+      pickBtn.classList.toggle('qa-form__upload-pick--secondary', n > 0);
+      if (n > 0) {
+        countBadge.hidden = false;
+        countBadge.textContent = n + (n === 1 ? ' file' : ' files');
+      } else {
+        countBadge.hidden = true;
+      }
     }
 
     function renderFileList() {
@@ -913,6 +923,7 @@
     });
 
     toolbar.appendChild(pickBtn);
+    toolbar.appendChild(countBadge);
     toolbar.appendChild(clearBtn);
     controlWrap.appendChild(toolbar);
     controlWrap.appendChild(list);
