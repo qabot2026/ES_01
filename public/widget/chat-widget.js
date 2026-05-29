@@ -1542,7 +1542,7 @@
     if (opts.skipIfSending && this.isSending) {
       return Promise.resolve();
     }
-    if (!opts.silent && this.isSending) {
+    if (!opts.silent && this.isSending && !opts.allowWhileSending) {
       return Promise.resolve();
     }
 
@@ -2715,8 +2715,11 @@
     if (!hasContent) row.remove();
   };
 
-  QualityAssistantWidget.prototype.runFormDialogflowAction = function (action) {
+  QualityAssistantWidget.prototype.runFormDialogflowAction = function (action, opts) {
+    opts = opts || {};
     if (!action) return Promise.resolve();
+    this._userHasInteracted = true;
+    this.markUserInteracted();
     var body = {
       sessionId: this.sessionId,
       languageCode: this.getDialogflowLang(),
@@ -2728,7 +2731,65 @@
     } else {
       return Promise.resolve();
     }
-    return this.postToDialogflow(body);
+    return this.postToDialogflow(
+      body,
+      Object.assign(
+        {
+          allowWhileSending: true,
+          applyResponse: opts.applyResponse !== false,
+          showTyping: opts.showTyping !== false,
+        },
+        opts
+      )
+    );
+  };
+
+  QualityAssistantWidget.prototype.handleOtpResend = function (payload) {
+    var self = this;
+    payload = payload || {};
+    var values = payload.values || {};
+    var def = payload.def || {};
+    var req = payload.request || {};
+    var statusEl = payload.statusEl;
+
+    this.clientContext = Object.assign({}, this.clientContext || {}, {
+      mobile: values.mobile || this.clientContext.mobile,
+      dial_code: values.dial_code || this.clientContext.dial_code,
+    });
+
+    var dataMsg =
+      global.QAChatForm && global.QAChatForm.formatOtpResend
+        ? global.QAChatForm.formatOtpResend(values, def)
+        : 'resend_otp';
+
+    var onResend =
+      global.QAChatForm && global.QAChatForm.resolveFormAction
+        ? global.QAChatForm.resolveFormAction(
+            req.onResend || def.resendOtpAction || 'query:resend_otp'
+          )
+        : null;
+
+    return this.postToDialogflow(
+      { message: dataMsg, sessionId: this.sessionId, languageCode: this.getDialogflowLang() },
+      { applyResponse: !onResend, showTyping: !onResend, allowWhileSending: true }
+    )
+      .then(function () {
+        if (!onResend) return;
+        return self.runFormDialogflowAction(onResend, {
+          allowWhileSending: true,
+          applyResponse: true,
+          showTyping: true,
+        });
+      })
+      .then(function () {
+        if (statusEl) statusEl.hidden = true;
+      })
+      .catch(function () {
+        if (statusEl) {
+          statusEl.hidden = false;
+          statusEl.textContent = 'Could not resend OTP. Try again.';
+        }
+      });
   };
 
   QualityAssistantWidget.prototype.handleFormClose = function (payload) {
@@ -2773,7 +2834,7 @@
           sessionId: self.sessionId,
           languageCode: self.getDialogflowLang(),
         },
-        { applyResponse: false, showTyping: false }
+        { applyResponse: false, showTyping: false, allowWhileSending: true }
       );
 
       if (onSubmit) {

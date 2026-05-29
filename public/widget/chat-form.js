@@ -43,6 +43,8 @@
       otpEnterPlaceholder: 'Enter OTP',
       resendOtp: "Didn't receive? Send OTP again",
       changeMobile: 'Change mobile number',
+      otpResending: 'Sending a new code…',
+      otpResendNeedMobile: 'Enter your mobile number first.',
       birthDatePlaceholder: 'Date of birth',
       summaryNameLabel: 'Name',
       summaryMobileLabel: 'Mobile',
@@ -78,6 +80,8 @@
       otpEnterPlaceholder: 'OTP दर्ज करें',
       resendOtp: 'कोड नहीं मिला? OTP दोबारा भेजें',
       changeMobile: 'मोबाइल नंबर बदलें',
+      otpResending: 'नया कोड भेजा जा रहा है…',
+      otpResendNeedMobile: 'पहले मोबाइल नंबर दर्ज करें।',
       birthDatePlaceholder: 'जन्म तिथि',
       summaryNameLabel: 'नाम',
       summaryMobileLabel: 'मोबाइल',
@@ -113,6 +117,8 @@
       otpEnterPlaceholder: 'OTP टाका',
       resendOtp: 'कोड मिळाला नाही? OTP पुन्हा पाठवा',
       changeMobile: 'मोबाईल नंबर बदला',
+      otpResending: 'नवा कोड पाठवत आहे…',
+      otpResendNeedMobile: 'आधी मोबाईल नंबर टाका.',
       birthDatePlaceholder: 'जन्मतारीख',
       summaryNameLabel: 'नाव',
       summaryMobileLabel: 'मोबाईल',
@@ -230,6 +236,26 @@
       if (Array.isArray(def.nextFormIds)) def.nextFormIds.forEach(push);
     }
     return ids[0] || '';
+  }
+
+  function formatOtpResend(values, def) {
+    var lines = ['[form:otp]', 'staff:' + (def && def.staffFormLabel ? def.staffFormLabel : 'otp'), 'action:resend'];
+    if (values.dial_code) lines.push('dial_code: ' + String(values.dial_code).trim());
+    if (values.mobile) lines.push('mobile: ' + String(values.mobile).trim());
+    return lines.join('\n');
+  }
+
+  function getOtpFormValues(form, widget) {
+    var otpIn = form.querySelector('[name="otp"]');
+    var mobileIn = form.querySelector('[name="mobile"]');
+    var ctx = (widget && widget.clientContext) || {};
+    var mobile = mobileIn ? String(mobileIn.value || '').trim() : '';
+    if (!mobile) mobile = String(ctx.mobile || '').trim();
+    return {
+      otp: otpIn ? String(otpIn.value || '').trim() : '',
+      mobile: mobile,
+      dial_code: String(ctx.dial_code || '').trim(),
+    };
   }
 
   function formatSubmission(formId, values, def, lang) {
@@ -742,18 +768,55 @@
     var actions = document.createElement('div');
     actions.className = 'qa-form__otp-actions';
 
+    var statusEl = document.createElement('p');
+    statusEl.className = 'qa-form__otp-status';
+    statusEl.hidden = true;
+
     var resendBtn = document.createElement('button');
     resendBtn.type = 'button';
     resendBtn.className = 'qa-form__otp-link';
     resendBtn.textContent = t(lang, 'resendOtp');
-    resendBtn.addEventListener('click', function () {
-      var action = resolveFormAction(
-        (request && (request.onResend || request.resendOtp)) ||
-          def.resendOtpAction ||
-          'query:resend_otp'
-      );
-      if (widget && action && typeof widget.runFormDialogflowAction === 'function') {
-        widget.runFormDialogflowAction(action);
+    resendBtn.addEventListener('click', function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      var vals = getOtpFormValues(form, widget);
+      if (mobileWrap && !mobileWrap.hidden && !vals.mobile) {
+        statusEl.hidden = false;
+        statusEl.textContent = t(lang, 'otpResendNeedMobile');
+        if (mobileInput) showFieldError(mobileInput, t(lang, 'required'));
+        return;
+      }
+      if (!vals.mobile && !vals.dial_code) {
+        mobileWrap.hidden = false;
+        mobileField.required = true;
+        if (mobileInput) {
+          mobileInput.required = true;
+          mobileInput.focus();
+        }
+        statusEl.hidden = false;
+        statusEl.textContent = t(lang, 'otpResendNeedMobile');
+        changeBtn.hidden = true;
+        return;
+      }
+      statusEl.hidden = false;
+      statusEl.textContent = t(lang, 'otpResending');
+      resendBtn.disabled = true;
+      if (widget && typeof widget.handleOtpResend === 'function') {
+        widget
+          .handleOtpResend({
+            request: request,
+            def: def,
+            values: vals,
+            form: form,
+            statusEl: statusEl,
+            resendBtn: resendBtn,
+          })
+          .finally(function () {
+            resendBtn.disabled = false;
+          });
+      } else {
+        resendBtn.disabled = false;
+        statusEl.hidden = true;
       }
     });
     actions.appendChild(resendBtn);
@@ -796,6 +859,7 @@
       changeBtn.hidden = true;
     });
     actions.appendChild(changeBtn);
+    actions.appendChild(statusEl);
 
     scroll.appendChild(actions);
     if (mobileWrap) scroll.appendChild(mobileWrap);
@@ -1696,6 +1760,7 @@
   global.QAChatForm = {
     buildFormEl: buildFormEl,
     formatSubmission: formatSubmission,
+    formatOtpResend: formatOtpResend,
     buildSummaryText: buildSummaryText,
     resolveFormAction: resolveFormAction,
     resolveNextFormId: resolveNextFormId,
