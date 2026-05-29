@@ -10,10 +10,12 @@ window.QA_CHAT_UI_CONFIG = {
     dialogflow: {
       projectId: 'qualityassistant-ygdm',
       agentId: '07ccbfd0-4cad-4898-8323-e6baeec80fc1',
+      /** Dialogflow events — not the ↻ button (see desk/mob restartButton). */
       welcomeEvent: {
         enabled: true,
         eventName: 'FRESH',
         triggerOnChatOpen: true,
+        /** User clicks ↻ Restart: send FRESH to Dialogflow? */
         triggerOnRestart: true,
         triggerOncePerSession: true,
       },
@@ -23,6 +25,7 @@ window.QA_CHAT_UI_CONFIG = {
         triggerOnIdle: true,
         idleTimeoutMs: 20000,
         triggerOnChatClose: false,
+        /** User clicks ↻ Restart: send ENDCHAT before new session? */
         triggerOnRestart: false,
         showBotResponse: true,
         closePanelAfterEnd: false,
@@ -161,8 +164,7 @@ window.QA_CHAT_UI_CONFIG = {
           },
         ],
       },
-      speechToText: { enabled: true },
-      restartChat: { enabled: false, label: 'Restart' },
+      speechToText: { enabled: true }, // mic button on/off
       inputPlaceholderByLanguage: {
         en: 'Type your message here…',
         hi: 'अपना संदेश लिखें…',
@@ -170,6 +172,7 @@ window.QA_CHAT_UI_CONFIG = {
       },
     },
 
+    /** Gap between language dropdown and ↻ button (desk + mob). Show/hide: desk.mob.restartButton */
     restartButton: { gapAfterLanguagePx: 10 },
 
     theme: {
@@ -256,7 +259,8 @@ window.QA_CHAT_UI_CONFIG = {
 
     autoOpenChat: { enabled: true, delayMs: 10000 },
 
-    restartButton: { enabled: true },
+    /** ↻ Restart button in header (desktop) */
+    restartButton: { enabled: true, label: 'Restart' },
 
     poweredBy: {
       enabled: true,
@@ -273,7 +277,6 @@ window.QA_CHAT_UI_CONFIG = {
 
     features: {
       speechToText: { enabled: true },
-      restartChat: { enabled: false, label: 'Restart' },
     },
   },
 
@@ -328,7 +331,8 @@ window.QA_CHAT_UI_CONFIG = {
 
     autoOpenChat: { enabled: true, delayMs: 7000 },
 
-    restartButton: { enabled: true },
+    /** ↻ Restart button in header (mobile) */
+    restartButton: { enabled: true, label: 'Restart' },
 
     poweredBy: {
       enabled: true,
@@ -345,7 +349,6 @@ window.QA_CHAT_UI_CONFIG = {
 
     features: {
       speechToText: { enabled: true },
-      restartChat: { enabled: true, label: 'Restart' },
     },
   },
 };

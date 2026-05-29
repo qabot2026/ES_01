@@ -68,16 +68,11 @@
   }
 
   function getRestartCfg() {
-    var eff = getEffectiveCfg();
-    var feats = eff.features || {};
-    var rb = eff.restartButton || {};
-    var restart = feats.restartChat || {};
-    var enabled =
-      rb.enabled != null ? rb.enabled !== false : restart.enabled !== false;
-    var label = String(
-      rb.label != null ? rb.label : restart.label != null ? restart.label : 'Restart'
-    ).trim() || 'Restart';
-    return { enabled: enabled, label: label };
+    var rb = getEffectiveCfg().restartButton || {};
+    return {
+      enabled: rb.enabled !== false,
+      label: String(rb.label != null ? rb.label : 'Restart').trim() || 'Restart',
+    };
   }
 
   function getHeaderLayoutCfg() {
