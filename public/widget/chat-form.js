@@ -40,6 +40,9 @@
       emailPlaceholder: 'Email address',
       dialCodePlaceholder: 'Country code',
       otpCodePlaceholder: 'OTP code',
+      otpEnterPlaceholder: 'Enter OTP',
+      resendOtp: "Didn't receive? Send OTP again",
+      changeMobile: 'Change mobile number',
       birthDatePlaceholder: 'Date of birth',
       summaryNameLabel: 'Name',
       summaryMobileLabel: 'Mobile',
@@ -72,6 +75,9 @@
       emailPlaceholder: 'ईमेल पता',
       dialCodePlaceholder: 'देश कोड',
       otpCodePlaceholder: 'OTP कोड',
+      otpEnterPlaceholder: 'OTP दर्ज करें',
+      resendOtp: 'कोड नहीं मिला? OTP दोबारा भेजें',
+      changeMobile: 'मोबाइल नंबर बदलें',
       birthDatePlaceholder: 'जन्म तिथि',
       summaryNameLabel: 'नाम',
       summaryMobileLabel: 'मोबाइल',
@@ -104,6 +110,9 @@
       emailPlaceholder: 'ईमेल पत्ता',
       dialCodePlaceholder: 'देश कोड',
       otpCodePlaceholder: 'OTP कोड',
+      otpEnterPlaceholder: 'OTP टाका',
+      resendOtp: 'कोड मिळाला नाही? OTP पुन्हा पाठवा',
+      changeMobile: 'मोबाईल नंबर बदला',
       birthDatePlaceholder: 'जन्मतारीख',
       summaryNameLabel: 'नाव',
       summaryMobileLabel: 'मोबाईल',
@@ -708,6 +717,92 @@
       var flag = flagForCountryFromOptions(options, data.countryCode);
       setDialPickerValue(picker, hidden, options, data.dialCode, flag, data.countryCode);
     });
+  }
+
+  function isOtpForm(def, formId) {
+    return (
+      String((def && def.formType) || '').toLowerCase() === 'otp' ||
+      String(formId || '').toLowerCase() === 'otp'
+    );
+  }
+
+  function renderOtpForm(scroll, form, wrap, def, lang, prefill, widget, request) {
+    var otpField;
+    var mobileField;
+    (def.fields || []).forEach(function (f) {
+      if (!f || !f.name) return;
+      if (f.name === 'otp') otpField = f;
+      if (f.name === 'mobile') mobileField = f;
+    });
+
+    if (otpField) {
+      scroll.appendChild(buildControlRow(otpField, lang, prefill).wrap);
+    }
+
+    var actions = document.createElement('div');
+    actions.className = 'qa-form__otp-actions';
+
+    var resendBtn = document.createElement('button');
+    resendBtn.type = 'button';
+    resendBtn.className = 'qa-form__otp-link';
+    resendBtn.textContent = t(lang, 'resendOtp');
+    resendBtn.addEventListener('click', function () {
+      var action = resolveFormAction(
+        (request && (request.onResend || request.resendOtp)) ||
+          def.resendOtpAction ||
+          'query:resend_otp'
+      );
+      if (widget && action && typeof widget.runFormDialogflowAction === 'function') {
+        widget.runFormDialogflowAction(action);
+      }
+    });
+    actions.appendChild(resendBtn);
+
+    var mobileWrap = null;
+    var mobileInput = null;
+    if (mobileField) {
+      var mobileBuilt = buildControlRow(mobileField, lang, prefill);
+      mobileWrap = mobileBuilt.wrap;
+      mobileWrap.classList.add('qa-form__field--otp-mobile');
+      mobileInput = mobileBuilt.input;
+      if (mobileField.hiddenUntilChangeMobile) {
+        mobileWrap.hidden = true;
+      }
+    }
+
+    var changeBtn = document.createElement('button');
+    changeBtn.type = 'button';
+    changeBtn.className = 'qa-form__otp-link';
+    changeBtn.textContent = t(lang, 'changeMobile');
+    changeBtn.addEventListener('click', function () {
+      if (!mobileWrap || !mobileInput) return;
+      mobileWrap.hidden = false;
+      mobileField.required = true;
+      mobileInput.required = true;
+      var sub = wrap.querySelector('.qa-form__subtitle');
+      if (sub && def.subtitleMobileByLanguage) {
+        sub.textContent = langPick(def.subtitleMobileByLanguage, lang);
+      }
+      if (prefill.mobile != null && String(prefill.mobile).trim()) {
+        mobileInput.value = String(prefill.mobile).trim();
+      } else if (
+        widget &&
+        widget.clientContext &&
+        widget.clientContext.mobile != null
+      ) {
+        mobileInput.value = String(widget.clientContext.mobile).trim();
+      }
+      mobileInput.focus();
+      changeBtn.hidden = true;
+    });
+    actions.appendChild(changeBtn);
+
+    scroll.appendChild(actions);
+    if (mobileWrap) scroll.appendChild(mobileWrap);
+
+    form._otpMobileRequired = function () {
+      return mobileWrap && !mobileWrap.hidden;
+    };
   }
 
   function isPhonePairField(field, next) {
@@ -1478,7 +1573,12 @@
     var hiddenStore = {};
     var fieldsList = def.fields || [];
 
+    if (isOtpForm(def, formId)) {
+      renderOtpForm(scroll, form, wrap, def, lang, prefill, widget, request);
+    }
+
     for (var fi = 0; fi < fieldsList.length; fi += 1) {
+      if (isOtpForm(def, formId)) break;
       var field = fieldsList[fi];
       if (!field || !field.name) continue;
       var type = String(field.type || 'text').toLowerCase();
@@ -1551,6 +1651,20 @@
       form.querySelectorAll('.qa-form__field--invalid').forEach(function (el) {
         el.classList.remove('qa-form__field--invalid');
       });
+
+      if (form._otpMobileRequired && form._otpMobileRequired()) {
+        var mobileFieldDef = (def.fields || []).find(function (f) {
+          return f && f.name === 'mobile';
+        });
+        var mobileIn = form.querySelector('[name="mobile"]');
+        if (mobileFieldDef && mobileIn) {
+          var mobileErr = validateValue(mobileFieldDef, mobileIn.value, lang);
+          if (mobileErr) {
+            showFieldError(mobileIn, mobileErr);
+            return;
+          }
+        }
+      }
 
       var result = collectFieldValues(def, form, lang, hiddenStore);
       if (!result.valid) return;

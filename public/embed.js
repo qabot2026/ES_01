@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var QA_ASSET_VERSION = '20260528-upload-form-id';
+  var QA_ASSET_VERSION = '20260528-otp-form-ui';
 
   var QA_FORM_SCRIPTS = [
     'contact.js',

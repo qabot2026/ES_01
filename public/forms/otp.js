@@ -5,6 +5,7 @@
   w.__DFCHAT_FORMS__ = w.__DFCHAT_FORMS__ || {};
   w.__DFCHAT_FORMS__.otp = {
     staffFormLabel: "otp",
+    formType: "otp",
     titleByLanguage: {
       en: "Verify OTP",
       hi: "OTP सत्यापित करें",
@@ -16,13 +17,14 @@
       mr: "पाठवलेला कोड टाका."
     },
     subtitleMobileByLanguage: {
-      en: "Enter the correct mobile number and submit. We will send a new code.",
-      hi: "सही मोबाइल नंबर दर्ज करें और जमा करें।",
-      mr: "योग्य मोबाईल क्रमांक टाका आणि सबमिट करा. नवा कोड पाठवू."
+      en: "Enter your mobile number. We will send a new code.",
+      hi: "अपना मोबाइल नंबर दर्ज करें। हम नया कोड भेजेंगे।",
+      mr: "तुमचा मोबाईल नंबर टाका. आम्ही नवा कोड पाठवू."
     },
     showSubtitle: true,
-    maxCardHeightPx: 240,
-    chatSummaryFieldNames: ["mobile", "otp"],
+    maxCardHeightPx: 280,
+    resendOtpAction: "query:resend_otp",
+    chatSummaryFieldNames: ["otp", "mobile"],
     fields: [
       {
         id: "o-otp",
@@ -34,7 +36,7 @@
         minLength: 4,
         inputMode: "numeric",
         pattern: "^[0-9]{4,8}$",
-        i18nPlaceholder: "otpCodePlaceholder",
+        i18nPlaceholder: "otpEnterPlaceholder",
         i18nSummaryLabel: "summaryOtpLabel",
         i18nInvalidMessage: "invalidOtp",
         autocomplete: "one-time-code"
@@ -44,6 +46,7 @@
         name: "mobile",
         type: "tel",
         required: false,
+        hiddenUntilChangeMobile: true,
         icon: "phone",
         validateAs: "phone",
         i18nPlaceholder: "mobilePlaceholder",
