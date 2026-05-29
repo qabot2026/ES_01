@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var QA_ASSET_VERSION = '20260528-form-remove-first';
+  var QA_ASSET_VERSION = '20260528-keep-agent-text-on-form-close';
 
   var QA_FORM_SCRIPTS = [
     'contact.js',

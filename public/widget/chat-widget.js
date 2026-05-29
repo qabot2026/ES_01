@@ -2701,7 +2701,18 @@
     if (!formEl) return;
     formEl.classList.add('qa-form--closed');
     var row = formEl.closest('.qa-msg');
-    if (row) row.remove();
+    var body = formEl.closest('.qa-msg__body');
+    formEl.remove();
+
+    /* Keep agent text/chips in the same turn — only drop the whole row if nothing remains */
+    if (!body || !row) return;
+    var hasContent = false;
+    Array.prototype.forEach.call(body.children, function (child) {
+      if (!child.classList.contains('qa-msg__persona-row')) {
+        hasContent = true;
+      }
+    });
+    if (!hasContent) row.remove();
   };
 
   QualityAssistantWidget.prototype.runFormDialogflowAction = function (action) {
