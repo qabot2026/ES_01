@@ -312,16 +312,181 @@
     return opt.label != null ? String(opt.label) : val;
   }
 
-  function flagForCountry(select, countryCode) {
+  function flagCdnUrl(country, width) {
+    var cc = String(country || '')
+      .trim()
+      .toLowerCase();
+    if (!/^[a-z]{2}$/.test(cc)) return '';
+    return 'https://flagcdn.com/w' + (width || 20) + '/' + cc + '.png';
+  }
+
+  function normalizeDialOptions(field) {
+    return (field.options || []).map(function (opt) {
+      return {
+        value: String(opt.value != null ? opt.value : opt.label || '').trim(),
+        country: String(opt.country || '').toUpperCase(),
+        flag: opt.flag ? String(opt.flag) : '',
+      };
+    });
+  }
+
+  function findDialOption(options, code, flagHint, countryHint) {
+    var want = String(code || '').trim();
+    var country = countryHint ? String(countryHint).toUpperCase() : '';
+    var flag = flagHint ? String(flagHint) : '';
+    var fallback = null;
+    var i;
+    for (i = 0; i < options.length; i += 1) {
+      var opt = options[i];
+      if (opt.value !== want) continue;
+      if (country && opt.country === country) return opt;
+      if (flag && opt.flag === flag && !fallback) fallback = opt;
+      if (!fallback) fallback = opt;
+    }
+    if (!fallback && country) {
+      for (i = 0; i < options.length; i += 1) {
+        if (options[i].country === country) return options[i];
+      }
+    }
+    return fallback || (options.length ? options[0] : null);
+  }
+
+  function updateDialPickerUi(picker, opt) {
+    if (!picker || !opt) return;
+    var img = picker.querySelector('.qa-dial-picker__flag-img');
+    var iso = picker.querySelector('.qa-dial-picker__iso');
+    var url = flagCdnUrl(opt.country, 40);
+    if (img) {
+      img.src = url || '';
+      img.alt = opt.country || '';
+      img.style.visibility = url ? 'visible' : 'hidden';
+    }
+    if (iso) iso.textContent = opt.country || '';
+  }
+
+  function setDialPickerValue(picker, hidden, options, code, flagHint, countryHint) {
+    var opt = findDialOption(options, code, flagHint, countryHint);
+    if (!opt || !hidden) return false;
+    hidden.value = opt.value;
+    picker._dialCurrent = opt;
+    updateDialPickerUi(picker, opt);
+    return true;
+  }
+
+  function buildDialPicker(field, lang, prefill) {
+    var options = normalizeDialOptions(field);
+    var picker = document.createElement('div');
+    picker.className = 'qa-dial-picker';
+    picker._dialOptions = options;
+
+    var hidden = document.createElement('input');
+    hidden.type = 'hidden';
+    hidden.className = 'qa-dial-picker__value qa-form__input';
+    hidden.id = field.id || 'qa-f-' + field.name;
+    if (field.name) hidden.name = field.name;
+    if (field.required) hidden.required = true;
+    hidden.setAttribute('aria-label', t(lang, 'dialCodePlaceholder'));
+
+    var trigger = document.createElement('button');
+    trigger.type = 'button';
+    trigger.className = 'qa-dial-picker__trigger qa-form__input qa-form__input--dial-code';
+    trigger.setAttribute('aria-haspopup', 'listbox');
+    trigger.setAttribute('aria-expanded', 'false');
+
+    var flagImg = document.createElement('img');
+    flagImg.className = 'qa-dial-picker__flag-img';
+    flagImg.width = 22;
+    flagImg.height = 16;
+    flagImg.decoding = 'async';
+    flagImg.loading = 'lazy';
+
+    var iso = document.createElement('span');
+    iso.className = 'qa-dial-picker__iso';
+    trigger.appendChild(flagImg);
+    trigger.appendChild(iso);
+
+    var menu = document.createElement('ul');
+    menu.className = 'qa-dial-picker__menu';
+    menu.hidden = true;
+    menu.setAttribute('role', 'listbox');
+
+    options.forEach(function (opt) {
+      var li = document.createElement('li');
+      li.className = 'qa-dial-picker__option';
+      li.setAttribute('role', 'option');
+      li.setAttribute('data-value', opt.value);
+      var liImg = document.createElement('img');
+      liImg.className = 'qa-dial-picker__flag-img';
+      liImg.src = flagCdnUrl(opt.country, 20);
+      liImg.alt = '';
+      liImg.width = 22;
+      liImg.height = 16;
+      var liIso = document.createElement('span');
+      liIso.className = 'qa-dial-picker__iso';
+      liIso.textContent = opt.country;
+      li.appendChild(liImg);
+      li.appendChild(liIso);
+      li.addEventListener('click', function (ev) {
+        ev.stopPropagation();
+        setDialPickerValue(picker, hidden, options, opt.value, opt.flag, opt.country);
+        menu.hidden = true;
+        trigger.setAttribute('aria-expanded', 'false');
+        showFieldError(hidden, '');
+      });
+      menu.appendChild(li);
+    });
+
+    function closeMenu() {
+      menu.hidden = true;
+      trigger.setAttribute('aria-expanded', 'false');
+    }
+
+    trigger.addEventListener('click', function (ev) {
+      ev.stopPropagation();
+      var willOpen = menu.hidden;
+      var menus = document.querySelectorAll('.qa-dial-picker__menu');
+      for (var m = 0; m < menus.length; m += 1) {
+        if (menus[m] !== menu) menus[m].hidden = true;
+      }
+      menu.hidden = !willOpen;
+      trigger.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+    });
+
+    if (!global.__QA_DIAL_PICKER_DOC_CLOSE__) {
+      global.__QA_DIAL_PICKER_DOC_CLOSE__ = true;
+      document.addEventListener('click', function () {
+        var openMenus = document.querySelectorAll('.qa-dial-picker__menu:not([hidden])');
+        for (var i = 0; i < openMenus.length; i += 1) {
+          openMenus[i].hidden = true;
+          var tr = openMenus[i].parentElement;
+          if (tr) {
+            var btn = tr.querySelector('.qa-dial-picker__trigger');
+            if (btn) btn.setAttribute('aria-expanded', 'false');
+          }
+        }
+      });
+    }
+
+    picker.appendChild(hidden);
+    picker.appendChild(trigger);
+    picker.appendChild(menu);
+
+    if (prefill[field.name] != null) {
+      setDialPickerValue(picker, hidden, options, String(prefill[field.name]).trim());
+    } else if (options.length) {
+      setDialPickerValue(picker, hidden, options, options[0].value, '', options[0].country);
+    }
+
+    return { picker: picker, input: hidden };
+  }
+
+  function flagForCountryFromOptions(options, countryCode) {
     var cc = String(countryCode || '').toUpperCase();
     if (!cc) return '';
-    var found = '';
-    Array.prototype.forEach.call(select.options, function (opt) {
-      if (String(opt.getAttribute('data-country') || '').toUpperCase() === cc) {
-        found = opt.getAttribute('data-flag') || opt.textContent || '';
-      }
-    });
-    return found;
+    for (var i = 0; i < options.length; i += 1) {
+      if (options[i].country === cc) return options[i].flag || '';
+    }
+    return '';
   }
 
   function detectPreferredDialCode(lang) {
@@ -451,53 +616,24 @@
     return '';
   }
 
-  function selectDialCode(select, code, flagHint, countryHint) {
-    var want = String(code || '').trim();
-    var flag = flagHint ? String(flagHint) : '';
-    var country = countryHint ? String(countryHint).toUpperCase() : '';
-    Array.prototype.forEach.call(select.options, function (opt) {
-      opt.selected = false;
-    });
-    var fallback = null;
-    Array.prototype.forEach.call(select.options, function (opt) {
-      if (opt.value !== want) return;
-      var optCountry = String(opt.getAttribute('data-country') || '').toUpperCase();
-      if (country && optCountry === country) {
-        opt.selected = true;
-        fallback = opt;
-      } else if (flag && opt.getAttribute('data-flag') === flag) {
-        if (!fallback || !country) {
-          opt.selected = true;
-          fallback = opt;
-        }
-      } else if (!fallback) {
-        fallback = opt;
-      }
-    });
-    if (fallback) {
-      fallback.selected = true;
-      return true;
-    }
-    return false;
-  }
-
-  function applyAutoDetectDialCode(select, lang, prefill) {
+  function applyAutoDetectDialCode(picker, hidden, options, lang, prefill) {
     if (prefill && prefill.dial_code != null && String(prefill.dial_code).trim()) {
-      if (selectDialCode(select, String(prefill.dial_code).trim())) return;
+      if (setDialPickerValue(picker, hidden, options, String(prefill.dial_code).trim())) return;
     }
     var preferred = detectPreferredDialCode(lang);
     var flagHint = detectPreferredDialFlag(lang);
     var countryHint = detectPreferredCountryCode(lang);
-    if (!selectDialCode(select, preferred, flagHint, countryHint) && select.options.length) {
-      select.options[0].selected = true;
+    if (!setDialPickerValue(picker, hidden, options, preferred, flagHint, countryHint) && options.length) {
+      setDialPickerValue(picker, hidden, options, options[0].value, '', options[0].country);
     }
   }
 
-  function detectDialFromLocation(select, dialField, lang, prefill, widget) {
+  function detectDialFromLocation(picker, hidden, dialField, lang, prefill, widget) {
+    var options = picker._dialOptions || [];
     if (prefill && prefill.dial_code != null && String(prefill.dial_code).trim()) {
       return;
     }
-    applyAutoDetectDialCode(select, lang, prefill);
+    applyAutoDetectDialCode(picker, hidden, options, lang, prefill);
 
     if (!dialField.detectFromLocation) return;
     if (!global.navigator || !navigator.geolocation) return;
@@ -514,8 +650,9 @@
             encodeURIComponent(pos.coords.longitude)
         ).then(function (data) {
           if (!data || !data.dialCode) return;
-          var flag = data.flag || flagForCountry(select, data.countryCode);
-          selectDialCode(select, data.dialCode, flag, data.countryCode);
+          var flag =
+            data.flag || flagForCountryFromOptions(options, data.countryCode);
+          setDialPickerValue(picker, hidden, options, data.dialCode, flag, data.countryCode);
         });
       },
       function () {},
@@ -552,8 +689,15 @@
     row.appendChild(dialBuilt.wrap);
     row.appendChild(mobileBuilt.wrap);
 
-    if (dialField.autoDetectDialCode && dialBuilt.input) {
-      detectDialFromLocation(dialBuilt.input, dialField, lang, prefill, widget);
+    if (dialField.autoDetectDialCode && dialBuilt.input && dialBuilt.picker) {
+      detectDialFromLocation(
+        dialBuilt.picker,
+        dialBuilt.input,
+        dialField,
+        lang,
+        prefill,
+        widget
+      );
     }
 
     return row;
@@ -567,6 +711,7 @@
     if (rowOpts.role === 'dial') wrap.classList.add('qa-form__field--dial');
     if (rowOpts.role === 'mobile') wrap.classList.add('qa-form__field--mobile');
     var type = String(field.type || 'text').toLowerCase();
+    var isDialCodeField = field.name === 'dial_code' || field.autoDetectDialCode;
 
     var controlWrap = document.createElement('div');
     controlWrap.className = 'qa-form__control';
@@ -582,24 +727,20 @@
       input = document.createElement('textarea');
       input.rows = field.rows || 3;
     } else if (type === 'select') {
-      input = document.createElement('select');
-      var isDialCode = field.name === 'dial_code' || field.autoDetectDialCode;
-      var compactDial = isDialCode && rowOpts.compactDial !== false;
-      (field.options || []).forEach(function (opt) {
-        var o = document.createElement('option');
-        o.value = opt.value != null ? opt.value : opt.label;
-        o.textContent = isDialCode
-          ? dialOptionLabel(opt, compactDial)
-          : opt.label != null
-            ? opt.label
-            : opt.value;
-        if (isDialCode && opt.flag) o.setAttribute('data-flag', opt.flag);
-        if (isDialCode && opt.country) o.setAttribute('data-country', opt.country);
-        input.appendChild(o);
-      });
+      var isDialCode = isDialCodeField;
       if (isDialCode) {
-        input.classList.add('qa-form__input--dial-code');
-        input.setAttribute('aria-label', t(lang, 'dialCodePlaceholder'));
+        var dialBuilt = buildDialPicker(field, lang, prefill);
+        input = dialBuilt.input;
+        controlWrap.appendChild(dialBuilt.picker);
+      } else {
+        input = document.createElement('select');
+        (field.options || []).forEach(function (opt) {
+          var o = document.createElement('option');
+          o.value = opt.value != null ? opt.value : opt.label;
+          o.textContent = opt.label != null ? opt.label : opt.value;
+          input.appendChild(o);
+        });
+        controlWrap.appendChild(input);
       }
     } else if (type === 'file') {
       input = document.createElement('input');
@@ -611,9 +752,11 @@
       input.type = type === 'tel' ? 'tel' : type;
     }
 
-    input.className = 'qa-form__input';
-    input.id = field.id || 'qa-f-' + field.name;
-    if (field.name) input.name = field.name;
+    if (type !== 'select' || !isDialCodeField) {
+      input.className = 'qa-form__input';
+    }
+    input.id = input.id || field.id || 'qa-f-' + field.name;
+    if (field.name && input.name !== field.name) input.name = field.name;
     if (field.required) input.required = true;
     if (field.autocomplete) input.autocomplete = field.autocomplete;
     if (field.inputMode) input.inputMode = field.inputMode;
@@ -627,17 +770,31 @@
       input.placeholder = phText;
     }
 
-    if (prefill[field.name] != null) {
+    if (prefill[field.name] != null && !(type === 'select' && isDialCodeField)) {
       input.value = String(prefill[field.name]);
-    } else if (field.value != null && type !== 'file') {
+    } else if (field.value != null && type !== 'file' && !(type === 'select' && isDialCodeField)) {
       input.value = String(field.value);
     }
 
-    if (type === 'select' && field.autoDetectDialCode && prefill[field.name] == null && !rowOpts.skipAutoDetect) {
-      applyAutoDetectDialCode(input, lang, prefill);
+    if (type === 'select' && isDialCodeField && field.autoDetectDialCode && prefill[field.name] == null && !rowOpts.skipAutoDetect) {
+      var dialPicker = controlWrap.querySelector('.qa-dial-picker');
+      if (dialPicker) {
+        applyAutoDetectDialCode(
+          dialPicker,
+          input,
+          dialPicker._dialOptions,
+          lang,
+          prefill
+        );
+      }
     }
 
-    controlWrap.appendChild(input);
+    if (
+      type !== 'select' ||
+      !isDialCodeField
+    ) {
+      controlWrap.appendChild(input);
+    }
     wrap.appendChild(controlWrap);
 
     var err = document.createElement('span');
@@ -645,7 +802,7 @@
     err.hidden = true;
     wrap.appendChild(err);
 
-    return { wrap: wrap, input: input };
+    return { wrap: wrap, input: input, picker: controlWrap.querySelector('.qa-dial-picker') };
   }
 
   function fetchJson(url) {
