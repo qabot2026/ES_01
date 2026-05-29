@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var QA_ASSET_VERSION = '20260528-upload-files-label';
+  var QA_ASSET_VERSION = '20260528-form-compact-white-btn';
 
   var QA_FORM_SCRIPTS = [
     'contact.js',
