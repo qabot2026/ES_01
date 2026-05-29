@@ -16,7 +16,7 @@
       mr: "तुमची माहिती शेअर करा."
     },
     showSubtitle: true,
-    maxCardHeightPx: 300,
+    maxCardHeightPx: 380,
     chatSummaryFieldNames: ["name", "dial_code", "mobile", "email"],
     fields: [
       { id: "c-name", name: "name", type: "text", required: true, icon: "user", i18nPlaceholder: "namePlaceholder", i18nSummaryLabel: "summaryNameLabel", autocomplete: "name" },

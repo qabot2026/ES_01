@@ -1328,10 +1328,29 @@
     return { values: values, valid: valid };
   }
 
-  function scaledFormMaxHeight(def) {
-    var n = def && def.maxCardHeightPx;
-    if (!n || n <= 0) return 260;
-    return Math.min(Math.round(Number(n) * 0.55), 300);
+  function formHasHeavyFields(def) {
+    return (def.fields || []).some(function (f) {
+      var t = String((f && f.type) || '').toLowerCase();
+      return (
+        t.indexOf('appointment') >= 0 ||
+        t === 'geolocation' ||
+        t === 'appointmentgeneral' ||
+        t === 'appointmentdoctor'
+      );
+    });
+  }
+
+  function scaledFormMaxHeight(def, formId) {
+    var n = Number(def && def.maxCardHeightPx) || 0;
+    formId = String(formId || '').toLowerCase();
+    if (formId === 'contact') {
+      return Math.max(n, 380);
+    }
+    if (!formHasHeavyFields(def)) {
+      return Math.max(n, 300);
+    }
+    if (!n || n <= 0) return 320;
+    return Math.min(Math.round(n * 0.75), 480);
   }
 
   function buildFormEl(request, widget) {
@@ -1355,7 +1374,7 @@
     var wrap = document.createElement('div');
     wrap.className = 'qa-form';
     wrap.setAttribute('data-form-id', formId);
-    wrap.style.maxHeight = scaledFormMaxHeight(def) + 'px';
+    wrap.style.maxHeight = scaledFormMaxHeight(def, formId) + 'px';
 
     var header = document.createElement('div');
     header.className = 'qa-form__header';

@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var QA_ASSET_VERSION = '20260528-form-compact-ip';
+  var QA_ASSET_VERSION = '20260528-contact-form-height';
 
   var QA_FORM_SCRIPTS = [
     'contact.js',
