@@ -2517,10 +2517,25 @@ textarea.qa-form__input {
 }
 
 .qa-form-cal__day--past,
+.qa-form-cal__day--closed,
 .qa-form-cal__day:disabled {
   opacity: 0.35;
   cursor: not-allowed;
   pointer-events: none;
+}
+
+.qa-form-cal__day--closed {
+  background: #f1f5f9;
+  border-color: #e2e8f0;
+  color: #94a3b8;
+}
+
+.qa-form-cal__closed-msg {
+  margin: 0;
+  padding: 8px 0;
+  font-size: 0.75rem;
+  color: var(--qa-muted);
+  text-align: center;
 }
 
 .qa-form-cal__nav-btn--disabled,

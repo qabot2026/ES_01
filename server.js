@@ -170,13 +170,12 @@ app.get('/api/appointment-slots', (req, res) => {
   const scope = String(req.query.scope || req.query.type || 'general').trim();
   const doctorId = String(req.query.doctorId || req.query.doctor_id || '').trim();
   const date = String(req.query.date || '').trim();
-  res.json(
-    formApi.appointmentSlots(scope, doctorId, date, {
-      dayStart: process.env.APPOINTMENT_DAY_START || '09:00',
-      dayEnd: process.env.APPOINTMENT_DAY_END || '18:00',
-      slotMinutes: process.env.APPOINTMENT_SLOT_MINUTES || 30,
-    })
-  );
+  res.json(formApi.appointmentSlots(scope, doctorId, date));
+});
+
+/** Read-only schedule template (edit data/appointment-schedule.json on server). */
+app.get('/api/appointment-schedule', (_req, res) => {
+  res.json(formApi.getAppointmentSchedule());
 });
 
 app.get('/api/phrase-translations', (req, res) => {

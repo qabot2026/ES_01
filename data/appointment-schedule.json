@@ -1,0 +1,53 @@
+{
+  "_help": "Default slot period (minutes) and clinic hours. weekdays = Mon–Sun pattern; dates = one-off overrides (YYYY-MM-DD). periods = time windows; closed = no bookings. scopes.doctor = separate rules for doctor appointments.",
+  "slotMinutes": 30,
+  "default": {
+    "periods": [{ "start": "09:00", "end": "18:00" }]
+  },
+  "weekdays": {
+    "monday": {
+      "periods": [
+        { "start": "09:00", "end": "13:00" },
+        { "start": "14:00", "end": "18:00" }
+      ],
+      "slotMinutes": 30
+    },
+    "tuesday": {
+      "periods": [{ "start": "10:00", "end": "17:00" }],
+      "slotMinutes": 30
+    },
+    "wednesday": {
+      "periods": [{ "start": "09:00", "end": "18:00" }]
+    },
+    "thursday": {
+      "periods": [{ "start": "09:00", "end": "18:00" }]
+    },
+    "friday": {
+      "periods": [{ "start": "09:00", "end": "16:00" }],
+      "slotMinutes": 20
+    },
+    "saturday": {
+      "periods": [{ "start": "10:00", "end": "14:00" }],
+      "slotMinutes": 15
+    },
+    "sunday": { "closed": true }
+  },
+  "dates": {
+    "2026-12-25": { "closed": true }
+  },
+  "scopes": {
+    "doctor": {
+      "slotMinutes": 20,
+      "default": {
+        "periods": [{ "start": "09:00", "end": "17:00" }]
+      },
+      "weekdays": {
+        "sunday": { "closed": true },
+        "saturday": {
+          "periods": [{ "start": "09:00", "end": "12:00" }],
+          "slotMinutes": 15
+        }
+      }
+    }
+  }
+}

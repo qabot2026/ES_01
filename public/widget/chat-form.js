@@ -65,7 +65,8 @@
       calPrev: 'Previous month',
       calNext: 'Next month',
       calPickTime: 'Pick a time',
-      calBookedLegend: 'Red = unavailable',
+      calBookedLegend: 'Red = full. Grey = closed.',
+      calClosedDay: 'Not available on this day.',
       calLoading: 'Loading…',
       formSubmitThanks: 'Thank you for sharing.',
       closeForm: 'Close form',
@@ -107,7 +108,8 @@
       calPrev: 'पिछला महीना',
       calNext: 'अगला महीना',
       calPickTime: 'समय चुनें',
-      calBookedLegend: 'लाल = उपलब्ध नहीं',
+      calBookedLegend: 'लाल = भरा। धूसर = बंद।',
+      calClosedDay: 'इस दिन अपॉइंटमेंट उपलब्ध नहीं।',
       calLoading: 'लोड हो रहा है…',
       formSubmitThanks: 'साझा करने के लिए धन्यवाद।',
       closeForm: 'फ़ॉर्म बंद करें',
@@ -149,7 +151,8 @@
       calPrev: 'मागील महिना',
       calNext: 'पुढील महिना',
       calPickTime: 'वेळ निवडा',
-      calBookedLegend: 'लाल = उपलब्ध नाही',
+      calBookedLegend: 'लाल = भरले. राखाडी = बंद.',
+      calClosedDay: 'या दिवशी अपॉइंटमेंट उपलब्ध नाही.',
       calLoading: 'लोड होत आहे…',
       formSubmitThanks: 'माहिती शेअर केल्याबद्दल धन्यवाद.',
       closeForm: 'फॉर्म बंद करा',
@@ -1517,6 +1520,7 @@
     var view = new Date();
     view.setDate(1);
     var bookedDates = [];
+    var closedDates = [];
     var selectedDate = dateHidden.value || '';
 
     function monthKey(d) {
@@ -1530,6 +1534,7 @@
       var m = view.getMonth();
       var daysInMonth = new Date(y, m + 1, 0).getDate();
       bookedDates = [];
+      closedDates = [];
       var promises = [];
       for (var day = 1; day <= daysInMonth; day += 1) {
         var iso =
@@ -1561,6 +1566,10 @@
       return Promise.all(promises).then(function (results) {
         results.forEach(function (r) {
           if (!r || !r.data) return;
+          if (r.data.closed) {
+            closedDates.push(r.iso);
+            return;
+          }
           var avail = r.data.availableTimes || [];
           var all = r.data.allSlots || [];
           if (all.length && avail.length === 0) {
@@ -1606,6 +1615,17 @@
             : '')
       ).then(function (data) {
         slotsWrap.classList.remove('qa-form-cal__slots--loading');
+        if (data && data.closed) {
+          slotsWrap.innerHTML = '';
+          var closedMsg = document.createElement('p');
+          closedMsg.className = 'qa-form-cal__closed-msg';
+          closedMsg.textContent = t(lang, 'calClosedDay');
+          slotsWrap.appendChild(closedMsg);
+          dateHidden.value = '';
+          timeHidden.value = '';
+          selectedDate = '';
+          return;
+        }
         var all = (data && data.allSlots) || [];
         var booked = (data && data.bookedTimes) || [];
         all.forEach(function (slot) {
@@ -1670,18 +1690,23 @@
         cell.type = 'button';
         cell.className = 'qa-form-cal__day';
         cell.textContent = String(day);
-        if (iso < today) {
+        var isPast = iso < today;
+        var isClosed = closedDates.indexOf(iso) >= 0;
+        if (isPast) {
           cell.disabled = true;
           cell.classList.add('qa-form-cal__day--past');
+        } else if (isClosed) {
+          cell.disabled = true;
+          cell.classList.add('qa-form-cal__day--closed');
         } else if (bookedDates.indexOf(iso) >= 0) {
           cell.classList.add('qa-form-cal__day--booked');
         }
         if (iso === selectedDate) {
           cell.classList.add('qa-form-cal__day--active');
         }
-        cell.addEventListener('click', function (d) {
+        cell.addEventListener('click', function (d, closed) {
           return function () {
-            if (d < today) return;
+            if (d < today || closed) return;
             selectedDate = d;
             grid.querySelectorAll('.qa-form-cal__day').forEach(function (el) {
               el.classList.remove('qa-form-cal__day--active');
@@ -1689,7 +1714,7 @@
             cell.classList.add('qa-form-cal__day--active');
             renderSlots(d);
           };
-        }(iso));
+        }(iso, isClosed));
         grid.appendChild(cell);
       }
     }
@@ -1741,6 +1766,12 @@
         timeHidden.value = '';
         selectedDate = '';
         renderGrid();
+        return false;
+      }
+      if (closedDates.indexOf(dateHidden.value) >= 0) {
+        err.textContent = t(lang, 'calClosedDay');
+        err.hidden = false;
+        wrap.classList.add('qa-form__field--invalid');
         return false;
       }
       err.hidden = true;
