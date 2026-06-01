@@ -25,6 +25,7 @@
         name: "appointmentdate",
         type: "date",
         required: true,
+        futureDateOnly: true,
         icon: "calendar",
         i18nSummaryLabel: "summaryDateLabel",
         placeholderByLanguage: { en: "Date", hi: "तिथि", mr: "तारीख" }

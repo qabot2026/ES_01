@@ -2516,9 +2516,18 @@ textarea.qa-form__input {
   color: var(--qa-text);
 }
 
-.qa-form-cal__day--past {
+.qa-form-cal__day--past,
+.qa-form-cal__day:disabled {
   opacity: 0.35;
   cursor: not-allowed;
+  pointer-events: none;
+}
+
+.qa-form-cal__nav-btn--disabled,
+.qa-form-cal__nav-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  pointer-events: none;
 }
 
 .qa-form-cal__day--booked {
