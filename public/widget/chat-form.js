@@ -315,7 +315,11 @@
 
       var field = findFieldDef(def, name);
       var label = summaryFieldLabel(field, name, lang);
-      lines.push(label + ': ' + String(values[name]).trim());
+      var val = String(values[name]).trim();
+      if (name === 'appointmenttime' || (field && field.type === 'time')) {
+        val = to12hClient(val);
+      }
+      lines.push(label + ': ' + val);
     });
 
     return lines.join('\n');
@@ -329,6 +333,44 @@
       return t(lang, field.i18nPlaceholder);
     }
     return '';
+  }
+
+  function parseTime24Client(t) {
+    var m = String(t || '').trim().match(/^(\d{1,2}):(\d{2})$/);
+    if (!m) return null;
+    var h = parseInt(m[1], 10);
+    var min = parseInt(m[2], 10);
+    if (h < 0 || h > 23 || min < 0 || min > 59) return null;
+    return { h: h, min: min };
+  }
+
+  function to24hClient(t) {
+    var s = String(t || '').trim();
+    if (!s) return '';
+    var p = parseTime24Client(s);
+    if (p) {
+      return String(p.h).padStart(2, '0') + ':' + String(p.min).padStart(2, '0');
+    }
+    var m12 = s.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+    if (!m12) return s;
+    var h = parseInt(m12[1], 10);
+    var min = m12[2];
+    var pm = m12[3].toUpperCase() === 'PM';
+    if (h < 1 || h > 12) return s;
+    if (h === 12) h = pm ? 12 : 0;
+    else if (pm) h += 12;
+    return String(h).padStart(2, '0') + ':' + min;
+  }
+
+  /** 12-hour display only (9:00 AM, 2:30 PM). */
+  function to12hClient(t) {
+    var s24 = to24hClient(t);
+    var p = parseTime24Client(s24);
+    if (!p) return String(t || '').trim();
+    var pm = p.h >= 12;
+    var h12 = p.h % 12;
+    if (h12 === 0) h12 = 12;
+    return h12 + ':' + String(p.min).padStart(2, '0') + ' ' + (pm ? 'PM' : 'AM');
   }
 
   function yesterdayIso() {
@@ -1468,7 +1510,9 @@
     timeHidden.type = 'hidden';
     timeHidden.name = 'appointmenttime';
     timeHidden.id = field.hiddenTimeId || field.id + '-time';
-    timeHidden.value = isPastAppointmentDate(prefill.appointmentdate) ? '' : prefill.appointmenttime || '';
+    timeHidden.value = isPastAppointmentDate(prefill.appointmentdate)
+      ? ''
+      : to24hClient(prefill.appointmenttime || '');
 
     form.appendChild(dateHidden);
     form.appendChild(timeHidden);
@@ -1628,30 +1672,42 @@
         }
         var all = (data && data.allSlots) || [];
         var booked = (data && data.bookedTimes) || [];
-        all.forEach(function (slot) {
+        var all24 = (data && data.allSlots24) || all.map(function (s) { return to24hClient(s); });
+        all.forEach(function (slot, idx) {
+          var slot24 = all24[idx] || to24hClient(slot);
+          var slot12 = to12hClient(slot24);
           var b = document.createElement('button');
           b.type = 'button';
           b.className = 'qa-form-cal__slot';
-          b.textContent = slot;
-          var isBooked = booked.indexOf(slot) >= 0;
+          b.textContent = slot12;
+          b.setAttribute('data-slot-24', slot24);
+          var isBooked =
+            booked.indexOf(slot) >= 0 ||
+            booked.indexOf(slot12) >= 0 ||
+            booked.indexOf(slot24) >= 0;
           if (isBooked) {
             b.disabled = true;
             b.classList.add('qa-form-cal__slot--booked');
           }
-          if (timeHidden.value === slot && dateHidden.value === iso) {
+          if (to24hClient(timeHidden.value) === slot24 && dateHidden.value === iso) {
             b.classList.add('qa-form-cal__slot--active');
           }
-          b.addEventListener('click', function () {
-            if (isBooked) return;
-            dateHidden.value = iso;
-            timeHidden.value = slot;
-            selectedDate = iso;
-            slotsWrap.querySelectorAll('.qa-form-cal__slot').forEach(function (el) {
-              el.classList.remove('qa-form-cal__slot--active');
-            });
-            b.classList.add('qa-form-cal__slot--active');
-            err.hidden = true;
-          });
+          b.addEventListener(
+            'click',
+            (function (d, t24, bookedFlag, btn) {
+              return function () {
+                if (bookedFlag) return;
+                dateHidden.value = d;
+                timeHidden.value = t24;
+                selectedDate = d;
+                slotsWrap.querySelectorAll('.qa-form-cal__slot').forEach(function (el) {
+                  el.classList.remove('qa-form-cal__slot--active');
+                });
+                btn.classList.add('qa-form-cal__slot--active');
+                err.hidden = true;
+              };
+            })(iso, slot24, isBooked, b)
+          );
           slotsWrap.appendChild(b);
         });
       });
@@ -1816,8 +1872,9 @@
       if (type === 'appointmentdoctor' || type === 'appointmentgeneral') {
         values.appointmentdate =
           (form.querySelector('[name="appointmentdate"]') || {}).value || '';
-        values.appointmenttime =
+        var apptTimeRaw =
           (form.querySelector('[name="appointmenttime"]') || {}).value || '';
+        values.appointmenttime = to12hClient(apptTimeRaw);
         var calWrap = form.querySelector('.qa-form__field--calendar');
         if (field.required !== false && calWrap && calWrap._validateAppt && !calWrap._validateAppt()) {
           valid = false;
@@ -1850,6 +1907,9 @@
 
       var input = form.querySelector('[name="' + field.name + '"]');
       var raw = input ? (input.tagName === 'SELECT' ? input.value : input.value) : '';
+      if (field.name === 'appointmenttime' || field.type === 'time') {
+        raw = to12hClient(raw);
+      }
       values[field.name] = raw;
       var errMsg = validateValue(field, raw, lang);
       if (errMsg) {

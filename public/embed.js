@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var QA_ASSET_VERSION = '20260529-appointment-schedule';
+  var QA_ASSET_VERSION = '20260529-appointment-12h';
 
   var QA_FORM_SCRIPTS = [
     'contact.js',

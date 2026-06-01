@@ -1,5 +1,5 @@
 {
-  "_help": "Default slot period (minutes) and clinic hours. weekdays = Mon–Sun pattern; dates = one-off overrides (YYYY-MM-DD). periods = time windows; closed = no bookings. scopes.doctor = separate rules for doctor appointments.",
+  "_help": "Hours use 24h in this file (09:00, 14:00). Chat shows 12h (9:00 AM). weekdays = daily pattern; dates = YYYY-MM-DD overrides; closed = no bookings. scopes.doctor = doctor form rules.",
   "slotMinutes": 30,
   "default": {
     "periods": [{ "start": "09:00", "end": "18:00" }]
