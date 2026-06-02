@@ -105,11 +105,6 @@ app.post('/api/chat', async (req, res) => {
 
     const userText = eventName ? '' : message && message.trim();
     chatTranscript.logDialogflowExchange(sid, userText, result);
-    if (sheets.isConfigured()) {
-      conversationSheet.syncSessionToSheet(sid).catch((e) => {
-        console.warn('[sheets] post-chat sync:', e.message);
-      });
-    }
 
     res.json({ sessionId: sid, ...result });
   } catch (err) {
