@@ -61,6 +61,15 @@ window.QA_CHAT_UI_CONFIG = {
         inlineSelect: { display: 'dropdown' },
       },
       /** In-chat forms — definitions in /public/forms/*.js */
+      /**
+       * Live agent desk — team chats at /live-agent/
+       * Dialogflow: intent "Live Agent" or parameter live_agent=true
+       */
+      liveAgent: {
+        enabled: true,
+        pollIntervalMs: 2000,
+        deskUrl: '/live-agent/',
+      },
       forms: {
         enabled: true,
         /**

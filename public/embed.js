@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var QA_ASSET_VERSION = '20260602-feedback-summary';
+  var QA_ASSET_VERSION = '20260602-live-agent';
 
   var QA_FORM_SCRIPTS = [
     'contact.js',
@@ -72,13 +72,15 @@
         loadCss(base + '/widget/chat-widget.css');
         loadJs(assetUrl(base + '/widget/chat-form.js'), function () {
           loadJs(assetUrl(base + '/widget/chat-widget.js'), function () {
-            if (window.QualityAssistantWidget) {
-              window.__qaWidgetLoaded = true;
-              new window.QualityAssistantWidget({
-                apiBase:
-                  (window.QA_CONFIG && window.QA_CONFIG.apiBase) || base,
-              });
-            }
+            loadJs(assetUrl(base + '/widget/live-agent-client.js'), function () {
+              if (window.QualityAssistantWidget) {
+                window.__qaWidgetLoaded = true;
+                new window.QualityAssistantWidget({
+                  apiBase:
+                    (window.QA_CONFIG && window.QA_CONFIG.apiBase) || base,
+                });
+              }
+            });
           });
         });
       });

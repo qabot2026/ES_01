@@ -5,6 +5,7 @@ const dialogflow = require('./lib/dialogflow');
 const translate = require('./lib/translate');
 const phraseTranslations = require('./lib/phrase-translations');
 const formApi = require('./lib/form-api');
+const liveAgent = require('./lib/live-agent');
 
 const app = express();
 const PORT = process.env.PORT || 4567;
@@ -187,6 +188,82 @@ app.get('/api/appointment-month', (req, res) => {
 /** Read-only schedule template (edit data/appointment-schedule.json on server). */
 app.get('/api/appointment-schedule', (_req, res) => {
   res.json(formApi.getAppointmentSchedule());
+});
+
+/** --- Live agent service desk --- */
+app.post('/api/live-agent/request', (req, res) => {
+  const { sessionId, userLanguage, previewMessage } = req.body || {};
+  res.json(
+    liveAgent.requestHandoff(sessionId, {
+      userLanguage,
+      previewMessage,
+    })
+  );
+});
+
+app.get('/api/live-agent/state', (req, res) => {
+  res.json(liveAgent.getUserState(req.query.sessionId));
+});
+
+app.get('/api/live-agent/poll', (req, res) => {
+  const sessionId = req.query.sessionId;
+  const since = req.query.since;
+  res.json(liveAgent.getMessagesSince(sessionId, since));
+});
+
+app.post('/api/live-agent/user-message', (req, res) => {
+  const { sessionId, message } = req.body || {};
+  res.json(liveAgent.postUserMessage(sessionId, message));
+});
+
+function requireDeskAuth(req, res, next) {
+  if (liveAgent.verifyDeskToken(req)) return next();
+  res.status(401).json(liveAgent.deskAuthFailed());
+}
+
+app.get('/api/live-agent/queue', requireDeskAuth, (_req, res) => {
+  res.json({ ok: true, ...liveAgent.getQueue() });
+});
+
+app.get('/api/live-agent/session', requireDeskAuth, (req, res) => {
+  res.json(liveAgent.getSessionDetail(req.query.sessionId));
+});
+
+app.post('/api/live-agent/claim', requireDeskAuth, (req, res) => {
+  const { sessionId, agentId, agentName } = req.body || {};
+  res.json(
+    liveAgent.claimSession(sessionId, {
+      agentId: agentId || 'agent',
+      agentName: agentName || 'Agent',
+    })
+  );
+});
+
+app.post('/api/live-agent/agent-message', requireDeskAuth, (req, res) => {
+  const { sessionId, message, agentId, agentName } = req.body || {};
+  res.json(
+    liveAgent.postAgentMessage(sessionId, message, {
+      agentId,
+      agentName,
+    })
+  );
+});
+
+app.post('/api/live-agent/end', requireDeskAuth, (req, res) => {
+  const { sessionId, agentId, agentName, reason } = req.body || {};
+  res.json(
+    liveAgent.endSession(
+      sessionId,
+      { agentId, agentName },
+      reason || 'Agent ended the chat.'
+    )
+  );
+});
+
+app.get('/api/live-agent/desk-config', (_req, res) => {
+  res.json({
+    tokenRequired: liveAgent.isDeskTokenRequired(),
+  });
 });
 
 app.get('/api/phrase-translations', (req, res) => {

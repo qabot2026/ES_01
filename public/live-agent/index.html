@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Live Agent Desk</title>
+    <link rel="stylesheet" href="live-agent.css" />
+  </head>
+  <body>
+    <header class="la-header">
+      <h1>Live Agent Desk</h1>
+      <div class="la-header__actions">
+        <span id="la-agent-name" class="la-agent-badge"></span>
+        <a href="settings.html" class="la-btn la-btn--ghost">Settings</a>
+        <button type="button" id="la-refresh" class="la-btn">Refresh</button>
+      </div>
+    </header>
+    <main class="la-layout">
+      <aside class="la-sidebar">
+        <section>
+          <h2>Waiting <span id="la-wait-count" class="la-count">0</span></h2>
+          <ul id="la-waiting" class="la-list"></ul>
+        </section>
+        <section>
+          <h2>Active <span id="la-active-count" class="la-count">0</span></h2>
+          <ul id="la-active" class="la-list"></ul>
+        </section>
+      </aside>
+      <section class="la-chat">
+        <div id="la-chat-empty" class="la-chat__empty">Select a conversation</div>
+        <div id="la-chat-panel" class="la-chat__panel" hidden>
+          <div class="la-chat__toolbar">
+            <strong id="la-chat-title">Session</strong>
+            <div class="la-chat__toolbar-btns">
+              <button type="button" id="la-claim" class="la-btn la-btn--primary">Take chat</button>
+              <button type="button" id="la-end" class="la-btn la-btn--danger">End chat</button>
+            </div>
+          </div>
+          <div id="la-messages" class="la-messages"></div>
+          <form id="la-reply-form" class="la-reply">
+            <textarea
+              id="la-reply-input"
+              rows="2"
+              placeholder="Type a reply…"
+              required
+            ></textarea>
+            <button type="submit" class="la-btn la-btn--primary">Send</button>
+          </form>
+        </div>
+      </section>
+    </main>
+    <script src="live-agent.js"></script>
+  </body>
+</html>

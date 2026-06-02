@@ -1,0 +1,24 @@
+{
+  "sessions": {
+    "test-sess": {
+      "sessionId": "test-sess",
+      "status": "waiting",
+      "createdAt": "2026-06-02T12:02:50.020Z",
+      "updatedAt": "2026-06-02T12:02:50.035Z",
+      "agentId": "",
+      "agentName": "",
+      "userLanguage": "en",
+      "messages": [
+        {
+          "id": "63b57a72-2c34-42ab-8a0c-2ca2c0db1d10",
+          "from": "user",
+          "text": "hi",
+          "at": "2026-06-02T12:02:50.035Z",
+          "meta": {
+            "handoff": true
+          }
+        }
+      ]
+    }
+  }
+}

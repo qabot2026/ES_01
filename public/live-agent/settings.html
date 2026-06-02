@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Desk Settings</title>
+    <link rel="stylesheet" href="settings.css" />
+  </head>
+  <body>
+    <main class="la-settings">
+      <h1>Agent settings</h1>
+      <p class="la-settings__hint">
+        Used to identify you on the desk and to access the queue API when a server token is set.
+      </p>
+      <label>
+        Your name
+        <input type="text" id="la-set-name" placeholder="e.g. Priya" />
+      </label>
+      <label>
+        Agent ID
+        <input type="text" id="la-set-id" placeholder="e.g. priya@company" />
+      </label>
+      <label>
+        Desk API token
+        <input type="password" id="la-set-token" placeholder="LIVE_AGENT_DESK_TOKEN" autocomplete="off" />
+      </label>
+      <label>
+        API base (optional)
+        <input type="text" id="la-set-base" placeholder="https://your-app.up.railway.app" />
+      </label>
+      <div class="la-settings__actions">
+        <button type="button" id="la-set-save" class="la-btn la-btn--primary">Save</button>
+        <a href="index.html" class="la-btn la-btn--ghost">Back to desk</a>
+      </div>
+    </main>
+    <script src="settings.js"></script>
+  </body>
+</html>

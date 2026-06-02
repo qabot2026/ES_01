@@ -1910,12 +1910,15 @@
     return ICONS.user;
   };
 
-  QualityAssistantWidget.prototype.buildPersonaRow = function (role) {
+  QualityAssistantWidget.prototype.buildPersonaRow = function (role, options) {
+    options = options || {};
     var bp = getRootCfg().botPersona || {};
     var up = getRootCfg().userPersona || {};
     var p = role === 'bot' ? bp : up;
     var name =
-      p.label || (role === 'bot' ? 'Quality' : 'You');
+      options.personaLabel ||
+      p.label ||
+      (role === 'bot' ? 'Quality' : 'You');
     var timeStr = formatPersonaTime(p);
 
     var row = document.createElement('div');
@@ -2920,7 +2923,7 @@
     row.className = 'qa-msg qa-msg--' + role;
     var body = document.createElement('div');
     body.className = 'qa-msg__body';
-    body.appendChild(this.buildPersonaRow(role));
+    body.appendChild(this.buildPersonaRow(role, options));
     var textStr = text == null ? '' : String(text).trim();
     var replyParts = options.replyParts || [];
     var dropdowns = options.dropdowns || [];
