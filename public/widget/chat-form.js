@@ -1631,11 +1631,6 @@
     form.appendChild(dateHidden);
     form.appendChild(timeHidden);
 
-    var legend = document.createElement('p');
-    legend.className = 'qa-form-cal__legend';
-    legend.textContent = t(lang, 'calBookedLegend');
-    wrap.appendChild(legend);
-
     var nav = document.createElement('div');
     nav.className = 'qa-form-cal__nav';
     var prevBtn = document.createElement('button');
@@ -1659,11 +1654,18 @@
     grid.className = 'qa-form-cal__grid';
     wrap.appendChild(grid);
 
+    var slotsHead = document.createElement('div');
+    slotsHead.className = 'qa-form-cal__slots-head';
+    slotsHead.hidden = true;
     var slotsTitle = document.createElement('p');
     slotsTitle.className = 'qa-form-cal__slots-title';
     slotsTitle.textContent = t(lang, 'calPickTime');
-    slotsTitle.hidden = true;
-    wrap.appendChild(slotsTitle);
+    var legend = document.createElement('p');
+    legend.className = 'qa-form-cal__legend';
+    legend.textContent = t(lang, 'calBookedLegend');
+    slotsHead.appendChild(slotsTitle);
+    slotsHead.appendChild(legend);
+    wrap.appendChild(slotsHead);
 
     var slotsWrap = document.createElement('div');
     slotsWrap.className = 'qa-form-cal__slots';
@@ -1768,7 +1770,7 @@
     function renderSlots(iso) {
       if (String(iso || '').trim() < calendarTodayIso()) {
         slotsWrap.innerHTML = '';
-        slotsTitle.hidden = true;
+        slotsHead.hidden = true;
         slotsWrap.hidden = true;
         dateHidden.value = '';
         timeHidden.value = '';
@@ -1776,7 +1778,7 @@
         return;
       }
       slotsWrap.innerHTML = '';
-      slotsTitle.hidden = false;
+      slotsHead.hidden = false;
       slotsWrap.hidden = false;
       var base = apiBase(widget);
       if (!base) return;
@@ -1784,6 +1786,17 @@
       fetchJson(base + apptSlotsQuery(formId, iso)).then(function (data) {
         slotsWrap.classList.remove('qa-form-cal__slots--loading');
         applyTimezoneFromApi(data);
+        if (data && data.noAvailableSlots) {
+          slotsWrap.innerHTML = '';
+          var goneMsg = document.createElement('p');
+          goneMsg.className = 'qa-form-cal__closed-msg';
+          goneMsg.textContent =
+            iso === calendarTodayIso()
+              ? t(lang, 'calNoMoreSlotsToday')
+              : t(lang, 'calClosedDay');
+          slotsWrap.appendChild(goneMsg);
+          return;
+        }
         if (data && data.closed) {
           slotsWrap.innerHTML = '';
           var closedMsg = document.createElement('p');
@@ -1898,6 +1911,7 @@
           cell.classList.add('qa-form-cal__day--closed');
         } else if (bookedDates.indexOf(iso) >= 0) {
           cell.classList.add('qa-form-cal__day--booked');
+          cell.classList.add('qa-form-cal__day--full');
         }
         if (iso === selectedDate) {
           cell.classList.add('qa-form-cal__day--active');
