@@ -156,6 +156,30 @@
     if (endBtn) endBtn.hidden = status !== 'active';
   }
 
+  function loadTranscriptPreview(sessionId) {
+    var detail = document.getElementById('la-detail');
+    var preview = document.getElementById('la-detail-preview');
+    var link = document.getElementById('la-detail-script');
+    if (!detail || !sessionId) return;
+    detail.hidden = false;
+    document.getElementById('la-detail-id').textContent = sessionId;
+    link.href =
+      '../transcript.html?session=' + encodeURIComponent(sessionId);
+    fetchJson(
+      apiBase() + '/api/transcript?sessionId=' + encodeURIComponent(sessionId),
+      { headers: headers() }
+    ).then(function (res) {
+      if (!res.ok || !res.body.ok) {
+        preview.textContent = 'No script saved yet.';
+        return;
+      }
+      var lines = (res.body.turns || []).map(function (m) {
+        return (m.role || '?') + ': ' + (m.text || '');
+      });
+      preview.textContent = lines.length ? lines.join('\n\n') : 'No script saved yet.';
+    });
+  }
+
   function selectSession(sessionId, statusHint) {
     selectedId = sessionId;
     msgSince = '';
@@ -164,6 +188,7 @@
     document.getElementById('la-chat-title').textContent =
       'Visitor ' + sessionId.slice(0, 10) + '…';
     updateChatToolbar(statusHint || 'waiting');
+    loadTranscriptPreview(sessionId);
     loadMessages(true);
     refreshQueue();
   }

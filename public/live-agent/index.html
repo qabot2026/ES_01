@@ -25,6 +25,7 @@
         <div class="la-header__actions">
           <span id="la-status" class="la-status la-status--ok" title="API connection">Online</span>
           <span id="la-agent-name" class="la-agent-badge"></span>
+          <a href="../dashboard/" class="la-btn la-btn--outline la-btn--sm">Analytics</a>
           <a href="settings.html" class="la-btn la-btn--outline la-btn--sm">Change token</a>
           <button type="button" id="la-refresh" class="la-btn la-btn--outline la-btn--sm">
             Refresh
@@ -32,7 +33,7 @@
         </div>
       </header>
 
-      <main class="la-layout">
+      <main class="la-layout la-layout--3">
         <aside class="la-sidebar">
           <div class="la-sidebar__tabs">
             <button type="button" class="la-tab la-tab--active" data-tab="waiting">
@@ -84,6 +85,16 @@
             </form>
           </div>
         </section>
+
+        <aside id="la-detail" class="la-detail" hidden>
+          <h2 class="la-detail__title">Visitor</h2>
+          <p class="la-detail__id" id="la-detail-id"></p>
+          <a id="la-detail-script" class="la-detail__link" href="#" target="_blank" rel="noopener"
+            >Open chat script</a
+          >
+          <h3 class="la-detail__sub">Preview</h3>
+          <div id="la-detail-preview" class="la-detail__preview"></div>
+        </aside>
       </main>
     </div>
     <script src="live-agent.js"></script>

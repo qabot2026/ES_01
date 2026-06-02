@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var QA_ASSET_VERSION = '20260602-live-agent';
+  var QA_ASSET_VERSION = '20260602-desk-analytics';
 
   var QA_FORM_SCRIPTS = [
     'contact.js',
@@ -73,6 +73,7 @@
         loadJs(assetUrl(base + '/widget/chat-form.js'), function () {
           loadJs(assetUrl(base + '/widget/chat-widget.js'), function () {
             loadJs(assetUrl(base + '/widget/live-agent-client.js'), function () {
+              loadJs(assetUrl(base + '/widget/transcript-client.js'), function () {
               if (window.QualityAssistantWidget) {
                 window.__qaWidgetLoaded = true;
                 new window.QualityAssistantWidget({
@@ -80,6 +81,7 @@
                     (window.QA_CONFIG && window.QA_CONFIG.apiBase) || base,
                 });
               }
+              });
             });
           });
         });

@@ -69,6 +69,7 @@ window.QA_CHAT_UI_CONFIG = {
         enabled: true,
         pollIntervalMs: 2000,
         deskUrl: '/live-agent/',
+        dashboardUrl: '/dashboard/',
       },
       forms: {
         enabled: true,

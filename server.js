@@ -6,6 +6,8 @@ const translate = require('./lib/translate');
 const phraseTranslations = require('./lib/phrase-translations');
 const formApi = require('./lib/form-api');
 const liveAgent = require('./lib/live-agent');
+const chatTranscript = require('./lib/chat-transcript');
+const sheets = require('./lib/sheets');
 
 const app = express();
 const PORT = process.env.PORT || 4567;
@@ -88,6 +90,21 @@ app.post('/api/chat', async (req, res) => {
       : await dialogflow.detectIntent(sid, message.trim(), languageCode);
     if (phraseTranslations.isEnabled()) {
       result = phraseTranslations.applyToResult(result, uiLang);
+    }
+    if (result.liveAgent) {
+      liveAgent.requestHandoff(sid, {
+        userLanguage: uiLang,
+        previewMessage: message ? message.trim() : '',
+      });
+      const base = PUBLIC_BASE_URL.replace(/\/$/, '');
+      sheets
+        .appendRow({
+          sessionId: sid,
+          event: 'live_agent_request',
+          summary: (message || result.reply || '').slice(0, 200),
+          transcriptUrl: `${base}/transcript.html?session=${encodeURIComponent(sid)}`,
+        })
+        .catch(() => {});
     }
     res.json({ sessionId: sid, ...result });
   } catch (err) {
@@ -263,6 +280,33 @@ app.post('/api/live-agent/end', requireDeskAuth, (req, res) => {
 app.get('/api/live-agent/desk-config', (_req, res) => {
   res.json({
     tokenRequired: liveAgent.isDeskTokenRequired(),
+    sheetsConfigured: sheets.isConfigured(),
+    publicBaseUrl: PUBLIC_BASE_URL,
+  });
+});
+
+app.post('/api/transcript/append', (req, res) => {
+  const { sessionId, role, text, turns } = req.body || {};
+  if (Array.isArray(turns) && turns.length) {
+    return res.json({
+      ok: true,
+      added: chatTranscript.appendTurns(sessionId, turns),
+    });
+  }
+  const turn = chatTranscript.appendTurn(sessionId, role, text);
+  res.json({ ok: !!turn, turn });
+});
+
+app.get('/api/transcript', requireDeskAuth, (req, res) => {
+  res.json(chatTranscript.getTranscript(req.query.sessionId));
+});
+
+app.get('/api/analytics/summary', requireDeskAuth, (_req, res) => {
+  const queue = liveAgent.getQueue();
+  res.json({
+    ok: true,
+    sheetsConfigured: sheets.isConfigured(),
+    ...chatTranscript.getAnalyticsSummary(queue),
   });
 });
 
@@ -286,8 +330,11 @@ app.get('/api/config', (_req, res) => {
     translateReady: translate.isConfigured(),
     phraseTranslationsFile: phraseTranslations.isEnabled(),
     phraseTranslationsPath: phraseTranslations.DATA_PATH,
+    sheetsConfigured: sheets.isConfigured(),
     publicBaseUrl: PUBLIC_BASE_URL,
     embedScript: `${PUBLIC_BASE_URL}/embed.js`,
+    deskUrl: `${PUBLIC_BASE_URL}/live-agent/`,
+    dashboardUrl: `${PUBLIC_BASE_URL}/dashboard/`,
   });
 });
 

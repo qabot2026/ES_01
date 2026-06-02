@@ -7,4 +7,7 @@ credentials.json
 # Friend's CX reference — study only, do not publish
 Only to refer company.config.js
 Only to refer*
+Only Refer/
 refer-forms/
+data/transcripts/*.json
+!data/transcripts/.gitkeep
