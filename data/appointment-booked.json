@@ -1,5 +1,5 @@
 {
-  "_help": "Booked slots for appointment calendars. Red days / disabled times come from here.",
+  "_help": "Booked slots for appointment calendars. Use 12-hour times (9:00 AM, 2:30 PM) in slotsByDate.",
   "general": {
     "fullyBookedDates": [],
     "slotsByDate": {}

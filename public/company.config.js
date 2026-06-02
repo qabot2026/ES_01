@@ -70,7 +70,7 @@ window.QA_CHAT_UI_CONFIG = {
          *
          * Top-level slotMinutes = default slot period (minutes).
          * weekdays.monday … sunday — per-day pattern:
-         *   { periods: [{ start: "09:00", end: "13:00" }, { start: "14:00", end: "18:00" }], slotMinutes: 20 }
+         *   { periods: [{ start: "9:00 AM", end: "1:00 PM" }, { start: "2:00 PM", end: "6:00 PM" }], slotMinutes: 20 }
          *   { closed: true }
          * dates["2026-12-25"] — one-off override (same shape).
          * scopes.doctor — separate rules for doctor booking form.
