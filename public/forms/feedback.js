@@ -26,6 +26,7 @@
         required: true,
         icon: "star",
         placeholderByLanguage: { en: "Rating (1-5)", hi: "रेटिंग (1-5)", mr: "रेटिंग (1-5)" },
+        i18nSummaryLabel: "summaryRatingLabel",
         options: [
           { label: "1", value: "1" },
           { label: "2", value: "2" },
@@ -41,7 +42,8 @@
         required: true,
         icon: "message",
         rows: 3,
-        placeholderByLanguage: { en: "Write your feedback…", hi: "अपना फीडबैक लिखें…", mr: "तुमचा अभिप्राय लिहा…" }
+        placeholderByLanguage: { en: "Write your feedback…", hi: "अपना फीडबैक लिखें…", mr: "तुमचा अभिप्राय लिहा…" },
+        i18nSummaryLabel: "summaryMessageLabel"
       }
     ]
   };

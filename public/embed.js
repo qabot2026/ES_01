@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var QA_ASSET_VERSION = '20260602-cal-legend-full-days';
+  var QA_ASSET_VERSION = '20260602-feedback-summary';
 
   var QA_FORM_SCRIPTS = [
     'contact.js',

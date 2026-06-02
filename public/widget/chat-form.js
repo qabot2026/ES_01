@@ -59,6 +59,8 @@
       summaryDocumentLabel: 'Document',
       summaryDoctorIdLabel: 'Doctor',
       summaryBirthDateLabel: 'Birth date',
+      summaryRatingLabel: 'Rating',
+      summaryMessageLabel: 'Message',
       chooseFiles: 'Upload',
       addMoreFiles: 'Add',
       filesSelected: '{n} selected',
