@@ -100,9 +100,9 @@ app.post('/api/chat', async (req, res) => {
       sheets
         .appendRow({
           sessionId: sid,
+          role: 'user',
+          message: (message || result.reply || '').slice(0, 2000),
           event: 'live_agent_request',
-          summary: (message || result.reply || '').slice(0, 200),
-          transcriptUrl: `${base}/transcript.html?session=${encodeURIComponent(sid)}`,
         })
         .catch(() => {});
     }
