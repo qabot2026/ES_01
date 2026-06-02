@@ -8,6 +8,7 @@ const formApi = require('./lib/form-api');
 const liveAgent = require('./lib/live-agent');
 const chatTranscript = require('./lib/chat-transcript');
 const sheets = require('./lib/sheets');
+const conversationSheet = require('./lib/conversation-sheet');
 
 const app = express();
 const PORT = process.env.PORT || 4567;
@@ -96,15 +97,10 @@ app.post('/api/chat', async (req, res) => {
         userLanguage: uiLang,
         previewMessage: message ? message.trim() : '',
       });
-      const base = PUBLIC_BASE_URL.replace(/\/$/, '');
-      sheets
-        .appendRow({
-          sessionId: sid,
-          role: 'user',
-          message: (message || result.reply || '').slice(0, 2000),
-          event: 'live_agent_request',
-        })
-        .catch(() => {});
+      chatTranscript.mergeSessionMeta(sid, {
+        channel: 'Web',
+        liveAgentRequested: true,
+      });
     }
     res.json({ sessionId: sid, ...result });
   } catch (err) {
@@ -283,6 +279,21 @@ app.get('/api/live-agent/desk-config', (_req, res) => {
     sheetsConfigured: sheets.isConfigured(),
     publicBaseUrl: PUBLIC_BASE_URL,
   });
+});
+
+app.post('/api/session-context', (req, res) => {
+  const { sessionId } = req.body || {};
+  const sid = String(sessionId || '').trim();
+  if (!sid) {
+    return res.status(400).json({ error: 'session_required' });
+  }
+  const meta = conversationSheet.metaFromClientBody(req.body || {});
+  const ip = formApi.getClientIp(req);
+  if (ip) meta.ip = ip;
+  if (Object.keys(meta).length) {
+    chatTranscript.mergeSessionMeta(sid, meta);
+  }
+  res.json({ ok: true, sessionId: sid, merged: Object.keys(meta).length });
 });
 
 app.post('/api/transcript/append', (req, res) => {

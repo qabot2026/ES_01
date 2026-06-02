@@ -1163,9 +1163,59 @@
     }
   };
 
+  function parseUaBrowser(ua) {
+    ua = String(ua || '');
+    if (/Edg\//i.test(ua)) return 'Edge';
+    if (/Chrome\//i.test(ua) && !/Edg/i.test(ua)) return 'Chrome';
+    if (/Firefox\//i.test(ua)) return 'Firefox';
+    if (/Safari\//i.test(ua) && !/Chrome/i.test(ua)) return 'Safari';
+    return '';
+  }
+
+  function parseUaOs(ua) {
+    ua = String(ua || '');
+    if (/Windows/i.test(ua)) return 'Windows';
+    if (/Mac OS X|Macintosh/i.test(ua)) return 'macOS';
+    if (/Android/i.test(ua)) return 'Android';
+    if (/iPhone|iPad|iPod/i.test(ua)) return 'iOS';
+    if (/Linux/i.test(ua)) return 'Linux';
+    return '';
+  }
+
+  QualityAssistantWidget.prototype.buildSessionContextPayload = function () {
+    var loc = global.location || {};
+    var ua = (global.navigator && global.navigator.userAgent) || '';
+    var params = new URLSearchParams(loc.search || '');
+    var ctx = Object.assign({}, this.clientContext || {});
+    return Object.assign(ctx, {
+      sessionId: this.sessionId,
+      sourceUrl: loc.href || '',
+      device: /Mobi|Android|iPhone|iPad/i.test(ua) ? 'Mobile' : 'Desktop',
+      browser: parseUaBrowser(ua),
+      os: parseUaOs(ua),
+      channel: ctx.channel || 'Web',
+      utm_campaign: params.get('utm_campaign') || ctx.utm_campaign || '',
+      utm_content: params.get('utm_content') || ctx.utm_content || '',
+      utm_medium: params.get('utm_medium') || ctx.utm_medium || '',
+      utm_source: params.get('utm_source') || ctx.utm_source || '',
+      utm_term: params.get('utm_term') || ctx.utm_term || '',
+    });
+  };
+
+  QualityAssistantWidget.prototype.pushSessionContext = function () {
+    if (!this.apiBase || !this.sessionId) return;
+    var payload = this.buildSessionContextPayload();
+    fetch(this.apiBase + '/api/session-context', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    }).catch(function () {});
+  };
+
   QualityAssistantWidget.prototype.fetchConfig = function () {
     var self = this;
     if (!this.apiBase) return;
+    this.pushSessionContext();
     fetch(this.apiBase + '/api/config')
       .then(function (r) {
         return r.json();
@@ -2813,6 +2863,7 @@
     var self = this;
     payload = payload || {};
     this.clientContext = Object.assign({}, this.clientContext || {}, payload.values || {});
+    this.pushSessionContext();
     this._userHasInteracted = true;
 
     var ack = payload.summaryText || '';

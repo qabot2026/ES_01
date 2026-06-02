@@ -1,19 +1,21 @@
-# Google Sheet par saari conversation — steps
+# Google Sheet — one row per conversation
 
-Har user/bot/agent message ki **ek row** Sheet mein jayegi (jab setup sahi ho).
+Har chat session ki **ek row** Sheet mein jati hai (headers ke saath). Naye messages par wahi row **update** hoti hai.
 
 ---
 
 ## Step 1 — Google Sheet banayein
 
 1. [Google Sheets](https://sheets.google.com) → **Blank spreadsheet**
-2. Pehli row (header) likhein:
+2. **Row 1** par ye headers likhein (order same rakhein):
 
-| A | B | C | D | E | F | G | H |
-|---|---|---|---|---|---|---|---|
-| Date | Time | Session | Role | Message | Event | Agent | Chat link |
+| A | B | C | D | E | F | G | H | I | J | K | L | M | N | O | P | Q | R | S | T | U | V | W | X | Y | Z | AA | AB | AC | AD | AE | AF | AG |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Conv. Link | Conv. Date | Conv. Time | Name | Mobile | Email | Channel | User Queries | Repeated User | Source URL | Session ID | Device | Browser | OS | City | IP Address | App. Booked | App. Date | App. Time | Document | Sentiment | Rating | Feedback | Duration | CRM Push Status | Message Count | Average Response Time | UtmCampaign | UtmContent | UtmMedium | UtmSource | UtmTerm | Fall back |
 
-3. Sheet ka naam note karein (neeche left) — default `Sheet1` hota hai.
+3. Sheet tab naam note karein (default `Sheet1`).
+
+App pehli baar sync par khali row 1 par headers **auto** bhi likh sakta hai — phir bhi aap manually set kar sakte ho.
 
 ---
 
@@ -27,7 +29,7 @@ Har user/bot/agent message ki **ek row** Sheet mein jayegi (jab setup sahi ho).
 
 ## Step 3 — Google Sheets API on
 
-1. [Google Cloud Console](https://console.cloud.google.com/) → wahi project jisme Dialogflow / Firebase hai  
+1. [Google Cloud Console](https://console.cloud.google.com/) → wahi project jisme Dialogflow hai  
 2. **APIs & Services** → **Library**  
 3. Search: **Google Sheets API** → **Enable**
 
@@ -35,44 +37,38 @@ Har user/bot/agent message ki **ek row** Sheet mein jayegi (jab setup sahi ho).
 
 ## Step 4 — Railway variables
 
-Apni Railway service → **Variables** → add / check:
-
 | Variable | Value |
 |----------|--------|
 | `GOOGLE_CREDENTIALS_JSON` | Poora service account JSON (Dialogflow wala hi) |
-| `SHEETS_SPREADSHEET_ID` | Sheet URL se ID: `https://docs.google.com/spreadsheets/d/ **YAHAN_ID** /edit` |
-| `SHEETS_RANGE` | `Sheet1!A:H` (agar tab ka naam alag ho to `Leads!A:H` jaisa) |
-| `PUBLIC_BASE_URL` | `https://aapka-app.up.railway.app` (transcript link ke liye) |
+| `SHEETS_SPREADSHEET_ID` | Sheet URL se ID |
+| `SHEETS_RANGE` | `Sheet1!A:AG` (33 columns) |
+| `PUBLIC_BASE_URL` | `https://aapka-app.up.railway.app` (Conv. Link / transcript) |
 
-**Redeploy** karein (Deploy / Restart).
+**Redeploy** karein.
 
 ---
 
 ## Step 5 — Test
 
 1. Website par chatbot kholo → 2–3 message bhejo  
-2. Google Sheet refresh karo → nayi rows aani chahiye  
-3. Dashboard `/dashboard/` par **Google Sheet: On** dikhe  
+2. Sheet refresh — **ek row** session ke liye; dubara message par wahi row update  
+3. Dashboard `/dashboard/` par **Google Sheet: On**
 
-Agar row nahi aati:
-
-- Sheet **Editor** par service account email hai?  
-- `SHEETS_SPREADSHEET_ID` sahi hai?  
-- Railway **Deploy logs** mein `[sheets] append failed` dekho  
+Agar row nahi aati: service account **Editor**, sahi `SHEETS_SPREADSHEET_ID`, logs mein `[sheets]` / `[conversation-sheet]` dekho.
 
 ---
 
-## Sheet mein kya aata hai
+## Columns ka source
 
-| Role | Matlab |
-|------|--------|
-| user | Visitor ne likha |
-| bot | Dialogflow jawab |
-| agent | Live agent desk se reply |
-
-| Event | Matlab |
-|-------|--------|
-| chat_message | Normal chat line |
-| live_agent_request | User ne agent maanga |
-
-**Chat link** column se poori script browser mein khul sakti hai.
+| Column | Source |
+|--------|--------|
+| Conv. Link | Transcript URL (`PUBLIC_BASE_URL` + session) |
+| Conv. Date / Time | Pehla message (default TZ `Asia/Kolkata`) |
+| Name, Mobile, Email | Forms / `clientContext` → `/api/session-context` |
+| User Queries | Saare user messages joined |
+| Source URL, UTM*, Device, Browser, OS | Widget on load |
+| IP Address | Server `X-Forwarded-For` |
+| App. Booked / Date / Time | Appointment form submit |
+| Rating, Feedback | Feedback form |
+| Duration, Message Count, Avg Response Time | Transcript turns se calculate |
+| Fall back | Dialogflow fallback (jab set ho) |
