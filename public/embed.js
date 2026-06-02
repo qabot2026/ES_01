@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var QA_ASSET_VERSION = '20260530-appointment-today-settings';
+  var QA_ASSET_VERSION = '20260602-appointment-cal-compact';
 
   var QA_FORM_SCRIPTS = [
     'contact.js',

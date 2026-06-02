@@ -1527,6 +1527,17 @@
     );
   }
 
+  function apptMonthQuery(formId, year, monthIndex) {
+    return (
+      '/api/appointment-month?formId=' +
+      encodeURIComponent(normalizeApptFormId(formId)) +
+      '&year=' +
+      encodeURIComponent(year) +
+      '&month=' +
+      encodeURIComponent(monthIndex + 1)
+    );
+  }
+
   function renderAppointmentCalendar(field, form, lang, widget, prefill, formId) {
     formId = normalizeApptFormId(formId);
     var wrap = document.createElement('div');
@@ -1610,53 +1621,23 @@
 
     function fetchMonthBooked() {
       var base = apiBase(widget);
-      if (!base) return Promise.resolve();
       var y = view.getFullYear();
       var m = view.getMonth();
-      var daysInMonth = new Date(y, m + 1, 0).getDate();
       bookedDates = [];
       closedDates = [];
-      var promises = [];
-      for (var day = 1; day <= daysInMonth; day += 1) {
-        var iso =
-          y +
-          '-' +
-          String(m + 1).padStart(2, '0') +
-          '-' +
-          String(day).padStart(2, '0');
-        promises.push(
-          (function (dayIso) {
-            return fetchJson(base + apptSlotsQuery(formId, dayIso)).then(function (data) {
-              return { iso: dayIso, data: data };
-            });
-          })(iso)
-        );
-      }
-      return Promise.all(promises).then(function (results) {
-        results.forEach(function (r) {
-          if (!r || !r.data) return;
-          if (r.data.allowToday === false) calAllowToday = false;
-          if (r.data.closed || r.data.todayHidden) {
-            closedDates.push(r.iso);
-            return;
-          }
-          if (r.data.allFull) {
-            bookedDates.push(r.iso);
-          } else {
-            var avail = r.data.availableTimes || [];
-            var all = r.data.allSlots || [];
-            if (all.length && avail.length === 0) {
-              bookedDates.push(r.iso);
-            }
-          }
-          if (
-            Array.isArray(r.data.fullyBookedDates) &&
-            r.data.fullyBookedDates.indexOf(r.iso) >= 0
-          ) {
-            bookedDates.push(r.iso);
-          }
+      grid.classList.remove('qa-form-cal__grid--busy');
+      if (!base) return Promise.resolve();
+      grid.classList.add('qa-form-cal__grid--busy');
+      return fetchJson(base + apptMonthQuery(formId, y, m))
+        .then(function (data) {
+          if (!data) return;
+          if (data.allowToday === false) calAllowToday = false;
+          closedDates = Array.isArray(data.closedDates) ? data.closedDates.slice() : [];
+          bookedDates = Array.isArray(data.bookedDates) ? data.bookedDates.slice() : [];
+        })
+        .finally(function () {
+          grid.classList.remove('qa-form-cal__grid--busy');
         });
-      });
     }
 
     function renderSlots(iso) {
@@ -1815,22 +1796,21 @@
     prevBtn.addEventListener('click', function () {
       if (prevBtn.disabled) return;
       view.setMonth(view.getMonth() - 1);
-      fetchMonthBooked().then(function () {
-        renderGrid();
-        syncPrevNav();
-      });
+      renderGrid();
+      syncPrevNav();
+      fetchMonthBooked().then(renderGrid);
     });
     nextBtn.addEventListener('click', function () {
       view.setMonth(view.getMonth() + 1);
-      fetchMonthBooked().then(function () {
-        renderGrid();
-        syncPrevNav();
-      });
-    });
-
-    fetchMonthBooked().then(function () {
       renderGrid();
       syncPrevNav();
+      fetchMonthBooked().then(renderGrid);
+    });
+
+    renderGrid();
+    syncPrevNav();
+    fetchMonthBooked().then(function () {
+      renderGrid();
       if (dateHidden.value && !isPastAppointmentDate(dateHidden.value)) {
         renderSlots(dateHidden.value);
       }

@@ -174,6 +174,16 @@ app.get('/api/appointment-slots', (req, res) => {
   res.json(formApi.appointmentSlots(formId, '', date));
 });
 
+/** One call per month — calendar paints dates fast, then applies red/grey. */
+app.get('/api/appointment-month', (req, res) => {
+  const formId = String(
+    req.query.formId || req.query.form_id || req.query.scope || 'appointment'
+  ).trim();
+  const year = req.query.year;
+  const month = req.query.month;
+  res.json(formApi.appointmentMonthSummary(formId, year, month));
+});
+
 /** Read-only schedule template (edit data/appointment-schedule.json on server). */
 app.get('/api/appointment-schedule', (_req, res) => {
   res.json(formApi.getAppointmentSchedule());

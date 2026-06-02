@@ -2454,34 +2454,42 @@ textarea.qa-form__input {
   font-family: inherit;
 }
 
-/* Appointment calendar */
+/* Appointment calendar — compact */
+.qa-form__field--calendar {
+  margin-bottom: 4px;
+}
+
 .qa-form-cal__legend {
-  font-size: 0.75rem;
+  font-size: 0.6875rem;
   color: var(--qa-text-soft, var(--qa-muted));
-  margin: 0 0 8px;
+  margin: 0 0 4px;
+  line-height: 1.3;
 }
 
 .qa-form-cal__nav {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
+  gap: 4px;
 }
 
 .qa-form-cal__month {
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   font-weight: 700;
   color: var(--qa-text);
 }
 
 .qa-form-cal__nav-btn {
-  width: 32px;
-  height: 32px;
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  padding: 0;
   border: 1px solid var(--qa-border);
-  border-radius: 8px;
+  border-radius: 6px;
   background: var(--qa-surface);
   cursor: pointer;
-  font-size: 1.125rem;
+  font-size: 0.9375rem;
   line-height: 1;
   color: var(--qa-primary);
 }
@@ -2489,28 +2497,40 @@ textarea.qa-form__input {
 .qa-form-cal__grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 4px;
-  margin-bottom: 10px;
+  gap: 2px;
+  margin-bottom: 4px;
+}
+
+.qa-form-cal__grid--busy {
+  opacity: 0.92;
 }
 
 .qa-form-cal__dow {
   text-align: center;
-  font-size: 0.6875rem;
+  font-size: 0.625rem;
   font-weight: 700;
   color: var(--qa-muted);
-  padding: 4px 0;
+  padding: 2px 0;
+  line-height: 1.1;
 }
 
 .qa-form-cal__pad {
-  aspect-ratio: 1;
+  height: 24px;
+  min-height: 24px;
 }
 
 .qa-form-cal__day {
-  aspect-ratio: 1;
+  height: 24px;
+  min-height: 24px;
+  max-height: 24px;
+  padding: 0;
+  margin: 0;
   border: 1px solid var(--qa-border);
-  border-radius: 8px;
+  border-radius: 4px;
   background: var(--qa-surface);
-  font-size: 0.75rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1;
   cursor: pointer;
   font-family: inherit;
   color: var(--qa-text);
@@ -2532,10 +2552,11 @@ textarea.qa-form__input {
 
 .qa-form-cal__closed-msg {
   margin: 0;
-  padding: 8px 0;
-  font-size: 0.75rem;
+  padding: 4px 0;
+  font-size: 0.6875rem;
   color: var(--qa-muted);
   text-align: center;
+  line-height: 1.3;
 }
 
 .qa-form-cal__nav-btn--disabled,
@@ -2558,28 +2579,33 @@ textarea.qa-form__input {
 }
 
 .qa-form-cal__slots-title {
-  font-size: 0.8125rem;
+  font-size: 0.6875rem;
   font-weight: 600;
-  margin: 8px 0 6px;
+  margin: 4px 0 3px;
   color: var(--qa-text);
 }
 
 .qa-form-cal__slots {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 3px;
+  margin-bottom: 2px;
 }
 
 .qa-form-cal__slots--loading {
-  opacity: 0.6;
+  opacity: 0.65;
+  min-height: 28px;
 }
 
 .qa-form-cal__slot {
-  padding: 8px 12px;
-  border-radius: 8px;
+  padding: 3px 6px;
+  min-height: 22px;
+  border-radius: 4px;
   border: 1px solid var(--qa-border);
   background: var(--qa-surface);
-  font-size: 0.8125rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1.2;
   cursor: pointer;
   font-family: inherit;
 }
