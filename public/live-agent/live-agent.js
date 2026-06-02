@@ -120,7 +120,14 @@
         if (!res.ok) {
           setStatus(false);
           if (res.status === 401) {
-            alert('Desk token wrong — open Settings and fix the token.');
+            var msg =
+              (res.body && res.body.message) ||
+              'Wrong token — check LIVE_AGENT_DESK_TOKEN.';
+            alert(msg);
+            if (res.body && res.body.error === 'desk_token_not_configured') {
+              return;
+            }
+            window.location.href = 'settings.html';
           }
           return;
         }
@@ -304,8 +311,8 @@
   });
 
   var d = loadDesk();
-  if (!d.agentName || !d.agentId) {
-    window.location.href = 'settings.html?first=1';
+  if (!d.agentName || !d.token) {
+    window.location.href = 'settings.html';
   }
 
   document.getElementById('la-agent-name').textContent = d.agentName || 'Agent';

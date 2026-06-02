@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Desk Settings</title>
+    <title>Desk login</title>
     <link rel="stylesheet" href="settings.css" />
   </head>
   <body>
@@ -15,44 +15,27 @@
           width="48"
           height="48"
         />
-        <h1>Agent settings</h1>
-        <p>One-time setup for your team</p>
+        <h1>Live Agent Desk</h1>
+        <p>Enter your team details to open the desk</p>
       </header>
 
       <main class="la-settings-card">
-        <p id="la-first-hint" class="la-settings__banner" hidden>
-          Welcome — enter your name below, then Save.
-        </p>
         <label class="la-field">
-          <span>Your name (shown to visitors)</span>
-          <input type="text" id="la-set-name" placeholder="e.g. Priya" autocomplete="name" />
+          <span>Your name</span>
+          <input type="text" id="la-set-name" placeholder="Priya" autocomplete="name" required />
         </label>
         <label class="la-field">
-          <span>Agent ID (any unique id)</span>
-          <input type="text" id="la-set-id" placeholder="e.g. priya" autocomplete="username" />
-        </label>
-        <label class="la-field">
-          <span>Desk API token <small>(only if Railway has LIVE_AGENT_DESK_TOKEN)</small></span>
+          <span>Desk token</span>
           <input
             type="password"
             id="la-set-token"
-            placeholder="Leave empty if not using token"
+            placeholder="LIVE_AGENT_DESK_TOKEN from Railway"
             autocomplete="off"
-          />
-        </label>
-        <label class="la-field">
-          <span>Server URL <small>(usually leave blank)</small></span>
-          <input
-            type="url"
-            id="la-set-base"
-            placeholder="https://your-app.up.railway.app"
+            required
           />
         </label>
         <div class="la-settings__actions">
-          <button type="button" id="la-set-save" class="la-btn la-btn--primary">
-            Save & open desk
-          </button>
-          <a href="index.html" class="la-btn la-btn--ghost">Back</a>
+          <button type="button" id="la-set-save" class="la-btn la-btn--primary">Open desk</button>
         </div>
       </main>
     </div>
