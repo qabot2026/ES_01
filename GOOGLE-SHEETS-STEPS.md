@@ -54,7 +54,12 @@ App pehli baar sync par khali row 1 par headers **auto** bhi likh sakta hai — 
 2. Sheet refresh — **ek row** session ke liye; dubara message par wahi row update  
 3. Dashboard `/dashboard/` par **Google Sheet: On**
 
-Agar row nahi aati: service account **Editor**, sahi `SHEETS_SPREADSHEET_ID`, logs mein `[sheets]` / `[conversation-sheet]` dekho.
+Agar row nahi aati:
+
+- Railway mein **`SHEETS_SPREADSHEET_ID`** set hai? (`/api/config` → `sheetsConfigured: true`, `sheetsSpreadsheetIdSet: true`)
+- Service account ko Sheet par **Editor**
+- Deploy logs: `[sheets] enabled` ya `[sheets] append:` error
+- Chat **server** par log hoti hai (`/api/chat`) — sirf browser UI se likhne se pehle row nahi banti thi; ab har message ke baad sync hota hai
 
 ---
 

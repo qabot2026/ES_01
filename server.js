@@ -102,6 +102,10 @@ app.post('/api/chat', async (req, res) => {
         liveAgentRequested: true,
       });
     }
+
+    const userText = eventName ? '' : message && message.trim();
+    chatTranscript.logDialogflowExchange(sid, userText, result);
+
     res.json({ sessionId: sid, ...result });
   } catch (err) {
     const detail = dialogflow.formatApiError(err);
@@ -342,6 +346,8 @@ app.get('/api/config', (_req, res) => {
     phraseTranslationsFile: phraseTranslations.isEnabled(),
     phraseTranslationsPath: phraseTranslations.DATA_PATH,
     sheetsConfigured: sheets.isConfigured(),
+    sheetsSpreadsheetIdSet: !!sheets.SPREADSHEET_ID,
+    sheetsRange: sheets.RANGE,
     publicBaseUrl: PUBLIC_BASE_URL,
     embedScript: `${PUBLIC_BASE_URL}/embed.js`,
     deskUrl: `${PUBLIC_BASE_URL}/live-agent/`,
@@ -362,6 +368,20 @@ app.listen(PORT, () => {
   if (!dialogflow.isConfigured()) {
     console.warn('⚠ GOOGLE_CREDENTIALS_JSON missing — /api/chat will not work.');
     return;
+  }
+  if (sheets.isConfigured()) {
+    console.log(
+      '[sheets] enabled — spreadsheet',
+      sheets.SPREADSHEET_ID.slice(0, 8) + '…',
+      'range',
+      sheets.RANGE
+    );
+  } else if (String(process.env.SHEETS_SPREADSHEET_ID || '').trim()) {
+    console.warn(
+      '[sheets] SHEETS_SPREADSHEET_ID is set but logging is off — need GOOGLE_CREDENTIALS_JSON'
+    );
+  } else {
+    console.warn('[sheets] disabled — set SHEETS_SPREADSHEET_ID on Railway');
   }
   dialogflow
     .probe()
