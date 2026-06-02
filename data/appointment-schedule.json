@@ -1,5 +1,5 @@
 {
-  "_help": "Use 12-hour times only (9:00 AM, 2:00 PM). weekdays = daily pattern; dates = YYYY-MM-DD overrides; closed = no bookings. slotMinutes = gap between slots. scopes.doctor = doctor form rules.",
+  "_help": "12-hour only (9:00 AM). FORMS: (1) form_id appintmentformgeneral → top default + weekdays + dates. (2) form_id appintmentformdoctor → scopes.doctor (+ weekdays/dates here override for that form). (3) form_id appointment → NOT this file (plain date/time fields). slotMinutes = minutes between slots.",
   "slotMinutes": 30,
   "default": {
     "periods": [{ "start": "9:00 AM", "end": "6:00 PM" }]
