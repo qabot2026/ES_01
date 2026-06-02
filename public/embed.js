@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var QA_ASSET_VERSION = '20260602-cal-legend-short';
+  var QA_ASSET_VERSION = '20260602-appt-summary';
 
   var QA_FORM_SCRIPTS = [
     'contact.js',

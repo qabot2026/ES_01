@@ -54,6 +54,8 @@
       summaryOtpLabel: 'OTP',
       summaryDateLabel: 'Date',
       summaryTimeLabel: 'Time',
+      summaryAppointmentDateLabel: 'Appointment Date',
+      summaryAppointmentTimeLabel: 'Appointment Time',
       summaryDocumentLabel: 'Document',
       summaryDoctorIdLabel: 'Doctor',
       summaryBirthDateLabel: 'Birth date',
@@ -65,13 +67,14 @@
       calPrev: 'Previous month',
       calNext: 'Next month',
       calPickTime: 'Pick a time',
-      calBookedLegend: 'Green - Available · Red - Full · Grey - Closed',
+      calBookedLegend: 'Green - Available · Red - Full',
       calClosedDay: 'Not available on this day.',
       calTodayHidden: 'Today is not available for booking. Pick a future date.',
       calNoMoreSlotsToday: 'No more times left today. Try another date.',
       calOutsideWindow: 'You can only book within the allowed number of days.',
       calLoading: 'Loading…',
       formSubmitThanks: 'Thank you for sharing.',
+      formSubmitThanksAppointment: 'Your appointment request has been submitted.',
       closeForm: 'Close form',
     },
     hi: {
@@ -100,6 +103,8 @@
       summaryOtpLabel: 'OTP',
       summaryDateLabel: 'तिथि',
       summaryTimeLabel: 'समय',
+      summaryAppointmentDateLabel: 'अपॉइंटमेंट तिथि',
+      summaryAppointmentTimeLabel: 'अपॉइंटमेंट समय',
       summaryDocumentLabel: 'दस्तावेज़',
       summaryDoctorIdLabel: 'डॉक्टर',
       summaryBirthDateLabel: 'जन्म तिथि',
@@ -111,13 +116,14 @@
       calPrev: 'पिछला महीना',
       calNext: 'अगला महीना',
       calPickTime: 'समय चुनें',
-      calBookedLegend: 'हरा - खाली · लाल - भरा · धूसर - बंद',
+      calBookedLegend: 'हरा - खाली · लाल - भरा',
       calClosedDay: 'इस दिन अपॉइंटमेंट उपलब्ध नहीं।',
       calTodayHidden: 'आज की तारीख उपलब्ध नहीं। आगे की तारीख चुनें।',
       calNoMoreSlotsToday: 'आज के लिए और समय उपलब्ध नहीं। दूसरी तारीख चुनें।',
       calOutsideWindow: 'केवल निर्धारित दिनों के भीतर ही बुक कर सकते हैं।',
       calLoading: 'लोड हो रहा है…',
       formSubmitThanks: 'साझा करने के लिए धन्यवाद।',
+      formSubmitThanksAppointment: 'आपका अपॉइंटमेंट अनुरोध जमा हो गया है।',
       closeForm: 'फ़ॉर्म बंद करें',
     },
     mr: {
@@ -146,6 +152,8 @@
       summaryOtpLabel: 'OTP',
       summaryDateLabel: 'तारीख',
       summaryTimeLabel: 'वेळ',
+      summaryAppointmentDateLabel: 'अपॉइंटमेंट तारीख',
+      summaryAppointmentTimeLabel: 'अपॉइंटमेंट वेळ',
       summaryDocumentLabel: 'दस्तऐवज',
       summaryDoctorIdLabel: 'डॉक्टर',
       summaryBirthDateLabel: 'जन्मतारीख',
@@ -157,13 +165,14 @@
       calPrev: 'मागील महिना',
       calNext: 'पुढील महिना',
       calPickTime: 'वेळ निवडा',
-      calBookedLegend: 'हिरवा - उपलब्ध · लाल - भरले · राखाडी - बंद',
+      calBookedLegend: 'हिरवा - उपलब्ध · लाल - भरले',
       calClosedDay: 'या दिवशी अपॉइंटमेंट उपलब्ध नाही.',
       calTodayHidden: 'आजची तारीख उपलब्ध नाही. पुढची तारीख निवडा.',
       calNoMoreSlotsToday: 'आजसाठी आणखी वेळ उपलब्ध नाही. दुसरी तारीख निवडा.',
       calOutsideWindow: 'फक्त ठरवलेल्या दिवसांमध्येच बुकिंग करता येईल.',
       calLoading: 'लोड होत आहे…',
       formSubmitThanks: 'माहिती शेअर केल्याबद्दल धन्यवाद.',
+      formSubmitThanksAppointment: 'तुमची अपॉइंटमेंट विनंती जमा झाली आहे.',
       closeForm: 'फॉर्म बंद करा',
     },
   };
@@ -293,20 +302,16 @@
     var names = (def && def.chatSummaryFieldNames) || Object.keys(values);
     names.forEach(function (name) {
       if (values[name] == null || values[name] === '') return;
-      var label = name;
-      var field = (def && def.fields || []).find(function (f) {
-        return f.name === name;
-      });
-      if (field && field.i18nSummaryLabel) {
-        label = t(lang, field.i18nSummaryLabel);
-      }
-      lines.push(label + ': ' + String(values[name]));
+      var field = findFieldDef(def, name);
+      var label = appointmentSummaryLabel(name, field, def, lang);
+      var val = formatSummaryFieldValue(name, values[name], field, def);
+      lines.push(label + ': ' + val);
     });
     return lines.join('\n');
   }
 
   function buildSummaryText(formId, values, def, lang) {
-    var lines = [t(lang, 'formSubmitThanks')];
+    var lines = [submitThanksMessage(def, lang)];
 
     var names = (def && def.chatSummaryFieldNames) || Object.keys(values);
     var hasMobile = values.mobile != null && String(values.mobile).trim() !== '';
@@ -323,11 +328,8 @@
       }
 
       var field = findFieldDef(def, name);
-      var label = summaryFieldLabel(field, name, lang);
-      var val = String(values[name]).trim();
-      if (name === 'appointmenttime' || (field && field.type === 'time')) {
-        val = to12hClient(val);
-      }
+      var label = appointmentSummaryLabel(name, field, def, lang);
+      var val = formatSummaryFieldValue(name, values[name], field, def);
       lines.push(label + ': ' + val);
     });
 
@@ -380,6 +382,39 @@
     var h12 = p.h % 12;
     if (h12 === 0) h12 = 12;
     return h12 + ':' + String(p.min).padStart(2, '0') + ' ' + (pm ? 'PM' : 'AM');
+  }
+
+  function formatAppointmentDateDisplay(iso) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso || '').trim());
+    if (!m) return String(iso || '').trim();
+    return m[3] + '/' + m[2] + '/' + m[1];
+  }
+
+  function submitThanksMessage(def, lang) {
+    if (def && def.formType === 'appointment') {
+      return t(lang, 'formSubmitThanksAppointment');
+    }
+    return t(lang, 'formSubmitThanks');
+  }
+
+  function appointmentSummaryLabel(name, field, def, lang) {
+    if (def && def.formType === 'appointment') {
+      if (name === 'appointmentdate') return t(lang, 'summaryAppointmentDateLabel');
+      if (name === 'appointmenttime') return t(lang, 'summaryAppointmentTimeLabel');
+    }
+    return summaryFieldLabel(field, name, lang);
+  }
+
+  function formatSummaryFieldValue(name, val, field, def) {
+    val = String(val || '').trim();
+    if (!val) return val;
+    if (def && def.formType === 'appointment' && name === 'appointmentdate') {
+      return formatAppointmentDateDisplay(val);
+    }
+    if (name === 'appointmenttime' || (field && field.type === 'time')) {
+      return to12hClient(val);
+    }
+    return val;
   }
 
   function yesterdayIso() {

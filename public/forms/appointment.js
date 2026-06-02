@@ -25,7 +25,7 @@
         icon: "calendar",
         hiddenDateId: "appt-date",
         hiddenTimeId: "appt-time",
-        i18nSummaryLabel: "summaryDateLabel",
+        i18nSummaryLabel: "summaryAppointmentDateLabel",
         placeholderByLanguage: {
           en: "Calendar below",
           hi: "नीचे कैलेंडर",
