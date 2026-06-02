@@ -13,12 +13,7 @@
       hi: "अपॉइंटमेंट",
       mr: "अपॉइंटमेंट"
     },
-    subtitleByLanguage: {
-      en: "Green = slot available. Red = full. Pick date, then time.",
-      hi: "हरा = खाली स्लॉट। लाल = भरा। तारीख, फिर समय चुनें।",
-      mr: "हिरवा = उपलब्ध. लाल = भरले. तारीख, नंतर वेळ."
-    },
-    showSubtitle: true,
+    showSubtitle: false,
     maxCardHeightPx: 540,
     chatSummaryFieldNames: ["appointmentdate", "appointmenttime"],
     fields: [
