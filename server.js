@@ -1,5 +1,6 @@
 const express = require('express');
 const path = require('path');
+const multer = require('multer');
 const { randomUUID } = require('crypto');
 const dialogflow = require('./lib/dialogflow');
 const translate = require('./lib/translate');
@@ -9,6 +10,7 @@ const liveAgent = require('./lib/live-agent');
 const chatTranscript = require('./lib/chat-transcript');
 const sheets = require('./lib/sheets');
 const conversationSheet = require('./lib/conversation-sheet');
+const driveUpload = require('./lib/drive-upload');
 
 const app = express();
 const PORT = process.env.PORT || 4567;
@@ -26,6 +28,11 @@ app.use((req, res, next) => {
 });
 
 app.use(express.json({ limit: '32kb' }));
+
+const uploadDocumentsMw = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 25 * 1024 * 1024, files: 10 },
+});
 
 app.use((req, res, next) => {
   if (
@@ -312,6 +319,60 @@ app.post('/api/session-context', (req, res) => {
   res.json({ ok: true, sessionId: sid, merged: Object.keys(meta).length });
 });
 
+app.post(
+  '/api/upload/documents',
+  uploadDocumentsMw.array('files', 10),
+  async (req, res) => {
+    if (!driveUpload.isConfigured()) {
+      return res.status(503).json({
+        error: 'drive_not_configured',
+        message:
+          'Set GOOGLE_DRIVE_FOLDER_ID and Drive auth (OAuth or service account). See GOOGLE-DRIVE-STEPS.md',
+      });
+    }
+    const sessionId = String(req.body.sessionId || '').trim();
+    if (!sessionId) {
+      return res.status(400).json({ error: 'session_required' });
+    }
+    const files = req.files || [];
+    if (!files.length) {
+      return res.status(400).json({ error: 'files_required' });
+    }
+    try {
+      const pack = await driveUpload.uploadSubmissionFilesToDrive(files, {
+        mobile: req.body.mobile,
+        dialCode: req.body.dial_code || req.body.dialCode,
+        clientSessionId: sessionId,
+      });
+      const links = pack.uploads
+        .map((u) => u.web_view_link)
+        .filter(Boolean)
+        .join('\n');
+      const meta = {
+        document: pack.drive_subfolder_name,
+        drive_subfolder_id: pack.drive_subfolder_id,
+        drive_subfolder_name: pack.drive_subfolder_name,
+        drive_folder_link: pack.drive_folder_link,
+        document_links: links,
+      };
+      chatTranscript.mergeSessionMeta(sessionId, meta);
+      res.json({
+        ok: true,
+        sessionId,
+        drive_subfolder_name: pack.drive_subfolder_name,
+        drive_folder_link: pack.drive_folder_link,
+        uploads: pack.uploads,
+      });
+    } catch (err) {
+      console.error('[drive-upload]', err.message);
+      res.status(500).json({
+        error: 'drive_upload_failed',
+        message: err.message,
+      });
+    }
+  }
+);
+
 app.post('/api/transcript/append', (req, res) => {
   const { sessionId, role, text, turns } = req.body || {};
   if (Array.isArray(turns) && turns.length) {
@@ -361,6 +422,7 @@ app.get('/api/config', (_req, res) => {
     sheetsClientReady: sheets.isClientReady(),
     sheetsSpreadsheetIdSet: !!sheets.SPREADSHEET_ID,
     sheetsRange: sheets.RANGE,
+    driveConfigured: driveUpload.isConfigured(),
     sheetsServiceAccountEmail: require('./lib/google-credentials').getClientEmail(),
     publicBaseUrl: PUBLIC_BASE_URL,
     embedScript: `${PUBLIC_BASE_URL}/embed.js`,
@@ -417,6 +479,13 @@ app.listen(PORT, () => {
     );
   } else {
     console.warn('[sheets] disabled — set SHEETS_SPREADSHEET_ID on Railway');
+  }
+  if (driveUpload.isConfigured()) {
+    console.log('[drive] upload enabled — parent folder', driveUpload.FOLDER_ID.slice(0, 8) + '…');
+  } else {
+    console.warn(
+      '[drive] disabled — set GOOGLE_DRIVE_FOLDER_ID + OAuth or service account (GOOGLE-DRIVE-STEPS.md)'
+    );
   }
   dialogflow
     .probe()

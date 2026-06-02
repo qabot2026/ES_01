@@ -2302,24 +2302,67 @@
       var result = collectFieldValues(def, form, lang, hiddenStore);
       if (!result.valid) return;
 
-      wrap.classList.add('qa-form--submitted');
-      form.querySelectorAll('input, select, textarea, button').forEach(function (el) {
-        el.disabled = true;
-      });
-
-      var nextFormId = resolveNextFormId(def, request || {});
-      if (widget && typeof widget.handleFormSubmit === 'function') {
-        widget.handleFormSubmit({
-          formId: formId,
-          values: result.values,
-          def: def,
-          request: request,
-          formEl: wrap,
-          nextFormId: nextFormId,
-          summaryText: buildSummaryText(formId, result.values, def, lang),
-          dialogflowText: formatSubmission(formId, result.values, def, lang),
+      var submitUploadThenForm = function () {
+        wrap.classList.add('qa-form--submitted');
+        form.querySelectorAll('input, select, textarea, button').forEach(function (el) {
+          el.disabled = true;
         });
+        var nextFormId = resolveNextFormId(def, request || {});
+        if (widget && typeof widget.handleFormSubmit === 'function') {
+          widget.handleFormSubmit({
+            formId: formId,
+            values: result.values,
+            def: def,
+            request: request,
+            formEl: wrap,
+            nextFormId: nextFormId,
+            summaryText: buildSummaryText(formId, result.values, def, lang),
+            dialogflowText: formatSubmission(formId, result.values, def, lang),
+          });
+        }
+      };
+
+      var selectedFiles = form._selectedFiles || [];
+      if (
+        isUploadForm(def, formId) &&
+        selectedFiles.length &&
+        widget &&
+        typeof widget.uploadFormDocuments === 'function'
+      ) {
+        widget
+          .uploadFormDocuments(selectedFiles, result.values)
+          .then(function (up) {
+            if (!up || !up.ok) {
+              wrap.classList.remove('qa-form--submitted');
+              form.querySelectorAll('input, select, textarea, button').forEach(function (el) {
+                el.disabled = false;
+              });
+              var errEl = form.querySelector('.qa-form__upload-error');
+              if (!errEl) {
+                errEl = document.createElement('p');
+                errEl.className = 'qa-form__upload-error';
+                errEl.setAttribute('role', 'alert');
+                form.querySelector('.qa-form__footer').prepend(errEl);
+              }
+              errEl.textContent =
+                (up && up.message) || 'Could not upload to Google Drive. Try again.';
+              return;
+            }
+            if (up.drive_subfolder_name) {
+              result.values.document = up.drive_subfolder_name;
+            }
+            submitUploadThenForm();
+          })
+          .catch(function () {
+            wrap.classList.remove('qa-form--submitted');
+            form.querySelectorAll('input, select, textarea, button').forEach(function (el) {
+              el.disabled = false;
+            });
+          });
+        return;
       }
+
+      submitUploadThenForm();
     });
 
     wrap.appendChild(form);

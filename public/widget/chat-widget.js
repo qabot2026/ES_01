@@ -2859,6 +2859,46 @@
     }
   };
 
+  QualityAssistantWidget.prototype.uploadFormDocuments = function (files, values) {
+    if (!this.apiBase || !files || !files.length) {
+      return Promise.resolve({ ok: false, message: 'No files selected' });
+    }
+    var ctx = this.clientContext || {};
+    var vals = values || {};
+    var fd = new FormData();
+    fd.append('sessionId', this.sessionId);
+    var mobile = vals.mobile != null ? String(vals.mobile).trim() : String(ctx.mobile || '').trim();
+    var dial = vals.dial_code != null ? String(vals.dial_code).trim() : String(ctx.dial_code || '').trim();
+    if (mobile) fd.append('mobile', mobile);
+    if (dial) fd.append('dial_code', dial);
+    for (var i = 0; i < files.length; i += 1) {
+      fd.append('files', files[i], files[i].name);
+    }
+    return fetch(this.apiBase + '/api/upload/documents', {
+      method: 'POST',
+      body: fd,
+    })
+      .then(function (r) {
+        return r.json().then(function (data) {
+          return { status: r.status, data: data };
+        });
+      })
+      .then(function (res) {
+        if (res.status >= 200 && res.status < 300 && res.data && res.data.ok) {
+          return res.data;
+        }
+        return {
+          ok: false,
+          message:
+            (res.data && (res.data.message || res.data.error)) ||
+            'Upload failed',
+        };
+      })
+      .catch(function () {
+        return { ok: false, message: 'Upload failed' };
+      });
+  };
+
   QualityAssistantWidget.prototype.handleFormSubmit = function (payload) {
     var self = this;
     payload = payload || {};
