@@ -1,8 +1,9 @@
 {
-  "_help": "Booked slots for appointment calendars. Use 12-hour times (9:00 AM, 2:30 PM) in slotsByDate.",
-  "general": {
-    "fullyBookedDates": [],
-    "slotsByDate": {}
-  },
-  "doctors": {}
+  "_help": "forms.<form_id>.slotsByDate: { \"2026-06-02\": { \"09:00\": 2, \"09:30\": 1 } } = 09:00 par 2 bookings (capacity 2 par red). Purana array format bhi chalega.",
+  "forms": {
+    "appointment": {
+      "fullyBookedDates": [],
+      "slotsByDate": {}
+    }
+  }
 }

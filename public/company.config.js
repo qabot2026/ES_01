@@ -64,20 +64,13 @@ window.QA_CHAT_UI_CONFIG = {
       forms: {
         enabled: true,
         /**
-         * Appointment hours & slot length — edit on server:
-         *   data/appointment-schedule.json
-         * (Redeploy/restart not required if file is on persistent disk.)
-         *
-         * Top-level slotMinutes = default slot period (minutes).
-         * weekdays.monday … sunday — per-day pattern:
-         *   { periods: [{ start: "9:00 AM", end: "1:00 PM" }, { start: "2:00 PM", end: "6:00 PM" }], slotMinutes: 20 }
-         *   { closed: true }
-         * dates["2026-12-25"] — one-off override (same shape).
-         * scopes.doctor — separate rules for doctor booking form.
+         * Appointment form_id: "appointment" — edit on server:
+         *   data/appointment-schedule.json  (forms.appointment)
+         *   data/appointment-booked.json    (booked counts per slot)
+         * weekdays + periods (9:00 AM–5:00 PM), slotMinutes, slotCapacity per day.
          */
         appointment: {
           scheduleFile: 'data/appointment-schedule.json',
-          slotMinutes: 30,
         },
       },
     },

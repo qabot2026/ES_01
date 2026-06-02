@@ -167,10 +167,11 @@ app.get('/api/nearest-branches', (req, res) => {
 });
 
 app.get('/api/appointment-slots', (req, res) => {
-  const scope = String(req.query.scope || req.query.type || 'general').trim();
-  const doctorId = String(req.query.doctorId || req.query.doctor_id || '').trim();
+  const formId = String(
+    req.query.formId || req.query.form_id || req.query.scope || req.query.type || 'appointment'
+  ).trim();
   const date = String(req.query.date || '').trim();
-  res.json(formApi.appointmentSlots(scope, doctorId, date));
+  res.json(formApi.appointmentSlots(formId, '', date));
 });
 
 /** Read-only schedule template (edit data/appointment-schedule.json on server). */

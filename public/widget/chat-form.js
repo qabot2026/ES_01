@@ -65,7 +65,7 @@
       calPrev: 'Previous month',
       calNext: 'Next month',
       calPickTime: 'Pick a time',
-      calBookedLegend: 'Red = full. Grey = closed.',
+      calBookedLegend: 'Green = available. Red = full. Grey = closed.',
       calClosedDay: 'Not available on this day.',
       calLoading: 'Loading…',
       formSubmitThanks: 'Thank you for sharing.',
@@ -108,7 +108,7 @@
       calPrev: 'पिछला महीना',
       calNext: 'अगला महीना',
       calPickTime: 'समय चुनें',
-      calBookedLegend: 'लाल = भरा। धूसर = बंद।',
+      calBookedLegend: 'हरा = खाली। लाल = भरा। धूसर = बंद।',
       calClosedDay: 'इस दिन अपॉइंटमेंट उपलब्ध नहीं।',
       calLoading: 'लोड हो रहा है…',
       formSubmitThanks: 'साझा करने के लिए धन्यवाद।',
@@ -151,7 +151,7 @@
       calPrev: 'मागील महिना',
       calNext: 'पुढील महिना',
       calPickTime: 'वेळ निवडा',
-      calBookedLegend: 'लाल = भरले. राखाडी = बंद.',
+      calBookedLegend: 'हिरवा = उपलब्ध. लाल = भरले. राखाडी = बंद.',
       calClosedDay: 'या दिवशी अपॉइंटमेंट उपलब्ध नाही.',
       calLoading: 'लोड होत आहे…',
       formSubmitThanks: 'माहिती शेअर केल्याबद्दल धन्यवाद.',
@@ -1492,7 +1492,37 @@
     return wrap;
   }
 
-  function renderAppointmentCalendar(field, form, lang, widget, prefill, scope) {
+  function normalizeApptFormId(formId) {
+    var id = String(formId || 'appointment')
+      .trim()
+      .toLowerCase();
+    if (id === 'general' || id === 'appintmentformgeneral' || id === 'appintmentformdoctor') {
+      return 'appointment';
+    }
+    return id || 'appointment';
+  }
+
+  function isAppointmentCalendarField(field, def) {
+    var t = String((field && field.type) || '').toLowerCase();
+    return (
+      t === 'appointment' ||
+      t === 'appointmentgeneral' ||
+      t === 'appointmentdoctor' ||
+      String((def && def.formType) || '').toLowerCase() === 'appointment'
+    );
+  }
+
+  function apptSlotsQuery(formId, dateIso) {
+    return (
+      '/api/appointment-slots?formId=' +
+      encodeURIComponent(normalizeApptFormId(formId)) +
+      '&date=' +
+      encodeURIComponent(dateIso)
+    );
+  }
+
+  function renderAppointmentCalendar(field, form, lang, widget, prefill, formId) {
+    formId = normalizeApptFormId(formId);
     var wrap = document.createElement('div');
     wrap.className = 'qa-form__field qa-form__field--calendar';
 
@@ -1589,19 +1619,7 @@
           String(day).padStart(2, '0');
         promises.push(
           (function (dayIso) {
-            return fetchJson(
-              base +
-                '/api/appointment-slots?scope=' +
-                encodeURIComponent(scope) +
-                '&date=' +
-                encodeURIComponent(dayIso) +
-                (scope === 'doctor'
-                  ? '&doctorId=' +
-                    encodeURIComponent(
-                      (form.querySelector('[name="doctorId"]') || {}).value || ''
-                    )
-                  : '')
-            ).then(function (data) {
+            return fetchJson(base + apptSlotsQuery(formId, dayIso)).then(function (data) {
               return { iso: dayIso, data: data };
             });
           })(iso)
@@ -1614,10 +1632,14 @@
             closedDates.push(r.iso);
             return;
           }
-          var avail = r.data.availableTimes || [];
-          var all = r.data.allSlots || [];
-          if (all.length && avail.length === 0) {
+          if (r.data.allFull) {
             bookedDates.push(r.iso);
+          } else {
+            var avail = r.data.availableTimes || [];
+            var all = r.data.allSlots || [];
+            if (all.length && avail.length === 0) {
+              bookedDates.push(r.iso);
+            }
           }
           if (
             Array.isArray(r.data.fullyBookedDates) &&
@@ -1645,19 +1667,7 @@
       var base = apiBase(widget);
       if (!base) return;
       slotsWrap.classList.add('qa-form-cal__slots--loading');
-      fetchJson(
-        base +
-          '/api/appointment-slots?scope=' +
-          encodeURIComponent(scope) +
-          '&date=' +
-          encodeURIComponent(iso) +
-          (scope === 'doctor'
-            ? '&doctorId=' +
-              encodeURIComponent(
-                (form.querySelector('[name="doctorId"]') || {}).value || ''
-              )
-            : '')
-      ).then(function (data) {
+      fetchJson(base + apptSlotsQuery(formId, iso)).then(function (data) {
         slotsWrap.classList.remove('qa-form-cal__slots--loading');
         if (data && data.closed) {
           slotsWrap.innerHTML = '';
@@ -1670,33 +1680,33 @@
           selectedDate = '';
           return;
         }
-        var all = (data && data.allSlots) || [];
-        var booked = (data && data.bookedTimes) || [];
-        var all24 = (data && data.allSlots24) || all.map(function (s) { return to24hClient(s); });
-        all.forEach(function (slot, idx) {
-          var slot24 = all24[idx] || to24hClient(slot);
-          var slot12 = to12hClient(slot24);
+        var slotList = (data && data.slots) || [];
+        slotList.forEach(function (s) {
+          var slot24 = s.time24 || to24hClient(s.time);
+          var slot12 = s.time || to12hClient(slot24);
+          var isFull = s.status === 'full';
+          var cap = s.capacity || 1;
+          var bookedN = s.booked || 0;
           var b = document.createElement('button');
           b.type = 'button';
           b.className = 'qa-form-cal__slot';
-          b.textContent = slot12;
-          b.setAttribute('data-slot-24', slot24);
-          var isBooked =
-            booked.indexOf(slot) >= 0 ||
-            booked.indexOf(slot12) >= 0 ||
-            booked.indexOf(slot24) >= 0;
-          if (isBooked) {
+          if (isFull) {
+            b.classList.add('qa-form-cal__slot--full');
             b.disabled = true;
-            b.classList.add('qa-form-cal__slot--booked');
+          } else {
+            b.classList.add('qa-form-cal__slot--available');
           }
+          b.textContent =
+            cap > 1 ? slot12 + ' (' + bookedN + '/' + cap + ')' : slot12;
+          b.setAttribute('data-slot-24', slot24);
           if (to24hClient(timeHidden.value) === slot24 && dateHidden.value === iso) {
             b.classList.add('qa-form-cal__slot--active');
           }
           b.addEventListener(
             'click',
-            (function (d, t24, bookedFlag, btn) {
+            (function (d, t24, full, btn) {
               return function () {
-                if (bookedFlag) return;
+                if (full) return;
                 dateHidden.value = d;
                 timeHidden.value = t24;
                 selectedDate = d;
@@ -1706,7 +1716,7 @@
                 btn.classList.add('qa-form-cal__slot--active');
                 err.hidden = true;
               };
-            })(iso, slot24, isBooked, b)
+            })(iso, slot24, isFull, b)
           );
           slotsWrap.appendChild(b);
         });
@@ -1869,7 +1879,7 @@
         return;
       }
 
-      if (type === 'appointmentdoctor' || type === 'appointmentgeneral') {
+      if (isAppointmentCalendarField(field, def)) {
         values.appointmentdate =
           (form.querySelector('[name="appointmentdate"]') || {}).value || '';
         var apptTimeRaw =
@@ -1924,12 +1934,7 @@
   function formHasHeavyFields(def) {
     return (def.fields || []).some(function (f) {
       var t = String((f && f.type) || '').toLowerCase();
-      return (
-        t.indexOf('appointment') >= 0 ||
-        t === 'geolocation' ||
-        t === 'appointmentgeneral' ||
-        t === 'appointmentdoctor'
-      );
+      return isAppointmentCalendarField(f, def) || t === 'geolocation';
     });
   }
 
@@ -1941,6 +1946,13 @@
     }
     if (formId === 'upload' || formId === 'uploaddocument') {
       return Math.max(n, 320);
+    }
+    if (
+      formId === 'appointment' ||
+      formId === 'appintmentformgeneral' ||
+      formId === 'appintmentformdoctor'
+    ) {
+      return Math.max(n, 480);
     }
     if (!formHasHeavyFields(def)) {
       return Math.max(n, 300);
@@ -2061,16 +2073,9 @@
         continue;
       }
 
-      if (type === 'appointmentgeneral') {
+      if (isAppointmentCalendarField(field, def)) {
         scroll.appendChild(
-          renderAppointmentCalendar(field, form, lang, widget, prefill, 'general')
-        );
-        continue;
-      }
-
-      if (type === 'appointmentdoctor') {
-        scroll.appendChild(
-          renderAppointmentCalendar(field, form, lang, widget, prefill, 'doctor')
+          renderAppointmentCalendar(field, form, lang, widget, prefill, formId)
         );
         continue;
       }

@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var QA_ASSET_VERSION = '20260529-appointment-12h';
+  var QA_ASSET_VERSION = '20260530-appointment-single-form';
 
   var QA_FORM_SCRIPTS = [
     'contact.js',
@@ -9,8 +9,6 @@
     'otp.js',
     'upload.js',
     'appointment.js',
-    'appointment-doctor.js',
-    'appointment-general.js',
     'birthform.js',
     'nearest-branch.js',
   ];

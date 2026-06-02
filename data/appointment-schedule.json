@@ -1,52 +1,47 @@
 {
-  "_help": "12-hour only (9:00 AM). FORMS: (1) form_id appintmentformgeneral → top default + weekdays + dates. (2) form_id appintmentformdoctor → scopes.doctor (+ weekdays/dates here override for that form). (3) form_id appointment → NOT this file (plain date/time fields). slotMinutes = minutes between slots.",
-  "slotMinutes": 30,
-  "default": {
-    "periods": [{ "start": "9:00 AM", "end": "6:00 PM" }]
-  },
-  "weekdays": {
-    "monday": {
-      "periods": [
-        { "start": "9:00 AM", "end": "1:00 PM" },
-        { "start": "2:00 PM", "end": "6:00 PM" }
-      ],
-      "slotMinutes": 30
-    },
-    "tuesday": {
-      "periods": [{ "start": "10:00 AM", "end": "5:00 PM" }],
-      "slotMinutes": 30
-    },
-    "wednesday": {
-      "periods": [{ "start": "9:00 AM", "end": "6:00 PM" }]
-    },
-    "thursday": {
-      "periods": [{ "start": "9:00 AM", "end": "6:00 PM" }]
-    },
-    "friday": {
-      "periods": [{ "start": "9:00 AM", "end": "4:00 PM" }],
-      "slotMinutes": 20
-    },
-    "saturday": {
-      "periods": [{ "start": "10:00 AM", "end": "2:00 PM" }],
-      "slotMinutes": 15
-    },
-    "sunday": { "closed": true }
-  },
-  "dates": {
-    "2026-12-25": { "closed": true }
-  },
-  "scopes": {
-    "doctor": {
-      "slotMinutes": 20,
+  "_help": "Har form ka alag block forms.<form_id>. 12-hour (9:00 AM). weekdays: din + periods + slotMinutes + slotCapacity (ek slot par kitni booking). dates: ek din override. Dialogflow form_id: appointment",
+  "forms": {
+    "appointment": {
+      "slotMinutes": 30,
+      "slotCapacity": 1,
       "default": {
-        "periods": [{ "start": "9:00 AM", "end": "5:00 PM" }]
+        "periods": [{ "start": "9:00 AM", "end": "6:00 PM" }]
       },
       "weekdays": {
-        "sunday": { "closed": true },
+        "monday": {
+          "periods": [
+            { "start": "9:00 AM", "end": "1:00 PM" },
+            { "start": "2:00 PM", "end": "6:00 PM" }
+          ],
+          "slotMinutes": 30,
+          "slotCapacity": 2
+        },
+        "tuesday": {
+          "periods": [{ "start": "10:00 AM", "end": "5:00 PM" }],
+          "slotMinutes": 30,
+          "slotCapacity": 1
+        },
+        "wednesday": {
+          "periods": [{ "start": "9:00 AM", "end": "6:00 PM" }],
+          "slotCapacity": 1
+        },
+        "thursday": {
+          "periods": [{ "start": "9:00 AM", "end": "6:00 PM" }]
+        },
+        "friday": {
+          "periods": [{ "start": "9:00 AM", "end": "4:00 PM" }],
+          "slotMinutes": 20,
+          "slotCapacity": 1
+        },
         "saturday": {
-          "periods": [{ "start": "9:00 AM", "end": "12:00 PM" }],
-          "slotMinutes": 15
-        }
+          "periods": [{ "start": "10:00 AM", "end": "2:00 PM" }],
+          "slotMinutes": 15,
+          "slotCapacity": 1
+        },
+        "sunday": { "closed": true }
+      },
+      "dates": {
+        "2026-12-25": { "closed": true }
       }
     }
   }
