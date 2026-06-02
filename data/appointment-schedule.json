@@ -1,9 +1,10 @@
 {
-  "_help": "forms.appointment: allowToday true=aaj select ho sakti hai; false=aaj band. hidePastTimesToday true=aaj ke guzre hue slots hide. 12-hour times. slotCapacity=ek slot par kitni booking.",
+  "_help": "forms.appointment: maxBookingDays=kitne din book (7=7 din). allowToday, hidePastTimesToday, slotMinutes, slotCapacity, weekdays periods (12h).",
   "forms": {
     "appointment": {
       "allowToday": true,
       "hidePastTimesToday": true,
+      "maxBookingDays": 7,
       "slotMinutes": 30,
       "slotCapacity": 1,
       "default": {

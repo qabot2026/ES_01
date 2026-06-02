@@ -69,6 +69,7 @@
       calClosedDay: 'Not available on this day.',
       calTodayHidden: 'Today is not available for booking. Pick a future date.',
       calNoMoreSlotsToday: 'No more times left today. Try another date.',
+      calOutsideWindow: 'You can only book within the allowed number of days.',
       calLoading: 'Loading…',
       formSubmitThanks: 'Thank you for sharing.',
       closeForm: 'Close form',
@@ -114,6 +115,7 @@
       calClosedDay: 'इस दिन अपॉइंटमेंट उपलब्ध नहीं।',
       calTodayHidden: 'आज की तारीख उपलब्ध नहीं। आगे की तारीख चुनें।',
       calNoMoreSlotsToday: 'आज के लिए और समय उपलब्ध नहीं। दूसरी तारीख चुनें।',
+      calOutsideWindow: 'केवल निर्धारित दिनों के भीतर ही बुक कर सकते हैं।',
       calLoading: 'लोड हो रहा है…',
       formSubmitThanks: 'साझा करने के लिए धन्यवाद।',
       closeForm: 'फ़ॉर्म बंद करें',
@@ -159,6 +161,7 @@
       calClosedDay: 'या दिवशी अपॉइंटमेंट उपलब्ध नाही.',
       calTodayHidden: 'आजची तारीख उपलब्ध नाही. पुढची तारीख निवडा.',
       calNoMoreSlotsToday: 'आजसाठी आणखी वेळ उपलब्ध नाही. दुसरी तारीख निवडा.',
+      calOutsideWindow: 'फक्त ठरवलेल्या दिवसांमध्येच बुकिंग करता येईल.',
       calLoading: 'लोड होत आहे…',
       formSubmitThanks: 'माहिती शेअर केल्याबद्दल धन्यवाद.',
       closeForm: 'फॉर्म बंद करा',
@@ -1613,7 +1616,39 @@
     var bookedDates = [];
     var closedDates = [];
     var calAllowToday = true;
+    var calBookingMin = '';
+    var calBookingMax = '';
+    var calMaxBookingDays = 30;
     var selectedDate = dateHidden.value || '';
+
+    function addDaysIsoClient(iso, days) {
+      var p = String(iso || '').split('-').map(Number);
+      var d = new Date(p[0], p[1] - 1, p[2], 12, 0, 0);
+      d.setDate(d.getDate() + days);
+      return localDateIso(d);
+    }
+
+    function applyBookingWindowFromApi(data) {
+      if (!data) return;
+      if (data.allowToday === false) calAllowToday = false;
+      if (data.bookingWindow) {
+        calBookingMin = data.bookingWindow.min || '';
+        calBookingMax = data.bookingWindow.max || '';
+        calMaxBookingDays = data.bookingWindow.maxBookingDays || calMaxBookingDays;
+      } else if (data.maxBookingDays) {
+        calMaxBookingDays = data.maxBookingDays;
+        var today = todayLocalIso();
+        calBookingMin = calAllowToday ? today : addDaysIsoClient(today, 1);
+        calBookingMax = addDaysIsoClient(calBookingMin, calMaxBookingDays - 1);
+      }
+    }
+
+    function defaultBookingWindow() {
+      var today = todayLocalIso();
+      calBookingMin = calAllowToday ? today : addDaysIsoClient(today, 1);
+      calBookingMax = addDaysIsoClient(calBookingMin, calMaxBookingDays - 1);
+    }
+    defaultBookingWindow();
 
     function monthKey(d) {
       return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
@@ -1631,7 +1666,7 @@
       return fetchJson(base + apptMonthQuery(formId, y, m))
         .then(function (data) {
           if (!data) return;
-          if (data.allowToday === false) calAllowToday = false;
+          applyBookingWindowFromApi(data);
           closedDates = Array.isArray(data.closedDates) ? data.closedDates.slice() : [];
           bookedDates = Array.isArray(data.bookedDates) ? data.bookedDates.slice() : [];
         })
@@ -1694,6 +1729,7 @@
             b.disabled = true;
           } else {
             b.classList.add('qa-form-cal__slot--available');
+            b.setAttribute('data-slot-status', 'available');
           }
           b.textContent =
             cap > 1 ? slot12 + ' (' + bookedN + '/' + cap + ')' : slot12;
@@ -1757,8 +1793,10 @@
         cell.textContent = String(day);
         var isPast = iso < today;
         var isTodayBlocked = iso === today && !calAllowToday;
+        var isOutside =
+          (calBookingMin && iso < calBookingMin) || (calBookingMax && iso > calBookingMax);
         var isClosed = closedDates.indexOf(iso) >= 0;
-        if (isPast || isTodayBlocked) {
+        if (isPast || isTodayBlocked || isOutside) {
           cell.disabled = true;
           cell.classList.add('qa-form-cal__day--past');
         } else if (isClosed) {
@@ -1770,17 +1808,21 @@
         if (iso === selectedDate) {
           cell.classList.add('qa-form-cal__day--active');
         }
-        cell.addEventListener('click', function (d, closed, todayBlocked) {
-          return function () {
-            if (d < today || closed || todayBlocked) return;
-            selectedDate = d;
-            grid.querySelectorAll('.qa-form-cal__day').forEach(function (el) {
-              el.classList.remove('qa-form-cal__day--active');
-            });
-            cell.classList.add('qa-form-cal__day--active');
-            renderSlots(d);
-          };
-        }(iso, isClosed, isTodayBlocked));
+        cell.addEventListener(
+          'click',
+          (function (d, closed, todayBlocked, outside, dayBtn) {
+            return function () {
+              if (d < today || closed || todayBlocked || outside) return;
+              selectedDate = d;
+              dateHidden.value = d;
+              grid.querySelectorAll('.qa-form-cal__day').forEach(function (el) {
+                el.classList.remove('qa-form-cal__day--active');
+              });
+              dayBtn.classList.add('qa-form-cal__day--active');
+              renderSlots(d);
+            };
+          })(iso, isClosed, isTodayBlocked, isOutside, cell)
+        );
         grid.appendChild(cell);
       }
     }
@@ -1841,6 +1883,16 @@
       }
       if (dateHidden.value === todayLocalIso() && !calAllowToday) {
         err.textContent = t(lang, 'calTodayHidden');
+        err.hidden = false;
+        wrap.classList.add('qa-form__field--invalid');
+        return false;
+      }
+      if (
+        dateHidden.value &&
+        ((calBookingMin && dateHidden.value < calBookingMin) ||
+          (calBookingMax && dateHidden.value > calBookingMax))
+      ) {
+        err.textContent = t(lang, 'calOutsideWindow');
         err.hidden = false;
         wrap.classList.add('qa-form__field--invalid');
         return false;
