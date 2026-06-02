@@ -1,7 +1,9 @@
 {
-  "_help": "Har form ka alag block forms.<form_id>. 12-hour (9:00 AM). weekdays: din + periods + slotMinutes + slotCapacity (ek slot par kitni booking). dates: ek din override. Dialogflow form_id: appointment",
+  "_help": "forms.appointment: allowToday true=aaj select ho sakti hai; false=aaj band. hidePastTimesToday true=aaj ke guzre hue slots hide. 12-hour times. slotCapacity=ek slot par kitni booking.",
   "forms": {
     "appointment": {
+      "allowToday": true,
+      "hidePastTimesToday": true,
       "slotMinutes": 30,
       "slotCapacity": 1,
       "default": {

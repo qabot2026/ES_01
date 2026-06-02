@@ -67,6 +67,8 @@
       calPickTime: 'Pick a time',
       calBookedLegend: 'Green = available. Red = full. Grey = closed.',
       calClosedDay: 'Not available on this day.',
+      calTodayHidden: 'Today is not available for booking. Pick a future date.',
+      calNoMoreSlotsToday: 'No more times left today. Try another date.',
       calLoading: 'Loading…',
       formSubmitThanks: 'Thank you for sharing.',
       closeForm: 'Close form',
@@ -110,6 +112,8 @@
       calPickTime: 'समय चुनें',
       calBookedLegend: 'हरा = खाली। लाल = भरा। धूसर = बंद।',
       calClosedDay: 'इस दिन अपॉइंटमेंट उपलब्ध नहीं।',
+      calTodayHidden: 'आज की तारीख उपलब्ध नहीं। आगे की तारीख चुनें।',
+      calNoMoreSlotsToday: 'आज के लिए और समय उपलब्ध नहीं। दूसरी तारीख चुनें।',
       calLoading: 'लोड हो रहा है…',
       formSubmitThanks: 'साझा करने के लिए धन्यवाद।',
       closeForm: 'फ़ॉर्म बंद करें',
@@ -153,6 +157,8 @@
       calPickTime: 'वेळ निवडा',
       calBookedLegend: 'हिरवा = उपलब्ध. लाल = भरले. राखाडी = बंद.',
       calClosedDay: 'या दिवशी अपॉइंटमेंट उपलब्ध नाही.',
+      calTodayHidden: 'आजची तारीख उपलब्ध नाही. पुढची तारीख निवडा.',
+      calNoMoreSlotsToday: 'आजसाठी आणखी वेळ उपलब्ध नाही. दुसरी तारीख निवडा.',
       calLoading: 'लोड होत आहे…',
       formSubmitThanks: 'माहिती शेअर केल्याबद्दल धन्यवाद.',
       closeForm: 'फॉर्म बंद करा',
@@ -1595,6 +1601,7 @@
     view.setDate(1);
     var bookedDates = [];
     var closedDates = [];
+    var calAllowToday = true;
     var selectedDate = dateHidden.value || '';
 
     function monthKey(d) {
@@ -1628,7 +1635,8 @@
       return Promise.all(promises).then(function (results) {
         results.forEach(function (r) {
           if (!r || !r.data) return;
-          if (r.data.closed) {
+          if (r.data.allowToday === false) calAllowToday = false;
+          if (r.data.closed || r.data.todayHidden) {
             closedDates.push(r.iso);
             return;
           }
@@ -1681,6 +1689,16 @@
           return;
         }
         var slotList = (data && data.slots) || [];
+        if (!slotList.length) {
+          var emptyMsg = document.createElement('p');
+          emptyMsg.className = 'qa-form-cal__closed-msg';
+          emptyMsg.textContent =
+            iso === todayLocalIso()
+              ? t(lang, 'calNoMoreSlotsToday')
+              : t(lang, 'calClosedDay');
+          slotsWrap.appendChild(emptyMsg);
+          return;
+        }
         slotList.forEach(function (s) {
           var slot24 = s.time24 || to24hClient(s.time);
           var slot12 = s.time || to12hClient(slot24);
@@ -1757,8 +1775,9 @@
         cell.className = 'qa-form-cal__day';
         cell.textContent = String(day);
         var isPast = iso < today;
+        var isTodayBlocked = iso === today && !calAllowToday;
         var isClosed = closedDates.indexOf(iso) >= 0;
-        if (isPast) {
+        if (isPast || isTodayBlocked) {
           cell.disabled = true;
           cell.classList.add('qa-form-cal__day--past');
         } else if (isClosed) {
@@ -1770,9 +1789,9 @@
         if (iso === selectedDate) {
           cell.classList.add('qa-form-cal__day--active');
         }
-        cell.addEventListener('click', function (d, closed) {
+        cell.addEventListener('click', function (d, closed, todayBlocked) {
           return function () {
-            if (d < today || closed) return;
+            if (d < today || closed || todayBlocked) return;
             selectedDate = d;
             grid.querySelectorAll('.qa-form-cal__day').forEach(function (el) {
               el.classList.remove('qa-form-cal__day--active');
@@ -1780,7 +1799,7 @@
             cell.classList.add('qa-form-cal__day--active');
             renderSlots(d);
           };
-        }(iso, isClosed));
+        }(iso, isClosed, isTodayBlocked));
         grid.appendChild(cell);
       }
     }
@@ -1836,6 +1855,12 @@
       }
       if (closedDates.indexOf(dateHidden.value) >= 0) {
         err.textContent = t(lang, 'calClosedDay');
+        err.hidden = false;
+        wrap.classList.add('qa-form__field--invalid');
+        return false;
+      }
+      if (dateHidden.value === todayLocalIso() && !calAllowToday) {
+        err.textContent = t(lang, 'calTodayHidden');
         err.hidden = false;
         wrap.classList.add('qa-form__field--invalid');
         return false;
