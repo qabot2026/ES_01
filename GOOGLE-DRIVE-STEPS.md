@@ -14,17 +14,52 @@ When a visitor submits the **Upload document** form, files go to a subfolder und
 - Date = `DD_MM_YYYY` in `Asia/Kolkata` (or `CONTACT_FORM_SUBMISSION_TZ`)
 - Sequence = `01`, `02`, … per mobile per calendar day
 
-## Railway variables
+## Option A — OAuth (My Drive / personal Gmail)
+
+### 1. Client ID + Secret (Google Cloud Console)
+
+1. [Google Cloud Console](https://console.cloud.google.com/) → your project  
+2. **APIs & Services → Library** → enable **Google Drive API**  
+3. **OAuth consent screen** → External → add your Gmail as **Test user**  
+4. **Credentials → Create credentials → OAuth client ID**  
+   - Type: **Web application**  
+   - Redirect URI (exact): `http://127.0.0.1:8765/oauth2callback`  
+5. Copy **Client ID** → Railway `GOOGLE_DRIVE_OAUTH_CLIENT_ID`  
+6. Copy **Client secret** → Railway `GOOGLE_DRIVE_OAUTH_CLIENT_SECRET`
+
+### 2. Refresh token (one time on your PC)
+
+```powershell
+cd ES_01
+$env:GOOGLE_DRIVE_OAUTH_CLIENT_ID="....apps.googleusercontent.com"
+$env:GOOGLE_DRIVE_OAUTH_CLIENT_SECRET="GOCSPX-..."
+node scripts/get-google-drive-refresh-token.js
+```
+
+Sign in with the Gmail that owns the upload folder → terminal prints  
+`GOOGLE_DRIVE_OAUTH_REFRESH_TOKEN=...` → paste into Railway.
+
+If no refresh token: revoke app at https://myaccount.google.com/permissions and run again.
+
+### 3. Parent folder
+
+Create folder in Drive → URL has id → `GOOGLE_DRIVE_FOLDER_ID` on Railway.
+
+---
+
+## Option B — Service account (Workspace Shared drive)
+
+Use existing `GOOGLE_CREDENTIALS_JSON`. Folder must be on a **Shared drive**, shared with service account **Editor**.
+
+---
+
+## Railway variables (summary)
 
 | Variable | Purpose |
 |----------|---------|
 | `GOOGLE_DRIVE_FOLDER_ID` | Parent folder id from Drive URL |
-| `GOOGLE_CREDENTIALS_JSON` | Service account (Workspace **Shared drive** folder) |
-| **Or** OAuth trio | `GOOGLE_DRIVE_OAUTH_CLIENT_ID`, `GOOGLE_DRIVE_OAUTH_CLIENT_SECRET`, `GOOGLE_DRIVE_OAUTH_REFRESH_TOKEN` (My Drive / personal Gmail) |
-
-Enable **Google Drive API** in the same GCP project.
-
-Share the parent folder with the service account email (**Editor**) if using service account.
+| OAuth trio | `GOOGLE_DRIVE_OAUTH_CLIENT_ID`, `GOOGLE_DRIVE_OAUTH_CLIENT_SECRET`, `GOOGLE_DRIVE_OAUTH_REFRESH_TOKEN` |
+| Or service account | `GOOGLE_CREDENTIALS_JSON` (Shared drive only) |
 
 ## Check
 
