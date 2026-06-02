@@ -439,6 +439,35 @@
     return localDateIso(new Date());
   }
 
+  function todayIsoInTimeZone(tz) {
+    try {
+      return new Date().toLocaleDateString('en-CA', { timeZone: tz });
+    } catch (e) {
+      return todayLocalIso();
+    }
+  }
+
+  function nowMinutesInTimeZone(tz) {
+    try {
+      var parts = new Intl.DateTimeFormat('en-GB', {
+        timeZone: tz,
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+      }).formatToParts(new Date());
+      var h = 0;
+      var min = 0;
+      parts.forEach(function (p) {
+        if (p.type === 'hour') h = parseInt(p.value, 10);
+        if (p.type === 'minute') min = parseInt(p.value, 10);
+      });
+      return h * 60 + min;
+    } catch (e) {
+      var d = new Date();
+      return d.getHours() * 60 + d.getMinutes();
+    }
+  }
+
   function isPastAppointmentDate(iso) {
     return String(iso || '').trim() < todayLocalIso();
   }
@@ -1654,7 +1683,32 @@
     var calBookingMin = '';
     var calBookingMax = '';
     var calMaxBookingDays = 30;
+    var calBusinessTz = '';
     var selectedDate = dateHidden.value || '';
+
+    function calendarTodayIso() {
+      return calBusinessTz ? todayIsoInTimeZone(calBusinessTz) : todayLocalIso();
+    }
+
+    function applyTimezoneFromApi(data) {
+      if (data && data.timezone) calBusinessTz = String(data.timezone).trim();
+    }
+
+    function filterPastSlotsClient(slotList, iso, hidePast) {
+      if (!hidePast || iso !== calendarTodayIso()) return slotList;
+      var nowM = calBusinessTz
+        ? nowMinutesInTimeZone(calBusinessTz)
+        : (function () {
+            var d = new Date();
+            return d.getHours() * 60 + d.getMinutes();
+          })();
+      return slotList.filter(function (s) {
+        var slot24 = s.time24 || to24hClient(s.time);
+        var p = parseTime24Client(slot24);
+        if (!p) return true;
+        return p.h * 60 + p.min > nowM;
+      });
+    }
 
     function addDaysIsoClient(iso, days) {
       var p = String(iso || '').split('-').map(Number);
@@ -1665,6 +1719,7 @@
 
     function applyBookingWindowFromApi(data) {
       if (!data) return;
+      applyTimezoneFromApi(data);
       if (data.allowToday === false) calAllowToday = false;
       if (data.bookingWindow) {
         calBookingMin = data.bookingWindow.min || '';
@@ -1672,14 +1727,14 @@
         calMaxBookingDays = data.bookingWindow.maxBookingDays || calMaxBookingDays;
       } else if (data.maxBookingDays) {
         calMaxBookingDays = data.maxBookingDays;
-        var today = todayLocalIso();
+        var today = calendarTodayIso();
         calBookingMin = calAllowToday ? today : addDaysIsoClient(today, 1);
         calBookingMax = addDaysIsoClient(calBookingMin, calMaxBookingDays - 1);
       }
     }
 
     function defaultBookingWindow() {
-      var today = todayLocalIso();
+      var today = calendarTodayIso();
       calBookingMin = calAllowToday ? today : addDaysIsoClient(today, 1);
       calBookingMax = addDaysIsoClient(calBookingMin, calMaxBookingDays - 1);
     }
@@ -1711,7 +1766,7 @@
     }
 
     function renderSlots(iso) {
-      if (isPastAppointmentDate(iso)) {
+      if (String(iso || '').trim() < calendarTodayIso()) {
         slotsWrap.innerHTML = '';
         slotsTitle.hidden = true;
         slotsWrap.hidden = true;
@@ -1728,6 +1783,7 @@
       slotsWrap.classList.add('qa-form-cal__slots--loading');
       fetchJson(base + apptSlotsQuery(formId, iso)).then(function (data) {
         slotsWrap.classList.remove('qa-form-cal__slots--loading');
+        applyTimezoneFromApi(data);
         if (data && data.closed) {
           slotsWrap.innerHTML = '';
           var closedMsg = document.createElement('p');
@@ -1740,11 +1796,14 @@
           return;
         }
         var slotList = (data && data.slots) || [];
+        if (data && data.hidePastTimesToday) {
+          slotList = filterPastSlotsClient(slotList, iso, true);
+        }
         if (!slotList.length) {
           var emptyMsg = document.createElement('p');
           emptyMsg.className = 'qa-form-cal__closed-msg';
           emptyMsg.textContent =
-            iso === todayLocalIso()
+            iso === calendarTodayIso()
               ? t(lang, 'calNoMoreSlotsToday')
               : t(lang, 'calClosedDay');
           slotsWrap.appendChild(emptyMsg);
@@ -1809,7 +1868,7 @@
       });
       var first = new Date(y, m, 1).getDay();
       var days = new Date(y, m + 1, 0).getDate();
-      var today = todayLocalIso();
+      var today = calendarTodayIso();
       for (var i = 0; i < first; i += 1) {
         var pad = document.createElement('span');
         pad.className = 'qa-form-cal__pad';
@@ -1916,7 +1975,7 @@
         wrap.classList.add('qa-form__field--invalid');
         return false;
       }
-      if (dateHidden.value === todayLocalIso() && !calAllowToday) {
+      if (dateHidden.value === calendarTodayIso() && !calAllowToday) {
         err.textContent = t(lang, 'calTodayHidden');
         err.hidden = false;
         wrap.classList.add('qa-form__field--invalid');
