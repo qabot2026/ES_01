@@ -105,6 +105,11 @@ app.post('/api/chat', async (req, res) => {
 
     const userText = eventName ? '' : message && message.trim();
     chatTranscript.logDialogflowExchange(sid, userText, result);
+    if (sheets.isConfigured()) {
+      conversationSheet.syncSessionToSheet(sid).catch((e) => {
+        console.warn('[sheets] post-chat sync:', e.message);
+      });
+    }
 
     res.json({ sessionId: sid, ...result });
   } catch (err) {
@@ -285,6 +290,18 @@ app.get('/api/live-agent/desk-config', (_req, res) => {
   });
 });
 
+app.get('/api/sheets/status', async (_req, res) => {
+  const status = sheets.getStatus();
+  if (sheets.isConfigured() && status.lastProbeAt == null) {
+    try {
+      status.probe = await sheets.probe();
+    } catch (e) {
+      status.probe = { ok: false, error: e.message };
+    }
+  }
+  res.json(status);
+});
+
 app.post('/api/session-context', (req, res) => {
   const { sessionId } = req.body || {};
   const sid = String(sessionId || '').trim();
@@ -346,8 +363,10 @@ app.get('/api/config', (_req, res) => {
     phraseTranslationsFile: phraseTranslations.isEnabled(),
     phraseTranslationsPath: phraseTranslations.DATA_PATH,
     sheetsConfigured: sheets.isConfigured(),
+    sheetsClientReady: sheets.isClientReady(),
     sheetsSpreadsheetIdSet: !!sheets.SPREADSHEET_ID,
     sheetsRange: sheets.RANGE,
+    sheetsServiceAccountEmail: require('./lib/google-credentials').getClientEmail(),
     publicBaseUrl: PUBLIC_BASE_URL,
     embedScript: `${PUBLIC_BASE_URL}/embed.js`,
     deskUrl: `${PUBLIC_BASE_URL}/live-agent/`,
@@ -374,8 +393,29 @@ app.listen(PORT, () => {
       '[sheets] enabled — spreadsheet',
       sheets.SPREADSHEET_ID.slice(0, 8) + '…',
       'range',
-      sheets.RANGE
+      sheets.RANGE,
+      'account',
+      require('./lib/google-credentials').getClientEmail() || '(parse failed)'
     );
+    sheets
+      .probe()
+      .then((p) => {
+        if (p.ok) {
+          console.log('[sheets] probe OK — tab', p.configuredTab, 'exists:', p.tabExists);
+          if (p.tabExists === false) {
+            console.warn(
+              '[sheets] Tab "' +
+                p.configuredTab +
+                '" not in sheet. Tabs:',
+              (p.tabNames || []).join(', '),
+              '— fix SHEETS_RANGE'
+            );
+          }
+        } else {
+          console.error('[sheets] probe failed:', JSON.stringify(p));
+        }
+      })
+      .catch((err) => console.error('[sheets] probe error:', err.message));
   } else if (String(process.env.SHEETS_SPREADSHEET_ID || '').trim()) {
     console.warn(
       '[sheets] SHEETS_SPREADSHEET_ID is set but logging is off — need GOOGLE_CREDENTIALS_JSON'

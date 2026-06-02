@@ -58,7 +58,8 @@ Agar row nahi aati:
 
 - Railway mein **`SHEETS_SPREADSHEET_ID`** set hai? (`/api/config` → `sheetsConfigured: true`, `sheetsSpreadsheetIdSet: true`)
 - Service account ko Sheet par **Editor**
-- Deploy logs: `[sheets] enabled` ya `[sheets] append:` error
+- Browser: `https://aapka-app.up.railway.app/api/sheets/status` — `probe.ok`, `tabExists`, `lastError`
+- Deploy logs: `[sheets] probe OK` ya `probe failed` / `Tab "Sheet1" not in sheet`
 - Chat **server** par log hoti hai (`/api/chat`) — sirf browser UI se likhne se pehle row nahi banti thi; ab har message ke baad sync hota hai
 
 ---
