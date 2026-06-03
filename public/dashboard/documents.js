@@ -78,11 +78,6 @@
     return raw.replace(/^\+/, '').trim() || '—';
   }
 
-  function fileExt(name) {
-    var m = String(name || '').match(/\.([^.]+)$/i);
-    return m ? m[1].toUpperCase() : '';
-  }
-
   function transcriptSessionId(r) {
     var sid = String((r && r.session_id) || '').trim();
     if (sid) return sid;
@@ -228,16 +223,11 @@
       .map(function (r) {
         var displayName = r.name || '—';
         var chatSid = transcriptSessionId(r);
-        var ext = fileExt(r.file_name);
         return (
           '<tr>' +
           '<td><span class="docs-file-name">' +
           escapeHtml(r.file_name) +
-          '</span>' +
-          (ext
-            ? '<span class="docs-file-type">' + escapeHtml(ext) + '</span>'
-            : '') +
-          '</td>' +
+          '</span></td>' +
           '<td>' +
           escapeHtml(r.tag || '—') +
           '</td>' +
