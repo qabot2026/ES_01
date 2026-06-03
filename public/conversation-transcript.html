@@ -922,6 +922,26 @@
         return s;
       }
 
+      function formatDocumentSummaryDisplay(val) {
+        var s = String(val || "").trim();
+        if (!s) return "";
+        if (/^https?:\/\//i.test(s)) {
+          try {
+            var u = new URL(s);
+            var seg = decodeURIComponent(u.pathname.split("/").filter(Boolean).pop() || "");
+            var parts = seg.split("_");
+            if (parts.length >= 3 && /^\d{13,}$/.test(parts[0])) {
+              return parts.slice(2).join("_") || seg;
+            }
+            return seg;
+          } catch (ignore) {
+            return s;
+          }
+        }
+        if (/^\d{10,}_\d{2}_\d{2}_\d{4}_/.test(s)) return "";
+        return s;
+      }
+
       function normalizeDetailValue(v) {
         var s =
           typeof v === "number" || typeof v === "boolean"
@@ -1140,6 +1160,9 @@
             }
             var cellVal = normalizeDetailValue(cols[colKey]);
             if (!cellVal) continue;
+            if (colKey === "Document") {
+              cellVal = formatDocumentSummaryDisplay(cellVal);
+            }
             pairs.push([colKey, cellVal]);
           }
         }

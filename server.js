@@ -349,7 +349,12 @@ app.post(
         email: req.body.email,
       });
       const meta = {
-        document: pack.storage_folder,
+        document: pack.document_names || '',
+        document_names: pack.document_names || '',
+        uploaded_files: (pack.uploads || []).map((u) => ({
+          original_name: u.original_name,
+          gcs_object: u.gcs_object,
+        })),
         storage_folder: pack.storage_folder,
         storage_path: pack.storage_path,
         document_link: pack.document_link,
@@ -370,6 +375,7 @@ app.post(
         ok: true,
         sessionId,
         storage_folder: pack.storage_folder,
+        document_names: pack.document_names,
         document_link: pack.document_link,
         uploads: pack.uploads,
       });

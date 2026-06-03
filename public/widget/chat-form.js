@@ -414,6 +414,24 @@
   function formatSummaryFieldValue(name, val, field, def) {
     val = String(val || '').trim();
     if (!val) return val;
+    if (
+      name === 'document' ||
+      (field && field.type === 'file') ||
+      (def && def.formType === 'upload')
+    ) {
+      if (/^https?:\/\//i.test(val)) {
+        var m = val.match(/\/([^/?]+)(?:\?|$)/);
+        if (m && m[1]) {
+          var base = decodeURIComponent(m[1]);
+          var parts = base.split('_');
+          if (parts.length >= 3 && /^\d{13,}$/.test(parts[0])) {
+            return parts.slice(2).join('_') || base;
+          }
+          return base;
+        }
+      }
+      if (/^\d{10,}_\d{2}_\d{2}_\d{4}_/.test(val)) return val;
+    }
     if (def && def.formType === 'appointment' && name === 'appointmentdate') {
       return formatAppointmentDateDisplay(val);
     }
@@ -2348,8 +2366,15 @@
                 (up && up.message) || 'Could not upload file. Try again.';
               return;
             }
-            if (up.storage_folder) {
-              result.values.document = up.storage_folder;
+            if (up.document_names) {
+              result.values.document = up.document_names;
+            } else if (up.uploads && up.uploads.length) {
+              result.values.document = up.uploads
+                .map(function (u) {
+                  return u.original_name;
+                })
+                .filter(Boolean)
+                .join(', ');
             }
             submitUploadThenForm();
           })
