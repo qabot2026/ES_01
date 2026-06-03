@@ -838,8 +838,20 @@
           .trim();
       }
 
+      function isAssistantRole(role) {
+        var r = String(role || "").toLowerCase();
+        return r === "assistant" || r === "bot" || r === "model" || r === "ai";
+      }
+
+      function displayRoleForTurn(turn) {
+        if (!turn) return "user";
+        if (isAssistantRole(turn.role)) return "assistant";
+        if (turn.role === "agent") return "agent";
+        return "user";
+      }
+
       function renderAssistantBody(turn) {
-        if (!turn || turn.role !== "assistant") {
+        if (!turn || !isAssistantRole(turn.role)) {
           return '<p class="rc-text">' + escapeHtml((turn && turn.text) || "") + "</p>";
         }
         var rich = resolveRich(turn);
@@ -1253,7 +1265,7 @@
           var stats = json.transcript_stats && typeof json.transcript_stats === "object" ? json.transcript_stats : null;
           var assistantN = 0;
           for (var ai = 0; ai < turns.length; ai += 1) {
-            if (turns[ai] && turns[ai].role === "assistant") assistantN += 1;
+            if (turns[ai] && isAssistantRole(turns[ai].role)) assistantN += 1;
           }
 
           thread.innerHTML = "";
@@ -1283,12 +1295,7 @@
           thread.appendChild(dayLine);
           for (var i = 0; i < turns.length; i++) {
             var t = turns[i];
-            var role =
-              t && t.role === "assistant"
-                ? "assistant"
-                : t && t.role === "agent"
-                  ? "agent"
-                  : "user";
+            var role = displayRoleForTurn(t);
             var who =
               role === "assistant"
                 ? "Assistant"
@@ -1304,8 +1311,7 @@
             var timeHtml = timeLbl
               ? '<span class="msg-time">' + escapeHtml(timeLbl) + "</span>"
               : "";
-            var bodyHtml =
-              role === "assistant"
+            var bodyHtml = isAssistantRole(t && t.role)
                 ? renderAssistantBody(t)
                 : '<p class="rc-text">' + escapeHtml((t && t.text) || "") + "</p>";
             var row = document.createElement("div");
