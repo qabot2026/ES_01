@@ -2,7 +2,7 @@
   'use strict';
 
   var KEY = 'qa_live_agent_desk';
-  var state = { folders: [], filtered: [] };
+  var state = { rows: [], filtered: [] };
 
   function desk() {
     try {
@@ -24,7 +24,8 @@
   }
 
   if (!desk().token) {
-    window.location.href = '../live-agent/settings.html?next=' +
+    window.location.href =
+      '../live-agent/settings.html?next=' +
       encodeURIComponent('dashboard/documents.html');
     return;
   }
@@ -36,11 +37,11 @@
     return (b / (1024 * 1024)).toFixed(1) + ' MB';
   }
 
-  function formatDate(iso) {
+  function formatDate(iso, dateDisplay) {
+    if (dateDisplay) return dateDisplay;
     if (!iso) return '—';
     try {
-      var d = new Date(iso);
-      return d.toLocaleString('en-IN', {
+      return new Date(iso).toLocaleString('en-IN', {
         day: '2-digit',
         month: 'short',
         year: 'numeric',
@@ -52,114 +53,18 @@
     }
   }
 
+  function formatMobile(m) {
+    if (!m) return '—';
+    var s = String(m).replace(/\D/g, '');
+    if (s.length >= 12 && s.indexOf('91') === 0) {
+      return '91 ' + s.slice(2, 4) + ' ' + s.slice(4);
+    }
+    return s;
+  }
+
   function fileExt(name) {
-    var m = String(name || '').match(/\.([^.]+)$/);
-    return m ? m[1].toUpperCase().slice(0, 4) : 'FILE';
-  }
-
-  function showAlert(msg) {
-    var el = document.getElementById('docs-alert');
-    el.hidden = !msg;
-    el.textContent = msg || '';
-  }
-
-  function applyFilter() {
-    var q = String(document.getElementById('docs-search').value || '')
-      .trim()
-      .toLowerCase();
-    if (!q) {
-      state.filtered = state.folders.slice();
-    } else {
-      state.filtered = state.folders.filter(function (f) {
-        var hay =
-          (f.storage_folder || '') +
-          ' ' +
-          (f.mobile || '') +
-          ' ' +
-          (f.name || '') +
-          ' ' +
-          (f.email || '') +
-          ' ' +
-          (f.session_id || '');
-        f.files.forEach(function (file) {
-          hay += ' ' + (file.file_name || '');
-        });
-        return hay.toLowerCase().indexOf(q) >= 0;
-      });
-    }
-    renderGrid();
-  }
-
-  function renderGrid() {
-    var grid = document.getElementById('docs-grid');
-    var list = state.filtered;
-    var totalFiles = 0;
-    list.forEach(function (f) {
-      totalFiles += f.file_count || 0;
-    });
-    document.getElementById('docs-count-folders').textContent = String(list.length);
-    document.getElementById('docs-count-files').textContent = String(totalFiles);
-
-    if (!list.length) {
-      grid.innerHTML =
-        '<p class="docs-empty">No uploads found. Try another search or upload a document in chat.</p>';
-      return;
-    }
-
-    grid.innerHTML = list
-      .map(function (f, idx) {
-        var title = f.name || f.mobile || f.storage_folder || 'Upload';
-        var sub = [];
-        if (f.mobile) sub.push('+' + f.mobile.replace(/^(\d{2})/, '$1 ').replace(/(\d{10})$/, ' $1'));
-        if (f.email) sub.push(f.email);
-        if (f.session_id) {
-          sub.push(
-            '<a href="../transcript.html?session=' +
-              encodeURIComponent(f.session_id) +
-              '" onclick="event.stopPropagation()">Chat script</a>'
-          );
-        }
-        return (
-          '<article class="docs-card" data-idx="' +
-          idx +
-          '" tabindex="0">' +
-          '<div class="docs-card__top">' +
-          '<span class="docs-card__badge">Upload #' +
-          (f.sequence || '—') +
-          '</span>' +
-          '<span class="docs-card__date">' +
-          (f.date_display || formatDate(f.updated_at)) +
-          '</span></div>' +
-          '<h3>' +
-          escapeHtml(title) +
-          '</h3>' +
-          '<p class="docs-card__meta">' +
-          (sub.length ? sub.join(' · ') : escapeHtml(f.storage_folder)) +
-          '</p>' +
-          '<div class="docs-card__footer">' +
-          '<span class="docs-card__files">' +
-          (f.file_count || 0) +
-          ' file' +
-          ((f.file_count || 0) === 1 ? '' : 's') +
-          '</span>' +
-          '<span class="docs-card__size">' +
-          formatBytes(f.total_bytes) +
-          '</span></div></article>'
-        );
-      })
-      .join('');
-
-    grid.querySelectorAll('.docs-card').forEach(function (card) {
-      card.addEventListener('click', function () {
-        openModal(state.filtered[Number(card.getAttribute('data-idx'))]);
-      });
-      card.addEventListener('keydown', function (e) {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          openModal(state.filtered[Number(card.getAttribute('data-idx'))]);
-        }
-      });
-    });
+    var m = String(name || '').match(/\.([^.]+)$/i);
+    return m ? m[1].toUpperCase() : '';
   }
 
   function escapeHtml(s) {
@@ -170,49 +75,141 @@
       .replace(/"/g, '&quot;');
   }
 
-  function openModal(folder) {
-    var modal = document.getElementById('docs-modal');
-    document.getElementById('docs-modal-title').textContent =
-      folder.name || folder.mobile || 'Upload';
-    document.getElementById('docs-modal-sub').textContent =
-      (folder.date_display ? folder.date_display + ' · ' : '') +
-      (folder.storage_folder || '');
-    var list = document.getElementById('docs-modal-files');
-    list.innerHTML = (folder.files || [])
-      .map(function (file) {
+  function showAlert(msg) {
+    var el = document.getElementById('docs-alert');
+    el.hidden = !msg;
+    el.textContent = msg || '';
+  }
+
+  function foldersToRows(folders) {
+    var rows = [];
+    (folders || []).forEach(function (f) {
+      (f.files || []).forEach(function (file) {
+        rows.push({
+          file_name: file.file_name,
+          gcs_object: file.gcs_object,
+          size_bytes: file.size_bytes,
+          uploaded_at: file.uploaded_at,
+          name: f.name || '',
+          mobile: f.mobile || '',
+          email: f.email || '',
+          date_display: f.date_display || '',
+          updated_at: f.updated_at || file.uploaded_at,
+          session_id: f.session_id || '',
+          storage_folder: f.storage_folder || '',
+        });
+      });
+    });
+    rows.sort(function (a, b) {
+      return String(b.updated_at || '').localeCompare(String(a.updated_at || ''));
+    });
+    return rows;
+  }
+
+  function updateSummary() {
+    var folders = {};
+    var totalBytes = 0;
+    state.filtered.forEach(function (r) {
+      folders[r.storage_folder] = true;
+      totalBytes += r.size_bytes || 0;
+    });
+    document.getElementById('docs-count-submissions').textContent = String(
+      Object.keys(folders).length
+    );
+    document.getElementById('docs-count-files').textContent = String(
+      state.filtered.length
+    );
+    document.getElementById('docs-count-size').textContent = formatBytes(totalBytes);
+    document.getElementById('docs-showing').textContent =
+      state.filtered.length === state.rows.length
+        ? 'Showing all ' + state.rows.length + ' documents'
+        : 'Showing ' + state.filtered.length + ' of ' + state.rows.length;
+  }
+
+  function applyFilter() {
+    var q = String(document.getElementById('docs-search').value || '')
+      .trim()
+      .toLowerCase();
+    if (!q) {
+      state.filtered = state.rows.slice();
+    } else {
+      state.filtered = state.rows.filter(function (r) {
+        var hay =
+          (r.file_name || '') +
+          ' ' +
+          (r.name || '') +
+          ' ' +
+          (r.mobile || '') +
+          ' ' +
+          (r.email || '') +
+          ' ' +
+          (r.storage_folder || '') +
+          ' ' +
+          (r.session_id || '');
+        return hay.toLowerCase().indexOf(q) >= 0;
+      });
+    }
+    renderTable();
+  }
+
+  function renderTable() {
+    var tbody = document.getElementById('docs-tbody');
+    updateSummary();
+
+    if (!state.filtered.length) {
+      tbody.innerHTML =
+        '<tr><td colspan="6" class="docs-table__empty">No documents found.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = state.filtered
+      .map(function (r) {
+        var customer = r.name || r.email || '—';
+        var ext = fileExt(r.file_name);
         return (
-          '<li class="docs-file-item">' +
-          '<div class="docs-file-icon">' +
-          escapeHtml(fileExt(file.file_name)) +
-          '</div>' +
-          '<div class="docs-file-info">' +
-          '<strong>' +
-          escapeHtml(file.file_name) +
-          '</strong>' +
-          '<span>' +
-          formatBytes(file.size_bytes) +
-          ' · ' +
-          formatDate(file.uploaded_at) +
-          '</span></div>' +
+          '<tr>' +
+          '<td><span class="docs-file-name">' +
+          escapeHtml(r.file_name) +
+          '</span>' +
+          (ext
+            ? '<span class="docs-file-type">' + escapeHtml(ext) + '</span>'
+            : '') +
+          '</td>' +
+          '<td>' +
+          escapeHtml(customer) +
+          '</td>' +
+          '<td>' +
+          escapeHtml(formatMobile(r.mobile)) +
+          '</td>' +
+          '<td>' +
+          escapeHtml(formatDate(r.uploaded_at, r.date_display)) +
+          '</td>' +
+          '<td>' +
+          formatBytes(r.size_bytes) +
+          '</td>' +
+          '<td><div class="docs-actions">' +
           '<button type="button" class="docs-view" data-object="' +
-          escapeHtml(file.gcs_object) +
+          escapeHtml(r.gcs_object) +
           '">View</button>' +
+          '<span class="docs-sep">|</span>' +
           '<button type="button" class="docs-download" data-object="' +
-          escapeHtml(file.gcs_object) +
-          '">Download</button></li>'
+          escapeHtml(r.gcs_object) +
+          '">Download</button>' +
+          (r.session_id
+            ? '<span class="docs-sep">|</span><a class="docs-link-transcript" href="../transcript.html?session=' +
+              encodeURIComponent(r.session_id) +
+              '">Chat</a>'
+            : '') +
+          '</div></td></tr>'
         );
       })
       .join('');
 
-    list.querySelectorAll('.docs-download, .docs-view').forEach(function (btn) {
-      btn.addEventListener('click', function (e) {
-        e.stopPropagation();
+    tbody.querySelectorAll('.docs-view, .docs-download').forEach(function (btn) {
+      btn.addEventListener('click', function () {
         openSignedUrl(btn, btn.classList.contains('docs-view'));
       });
     });
-
-    if (typeof modal.showModal === 'function') modal.showModal();
-    else modal.setAttribute('open', '');
   }
 
   function openSignedUrl(btn, viewOnly) {
@@ -220,6 +217,7 @@
     if (!object) return;
     var label = viewOnly ? 'View' : 'Download';
     btn.disabled = true;
+    var prev = btn.textContent;
     btn.textContent = '…';
     fetch(
       apiBase() +
@@ -232,7 +230,7 @@
       })
       .then(function (data) {
         if (!data.ok || !data.url) {
-          alert(data.message || 'Could not get file link.');
+          alert(data.message || 'Could not open file.');
           return;
         }
         if (viewOnly) {
@@ -253,14 +251,14 @@
       })
       .finally(function () {
         btn.disabled = false;
-        btn.textContent = label;
+        btn.textContent = prev || label;
       });
   }
 
   function load() {
     showAlert('');
-    document.getElementById('docs-grid').innerHTML =
-      '<p class="docs-loading">Loading documents…</p>';
+    document.getElementById('docs-tbody').innerHTML =
+      '<tr><td colspan="6" class="docs-table__empty">Loading…</td></tr>';
     fetch(apiBase() + '/api/documents/catalog', { headers: headers() })
       .then(function (r) {
         return r.json();
@@ -268,32 +266,28 @@
       .then(function (data) {
         if (!data.ok) {
           if (data.error === 'gcs_not_configured') {
-            showAlert(
-              'Cloud storage is not configured. Set GCS_BUCKET_NAME on Railway.'
-            );
+            showAlert('Storage not configured. Set GCS_BUCKET_NAME on Railway.');
           } else if (data.error === 'unauthorized') {
             window.location.href = '../live-agent/settings.html';
             return;
           } else {
             showAlert(data.message || 'Could not load documents.');
           }
-          document.getElementById('docs-grid').innerHTML = '';
+          document.getElementById('docs-tbody').innerHTML =
+            '<tr><td colspan="6" class="docs-table__empty">—</td></tr>';
           return;
         }
-        state.folders = data.folders || [];
+        state.rows = foldersToRows(data.folders || []);
         applyFilter();
       })
       .catch(function () {
         showAlert('Network error. Check desk token and server.');
-        document.getElementById('docs-grid').innerHTML = '';
+        document.getElementById('docs-tbody').innerHTML =
+          '<tr><td colspan="6" class="docs-table__empty">—</td></tr>';
       });
   }
 
   document.getElementById('docs-refresh').addEventListener('click', load);
   document.getElementById('docs-search').addEventListener('input', applyFilter);
-  document.getElementById('docs-modal-close').addEventListener('click', function () {
-    document.getElementById('docs-modal').close();
-  });
-
   load();
 })();
