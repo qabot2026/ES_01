@@ -53,13 +53,29 @@
     }
   }
 
-  function formatMobile(m) {
-    if (!m) return '—';
-    var s = String(m).replace(/\D/g, '');
-    if (s.length >= 12 && s.indexOf('91') === 0) {
-      return '91 ' + s.slice(2, 4) + ' ' + s.slice(4);
+  function formatMobile(mobile, dialCode) {
+    if (!mobile) return '—';
+    var raw = String(mobile).trim();
+    var compact = raw.replace(/\s+/g, '');
+    var digits = compact.replace(/\D/g, '');
+    var dial = String(dialCode || '').replace(/\D/g, '');
+
+    if (/^\+?\d{11,}$/.test(compact) || digits.length > 10) {
+      var local = digits.slice(-10);
+      var dialDigits = dial || digits.slice(0, digits.length - 10);
+      if (!dialDigits && local.length === 10) dialDigits = '91';
+      if (dialDigits && local) return dialDigits + ' ' + local;
+      return digits;
     }
-    return s;
+
+    if (!dial && digits.length === 10) dial = '91';
+    var local = digits;
+    if (dial && local.indexOf(dial) === 0 && local.length > dial.length) {
+      local = local.slice(dial.length);
+    }
+    if (local.length > 10) local = local.slice(-10);
+    if (dial && local) return dial + ' ' + local;
+    return raw.replace(/^\+/, '').trim() || '—';
   }
 
   function fileExt(name) {
@@ -92,6 +108,7 @@
           uploaded_at: file.uploaded_at,
           name: f.name || '',
           mobile: f.mobile || '',
+          dial_code: f.dial_code || '',
           email: f.email || '',
           date_display: f.date_display || '',
           updated_at: f.updated_at || file.uploaded_at,
@@ -179,7 +196,7 @@
           escapeHtml(customer) +
           '</td>' +
           '<td>' +
-          escapeHtml(formatMobile(r.mobile)) +
+          escapeHtml(formatMobile(r.mobile, r.dial_code)) +
           '</td>' +
           '<td>' +
           escapeHtml(formatDate(r.uploaded_at, r.date_display)) +
@@ -200,7 +217,7 @@
           (r.session_id
             ? '<span class="docs-sep">|</span><a class="docs-link-transcript" href="../transcript.html?session=' +
               encodeURIComponent(r.session_id) +
-              '">Chat</a>'
+              '">Chatscript</a>'
             : '') +
           '</div></td></tr>'
         );
