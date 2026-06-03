@@ -344,6 +344,8 @@ app.post(
         mobile: req.body.mobile,
         dialCode: req.body.dial_code || req.body.dialCode,
         clientSessionId: sessionId,
+        name: req.body.name,
+        email: req.body.email,
       });
       const meta = {
         document: pack.storage_folder,
@@ -352,6 +354,12 @@ app.post(
         document_link: pack.document_link,
         document_links: pack.document_links,
       };
+      if (req.body.name) meta.name = String(req.body.name).trim();
+      if (req.body.email) meta.email = String(req.body.email).trim();
+      if (req.body.mobile) meta.mobile = String(req.body.mobile).trim();
+      if (req.body.dial_code || req.body.dialCode) {
+        meta.dial_code = String(req.body.dial_code || req.body.dialCode).trim();
+      }
       chatTranscript.mergeSessionMeta(sessionId, meta);
       conversationSheet.scheduleSheetSync(sessionId);
       res.json({

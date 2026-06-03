@@ -2871,6 +2871,12 @@
     var dial = vals.dial_code != null ? String(vals.dial_code).trim() : String(ctx.dial_code || '').trim();
     if (mobile) fd.append('mobile', mobile);
     if (dial) fd.append('dial_code', dial);
+    var customerName =
+      vals.name != null ? String(vals.name).trim() : String(ctx.name || '').trim();
+    var customerEmail =
+      vals.email != null ? String(vals.email).trim() : String(ctx.email || '').trim();
+    if (customerName) fd.append('name', customerName);
+    if (customerEmail) fd.append('email', customerEmail);
     for (var i = 0; i < files.length; i += 1) {
       fd.append('files', files[i], files[i].name);
     }
