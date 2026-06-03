@@ -44,7 +44,7 @@ App pehli baar sync par khali row 1 par headers **auto** bhi likh sakta hai — 
 | `GOOGLE_CREDENTIALS_JSON` | Poora service account JSON (Dialogflow wala hi) |
 | `SHEETS_SPREADSHEET_ID` | Sheet URL se ID |
 | `SHEETS_RANGE` | `Sheet1!A:AG` (33 columns) |
-| `PUBLIC_BASE_URL` | `https://aapka-app.up.railway.app` (Chatscript hyperlink URLs) |
+| `PUBLIC_BASE_URL` | Your live app URL (e.g. `https://your-app.up.railway.app`) — **required for column A Chatscript link**. If unset, Railway `RAILWAY_PUBLIC_DOMAIN` or the app default URL is used. |
 
 **Redeploy** karein.
 
