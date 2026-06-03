@@ -2864,6 +2864,9 @@
     if (!this.apiBase || !files || !files.length) {
       return Promise.resolve({ ok: false, message: 'No files selected' });
     }
+    if (this._uploadInFlight) {
+      return this._uploadInFlight;
+    }
     var ctx = this.clientContext || {};
     var vals = values || {};
     var fd = new FormData();
@@ -2888,7 +2891,8 @@
     for (var i = 0; i < files.length; i += 1) {
       fd.append('files', files[i], files[i].name);
     }
-    return fetch(this.apiBase + '/api/upload/documents', {
+    var self = this;
+    this._uploadInFlight = fetch(this.apiBase + '/api/upload/documents', {
       method: 'POST',
       body: fd,
     })
@@ -2910,7 +2914,11 @@
       })
       .catch(function () {
         return { ok: false, message: 'Upload failed' };
+      })
+      .finally(function () {
+        self._uploadInFlight = null;
       });
+    return this._uploadInFlight;
   };
 
   QualityAssistantWidget.prototype.handleFormSubmit = function (payload) {

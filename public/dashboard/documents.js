@@ -138,7 +138,32 @@
     rows.sort(function (a, b) {
       return String(b.updated_at || '').localeCompare(String(a.updated_at || ''));
     });
-    return rows;
+    return dedupeSubmissionRows(rows);
+  }
+
+  function dedupeSubmissionRows(rows) {
+    var best = {};
+    (rows || []).forEach(function (r) {
+      var sid = String(r.session_id || '').trim();
+      var fn = String(r.file_name || '').trim().toLowerCase();
+      var sz = String(r.size_bytes || '0');
+      var mob = String(r.mobile || '').replace(/\D/g, '');
+      var key =
+        sid && fn
+          ? 's:' + sid + ':' + fn + ':' + sz
+          : mob && fn
+            ? 'm:' + mob + ':' + fn + ':' + sz
+            : 'o:' + (r.gcs_object || '');
+      if (
+        !best[key] ||
+        String(r.updated_at || '').localeCompare(String(best[key].updated_at || '')) > 0
+      ) {
+        best[key] = r;
+      }
+    });
+    return Object.keys(best).map(function (k) {
+      return best[k];
+    });
   }
 
   function updateSummary() {

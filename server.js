@@ -336,9 +336,18 @@ app.post(
     if (!sessionId) {
       return res.status(400).json({ error: 'session_required' });
     }
-    const files = req.files || [];
+    let files = req.files || [];
     if (!files.length) {
       return res.status(400).json({ error: 'files_required' });
+    }
+    files = chatTranscript.filterDuplicateUploadFilesForSession(sessionId, files);
+    if (!files.length) {
+      return res.json({
+        ok: true,
+        sessionId,
+        duplicate_skipped: true,
+        message: 'Files already uploaded for this session.',
+      });
     }
     try {
       const uploadTag = String(req.body.tag || req.body.upload_tag || '').trim();
@@ -356,6 +365,7 @@ app.post(
         uploaded_files: (pack.uploads || []).map((u) => ({
           original_name: u.original_name,
           gcs_object: u.gcs_object,
+          size_bytes: u.size_bytes,
         })),
         storage_folder: pack.storage_folder,
         storage_path: pack.storage_path,
@@ -370,6 +380,7 @@ app.post(
       }
       if (uploadTag) meta.tag = uploadTag;
       meta.userEngaged = true;
+      meta.last_upload_at = new Date().toISOString();
       chatTranscript.mergeSessionMeta(sessionId, meta);
       if (chatTranscript.shouldScheduleSheetForSession(sessionId)) {
         conversationSheet.scheduleSheetSync(sessionId);
