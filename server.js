@@ -90,6 +90,7 @@ app.post('/api/chat', async (req, res) => {
   const uiLang = uiLanguageCode || languageCode;
 
   try {
+    await liveAgent.refreshStore();
     if (liveAgent.isDialogflowBlockedForSession(sid)) {
       const conv = liveAgent.getConversation(sid);
       const agentName = conv
@@ -97,7 +98,7 @@ app.post('/api/chat', async (req, res) => {
         : '';
       if (!eventName && message && typeof message === 'string' && message.trim()) {
         try {
-          liveAgent.postUserMessage(sid, message.trim());
+          await liveAgent.postUserMessage(sid, message.trim());
         } catch (postErr) {
           console.warn('[live-agent] visitor message during handoff:', postErr.message);
         }
@@ -142,7 +143,7 @@ app.post('/api/chat', async (req, res) => {
       } catch {
         /* ignore */
       }
-      liveAgent.requestHandoff(sid, {
+      await liveAgent.requestHandoff(sid, {
         userLanguage: uiLang,
         previewMessage: message ? message.trim() : '',
         visitorName: handoffVisitorName,
@@ -150,6 +151,7 @@ app.post('/api/chat', async (req, res) => {
       chatTranscript.mergeSessionMeta(sid, {
         channel: 'Web',
         liveAgentRequested: true,
+        liveAgentActive: true,
       });
       result.reply = '';
       result.replyParts = [];

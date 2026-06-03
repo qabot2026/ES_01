@@ -294,28 +294,23 @@
       var self = this;
       if (!this.apiBase || !this.sessionId) return;
       if (!this.liveAgentMode && !this._liveAgentHumanActive) return;
-      var statusUrl =
+      var syncUrl =
         this.apiBase +
-        '/api/live-agent/status?clientSessionId=' +
+        '/api/live-agent/sync?clientSessionId=' +
         encodeURIComponent(this.sessionId);
-      var msgUrl =
-        this.apiBase +
-        '/api/live-agent/messages?clientSessionId=' +
-        encodeURIComponent(this.sessionId) +
-        '&tail=50';
-      fetch(statusUrl)
+      fetch(syncUrl)
         .then(function (r) {
           return r.json();
         })
         .then(function (st) {
-          if (!st || !st.ok) return null;
+          if (!st || !st.ok) return;
           self._liveAgentHumanActive = !!st.humanActive;
           if (!st.humanActive) {
             self._liveAgentHumanActive = false;
           }
           if (st.conversation && st.conversation.status === 'closed') {
             self.stopLiveAgentMode(true);
-            return null;
+            return;
           }
           if (st.humanActive && !self.liveAgentMode) {
             self.startLiveAgentMode({});
@@ -336,12 +331,11 @@
               t(self, 'waiting', 'Waiting for an agent…')
             );
           }
-          return fetch(msgUrl).then(function (r) {
-            return r.json();
+          self._liveAgentIngestMessages({
+            ok: true,
+            messages: st.messages || [],
+            agentName: agentLabel || st.agentName,
           });
-        })
-        .then(function (data) {
-          if (data) self._liveAgentIngestMessages(data);
         })
         .catch(function () {});
     };
@@ -357,7 +351,7 @@
       }
       fetch(
         this.apiBase +
-          '/api/live-agent/status?clientSessionId=' +
+          '/api/live-agent/sync?clientSessionId=' +
           encodeURIComponent(this.sessionId)
       )
         .then(function (r) {
