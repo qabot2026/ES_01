@@ -83,6 +83,14 @@
     return m ? m[1].toUpperCase() : '';
   }
 
+  function transcriptSessionId(r) {
+    var sid = String((r && r.session_id) || '').trim();
+    if (sid) return sid;
+    var folder = String((r && r.storage_folder) || '').trim();
+    var m = folder.match(/^(.+)__(\d{2})_(\d{2})_(\d{4})_(\d+)$/);
+    return m ? m[1] : '';
+  }
+
   function escapeHtml(s) {
     return String(s)
       .replace(/&/g, '&amp;')
@@ -112,7 +120,7 @@
           email: f.email || '',
           date_display: f.date_display || '',
           updated_at: f.updated_at || file.uploaded_at,
-          session_id: f.session_id || '',
+          session_id: file.session_id || f.session_id || '',
           storage_folder: f.storage_folder || '',
           tag: file.tag || f.tag || '',
         });
@@ -184,7 +192,8 @@
 
     tbody.innerHTML = state.filtered
       .map(function (r) {
-        var customer = r.name || r.email || '—';
+        var displayName = r.name || '—';
+        var chatSid = transcriptSessionId(r);
         var ext = fileExt(r.file_name);
         return (
           '<tr>' +
@@ -199,7 +208,7 @@
           escapeHtml(r.tag || '—') +
           '</td>' +
           '<td>' +
-          escapeHtml(customer) +
+          escapeHtml(displayName) +
           '</td>' +
           '<td>' +
           escapeHtml(formatMobile(r.mobile, r.dial_code)) +
@@ -220,11 +229,9 @@
           '" data-filename="' +
           escapeHtml(r.file_name) +
           '">Download</button>' +
-          (r.session_id
-            ? '<span class="docs-sep">|</span><a class="docs-link-transcript" href="../conversation-transcript?session=' +
-              encodeURIComponent(r.session_id) +
-              '" target="_blank" rel="noopener noreferrer">Chatscript</a>'
-            : '') +
+          '<span class="docs-sep">|</span><a class="docs-link-transcript" href="../conversation-transcript?session=' +
+          encodeURIComponent(chatSid) +
+          '" target="_blank" rel="noopener noreferrer">Chatscript</a>' +
           '</div></td></tr>'
         );
       })
