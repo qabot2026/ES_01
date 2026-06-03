@@ -361,8 +361,11 @@ app.post(
       if (req.body.dial_code || req.body.dialCode) {
         meta.dial_code = String(req.body.dial_code || req.body.dialCode).trim();
       }
+      meta.userEngaged = true;
       chatTranscript.mergeSessionMeta(sessionId, meta);
-      conversationSheet.scheduleSheetSync(sessionId);
+      if (chatTranscript.shouldScheduleSheetForSession(sessionId)) {
+        conversationSheet.scheduleSheetSync(sessionId);
+      }
       res.json({
         ok: true,
         sessionId,

@@ -1189,6 +1189,7 @@
     var ctx = Object.assign({}, this.clientContext || {});
     return Object.assign(ctx, {
       sessionId: this.sessionId,
+      userEngaged: !!this._userHasInteracted,
       sourceUrl: loc.href || '',
       device: /Mobi|Android|iPhone|iPad/i.test(ua) ? 'Mobile' : 'Desktop',
       browser: parseUaBrowser(ua),
