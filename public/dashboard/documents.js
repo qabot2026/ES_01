@@ -194,6 +194,8 @@
           '<span class="docs-sep">|</span>' +
           '<button type="button" class="docs-download" data-object="' +
           escapeHtml(r.gcs_object) +
+          '" data-filename="' +
+          escapeHtml(r.file_name) +
           '">Download</button>' +
           (r.session_id
             ? '<span class="docs-sep">|</span><a class="docs-link-transcript" href="../transcript.html?session=' +
@@ -205,17 +207,21 @@
       })
       .join('');
 
-    tbody.querySelectorAll('.docs-view, .docs-download').forEach(function (btn) {
+    tbody.querySelectorAll('.docs-view').forEach(function (btn) {
       btn.addEventListener('click', function () {
-        openSignedUrl(btn, btn.classList.contains('docs-view'));
+        openView(btn);
+      });
+    });
+    tbody.querySelectorAll('.docs-download').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        downloadFile(btn);
       });
     });
   }
 
-  function openSignedUrl(btn, viewOnly) {
+  function openView(btn) {
     var object = btn.getAttribute('data-object');
     if (!object) return;
-    var label = viewOnly ? 'View' : 'Download';
     btn.disabled = true;
     var prev = btn.textContent;
     btn.textContent = '…';
@@ -233,25 +239,62 @@
           alert(data.message || 'Could not open file.');
           return;
         }
-        if (viewOnly) {
-          window.open(data.url, '_blank', 'noopener,noreferrer');
-        } else {
-          var a = document.createElement('a');
-          a.href = data.url;
-          a.download = data.file_name || '';
-          a.rel = 'noopener noreferrer';
-          a.target = '_blank';
-          document.body.appendChild(a);
-          a.click();
-          a.remove();
-        }
+        window.open(data.url, '_blank', 'noopener,noreferrer');
       })
       .catch(function () {
         alert('Request failed.');
       })
       .finally(function () {
         btn.disabled = false;
-        btn.textContent = prev || label;
+        btn.textContent = prev || 'View';
+      });
+  }
+
+  function downloadFile(btn) {
+    var object = btn.getAttribute('data-object');
+    var fileName = btn.getAttribute('data-filename') || 'download';
+    var token = desk().token;
+    if (!object || !token) return;
+
+    btn.disabled = true;
+    var prev = btn.textContent;
+    btn.textContent = '…';
+
+    fetch(
+      apiBase() +
+        '/api/documents/download?object=' +
+        encodeURIComponent(object),
+      { headers: headers() }
+    )
+      .then(function (r) {
+        if (!r.ok) {
+          return r.json().then(function (data) {
+            throw new Error((data && data.message) || 'Download failed.');
+          });
+        }
+        return r.blob().then(function (blob) {
+          return { blob: blob, fileName: fileName };
+        });
+      })
+      .then(function (result) {
+        var url = URL.createObjectURL(result.blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = result.fileName;
+        a.style.display = 'none';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(function () {
+          URL.revokeObjectURL(url);
+        }, 2000);
+      })
+      .catch(function (err) {
+        alert(err.message || 'Download failed.');
+      })
+      .finally(function () {
+        btn.disabled = false;
+        btn.textContent = prev || 'Download';
       });
   }
 

@@ -425,6 +425,26 @@ app.get('/api/documents/download-url', requireDeskAuth, async (req, res) => {
   }
 });
 
+app.get('/api/documents/download', requireDeskAuth, async (req, res) => {
+  try {
+    const result = await documentsCatalog.streamFileDownload(req.query.object, res);
+    if (!result.ok) {
+      const status =
+        result.error === 'not_found'
+          ? 404
+          : result.error === 'gcs_not_configured'
+            ? 503
+            : 400;
+      return res.status(status).json(result);
+    }
+  } catch (err) {
+    console.error('[documents/download]', err.message);
+    if (!res.headersSent) {
+      res.status(500).json({ ok: false, error: 'download_failed', message: err.message });
+    }
+  }
+});
+
 app.get('/api/phrase-translations', (req, res) => {
   const lang = String(req.query.lang || 'en').trim();
   if (lang === 'en') {
