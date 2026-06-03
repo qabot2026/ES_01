@@ -16,10 +16,23 @@
 
   function t(widget, key, fallback) {
     var lang = (widget && widget.language) || 'en';
-    var pack = (global.QA_CHAT_LIVE_STRINGS && global.QA_CHAT_LIVE_STRINGS[lang]) ||
+    var pack =
+      (global.QA_CHAT_LIVE_STRINGS && global.QA_CHAT_LIVE_STRINGS[lang]) ||
       (global.QA_CHAT_LIVE_STRINGS && global.QA_CHAT_LIVE_STRINGS.en) ||
       {};
     return pack[key] != null ? pack[key] : fallback;
+  }
+
+  function messageKey(m) {
+    if (!m) return '';
+    if (m.id) return String(m.id);
+    return (
+      (m.role || m.from || '') +
+      '|' +
+      (m.createdAt || m.at || '') +
+      '|' +
+      String(m.text || '').slice(0, 80)
+    );
   }
 
   function patchWidget() {
@@ -48,64 +61,82 @@
 
     var origApply = p.applyDialogflowResult;
     p.applyDialogflowResult = function (result) {
+      if (!result || !result.ok) {
+        return origApply.call(this, result);
+      }
+      var data = result.data || {};
+      if (data.liveAgent && liveEnabled()) {
+        if (!this.liveAgentMode) {
+          this.startLiveAgentMode(data);
+        }
+        if (data.skipBot) {
+          return;
+        }
+      }
       if (this.liveAgentMode) {
         return;
       }
-      origApply.call(this, result);
-      if (!liveEnabled()) return;
-      if (result && result.ok && result.data && result.data.liveAgent) {
-        this.startLiveAgentMode(result.data);
+      return origApply.call(this, result);
+    };
+
+    p._liveAgentAnnounceConnected = function (agentLabel, messageText) {
+      var name = (agentLabel && String(agentLabel).trim()) || 'an agent';
+      var text =
+        (messageText && String(messageText).trim()) ||
+        t(this, 'connectedPrefix', 'You are now chatting with') + ' ' + name + '.';
+      if (!this._liveAgentConnectedAnnounced) {
+        this._liveAgentConnectedAnnounced = true;
+        this.appendMessage('bot', text);
       }
+      this._liveAgentConnectedBanner(name);
     };
 
     p.startLiveAgentMode = function (data) {
       var self = this;
       if (!liveEnabled() || !this.apiBase) return;
-      if (this.liveAgentMode) return;
       var cfg = liveCfg();
+      var starting = !this.liveAgentMode;
       this.liveAgentMode = true;
-      this.liveAgentSince = '';
-      this.liveAgentSeen = {};
-      this._showLiveAgentBanner(
-        t(this, 'waiting', 'Waiting for an agent…')
-      );
-      var waitingMsg =
-        (data && data.reply && String(data.reply).trim()) ||
-        t(this, 'handoffReply', 'Connecting you to our team. Please wait.');
-      if (waitingMsg) {
-        this.appendMessage('bot', waitingMsg);
-      }
-      fetch(this.apiBase + '/api/live-agent/request', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          clientSessionId: this.sessionId,
-          sessionId: this.sessionId,
-          userLanguage: this.language || 'en',
-        }),
-      })
-        .then(function (r) {
-          return r.json();
-        })
-        .then(function () {
-          self._liveAgentPollTick();
-        })
-        .catch(function () {
+      if (starting) {
+        this.liveAgentSince = '';
+        this.liveAgentSeen = {};
+        this._liveAgentConnectedAnnounced = false;
+        this._showLiveAgentBanner(
+          t(this, 'waiting', 'Waiting for an agent…')
+        );
+        var waitingMsg =
+          (data && data.reply && String(data.reply).trim()) ||
+          t(this, 'handoffReply', 'Connecting you to our team. Please wait.');
+        if (waitingMsg) {
+          this.appendMessage('bot', waitingMsg);
+        }
+        fetch(this.apiBase + '/api/live-agent/request', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            clientSessionId: this.sessionId,
+            sessionId: this.sessionId,
+            userLanguage: this.language || 'en',
+          }),
+        }).catch(function () {
           self.appendMessage(
             'bot',
             t(self, 'handoffError', 'Could not reach support. Try again.')
           );
         });
+      }
       if (this._liveAgentPollTimer) {
         clearInterval(this._liveAgentPollTimer);
       }
       this._liveAgentPollTimer = setInterval(function () {
         self._liveAgentPollTick();
       }, cfg.pollIntervalMs || 2000);
+      this._liveAgentPollTick();
     };
 
     p.stopLiveAgentMode = function (endedByAgent) {
       this.liveAgentMode = false;
+      this._liveAgentConnectedAnnounced = false;
       if (this._liveAgentPollTimer) {
         clearInterval(this._liveAgentPollTimer);
         this._liveAgentPollTimer = null;
@@ -114,7 +145,11 @@
       if (endedByAgent) {
         this.appendMessage(
           'bot',
-          t(this, 'ended', 'Chat with agent ended. You can continue with the assistant.')
+          t(
+            this,
+            'ended',
+            'Chat with agent ended. You can continue with the assistant.'
+          )
         );
       }
     };
@@ -145,7 +180,10 @@
     p._liveAgentConnectedBanner = function (name) {
       var label = (name && String(name).trim()) || 'an agent';
       this._showLiveAgentBanner(
-        t(this, 'connectedPrefix', 'You are now chatting with') + ' ' + label + '.'
+        t(this, 'connectedPrefix', 'You are now chatting with') +
+          ' ' +
+          label +
+          '.'
       );
     };
 
@@ -153,6 +191,9 @@
       var self = this;
       text = (text || '').trim();
       if (!text) return;
+      if (!this.liveAgentMode) {
+        this.startLiveAgentMode({});
+      }
       this.markUserInteracted();
       this.noteUserActivity();
       this.appendMessage('user', text);
@@ -164,8 +205,51 @@
           sessionId: this.sessionId,
           text: text,
         }),
-      }).catch(function () {
-        self.showError('Could not send message to agent.');
+      })
+        .then(function (r) {
+          return r.json();
+        })
+        .then(function (body) {
+          if (!body || !body.ok) {
+            throw new Error((body && body.error) || 'Send failed');
+          }
+        })
+        .catch(function () {
+          self.showError('Could not send message to agent.');
+        });
+    };
+
+    p._liveAgentIngestMessages = function (data) {
+      if (!data || !data.ok) return;
+      var self = this;
+      var agentName = data.agentName || 'Support';
+      (data.messages || []).forEach(function (m) {
+        var key = messageKey(m);
+        if (!key || self.liveAgentSeen[key]) return;
+        self.liveAgentSeen[key] = true;
+        var from =
+          m.from ||
+          (m.role === 'agent'
+            ? 'agent'
+            : m.role === 'system'
+              ? 'system'
+              : '');
+        if (from === 'agent') {
+          self.appendMessage('bot', m.text, {
+            personaLabel: m.senderDisplayName || agentName,
+            skipTranscriptLog: false,
+          });
+        } else if (from === 'system') {
+          if (/you are now chatting with/i.test(m.text || '')) {
+            var match = String(m.text).match(/chatting with\s+(.+?)\.?$/i);
+            var label = match && match[1] ? match[1].trim() : agentName;
+            self._liveAgentAnnounceConnected(label, m.text);
+          } else {
+            self.appendMessage('bot', m.text);
+          }
+        }
+        if (m.createdAt) self.liveAgentSince = m.createdAt;
+        else if (m.at) self.liveAgentSince = m.at;
       });
     };
 
@@ -188,7 +272,7 @@
           return r.json();
         })
         .then(function (st) {
-          if (!st || !st.ok) return;
+          if (!st || !st.ok) return null;
           if (st.conversation && st.conversation.status === 'closed') {
             self.stopLiveAgentMode(true);
             return null;
@@ -200,7 +284,10 @@
               ? String(st.conversation.assignedAgentEmail).split('@')[0]
               : '');
           if (st.agentConnected && agentLabel) {
-            self._liveAgentConnectedBanner(agentLabel);
+            self._liveAgentAnnounceConnected(
+              agentLabel,
+              st.connectedMessage || ''
+            );
           } else if (st.humanActive) {
             self._showLiveAgentBanner(
               t(self, 'waiting', 'Waiting for an agent…')
@@ -211,35 +298,7 @@
           });
         })
         .then(function (data) {
-          if (!data || !data.ok) return;
-          var agentName = data.agentName || 'Support';
-          (data.messages || []).forEach(function (m) {
-            if (!m || !m.id || self.liveAgentSeen[m.id]) return;
-            self.liveAgentSeen[m.id] = true;
-            var from =
-              m.from ||
-              (m.role === 'agent'
-                ? 'agent'
-                : m.role === 'system'
-                  ? 'system'
-                  : '');
-            if (from === 'agent') {
-              self.appendMessage('bot', m.text, {
-                personaLabel: agentName,
-                skipTranscriptLog: false,
-              });
-            } else if (from === 'system') {
-              self.appendMessage('bot', m.text);
-              if (/you are now chatting with/i.test(m.text || '')) {
-                var match = String(m.text).match(/chatting with\s+(.+?)\.?$/i);
-                if (match && match[1]) {
-                  self._liveAgentConnectedBanner(match[1].trim());
-                }
-              }
-            }
-            if (m.createdAt) self.liveAgentSince = m.createdAt;
-            else if (m.at) self.liveAgentSince = m.at;
-          });
+          if (data) self._liveAgentIngestMessages(data);
         })
         .catch(function () {});
     };
@@ -259,24 +318,13 @@
         })
         .then(function (st) {
           if (!st || !st.ok || !st.humanActive) return;
-          self.liveAgentMode = true;
-          self.liveAgentSince = '';
-          self.liveAgentSeen = {};
+          self.startLiveAgentMode({});
           if (st.agentConnected && st.assignedAgentDisplayName) {
-            self._liveAgentConnectedBanner(st.assignedAgentDisplayName);
-          } else {
-            self._showLiveAgentBanner(
-              t(self, 'waiting', 'Waiting for an agent…')
+            self._liveAgentAnnounceConnected(
+              st.assignedAgentDisplayName,
+              st.connectedMessage || ''
             );
           }
-          var cfg = liveCfg();
-          if (self._liveAgentPollTimer) {
-            clearInterval(self._liveAgentPollTimer);
-          }
-          self._liveAgentPollTimer = setInterval(function () {
-            self._liveAgentPollTick();
-          }, cfg.pollIntervalMs || 2000);
-          self._liveAgentPollTick();
         })
         .catch(function () {});
     };

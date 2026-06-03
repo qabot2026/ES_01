@@ -97,6 +97,10 @@ app.post('/api/chat', async (req, res) => {
 
   try {
     if (liveAgent.isDialogflowBlockedForSession(sid)) {
+      const conv = liveAgent.getConversation(sid);
+      const agentName = conv
+        ? liveAgent.resolveAgentDisplayName(conv.assignedAgentEmail)
+        : '';
       return res.json({
         sessionId: sid,
         reply: '',
@@ -104,6 +108,11 @@ app.post('/api/chat', async (req, res) => {
         liveAgent: true,
         humanActive: true,
         skipBot: true,
+        agentConnected: !!(conv && conv.status === 'active' && conv.assignedAgentEmail),
+        assignedAgentDisplayName: agentName,
+        connectedMessage: agentName
+          ? `You are now chatting with ${agentName}.`
+          : '',
       });
     }
     let result = eventName

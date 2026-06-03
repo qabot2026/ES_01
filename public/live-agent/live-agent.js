@@ -114,7 +114,24 @@
     }
 
     function agentIdsMatch_(assigned, mine) {
-        return normalizeAgentId_(assigned) === normalizeAgentId_(mine);
+        const a = String(assigned || "").trim().toLowerCase();
+        const m = String(mine || "").trim().toLowerCase();
+        if (!a || !m) {
+            return false;
+        }
+        if (a === m) {
+            return true;
+        }
+        if (a.includes("@") && m.includes("@")) {
+            return a === m;
+        }
+        if (a.includes("@") && !m.includes("@")) {
+            return a.split("@")[0] === m;
+        }
+        if (!a.includes("@") && m.includes("@")) {
+            return a === m.split("@")[0];
+        }
+        return false;
     }
 
     function persistAuth_(secret, name) {
@@ -1598,16 +1615,14 @@
         if (!t) {
             return t;
         }
-        const agentEmail =
-            (selectedConv && selectedConv.assignedAgentEmail) ||
-            (selectedConv && selectedConv.acceptedByEmail) ||
-            "";
         if (
             t === "live_agent_human_connected" ||
             /^(.+?)\s+joined the chat\.?$/i.test(t) ||
-            /^Agent\s+\S+@\S+\s+accepted the chat\.?$/i.test(t)
+            /^Agent\s+\S+@\S+\s+accepted the chat\.?$/i.test(t) ||
+            /^you are now chatting with\s+/i.test(t)
         ) {
-            return "You are now chatting with " + resolveAgentDisplayName_(agentEmail) + ".";
+            const visitor = resolveVisitorDisplayName_(selectedConv, selectedVisitorContext);
+            return "You are now chatting with " + visitor + ".";
         }
         return t;
     }
@@ -1620,19 +1635,7 @@
             m.role === "system"
                 ? escapeHtml(formatSystemLineForDesk_(m.text || ""))
                 : escapeHtml(m.text || "");
-        const isMyAgentMsg =
-            (m.role === "agent" || m.role === "staff") && agentIdsMatch_(m.senderEmail, agentId);
-        if (
-            (m.role === "agent" || m.role === "staff")
-            && deskGeneral_().showAgentNameInChat !== false
-            && !isMyAgentMsg
-        ) {
-            body =
-                '<span class="msg-agent-name">' +
-                escapeHtml(agentLabelForMessage_(m)) +
-                "</span> " +
-                body;
-        }
+        /* Desk: no agent name prefix — agents see plain message bubbles */
         div.innerHTML = body + "<time>" + escapeHtml(formatTime(m.createdAt)) + "</time>";
         messageList.appendChild(div);
     }
