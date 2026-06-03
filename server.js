@@ -11,6 +11,7 @@ const chatTranscript = require('./lib/chat-transcript');
 const sheets = require('./lib/sheets');
 const conversationSheet = require('./lib/conversation-sheet');
 const gcsUpload = require('./lib/gcs-upload');
+const documentsCatalog = require('./lib/documents-catalog');
 
 const app = express();
 const PORT = process.env.PORT || 4567;
@@ -393,6 +394,35 @@ app.get('/api/analytics/summary', requireDeskAuth, (_req, res) => {
     sheetsConfigured: sheets.isConfigured(),
     ...chatTranscript.getAnalyticsSummary(queue),
   });
+});
+
+app.get('/api/documents/catalog', requireDeskAuth, async (req, res) => {
+  try {
+    const result = await documentsCatalog.listDocumentCatalog({
+      limit: req.query.limit,
+    });
+    if (!result.ok) {
+      return res.status(503).json(result);
+    }
+    res.json(result);
+  } catch (err) {
+    console.error('[documents/catalog]', err.message);
+    res.status(500).json({ ok: false, error: 'catalog_failed', message: err.message });
+  }
+});
+
+app.get('/api/documents/download-url', requireDeskAuth, async (req, res) => {
+  try {
+    const result = await documentsCatalog.getDownloadUrl(req.query.object);
+    if (!result.ok) {
+      const status = result.error === 'not_found' ? 404 : 503;
+      return res.status(status).json(result);
+    }
+    res.json(result);
+  } catch (err) {
+    console.error('[documents/download-url]', err.message);
+    res.status(500).json({ ok: false, error: 'download_failed', message: err.message });
+  }
 });
 
 app.get('/api/phrase-translations', (req, res) => {

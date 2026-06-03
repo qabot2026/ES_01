@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Uploaded documents</title>
+    <link rel="stylesheet" href="documents.css" />
+  </head>
+  <body>
+    <div class="docs-app">
+      <aside class="docs-sidebar">
+        <div class="docs-brand">
+          <span class="docs-brand__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+              <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+              <path d="M14 2v6h6M12 18v-6M9 15h6" />
+            </svg>
+          </span>
+          <div>
+            <strong>Document vault</strong>
+            <span>Client uploads</span>
+          </div>
+        </div>
+        <nav class="docs-side-nav">
+          <a href="index.html">Analytics</a>
+          <a href="documents.html" class="is-active">Documents</a>
+          <a href="../live-agent/">Service desk</a>
+          <a href="../live-agent/settings.html">Settings</a>
+        </nav>
+      </aside>
+
+      <div class="docs-main">
+        <nav class="docs-mobile-nav" aria-label="Navigation">
+          <a href="index.html">Analytics</a>
+          <a href="documents.html">Documents</a>
+          <a href="../live-agent/">Desk</a>
+        </nav>
+        <header class="docs-header">
+          <div>
+            <h1>Uploaded documents</h1>
+            <p class="docs-muted">View and download files from chat upload forms</p>
+          </div>
+          <div class="docs-header__actions">
+            <button type="button" id="docs-refresh" class="docs-btn docs-btn--primary">
+              Refresh
+            </button>
+          </div>
+        </header>
+
+        <section class="docs-toolbar">
+          <div class="docs-search-wrap">
+            <svg class="docs-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="7" />
+              <path d="M20 20l-3-3" />
+            </svg>
+            <input
+              type="search"
+              id="docs-search"
+              class="docs-search"
+              placeholder="Search mobile, name, file name…"
+              autocomplete="off"
+            />
+          </div>
+          <div class="docs-stats" id="docs-stats">
+            <span class="docs-stat"><strong id="docs-count-folders">—</strong> uploads</span>
+            <span class="docs-stat"><strong id="docs-count-files">—</strong> files</span>
+          </div>
+        </section>
+
+        <div id="docs-alert" class="docs-alert" hidden></div>
+        <div id="docs-grid" class="docs-grid">
+          <p class="docs-loading">Loading documents…</p>
+        </div>
+      </div>
+    </div>
+
+    <dialog id="docs-modal" class="docs-modal">
+      <div class="docs-modal__panel">
+        <header class="docs-modal__head">
+          <div>
+            <h2 id="docs-modal-title">Upload</h2>
+            <p id="docs-modal-sub" class="docs-muted"></p>
+          </div>
+          <button type="button" class="docs-modal__close" id="docs-modal-close" aria-label="Close">
+            ×
+          </button>
+        </header>
+        <ul id="docs-modal-files" class="docs-file-list"></ul>
+      </div>
+    </dialog>
+
+    <script src="documents.js"></script>
+  </body>
+</html>

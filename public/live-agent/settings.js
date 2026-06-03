@@ -35,6 +35,12 @@
       token: token,
       apiBase: window.location.origin.replace(/\/live-agent\/?$/, ''),
     });
-    window.location.href = 'index.html';
+    var params = new URLSearchParams(window.location.search);
+    var next = params.get('next');
+    if (next && !/^https?:\/\//i.test(next) && next.indexOf('..') < 0) {
+      window.location.href = next.charAt(0) === '/' ? next : '../' + next;
+    } else {
+      window.location.href = 'index.html';
+    }
   });
 })();
