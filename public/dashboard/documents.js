@@ -114,6 +114,7 @@
           updated_at: f.updated_at || file.uploaded_at,
           session_id: f.session_id || '',
           storage_folder: f.storage_folder || '',
+          tag: file.tag || f.tag || '',
         });
       });
     });
@@ -162,7 +163,9 @@
           ' ' +
           (r.storage_folder || '') +
           ' ' +
-          (r.session_id || '');
+          (r.session_id || '') +
+          ' ' +
+          (r.tag || '');
         return hay.toLowerCase().indexOf(q) >= 0;
       });
     }
@@ -175,7 +178,7 @@
 
     if (!state.filtered.length) {
       tbody.innerHTML =
-        '<tr><td colspan="6" class="docs-table__empty">No documents found.</td></tr>';
+        '<tr><td colspan="7" class="docs-table__empty">No documents found.</td></tr>';
       return;
     }
 
@@ -191,6 +194,9 @@
           (ext
             ? '<span class="docs-file-type">' + escapeHtml(ext) + '</span>'
             : '') +
+          '</td>' +
+          '<td>' +
+          escapeHtml(r.tag || '—') +
           '</td>' +
           '<td>' +
           escapeHtml(customer) +
@@ -318,7 +324,7 @@
   function load() {
     showAlert('');
     document.getElementById('docs-tbody').innerHTML =
-      '<tr><td colspan="6" class="docs-table__empty">Loading…</td></tr>';
+      '<tr><td colspan="7" class="docs-table__empty">Loading…</td></tr>';
     fetch(apiBase() + '/api/documents/catalog', { headers: headers() })
       .then(function (r) {
         return r.json();
@@ -334,7 +340,7 @@
             showAlert(data.message || 'Could not load documents.');
           }
           document.getElementById('docs-tbody').innerHTML =
-            '<tr><td colspan="6" class="docs-table__empty">—</td></tr>';
+            '<tr><td colspan="7" class="docs-table__empty">—</td></tr>';
           return;
         }
         state.rows = foldersToRows(data.folders || []);
@@ -343,7 +349,7 @@
       .catch(function () {
         showAlert('Network error. Check desk token and server.');
         document.getElementById('docs-tbody').innerHTML =
-          '<tr><td colspan="6" class="docs-table__empty">—</td></tr>';
+          '<tr><td colspan="7" class="docs-table__empty">—</td></tr>';
       });
   }
 

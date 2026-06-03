@@ -2348,7 +2348,7 @@
         typeof widget.uploadFormDocuments === 'function'
       ) {
         widget
-          .uploadFormDocuments(selectedFiles, result.values)
+          .uploadFormDocuments(selectedFiles, result.values, request)
           .then(function (up) {
             if (!up || !up.ok) {
               wrap.classList.remove('qa-form--submitted');

@@ -341,12 +341,14 @@ app.post(
       return res.status(400).json({ error: 'files_required' });
     }
     try {
+      const uploadTag = String(req.body.tag || req.body.upload_tag || '').trim();
       const pack = await gcsUpload.uploadSubmissionFilesToGcs(files, {
         mobile: req.body.mobile,
         dialCode: req.body.dial_code || req.body.dialCode,
         clientSessionId: sessionId,
         name: req.body.name,
         email: req.body.email,
+        tag: uploadTag,
       });
       const meta = {
         document: pack.document_names || '',
@@ -366,6 +368,7 @@ app.post(
       if (req.body.dial_code || req.body.dialCode) {
         meta.dial_code = String(req.body.dial_code || req.body.dialCode).trim();
       }
+      if (uploadTag) meta.tag = uploadTag;
       meta.userEngaged = true;
       chatTranscript.mergeSessionMeta(sessionId, meta);
       if (chatTranscript.shouldScheduleSheetForSession(sessionId)) {

@@ -2860,7 +2860,7 @@
     }
   };
 
-  QualityAssistantWidget.prototype.uploadFormDocuments = function (files, values) {
+  QualityAssistantWidget.prototype.uploadFormDocuments = function (files, values, request) {
     if (!this.apiBase || !files || !files.length) {
       return Promise.resolve({ ok: false, message: 'No files selected' });
     }
@@ -2868,6 +2868,12 @@
     var vals = values || {};
     var fd = new FormData();
     fd.append('sessionId', this.sessionId);
+    var uploadTag =
+      (request && request.tag) ||
+      (vals && vals.tag) ||
+      '';
+    uploadTag = String(uploadTag || '').trim();
+    if (uploadTag) fd.append('tag', uploadTag);
     var mobile = vals.mobile != null ? String(vals.mobile).trim() : String(ctx.mobile || '').trim();
     var dial = vals.dial_code != null ? String(vals.dial_code).trim() : String(ctx.dial_code || '').trim();
     if (mobile) fd.append('mobile', mobile);

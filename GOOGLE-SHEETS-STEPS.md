@@ -11,7 +11,7 @@ Har chat session ki **ek row** Sheet mein jati hai (headers ke saath). Naye mess
 
 | A | B | C | … |
 |---|---|---|
-| **Chatscript** | Conv. Link | Conv. Date | … (see app `SHEET_HEADERS` — 34 columns through **Fall back**) |
+| **Chatscript** | Conv. Link | Conv. Date | … (see app `SHEET_HEADERS` — 35 columns through **Fall back**; **Tag** is after **Document**) |
 
 Row 1 must start with **Chatscript** (clickable link in each row), then Conv. Link, Conv. Date, …
 
@@ -43,7 +43,7 @@ App pehli baar sync par khali row 1 par headers **auto** bhi likh sakta hai — 
 |----------|--------|
 | `GOOGLE_CREDENTIALS_JSON` | Poora service account JSON (Dialogflow wala hi) |
 | `SHEETS_SPREADSHEET_ID` | Sheet URL se ID |
-| `SHEETS_RANGE` | `Sheet1!A:AH` (34 columns) |
+| `SHEETS_RANGE` | `Sheet1!A:AI` (35 columns) |
 | `PUBLIC_BASE_URL` | `https://aapka-app.up.railway.app` (Chatscript + Conv. Link URLs) |
 
 **Redeploy** karein.
