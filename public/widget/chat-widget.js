@@ -2846,9 +2846,30 @@
       });
   };
 
+  QualityAssistantWidget.prototype.appendTranscriptTurn = function (role, text) {
+    if (!this.apiBase || !this.sessionId) return Promise.resolve();
+    var t = text == null ? '' : String(text).trim();
+    if (!t) return Promise.resolve();
+    return fetch(this.apiBase + '/api/transcript/append', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        sessionId: this.sessionId,
+        role: role || 'user',
+        text: t,
+      }),
+    }).catch(function () {
+      return null;
+    });
+  };
+
   QualityAssistantWidget.prototype.handleFormClose = function (payload) {
     payload = payload || {};
     this.removeFormCard(payload.formEl);
+    var formId = payload.formId ? String(payload.formId).trim() : '';
+    if (formId) {
+      this.appendTranscriptTurn('user', '__form_closed:' + formId);
+    }
     var req = payload.request || {};
     var action =
       global.QAChatForm && global.QAChatForm.resolveFormAction
@@ -2951,7 +2972,9 @@
           languageCode: self.getDialogflowLang(),
         },
         { applyResponse: false, showTyping: false, allowWhileSending: true }
-      );
+      ).then(function () {
+        if (ack) return self.appendTranscriptTurn('bot', ack);
+      });
 
       if (onSubmit) {
         chainPromise = chainPromise.then(function () {
