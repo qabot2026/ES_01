@@ -91,6 +91,10 @@
     return m ? m[1] : '';
   }
 
+  var COPY_LINK_ICON =
+    '<svg class="docs-icon" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" focusable="false">' +
+    '<path fill="currentColor" d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v16h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 18H8V7h11v16z"/></svg>';
+
   function escapeHtml(s) {
     return String(s)
       .replace(/&/g, '&amp;')
@@ -123,6 +127,7 @@
           session_id: file.session_id || f.session_id || '',
           storage_folder: f.storage_folder || '',
           tag: file.tag || f.tag || '',
+          storage_link: file.storage_link || '',
         });
       });
     });
@@ -186,7 +191,7 @@
 
     if (!state.filtered.length) {
       tbody.innerHTML =
-        '<tr><td colspan="7" class="docs-table__empty">No documents found.</td></tr>';
+        '<tr><td colspan="8" class="docs-table__empty">No documents found.</td></tr>';
       return;
     }
 
@@ -211,6 +216,9 @@
           escapeHtml(displayName) +
           '</td>' +
           '<td>' +
+          escapeHtml(r.email || '—') +
+          '</td>' +
+          '<td>' +
           escapeHtml(formatMobile(r.mobile, r.dial_code)) +
           '</td>' +
           '<td>' +
@@ -229,6 +237,14 @@
           '" data-filename="' +
           escapeHtml(r.file_name) +
           '">Download</button>' +
+          '<span class="docs-sep">|</span>' +
+          '<button type="button" class="docs-copy-link" data-object="' +
+          escapeHtml(r.gcs_object) +
+          '" data-storage-link="' +
+          escapeHtml(r.storage_link || '') +
+          '" aria-label="Copy link" title="Copy link">' +
+          COPY_LINK_ICON +
+          '</button>' +
           '<span class="docs-sep">|</span><a class="docs-link-transcript" href="../conversation-transcript?session=' +
           encodeURIComponent(chatSid) +
           '" target="_blank" rel="noopener noreferrer">Chatscript</a>' +
@@ -247,6 +263,84 @@
         downloadFile(btn);
       });
     });
+    tbody.querySelectorAll('.docs-copy-link').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        copyFileLink(btn);
+      });
+    });
+  }
+
+  function copyToClipboard(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      return navigator.clipboard.writeText(text);
+    }
+    return new Promise(function (resolve, reject) {
+      try {
+        var ta = document.createElement('textarea');
+        ta.value = text;
+        ta.setAttribute('readonly', '');
+        ta.style.position = 'fixed';
+        ta.style.left = '-9999px';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        ta.remove();
+        resolve();
+      } catch (e) {
+        reject(e);
+      }
+    });
+  }
+
+  function copyFileLink(btn) {
+    var object = btn.getAttribute('data-object');
+    var storageLink = btn.getAttribute('data-storage-link') || '';
+    if (!object) return;
+
+    function done(url) {
+      if (!url) {
+        alert('No link available.');
+        return;
+      }
+      copyToClipboard(url)
+        .then(function () {
+          btn.classList.add('docs-copy-link--done');
+          var prevTitle = btn.getAttribute('title');
+          btn.setAttribute('title', 'Copied');
+          setTimeout(function () {
+            btn.classList.remove('docs-copy-link--done');
+            btn.setAttribute('title', prevTitle || 'Copy link');
+          }, 1600);
+        })
+        .catch(function () {
+          alert('Could not copy link.');
+        });
+    }
+
+    if (storageLink) {
+      done(storageLink);
+      return;
+    }
+
+    btn.disabled = true;
+    fetch(
+      apiBase() +
+        '/api/documents/download-url?object=' +
+        encodeURIComponent(object),
+      { headers: headers() }
+    )
+      .then(function (r) {
+        return r.json();
+      })
+      .then(function (data) {
+        done(data.ok && data.url ? data.url : '');
+      })
+      .catch(function () {
+        alert('Could not get link.');
+      })
+      .finally(function () {
+        btn.disabled = false;
+      });
   }
 
   function openView(btn) {
@@ -331,7 +425,7 @@
   function load() {
     showAlert('');
     document.getElementById('docs-tbody').innerHTML =
-      '<tr><td colspan="7" class="docs-table__empty">Loading…</td></tr>';
+      '<tr><td colspan="8" class="docs-table__empty">Loading…</td></tr>';
     fetch(apiBase() + '/api/documents/catalog', { headers: headers() })
       .then(function (r) {
         return r.json();
@@ -347,7 +441,7 @@
             showAlert(data.message || 'Could not load documents.');
           }
           document.getElementById('docs-tbody').innerHTML =
-            '<tr><td colspan="7" class="docs-table__empty">—</td></tr>';
+            '<tr><td colspan="8" class="docs-table__empty">—</td></tr>';
           return;
         }
         state.rows = foldersToRows(data.folders || []);
@@ -356,7 +450,7 @@
       .catch(function () {
         showAlert('Network error. Check desk token and server.');
         document.getElementById('docs-tbody').innerHTML =
-          '<tr><td colspan="7" class="docs-table__empty">—</td></tr>';
+          '<tr><td colspan="8" class="docs-table__empty">—</td></tr>';
       });
   }
 

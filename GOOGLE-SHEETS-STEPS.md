@@ -11,9 +11,9 @@ Har chat session ki **ek row** Sheet mein jati hai (headers ke saath). Naye mess
 
 | A | B | C | … |
 |---|---|---|
-| **Chatscript** | Conv. Link | Conv. Date | … (see app `SHEET_HEADERS` — 34 columns through **Fall back**) |
+| **Chatscript** | Conv. Date | Conv. Time | … (see app `SHEET_HEADERS` — 33 columns through **Fall back**) |
 
-Row 1 must start with **Chatscript** (clickable link in each row), then Conv. Link, Conv. Date, …
+Row 1 must start in **column A** with **Chatscript**, then **Conv. Date** in B, **Conv. Time** in C, and so on (no extra blank column before A).
 
 3. Sheet tab naam note karein (default `Sheet1`).
 
@@ -43,8 +43,8 @@ App pehli baar sync par khali row 1 par headers **auto** bhi likh sakta hai — 
 |----------|--------|
 | `GOOGLE_CREDENTIALS_JSON` | Poora service account JSON (Dialogflow wala hi) |
 | `SHEETS_SPREADSHEET_ID` | Sheet URL se ID |
-| `SHEETS_RANGE` | `Sheet1!A:AH` (34 columns) |
-| `PUBLIC_BASE_URL` | `https://aapka-app.up.railway.app` (Chatscript + Conv. Link URLs) |
+| `SHEETS_RANGE` | `Sheet1!A:AG` (33 columns) |
+| `PUBLIC_BASE_URL` | `https://aapka-app.up.railway.app` (Chatscript hyperlink URLs) |
 
 **Redeploy** karein.
 
@@ -70,13 +70,13 @@ Agar row nahi aati:
 
 | Column | Source |
 |--------|--------|
-| Chatscript | Clickable **Chatscript** → opens `/conversation-transcript?session=…` in browser |
-| Conv. Link | Same transcript URL (plain link) |
-| Conv. Date / Time | Pehla message (default TZ `Asia/Kolkata`) |
+| Chatscript | Column **A** — clickable **Chatscript** → `/conversation-transcript?session=…` |
+| Conv. Date / Time | Columns **B** / **C** — pehla message (default TZ `Asia/Kolkata`) |
 | Name, Mobile, Email | Forms / `clientContext` → `/api/session-context` |
 | User Queries | Saare user messages joined |
 | Source URL, UTM*, Device, Browser, OS | Widget on load |
 | IP Address | Server `X-Forwarded-For` |
+| Document | Exact GCS storage URL(s) for uploaded files (`https://storage.googleapis.com/…`) |
 | App. Booked / Date / Time | Appointment form submit |
 | Rating, Feedback | Feedback form |
 | Duration, Message Count, Avg Response Time | Transcript turns se calculate |

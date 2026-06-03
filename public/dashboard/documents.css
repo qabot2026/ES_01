@@ -177,6 +177,31 @@
   text-decoration: underline;
 }
 
+.docs-copy-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0 !important;
+  border-radius: 6px;
+  color: var(--dash-primary);
+  background: transparent;
+}
+
+.docs-copy-link:hover {
+  background: #e0f2fe;
+  text-decoration: none !important;
+}
+
+.docs-copy-link--done {
+  color: #16a34a;
+}
+
+.docs-copy-link .docs-icon {
+  display: block;
+}
+
 .visually-hidden {
   position: absolute;
   width: 1px;
