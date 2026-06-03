@@ -101,6 +101,13 @@ app.post('/api/chat', async (req, res) => {
       const agentName = conv
         ? liveAgent.resolveAgentDisplayName(conv.assignedAgentEmail)
         : '';
+      if (!eventName && message && typeof message === 'string' && message.trim()) {
+        try {
+          liveAgent.postUserMessage(sid, message.trim());
+        } catch (postErr) {
+          console.warn('[live-agent] visitor message during handoff:', postErr.message);
+        }
+      }
       return res.json({
         sessionId: sid,
         reply: '',

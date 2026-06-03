@@ -67,6 +67,7 @@
     /** @type {Record<string, unknown> | null} */
     let selectedVisitorContext = null;
     let lastMessageIso = "";
+    let lastMessageId = "";
     /** Tracks unread on the open chat so a bump forces a full message resync. */
     let lastSelectedUnreadAgent = 0;
     let pollTimer = null;
@@ -998,7 +999,8 @@
                     const unreadNow = hit.unreadForAgent || 0;
                     if (unreadNow > lastSelectedUnreadAgent) {
                         lastMessageIso = "";
-                        loadMessages(selectedId, true);
+                        lastMessageId = "";
+                        loadMessages(selectedId, true, true);
                     }
                     lastSelectedUnreadAgent = unreadNow;
                     selectedConv = hit;
@@ -1529,6 +1531,7 @@
         selectedId = c.id;
         selectedConv = c;
         lastMessageIso = "";
+        lastMessageId = "";
         lastSelectedUnreadAgent = c.unreadForAgent || 0;
         messageList.innerHTML = "";
         chatEmpty.classList.add("hidden");
@@ -1567,18 +1570,27 @@
             messagePollsSinceFullSync += 1;
         }
         try {
-            const q =
-                !useFull && lastMessageIso
-                    ? "?since=" + encodeURIComponent(lastMessageIso) + "&limit=80"
-                    : "?limit=80";
+            const qParts = ["limit=80"];
+            if (!useFull && lastMessageId) {
+                qParts.push("sinceId=" + encodeURIComponent(lastMessageId));
+            } else if (!useFull && lastMessageIso) {
+                qParts.push("since=" + encodeURIComponent(lastMessageIso));
+            }
+            if (useFull) {
+                qParts.push("markRead=1");
+            }
             const data = await apiFetch(
-                `${API}/conversations/${encodeURIComponent(conversationId)}/messages${q}`
+                `${API}/conversations/${encodeURIComponent(conversationId)}/messages?` +
+                    qParts.join("&")
             );
             const messages = data.messages || [];
             if (!messages.length && quiet) return;
             let maxIso = lastMessageIso;
             for (const m of messages) {
                 if (document.querySelector('[data-msg-id="' + m.id + '"]')) {
+                    if (m.id) {
+                        lastMessageId = m.id;
+                    }
                     if (m.createdAt && (!maxIso || m.createdAt > maxIso)) {
                         maxIso = m.createdAt;
                     }
@@ -1586,6 +1598,9 @@
                 }
                 if (isStaleEndedSystemMsg_(m, selectedConv)) continue;
                 appendMessageEl(m);
+                if (m.id) {
+                    lastMessageId = m.id;
+                }
                 if (m.createdAt && (!maxIso || m.createdAt > maxIso)) {
                     maxIso = m.createdAt;
                 }
@@ -1747,6 +1762,7 @@
             if (opt) opt.remove();
             if (data.message) {
                 appendMessageEl(data.message);
+                if (data.message.id) lastMessageId = data.message.id;
                 if (data.message.createdAt) lastMessageIso = data.message.createdAt;
             }
             if (data.conversation) {

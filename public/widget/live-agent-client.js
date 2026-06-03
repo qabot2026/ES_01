@@ -44,7 +44,12 @@
 
     var origSend = p.sendMessageWithText;
     p.sendMessageWithText = function (text) {
-      if (this.liveAgentMode) {
+      text = (text || '').trim();
+      if (!text) return;
+      if (this.liveAgentMode || this._liveAgentHumanActive) {
+        if (!this.liveAgentMode) {
+          this.startLiveAgentMode({});
+        }
         this._liveAgentSendUser(text);
         return;
       }
@@ -66,6 +71,7 @@
       }
       var data = result.data || {};
       if (data.liveAgent && liveEnabled()) {
+        this._liveAgentHumanActive = true;
         if (!this.liveAgentMode) {
           this.startLiveAgentMode(data);
         }
@@ -99,7 +105,9 @@
       this.liveAgentMode = true;
       if (starting) {
         this.liveAgentSince = '';
+        this.liveAgentLastId = '';
         this.liveAgentSeen = {};
+        this._liveAgentHumanActive = true;
         this._liveAgentConnectedAnnounced = false;
         this._showLiveAgentBanner(
           t(this, 'waiting', 'Waiting for an agent…')
@@ -136,6 +144,7 @@
 
     p.stopLiveAgentMode = function (endedByAgent) {
       this.liveAgentMode = false;
+      this._liveAgentHumanActive = false;
       this._liveAgentConnectedAnnounced = false;
       if (this._liveAgentPollTimer) {
         clearInterval(this._liveAgentPollTimer);
@@ -191,9 +200,6 @@
       var self = this;
       text = (text || '').trim();
       if (!text) return;
-      if (!this.liveAgentMode) {
-        this.startLiveAgentMode({});
-      }
       this.markUserInteracted();
       this.noteUserActivity();
       this.appendMessage('user', text);
@@ -248,6 +254,7 @@
             self.appendMessage('bot', m.text);
           }
         }
+        if (m.id) self.liveAgentLastId = m.id;
         if (m.createdAt) self.liveAgentSince = m.createdAt;
         else if (m.at) self.liveAgentSince = m.at;
       });
@@ -255,7 +262,8 @@
 
     p._liveAgentPollTick = function () {
       var self = this;
-      if (!this.liveAgentMode || !this.apiBase || !this.sessionId) return;
+      if (!this.apiBase || !this.sessionId) return;
+      if (!this.liveAgentMode && !this._liveAgentHumanActive) return;
       var statusUrl =
         this.apiBase +
         '/api/live-agent/status?clientSessionId=' +
@@ -263,19 +271,28 @@
       var msgUrl =
         this.apiBase +
         '/api/live-agent/messages?clientSessionId=' +
-        encodeURIComponent(this.sessionId) +
-        (this.liveAgentSince
-          ? '&since=' + encodeURIComponent(this.liveAgentSince)
-          : '');
+        encodeURIComponent(this.sessionId);
+      if (this.liveAgentLastId) {
+        msgUrl += '&sinceId=' + encodeURIComponent(this.liveAgentLastId);
+      } else if (this.liveAgentSince) {
+        msgUrl += '&since=' + encodeURIComponent(this.liveAgentSince);
+      }
       fetch(statusUrl)
         .then(function (r) {
           return r.json();
         })
         .then(function (st) {
           if (!st || !st.ok) return null;
+          self._liveAgentHumanActive = !!st.humanActive;
+          if (!st.humanActive) {
+            self._liveAgentHumanActive = false;
+          }
           if (st.conversation && st.conversation.status === 'closed') {
             self.stopLiveAgentMode(true);
             return null;
+          }
+          if (st.humanActive && !self.liveAgentMode) {
+            self.startLiveAgentMode({});
           }
           var agentLabel =
             st.assignedAgentDisplayName ||
@@ -318,6 +335,7 @@
         })
         .then(function (st) {
           if (!st || !st.ok || !st.humanActive) return;
+          self._liveAgentHumanActive = true;
           self.startLiveAgentMode({});
           if (st.agentConnected && st.assignedAgentDisplayName) {
             self._liveAgentAnnounceConnected(

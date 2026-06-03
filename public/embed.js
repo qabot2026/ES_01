@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var QA_ASSET_VERSION = '20260603-live-agent-fix';
+  var QA_ASSET_VERSION = '20260603-live-agent-messaging';
 
   var QA_FORM_SCRIPTS = [
     'contact.js',
