@@ -111,6 +111,9 @@ app.post('/api/chat', async (req, res) => {
       return res.json({
         sessionId: sid,
         reply: '',
+        replyParts: [],
+        chips: [],
+        forms: [],
         messages: [],
         liveAgent: true,
         humanActive: true,
@@ -149,6 +152,19 @@ app.post('/api/chat', async (req, res) => {
         channel: 'Web',
         liveAgentRequested: true,
       });
+      result.reply = '';
+      result.replyParts = [];
+      result.chips = [];
+      result.chipHeading = '';
+      result.forms = [];
+      result.infoCards = [];
+      result.downloads = [];
+      result.dropdowns = [];
+      result.galleries = [];
+      result.cardCarousels = [];
+      result.liveAgent = true;
+      result.humanActive = true;
+      result.skipBot = true;
     }
 
     const userText = eventName ? '' : message && message.trim();

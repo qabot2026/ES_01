@@ -56,9 +56,13 @@
       return origSend.call(this, text);
     };
 
+    function humanChatActive_(w) {
+      return !!(w && (w.liveAgentMode || w._liveAgentHumanActive));
+    }
+
     var origPostDf = p.postToDialogflow;
     p.postToDialogflow = function (body, opts) {
-      if (this.liveAgentMode) {
+      if (humanChatActive_(this)) {
         return Promise.resolve();
       }
       return origPostDf.call(this, body, opts);
@@ -70,20 +74,45 @@
         return origApply.call(this, result);
       }
       var data = result.data || {};
+      if (data.humanActive) {
+        this._liveAgentHumanActive = true;
+      }
       if (data.liveAgent && liveEnabled()) {
         this._liveAgentHumanActive = true;
         if (!this.liveAgentMode) {
           this.startLiveAgentMode(data);
         }
-        if (data.skipBot) {
-          return;
-        }
+        return;
       }
-      if (this.liveAgentMode) {
+      if (humanChatActive_(this)) {
         return;
       }
       return origApply.call(this, result);
     };
+
+    var origWelcome = p.triggerWelcomeEvent;
+    if (typeof origWelcome === 'function') {
+      p.triggerWelcomeEvent = function () {
+        if (humanChatActive_(this)) return;
+        return origWelcome.call(this);
+      };
+    }
+
+    var origEndChat = p.triggerEndChatEvent;
+    if (typeof origEndChat === 'function') {
+      p.triggerEndChatEvent = function (opts) {
+        if (humanChatActive_(this)) return Promise.resolve();
+        return origEndChat.call(this, opts);
+      };
+    }
+
+    var origDfAction = p.runFormDialogflowAction;
+    if (typeof origDfAction === 'function') {
+      p.runFormDialogflowAction = function (action, opts) {
+        if (humanChatActive_(this)) return Promise.resolve();
+        return origDfAction.call(this, action, opts);
+      };
+    }
 
     p._liveAgentAnnounceConnected = function (agentLabel, messageText) {
       var name = (agentLabel && String(agentLabel).trim()) || 'an agent';
@@ -136,9 +165,10 @@
       if (this._liveAgentPollTimer) {
         clearInterval(this._liveAgentPollTimer);
       }
+      var pollMs = Math.min(cfg.pollIntervalMs || 2000, 1500);
       this._liveAgentPollTimer = setInterval(function () {
         self._liveAgentPollTick();
-      }, cfg.pollIntervalMs || 2000);
+      }, pollMs);
       this._liveAgentPollTick();
     };
 
@@ -219,6 +249,7 @@
           if (!body || !body.ok) {
             throw new Error((body && body.error) || 'Send failed');
           }
+          self._liveAgentPollTick();
         })
         .catch(function () {
           self.showError('Could not send message to agent.');
@@ -233,28 +264,30 @@
         var key = messageKey(m);
         if (!key || self.liveAgentSeen[key]) return;
         self.liveAgentSeen[key] = true;
+        var role = m.role || '';
         var from =
           m.from ||
-          (m.role === 'agent'
+          (role === 'agent' || role === 'staff'
             ? 'agent'
-            : m.role === 'system'
+            : role === 'system'
               ? 'system'
               : '');
-        if (from === 'agent') {
+        if (from === 'agent' && m.text) {
           self.appendMessage('bot', m.text, {
             personaLabel: m.senderDisplayName || agentName,
             skipTranscriptLog: false,
           });
+          if (m.id) self.liveAgentLastId = m.id;
         } else if (from === 'system') {
           if (/you are now chatting with/i.test(m.text || '')) {
             var match = String(m.text).match(/chatting with\s+(.+?)\.?$/i);
             var label = match && match[1] ? match[1].trim() : agentName;
             self._liveAgentAnnounceConnected(label, m.text);
-          } else {
+          } else if (m.text) {
             self.appendMessage('bot', m.text);
           }
+          if (m.id) self.liveAgentLastId = m.id;
         }
-        if (m.id) self.liveAgentLastId = m.id;
         if (m.createdAt) self.liveAgentSince = m.createdAt;
         else if (m.at) self.liveAgentSince = m.at;
       });
