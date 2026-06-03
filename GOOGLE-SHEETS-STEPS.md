@@ -11,9 +11,9 @@ Har chat session ki **ek row** Sheet mein jati hai (headers ke saath). Naye mess
 
 | A | B | C | … |
 |---|---|---|
-| **Chatscript** | Conv. Date | Conv. Time | … (see app `SHEET_HEADERS` — 33 columns through **Fall back**) |
+| **Conv. Link** | Conv. Date | Conv. Time | … (see app `SHEET_HEADERS` — 33 columns through **Fall back**) |
 
-Row 1 must start in **column A** with **Chatscript**, then **Conv. Date** in B, **Conv. Time** in C, and so on (no extra blank column before A).
+Row 1 must start in **column A** with **Conv. Link** (clickable Chatscript in each data row), then **Conv. Date** in B, **Conv. Time** in C, and so on (no extra blank column before A).
 
 3. Sheet tab naam note karein (default `Sheet1`).
 
