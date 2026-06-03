@@ -215,7 +215,7 @@
           escapeHtml(r.file_name) +
           '">Download</button>' +
           (r.session_id
-            ? '<span class="docs-sep">|</span><a class="docs-link-transcript" href="../transcript.html?session=' +
+            ? '<span class="docs-sep">|</span><a class="docs-link-transcript" href="../conversation-transcript?session=' +
               encodeURIComponent(r.session_id) +
               '" target="_blank" rel="noopener noreferrer">Chatscript</a>'
             : '') +

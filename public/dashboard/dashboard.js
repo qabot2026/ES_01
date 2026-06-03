@@ -47,7 +47,7 @@
       .map(function (s) {
         var sid = s.sessionId || '';
         var href =
-          '../transcript.html?session=' + encodeURIComponent(sid);
+          '../conversation-transcript?session=' + encodeURIComponent(sid);
         return (
           '<div class="dash-row"><span>' +
           (s.preview || sid.slice(0, 12)) +

@@ -164,7 +164,7 @@
     detail.hidden = false;
     document.getElementById('la-detail-id').textContent = sessionId;
     link.href =
-      '../transcript.html?session=' + encodeURIComponent(sessionId);
+      '../conversation-transcript?session=' + encodeURIComponent(sessionId);
     fetchJson(
       apiBase() + '/api/transcript?sessionId=' + encodeURIComponent(sessionId),
       { headers: headers() }

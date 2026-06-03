@@ -12,6 +12,7 @@ const sheets = require('./lib/sheets');
 const conversationSheet = require('./lib/conversation-sheet');
 const gcsUpload = require('./lib/gcs-upload');
 const documentsCatalog = require('./lib/documents-catalog');
+const conversationTranscriptView = require('./lib/conversation-transcript-view');
 
 const app = express();
 const PORT = process.env.PORT || 4567;
@@ -393,6 +394,31 @@ app.post('/api/transcript/append', (req, res) => {
 
 app.get('/api/transcript', requireDeskAuth, (req, res) => {
   res.json(chatTranscript.getTranscript(req.query.sessionId));
+});
+
+app.get('/conversation-transcript', (_req, res) => {
+  res.sendFile(path.join(publicDir, 'conversation-transcript.html'));
+});
+
+app.get('/api/conversation-transcript', async (req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
+  const auth = conversationTranscriptView.verifyViewerAuth(req);
+  if (!auth.ok) {
+    return res.status(401).json({ ok: false, error: auth.error });
+  }
+  try {
+    const session = String(req.query.session || '').trim();
+    const result = await conversationTranscriptView.getConversationTranscript(
+      session
+    );
+    if (!result.ok) {
+      return res.status(400).json(result);
+    }
+    res.json(result);
+  } catch (err) {
+    console.error('[conversation-transcript]', err.message);
+    res.status(500).json({ ok: false, error: err.message });
+  }
 });
 
 app.get('/api/analytics/summary', requireDeskAuth, (_req, res) => {
