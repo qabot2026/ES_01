@@ -9,9 +9,11 @@ Har chat session ki **ek row** Sheet mein jati hai (headers ke saath). Naye mess
 1. [Google Sheets](https://sheets.google.com) → **Blank spreadsheet**
 2. **Row 1** par ye headers likhein (order same rakhein):
 
-| A | B | C | D | E | F | G | H | I | J | K | L | M | N | O | P | Q | R | S | T | U | V | W | X | Y | Z | AA | AB | AC | AD | AE | AF | AG |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| Conv. Link | Conv. Date | Conv. Time | Name | Mobile | Email | Channel | User Queries | Repeated User | Source URL | Session ID | Device | Browser | OS | City | IP Address | App. Booked | App. Date | App. Time | Document | Sentiment | Rating | Feedback | Duration | CRM Push Status | Message Count | Average Response Time | UtmCampaign | UtmContent | UtmMedium | UtmSource | UtmTerm | Fall back |
+| A | B | C | … |
+|---|---|---|
+| **Chatscript** | Conv. Link | Conv. Date | … (see app `SHEET_HEADERS` — 34 columns through **Fall back**) |
+
+Row 1 must start with **Chatscript** (clickable link in each row), then Conv. Link, Conv. Date, …
 
 3. Sheet tab naam note karein (default `Sheet1`).
 
@@ -41,8 +43,8 @@ App pehli baar sync par khali row 1 par headers **auto** bhi likh sakta hai — 
 |----------|--------|
 | `GOOGLE_CREDENTIALS_JSON` | Poora service account JSON (Dialogflow wala hi) |
 | `SHEETS_SPREADSHEET_ID` | Sheet URL se ID |
-| `SHEETS_RANGE` | `Sheet1!A:AG` (33 columns) |
-| `PUBLIC_BASE_URL` | `https://aapka-app.up.railway.app` (Conv. Link / transcript) |
+| `SHEETS_RANGE` | `Sheet1!A:AH` (34 columns) |
+| `PUBLIC_BASE_URL` | `https://aapka-app.up.railway.app` (Chatscript + Conv. Link URLs) |
 
 **Redeploy** karein.
 
@@ -68,7 +70,8 @@ Agar row nahi aati:
 
 | Column | Source |
 |--------|--------|
-| Conv. Link | Transcript URL (`PUBLIC_BASE_URL` + session) |
+| Chatscript | Clickable **Chatscript** → opens `/conversation-transcript?session=…` in browser |
+| Conv. Link | Same transcript URL (plain link) |
 | Conv. Date / Time | Pehla message (default TZ `Asia/Kolkata`) |
 | Name, Mobile, Email | Forms / `clientContext` → `/api/session-context` |
 | User Queries | Saare user messages joined |
