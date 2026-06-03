@@ -10,7 +10,7 @@ const liveAgent = require('./lib/live-agent');
 const chatTranscript = require('./lib/chat-transcript');
 const sheets = require('./lib/sheets');
 const conversationSheet = require('./lib/conversation-sheet');
-const driveUpload = require('./lib/drive-upload');
+const gcsUpload = require('./lib/gcs-upload');
 
 const app = express();
 const PORT = process.env.PORT || 4567;
@@ -323,11 +323,11 @@ app.post(
   '/api/upload/documents',
   uploadDocumentsMw.array('files', 10),
   async (req, res) => {
-    if (!driveUpload.isConfigured()) {
+    if (!gcsUpload.isConfigured()) {
       return res.status(503).json({
-        error: 'drive_not_configured',
+        error: 'gcs_not_configured',
         message:
-          'Set GOOGLE_DRIVE_FOLDER_ID and Drive auth (OAuth or service account). See GOOGLE-DRIVE-STEPS.md',
+          'Set GCS_BUCKET_NAME and GOOGLE_CREDENTIALS_JSON on Railway. See GCS-STORAGE-STEPS.md',
       });
     }
     const sessionId = String(req.body.sessionId || '').trim();
@@ -339,34 +339,31 @@ app.post(
       return res.status(400).json({ error: 'files_required' });
     }
     try {
-      const pack = await driveUpload.uploadSubmissionFilesToDrive(files, {
+      const pack = await gcsUpload.uploadSubmissionFilesToGcs(files, {
         mobile: req.body.mobile,
         dialCode: req.body.dial_code || req.body.dialCode,
         clientSessionId: sessionId,
       });
-      const links = pack.uploads
-        .map((u) => u.web_view_link)
-        .filter(Boolean)
-        .join('\n');
       const meta = {
-        document: pack.drive_subfolder_name,
-        drive_subfolder_id: pack.drive_subfolder_id,
-        drive_subfolder_name: pack.drive_subfolder_name,
-        drive_folder_link: pack.drive_folder_link,
-        document_links: links,
+        document: pack.storage_folder,
+        storage_folder: pack.storage_folder,
+        storage_path: pack.storage_path,
+        document_link: pack.document_link,
+        document_links: pack.document_links,
       };
       chatTranscript.mergeSessionMeta(sessionId, meta);
+      conversationSheet.scheduleSheetSync(sessionId);
       res.json({
         ok: true,
         sessionId,
-        drive_subfolder_name: pack.drive_subfolder_name,
-        drive_folder_link: pack.drive_folder_link,
+        storage_folder: pack.storage_folder,
+        document_link: pack.document_link,
         uploads: pack.uploads,
       });
     } catch (err) {
-      console.error('[drive-upload]', err.message);
+      console.error('[gcs-upload]', err.message);
       res.status(500).json({
-        error: 'drive_upload_failed',
+        error: 'gcs_upload_failed',
         message: err.message,
       });
     }
@@ -422,7 +419,8 @@ app.get('/api/config', (_req, res) => {
     sheetsClientReady: sheets.isClientReady(),
     sheetsSpreadsheetIdSet: !!sheets.SPREADSHEET_ID,
     sheetsRange: sheets.RANGE,
-    driveConfigured: driveUpload.isConfigured(),
+    gcsConfigured: gcsUpload.isConfigured(),
+    gcsBucket: gcsUpload.BUCKET_NAME || null,
     sheetsServiceAccountEmail: require('./lib/google-credentials').getClientEmail(),
     publicBaseUrl: PUBLIC_BASE_URL,
     embedScript: `${PUBLIC_BASE_URL}/embed.js`,
@@ -480,11 +478,11 @@ app.listen(PORT, () => {
   } else {
     console.warn('[sheets] disabled — set SHEETS_SPREADSHEET_ID on Railway');
   }
-  if (driveUpload.isConfigured()) {
-    console.log('[drive] upload enabled — parent folder', driveUpload.FOLDER_ID.slice(0, 8) + '…');
+  if (gcsUpload.isConfigured()) {
+    console.log('[gcs] upload enabled — bucket', gcsUpload.BUCKET_NAME);
   } else {
     console.warn(
-      '[drive] disabled — set GOOGLE_DRIVE_FOLDER_ID + OAuth or service account (GOOGLE-DRIVE-STEPS.md)'
+      '[gcs] disabled — set GCS_BUCKET_NAME + GOOGLE_CREDENTIALS_JSON (GCS-STORAGE-STEPS.md)'
     );
   }
   dialogflow

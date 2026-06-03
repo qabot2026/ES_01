@@ -2345,11 +2345,11 @@
                 form.querySelector('.qa-form__footer').prepend(errEl);
               }
               errEl.textContent =
-                (up && up.message) || 'Could not upload to Google Drive. Try again.';
+                (up && up.message) || 'Could not upload file. Try again.';
               return;
             }
-            if (up.drive_subfolder_name) {
-              result.values.document = up.drive_subfolder_name;
+            if (up.storage_folder) {
+              result.values.document = up.storage_folder;
             }
             submitUploadThenForm();
           })
