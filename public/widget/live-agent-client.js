@@ -276,7 +276,7 @@
         if (from === 'agent' && m.text) {
           self.appendMessage('bot', m.text, {
             personaLabel: m.senderDisplayName || agentName,
-            skipTranscriptLog: false,
+            skipTranscriptLog: true,
           });
         } else if (from === 'system') {
           if (/you are now chatting with/i.test(m.text || '')) {
