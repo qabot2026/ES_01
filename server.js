@@ -114,7 +114,9 @@ app.post('/api/chat', async (req, res) => {
     }
 
     const userText = eventName ? '' : message && message.trim();
-    chatTranscript.logDialogflowExchange(sid, userText, result);
+    chatTranscript.logDialogflowExchange(sid, userText, result, {
+      skipTranscriptUser: req.body && req.body.skipTranscriptUser === true,
+    });
 
     res.json({ sessionId: sid, ...result });
   } catch (err) {

@@ -2404,11 +2404,44 @@
     return wrap;
   }
 
+  /** Chat script label after submit (keep in sync with lib/transcript-display-text.js). */
+  function formSubmittedTranscriptLabel(formId, def) {
+    var id = String(formId || '')
+      .trim()
+      .toLowerCase()
+      .replace(/[\s_-]+/g, '');
+    var staff = def && def.staffFormLabel
+      ? String(def.staffFormLabel)
+          .trim()
+          .toLowerCase()
+          .replace(/[\s_-]+/g, '')
+      : '';
+    var key = id || staff;
+    if (key === 'upload' || key === 'uploaddocument') {
+      return 'Document uploaded.';
+    }
+    if (key === 'contact') {
+      return 'Contact Form Submitted';
+    }
+    var name = String(formId || '')
+      .trim()
+      .replace(/[_-]+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .replace(/\b\w/g, function (m) {
+        return m.toUpperCase();
+      });
+    if (staff === 'upload' || staff === 'uploaddocument') {
+      return 'Document uploaded.';
+    }
+    return name + ' Form Submitted';
+  }
+
   global.QAChatForm = {
     buildFormEl: buildFormEl,
     formatSubmission: formatSubmission,
     formatOtpResend: formatOtpResend,
     buildSummaryText: buildSummaryText,
+    formSubmittedTranscriptLabel: formSubmittedTranscriptLabel,
     resolveFormAction: resolveFormAction,
     resolveNextFormId: resolveNextFormId,
     getFormDef: getFormDef,

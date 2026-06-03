@@ -3143,19 +3143,35 @@
     this.removeFormCard(payload.formEl);
 
     var runAfterFormGone = function () {
-      if (ack) {
-        self.appendMessage('bot', ack);
-      }
+      var userLabel =
+        global.QAChatForm && global.QAChatForm.formSubmittedTranscriptLabel
+          ? global.QAChatForm.formSubmittedTranscriptLabel(
+              payload.formId,
+              payload.def
+            )
+          : '';
 
-      /* Form data to Dialogflow is silent when we show our own ack */
-      var chainPromise = self.postToDialogflow(
-        {
-          message: payload.dialogflowText,
-          sessionId: self.sessionId,
-          languageCode: self.getDialogflowLang(),
-        },
-        { applyResponse: false, showTyping: false, allowWhileSending: true }
-      );
+      /* Transcript order: user submit line before bot thank-you */
+      var chainPromise = userLabel
+        ? self.appendTranscriptTurn('user', userLabel)
+        : Promise.resolve();
+
+      chainPromise = chainPromise.then(function () {
+        if (ack) {
+          self.appendMessage('bot', ack);
+        }
+
+        /* Form data to Dialogflow is silent when we show our own ack */
+        return self.postToDialogflow(
+          {
+            message: payload.dialogflowText,
+            sessionId: self.sessionId,
+            languageCode: self.getDialogflowLang(),
+            skipTranscriptUser: true,
+          },
+          { applyResponse: false, showTyping: false, allowWhileSending: true }
+        );
+      });
 
       if (onSubmit) {
         chainPromise = chainPromise.then(function () {
