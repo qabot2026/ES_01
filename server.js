@@ -96,6 +96,16 @@ app.post('/api/chat', async (req, res) => {
   }
 
   try {
+    if (liveAgent.isDialogflowBlockedForSession(sid)) {
+      return res.json({
+        sessionId: sid,
+        reply: '',
+        messages: [],
+        liveAgent: true,
+        humanActive: true,
+        skipBot: true,
+      });
+    }
     let result = eventName
       ? await dialogflow.detectEvent(sid, eventName, languageCode)
       : await dialogflow.detectIntent(sid, message.trim(), languageCode);
@@ -103,9 +113,21 @@ app.post('/api/chat', async (req, res) => {
       result = phraseTranslations.applyToResult(result, uiLang);
     }
     if (result.liveAgent) {
+      let handoffVisitorName = '';
+      try {
+        const doc = chatTranscript.getSessionDoc(sid);
+        const meta = doc && doc.meta && typeof doc.meta === 'object' ? doc.meta : {};
+        handoffVisitorName =
+          (typeof meta.name === 'string' && meta.name.trim()) ||
+          (typeof meta.visitorName === 'string' && meta.visitorName.trim()) ||
+          '';
+      } catch {
+        /* ignore */
+      }
       liveAgent.requestHandoff(sid, {
         userLanguage: uiLang,
         previewMessage: message ? message.trim() : '',
+        visitorName: handoffVisitorName,
       });
       chatTranscript.mergeSessionMeta(sid, {
         channel: 'Web',

@@ -516,7 +516,8 @@
                 return String(p.name).trim();
             }
         }
-        return "Agent";
+        const local = e.split("@")[0];
+        return local ? local.charAt(0).toUpperCase() + local.slice(1) : "Agent";
     }
 
     function isAiCopilotConv_(conv) {
@@ -1092,43 +1093,39 @@
             return;
         }
         handoverAgentSelect.innerHTML = "";
-        try {
-            const data = await apiFetch(`${API}/agents`);
-            const agents = Array.isArray(data.agents) ? data.agents : [];
-            let n = 0;
-            for (let i = 0; i < agents.length; i += 1) {
-                const a = agents[i];
-                const e = a && a.email ? String(a.email).trim().toLowerCase() : "";
-                if (!e || !e.includes("@") || agentIdsMatch_(e, agentId)) {
-                    continue;
-                }
-                const opt = document.createElement("option");
-                opt.value = e;
-                let label = e;
-                const profiles = deskSettings && deskSettings.general && deskSettings.general.agentProfiles;
-                if (Array.isArray(profiles)) {
-                    for (let pi = 0; pi < profiles.length; pi += 1) {
-                        const p = profiles[pi];
-                        if (p && agentIdsMatch_(p.email, e) && p.name) {
-                            label = String(p.name).trim();
-                            break;
-                        }
-                    }
-                }
-                opt.textContent = label;
-                handoverAgentSelect.appendChild(opt);
-                n += 1;
+        const deptId =
+            (selectedConv && selectedConv.departmentId) || "general";
+        const depts =
+            (deskSettings && deskSettings.departments) || [];
+        let dept = null;
+        for (let i = 0; i < depts.length; i += 1) {
+            if (depts[i] && depts[i].id === deptId) {
+                dept = depts[i];
+                break;
             }
-            if (!n) {
-                const opt = document.createElement("option");
-                opt.value = "";
-                opt.textContent = "No other agents in settings";
-                handoverAgentSelect.appendChild(opt);
+        }
+        if (!dept && depts.length) {
+            dept = depts[0];
+        }
+        const emails = dept && Array.isArray(dept.agentEmails) ? dept.agentEmails : [];
+        let n = 0;
+        for (let j = 0; j < emails.length; j += 1) {
+            const e = String(emails[j] || "")
+                .trim()
+                .toLowerCase();
+            if (!e || !e.includes("@") || agentIdsMatch_(e, agentId)) {
+                continue;
             }
-        } catch {
+            const opt = document.createElement("option");
+            opt.value = e;
+            opt.textContent = e;
+            handoverAgentSelect.appendChild(opt);
+            n += 1;
+        }
+        if (!n) {
             const opt = document.createElement("option");
             opt.value = "";
-            opt.textContent = "Could not load agents";
+            opt.textContent = "No other agents in this department";
             handoverAgentSelect.appendChild(opt);
         }
     }
@@ -1601,16 +1598,16 @@
         if (!t) {
             return t;
         }
-        const visitor = resolveVisitorDisplayName_(selectedConv, selectedVisitorContext);
-        if (t === "live_agent_human_connected") {
-            return "You are now chatting with " + visitor + ".";
-        }
-        if (/^(.+?)\s+joined the chat\.?$/i.test(t)) {
-            return "You are now chatting with " + visitor + ".";
-        }
-        const legacy = t.match(/^Agent\s+(\S+@\S+)\s+accepted the chat\.?$/i);
-        if (legacy) {
-            return "You are now chatting with " + visitor + ".";
+        const agentEmail =
+            (selectedConv && selectedConv.assignedAgentEmail) ||
+            (selectedConv && selectedConv.acceptedByEmail) ||
+            "";
+        if (
+            t === "live_agent_human_connected" ||
+            /^(.+?)\s+joined the chat\.?$/i.test(t) ||
+            /^Agent\s+\S+@\S+\s+accepted the chat\.?$/i.test(t)
+        ) {
+            return "You are now chatting with " + resolveAgentDisplayName_(agentEmail) + ".";
         }
         return t;
     }

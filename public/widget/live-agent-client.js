@@ -38,8 +38,19 @@
       return origSend.call(this, text);
     };
 
+    var origPostDf = p.postToDialogflow;
+    p.postToDialogflow = function (body, opts) {
+      if (this.liveAgentMode) {
+        return Promise.resolve();
+      }
+      return origPostDf.call(this, body, opts);
+    };
+
     var origApply = p.applyDialogflowResult;
     p.applyDialogflowResult = function (result) {
+      if (this.liveAgentMode) {
+        return;
+      }
       origApply.call(this, result);
       if (!liveEnabled()) return;
       if (result && result.ok && result.data && result.data.liveAgent) {
@@ -85,6 +96,9 @@
             t(self, 'handoffError', 'Could not reach support. Try again.')
           );
         });
+      if (this._liveAgentPollTimer) {
+        clearInterval(this._liveAgentPollTimer);
+      }
       this._liveAgentPollTimer = setInterval(function () {
         self._liveAgentPollTick();
       }, cfg.pollIntervalMs || 2000);
@@ -126,6 +140,13 @@
       if (!this.els || !this.els.panel) return;
       var el = this.els.panel.querySelector('.qa-live-agent-banner');
       if (el) el.hidden = true;
+    };
+
+    p._liveAgentConnectedBanner = function (name) {
+      var label = (name && String(name).trim()) || 'an agent';
+      this._showLiveAgentBanner(
+        t(this, 'connectedPrefix', 'You are now chatting with') + ' ' + label + '.'
+      );
     };
 
     p._liveAgentSendUser = function (text) {
@@ -179,8 +200,10 @@
               ? String(st.conversation.assignedAgentEmail).split('@')[0]
               : '');
           if (st.agentConnected && agentLabel) {
+            self._liveAgentConnectedBanner(agentLabel);
+          } else if (st.humanActive) {
             self._showLiveAgentBanner(
-              t(self, 'connected', 'Connected to') + ' ' + agentLabel
+              t(self, 'waiting', 'Waiting for an agent…')
             );
           }
           return fetch(msgUrl).then(function (r) {
@@ -189,6 +212,7 @@
         })
         .then(function (data) {
           if (!data || !data.ok) return;
+          var agentName = data.agentName || 'Support';
           (data.messages || []).forEach(function (m) {
             if (!m || !m.id || self.liveAgentSeen[m.id]) return;
             self.liveAgentSeen[m.id] = true;
@@ -201,11 +225,17 @@
                   : '');
             if (from === 'agent') {
               self.appendMessage('bot', m.text, {
-                personaLabel: data.agentName || 'Support',
+                personaLabel: agentName,
                 skipTranscriptLog: false,
               });
             } else if (from === 'system') {
               self.appendMessage('bot', m.text);
+              if (/you are now chatting with/i.test(m.text || '')) {
+                var match = String(m.text).match(/chatting with\s+(.+?)\.?$/i);
+                if (match && match[1]) {
+                  self._liveAgentConnectedBanner(match[1].trim());
+                }
+              }
             }
             if (m.createdAt) self.liveAgentSince = m.createdAt;
             else if (m.at) self.liveAgentSince = m.at;
@@ -214,27 +244,76 @@
         .catch(function () {});
     };
 
+    p._liveAgentResumeIfNeeded = function () {
+      var self = this;
+      if (!liveEnabled() || !this.apiBase || !this.sessionId || this.liveAgentMode) {
+        return;
+      }
+      fetch(
+        this.apiBase +
+          '/api/live-agent/status?clientSessionId=' +
+          encodeURIComponent(this.sessionId)
+      )
+        .then(function (r) {
+          return r.json();
+        })
+        .then(function (st) {
+          if (!st || !st.ok || !st.humanActive) return;
+          self.liveAgentMode = true;
+          self.liveAgentSince = '';
+          self.liveAgentSeen = {};
+          if (st.agentConnected && st.assignedAgentDisplayName) {
+            self._liveAgentConnectedBanner(st.assignedAgentDisplayName);
+          } else {
+            self._showLiveAgentBanner(
+              t(self, 'waiting', 'Waiting for an agent…')
+            );
+          }
+          var cfg = liveCfg();
+          if (self._liveAgentPollTimer) {
+            clearInterval(self._liveAgentPollTimer);
+          }
+          self._liveAgentPollTimer = setInterval(function () {
+            self._liveAgentPollTick();
+          }, cfg.pollIntervalMs || 2000);
+          self._liveAgentPollTick();
+        })
+        .catch(function () {});
+    };
+
+    var origInit = p.init;
+    if (typeof origInit === 'function') {
+      p.init = function () {
+        var out = origInit.apply(this, arguments);
+        var self = this;
+        setTimeout(function () {
+          self._liveAgentResumeIfNeeded();
+        }, 400);
+        return out;
+      };
+    }
+
     return true;
   }
 
   global.QA_CHAT_LIVE_STRINGS = {
     en: {
       waiting: 'Waiting for an agent…',
-      connected: 'Connected to',
+      connectedPrefix: 'You are now chatting with',
       handoffReply: 'Connecting you to our team. Please wait.',
       handoffError: 'Could not reach support. Try again.',
       ended: 'Chat with agent ended. You can continue with the assistant.',
     },
     hi: {
       waiting: 'एजेंट का इंतज़ार…',
-      connected: 'जुड़े हुए:',
+      connectedPrefix: 'अब आप बात कर रहे हैं',
       handoffReply: 'हम आपको टीम से जोड़ रहे हैं। कृपया प्रतीक्षा करें।',
       handoffError: 'सपोर्ट से कनेक्ट नहीं हो सका।',
       ended: 'एजेंट चैट समाप्त। आप असिस्टेंट से जारी रख सकते हैं।',
     },
     mr: {
       waiting: 'एजंटची वाट पाहत आहोत…',
-      connected: 'जोडले:',
+      connectedPrefix: 'आता तुम्ही बोलत आहात',
       handoffReply: 'आम्ही तुम्हाला टीमशी जोडत आहोत. कृपया थांबा.',
       handoffError: 'सपोर्टशी कनेक्ट होऊ शकले नाही.',
       ended: 'एजंट चॅट संपली. तुम्ही असिस्टंटसह पुढे चालू ठेवू शकता.',
