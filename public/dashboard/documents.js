@@ -111,8 +111,12 @@
 
   function foldersToRows(folders) {
     var rows = [];
+    var seenObjects = {};
     (folders || []).forEach(function (f) {
       (f.files || []).forEach(function (file) {
+        var obj = file.gcs_object || '';
+        if (obj && seenObjects[obj]) return;
+        if (obj) seenObjects[obj] = true;
         rows.push({
           file_name: file.file_name,
           gcs_object: file.gcs_object,

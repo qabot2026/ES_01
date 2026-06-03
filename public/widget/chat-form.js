@@ -2349,10 +2349,16 @@
         widget &&
         typeof widget.uploadFormDocuments === 'function'
       ) {
+        if (wrap.classList.contains('qa-form--uploading')) return;
+        wrap.classList.add('qa-form--uploading');
+        form.querySelectorAll('input, select, textarea, button').forEach(function (el) {
+          el.disabled = true;
+        });
         widget
           .uploadFormDocuments(selectedFiles, result.values, request)
           .then(function (up) {
             if (!up || !up.ok) {
+              wrap.classList.remove('qa-form--uploading');
               wrap.classList.remove('qa-form--submitted');
               form.querySelectorAll('input, select, textarea, button').forEach(function (el) {
                 el.disabled = false;
@@ -2382,6 +2388,7 @@
             submitUploadThenForm();
           })
           .catch(function () {
+            wrap.classList.remove('qa-form--uploading');
             wrap.classList.remove('qa-form--submitted');
             form.querySelectorAll('input, select, textarea, button').forEach(function (el) {
               el.disabled = false;
