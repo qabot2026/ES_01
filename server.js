@@ -89,12 +89,6 @@ app.post('/api/chat', async (req, res) => {
     typeof event === 'string' && event.trim() ? event.trim() : null;
   const uiLang = uiLanguageCode || languageCode;
 
-  if (!eventName) {
-    if (!message || typeof message !== 'string' || !message.trim()) {
-      return res.status(400).json({ error: 'message or event is required' });
-    }
-  }
-
   try {
     if (liveAgent.isDialogflowBlockedForSession(sid)) {
       const conv = liveAgent.getConversation(sid);
@@ -124,6 +118,11 @@ app.post('/api/chat', async (req, res) => {
           ? `You are now chatting with ${agentName}.`
           : '',
       });
+    }
+    if (!eventName) {
+      if (!message || typeof message !== 'string' || !message.trim()) {
+        return res.status(400).json({ error: 'message or event is required' });
+      }
     }
     let result = eventName
       ? await dialogflow.detectEvent(sid, eventName, languageCode)

@@ -424,8 +424,14 @@
     this.recognition = null;
     this.root = null;
     this.els = {};
+    this.liveAgentMode = false;
+    this._liveAgentHumanActive = false;
     this.init();
   }
+
+  QualityAssistantWidget.prototype.isHumanChatActive = function () {
+    return !!(this.liveAgentMode || this._liveAgentHumanActive);
+  };
 
   QualityAssistantWidget.prototype.newSessionId = function () {
     return 'qa-' + Date.now() + '-' + Math.random().toString(36).slice(2, 11);
@@ -449,6 +455,56 @@
     this.fetchConfig();
     this.scheduleStripHandPop();
     this.maybeAutoOpen();
+    this._bootLiveAgentScript();
+  };
+
+  QualityAssistantWidget.prototype._bootLiveAgentScript = function () {
+    var cfg = getRootCfg();
+    var la = (cfg.common && cfg.common.liveAgent) || cfg.liveAgent || {};
+    if (la.enabled === false || !this.apiBase) {
+      return;
+    }
+    var self = this;
+    if (typeof this.startLiveAgentMode === 'function') {
+      setTimeout(function () {
+        if (self._liveAgentResumeIfNeeded) {
+          self._liveAgentResumeIfNeeded();
+        }
+      }, 400);
+      return;
+    }
+    if (global.__qaLiveAgentScriptDone) {
+      setTimeout(function () {
+        if (typeof global.QA_LIVE_AGENT_PATCH === 'function') {
+          global.QA_LIVE_AGENT_PATCH();
+        }
+        if (self._liveAgentResumeIfNeeded) {
+          self._liveAgentResumeIfNeeded();
+        }
+      }, 100);
+      return;
+    }
+    if (global.__qaLiveAgentScriptLoading) {
+      return;
+    }
+    global.__qaLiveAgentScriptLoading = true;
+    var base = String(this.apiBase).replace(/\/$/, '');
+    var s = document.createElement('script');
+    s.src = base + '/widget/live-agent-client.js?v=20260604-live-v2';
+    s.onload = function () {
+      global.__qaLiveAgentScriptDone = true;
+      global.__qaLiveAgentScriptLoading = false;
+      if (typeof global.QA_LIVE_AGENT_PATCH === 'function') {
+        global.QA_LIVE_AGENT_PATCH();
+      }
+      if (self._liveAgentResumeIfNeeded) {
+        self._liveAgentResumeIfNeeded();
+      }
+    };
+    s.onerror = function () {
+      global.__qaLiveAgentScriptLoading = false;
+    };
+    document.head.appendChild(s);
   };
 
   QualityAssistantWidget.prototype.updateRestartVisibility = function () {
@@ -1529,6 +1585,21 @@
     }
     if (result.data.sessionId) this.sessionId = result.data.sessionId;
 
+    var data = result.data || {};
+    if (data.humanActive) {
+      this._liveAgentHumanActive = true;
+    }
+    if (data.liveAgent) {
+      this._liveAgentHumanActive = true;
+      if (typeof this.startLiveAgentMode === 'function') {
+        this.startLiveAgentMode(data);
+      }
+      return;
+    }
+    if (this.isHumanChatActive()) {
+      return;
+    }
+
     this.ensurePhraseMap()
       .then(function () {
         if (!result.data.localizedFromPhrases) {
@@ -1583,6 +1654,9 @@
   QualityAssistantWidget.prototype.postToDialogflow = function (body, opts) {
     opts = opts || {};
     var self = this;
+    if (this.isHumanChatActive()) {
+      return Promise.resolve();
+    }
     if (!this.apiBase) {
       return Promise.resolve();
     }
@@ -1647,6 +1721,7 @@
   };
 
   QualityAssistantWidget.prototype.triggerWelcomeEvent = function () {
+    if (this.isHumanChatActive()) return;
     var cfg = getWelcomeEventCfg();
     if (cfg.enabled === false) return;
     if (this._welcomeEventSent || this._welcomeEventInFlight || this.isSending) {
@@ -1668,6 +1743,7 @@
 
   QualityAssistantWidget.prototype.triggerEndChatEvent = function (opts) {
     opts = opts || {};
+    if (this.isHumanChatActive()) return Promise.resolve();
     var cfg = getEndChatEventCfg();
     if (cfg.enabled === false) return Promise.resolve();
     if (this._endChatEventInFlight) return Promise.resolve();
@@ -2771,6 +2847,7 @@
 
   QualityAssistantWidget.prototype.runFormDialogflowAction = function (action, opts) {
     opts = opts || {};
+    if (this.isHumanChatActive()) return Promise.resolve();
     if (!action) return Promise.resolve();
     this._userHasInteracted = true;
     this.markUserInteracted();
@@ -3407,6 +3484,15 @@
   QualityAssistantWidget.prototype.sendMessageWithText = function (text) {
     text = (text || '').trim();
     if (!text || this.isSending) return;
+    if (this.isHumanChatActive()) {
+      if (typeof this._liveAgentSendUser === 'function') {
+        if (!this.liveAgentMode && typeof this.startLiveAgentMode === 'function') {
+          this.startLiveAgentMode({});
+        }
+        this._liveAgentSendUser(text);
+        return;
+      }
+    }
     this.markUserInteracted();
     this.noteUserActivity();
     this.appendMessage('user', text);

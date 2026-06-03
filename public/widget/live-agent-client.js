@@ -35,6 +35,10 @@
     );
   }
 
+  function humanChatActive_(w) {
+    return !!(w && (w.liveAgentMode || w._liveAgentHumanActive));
+  }
+
   function patchWidget() {
     var C = global.QualityAssistantWidget;
     if (!C || !C.prototype) return false;
@@ -46,7 +50,7 @@
     p.sendMessageWithText = function (text) {
       text = (text || '').trim();
       if (!text) return;
-      if (this.liveAgentMode || this._liveAgentHumanActive) {
+      if (humanChatActive_(this)) {
         if (!this.liveAgentMode) {
           this.startLiveAgentMode({});
         }
@@ -55,10 +59,6 @@
       }
       return origSend.call(this, text);
     };
-
-    function humanChatActive_(w) {
-      return !!(w && (w.liveAgentMode || w._liveAgentHumanActive));
-    }
 
     var origPostDf = p.postToDialogflow;
     p.postToDialogflow = function (body, opts) {
@@ -132,11 +132,9 @@
       var cfg = liveCfg();
       var starting = !this.liveAgentMode;
       this.liveAgentMode = true;
+      this._liveAgentHumanActive = true;
       if (starting) {
-        this.liveAgentSince = '';
-        this.liveAgentLastId = '';
-        this.liveAgentSeen = {};
-        this._liveAgentHumanActive = true;
+        this.liveAgentSeen = this.liveAgentSeen || {};
         this._liveAgentConnectedAnnounced = false;
         this._showLiveAgentBanner(
           t(this, 'waiting', 'Waiting for an agent…')
@@ -165,7 +163,7 @@
       if (this._liveAgentPollTimer) {
         clearInterval(this._liveAgentPollTimer);
       }
-      var pollMs = Math.min(cfg.pollIntervalMs || 2000, 1500);
+      var pollMs = Math.min(cfg.pollIntervalMs || 2000, 1200);
       this._liveAgentPollTimer = setInterval(function () {
         self._liveAgentPollTick();
       }, pollMs);
@@ -260,6 +258,9 @@
       if (!data || !data.ok) return;
       var self = this;
       var agentName = data.agentName || 'Support';
+      if (!this.liveAgentSeen) {
+        this.liveAgentSeen = {};
+      }
       (data.messages || []).forEach(function (m) {
         var key = messageKey(m);
         if (!key || self.liveAgentSeen[key]) return;
@@ -277,7 +278,6 @@
             personaLabel: m.senderDisplayName || agentName,
             skipTranscriptLog: false,
           });
-          if (m.id) self.liveAgentLastId = m.id;
         } else if (from === 'system') {
           if (/you are now chatting with/i.test(m.text || '')) {
             var match = String(m.text).match(/chatting with\s+(.+?)\.?$/i);
@@ -286,10 +286,7 @@
           } else if (m.text) {
             self.appendMessage('bot', m.text);
           }
-          if (m.id) self.liveAgentLastId = m.id;
         }
-        if (m.createdAt) self.liveAgentSince = m.createdAt;
-        else if (m.at) self.liveAgentSince = m.at;
       });
     };
 
@@ -304,12 +301,8 @@
       var msgUrl =
         this.apiBase +
         '/api/live-agent/messages?clientSessionId=' +
-        encodeURIComponent(this.sessionId);
-      if (this.liveAgentLastId) {
-        msgUrl += '&sinceId=' + encodeURIComponent(this.liveAgentLastId);
-      } else if (this.liveAgentSince) {
-        msgUrl += '&since=' + encodeURIComponent(this.liveAgentSince);
-      }
+        encodeURIComponent(this.sessionId) +
+        '&tail=50';
       fetch(statusUrl)
         .then(function (r) {
           return r.json();
@@ -355,7 +348,11 @@
 
     p._liveAgentResumeIfNeeded = function () {
       var self = this;
-      if (!liveEnabled() || !this.apiBase || !this.sessionId || this.liveAgentMode) {
+      if (!liveEnabled() || !this.apiBase || !this.sessionId) {
+        return;
+      }
+      if (this.liveAgentMode) {
+        this._liveAgentPollTick();
         return;
       }
       fetch(
@@ -380,20 +377,10 @@
         .catch(function () {});
     };
 
-    var origInit = p.init;
-    if (typeof origInit === 'function') {
-      p.init = function () {
-        var out = origInit.apply(this, arguments);
-        var self = this;
-        setTimeout(function () {
-          self._liveAgentResumeIfNeeded();
-        }, 400);
-        return out;
-      };
-    }
-
     return true;
   }
+
+  global.QA_LIVE_AGENT_PATCH = patchWidget;
 
   global.QA_CHAT_LIVE_STRINGS = {
     en: {
@@ -419,7 +406,9 @@
     },
   };
 
-  if (!patchWidget()) {
+  patchWidget();
+
+  if (!global.QualityAssistantWidget) {
     var n = 0;
     var iv = setInterval(function () {
       n += 1;
