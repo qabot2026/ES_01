@@ -13,6 +13,7 @@ const conversationSheet = require('./lib/conversation-sheet');
 const gcsUpload = require('./lib/gcs-upload');
 const documentsCatalog = require('./lib/documents-catalog');
 const conversationTranscriptView = require('./lib/conversation-transcript-view');
+const conversationsSheetView = require('./lib/conversations-sheet-view');
 
 const app = express();
 const PORT = process.env.PORT || 4567;
@@ -431,6 +432,170 @@ app.get('/api/transcript', requireDeskAuth, (req, res) => {
 
 app.get('/conversation-transcript', (_req, res) => {
   res.sendFile(path.join(publicDir, 'conversation-transcript.html'));
+});
+
+app.get('/conversations-sheet', (_req, res) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+  res.setHeader('Pragma', 'no-cache');
+  res.sendFile(path.join(publicDir, 'conversations-sheet.html'));
+});
+
+function setConversationsSheetCors(req, res) {
+  const origin =
+    typeof req.headers.origin === 'string' ? req.headers.origin.trim() : '';
+  if (origin) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+  } else {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+  }
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader(
+    'Access-Control-Allow-Headers',
+    'Authorization, Content-Type, X-Conversations-Sheet-Secret, X-Agent-Token, X-Desk-Token'
+  );
+}
+
+function requireConversationsViewer(req, res) {
+  const auth = conversationTranscriptView.verifyViewerAuth(req);
+  if (!auth.ok) {
+    res.status(401).json({
+      ok: false,
+      error:
+        auth.error ||
+        'Unauthorized — use X-Conversations-Sheet-Secret or desk token (X-Agent-Token).',
+    });
+    return false;
+  }
+  if (!sheets.isConfigured()) {
+    res.status(503).json({
+      ok: false,
+      error:
+        'Google Sheets not configured (SHEETS_SPREADSHEET_ID + service account).',
+    });
+    return false;
+  }
+  return true;
+}
+
+app.options('/api/conversations-sheet', (req, res) => {
+  setConversationsSheetCors(req, res);
+  res.sendStatus(204);
+});
+
+app.options('/api/conversations-sheet-stats', (req, res) => {
+  setConversationsSheetCors(req, res);
+  res.sendStatus(204);
+});
+
+app.options('/api/conversations-sheet-export', (req, res) => {
+  setConversationsSheetCors(req, res);
+  res.sendStatus(204);
+});
+
+app.options('/api/conversations-sheet-sync-dashboard', (req, res) => {
+  setConversationsSheetCors(req, res);
+  res.sendStatus(204);
+});
+
+app.get('/api/conversations-sheet', async (req, res) => {
+  setConversationsSheetCors(req, res);
+  res.setHeader('Cache-Control', 'no-store');
+  if (!requireConversationsViewer(req, res)) return;
+  try {
+    let maxRows = 200;
+    if (req.query && req.query.limit != null) {
+      const n = Number.parseInt(String(req.query.limit), 10);
+      if (Number.isFinite(n) && n >= 5 && n <= 500) maxRows = n;
+    }
+    let offset = 0;
+    if (req.query && req.query.offset != null) {
+      const o = Number.parseInt(String(req.query.offset), 10);
+      if (Number.isFinite(o) && o >= 0 && o <= 500000) offset = o;
+    }
+    const rawFrom =
+      req.query && typeof req.query.from === 'string' ? req.query.from.trim() : '';
+    const rawTo =
+      req.query && typeof req.query.to === 'string' ? req.query.to.trim() : '';
+    const allInRange = req.query.all !== '0' && req.query.all !== 'false';
+    const includeStats =
+      req.query.includeStats !== '0' && req.query.includeStats !== 'false';
+    const payload = await conversationsSheetView.fetchConversationSheetPreview({
+      maxRows,
+      offset,
+      allInRange,
+      includeStats,
+      from: rawFrom,
+      to: rawTo,
+    });
+    res.json({ ok: true, ...payload });
+  } catch (err) {
+    console.error('[conversations-sheet]', err.message);
+    const msg = String(err.message || err);
+    const status = msg.includes('Invalid date parameter') ? 400 : 500;
+    res.status(status).json({ ok: false, error: msg.slice(0, 500) });
+  }
+});
+
+app.get('/api/conversations-sheet-stats', async (req, res) => {
+  setConversationsSheetCors(req, res);
+  res.setHeader('Cache-Control', 'no-store');
+  if (!requireConversationsViewer(req, res)) return;
+  try {
+    const q = req.query || {};
+    const from = typeof q.from === 'string' ? q.from.trim() : '';
+    const to = typeof q.to === 'string' ? q.to.trim() : '';
+    const statsOpts =
+      from || to ? { from: from || undefined, to: to || undefined } : {};
+    const payload =
+      await conversationsSheetView.fetchConversationLeadCaptureStats(statsOpts);
+    res.json({ ok: true, ...payload });
+  } catch (err) {
+    console.error('[conversations-sheet-stats]', err.message);
+    const msg = String(err.message || err);
+    const status = msg.includes('Invalid date parameter') ? 400 : 500;
+    res.status(status).json({ ok: false, error: msg.slice(0, 500) });
+  }
+});
+
+app.get('/api/conversations-sheet-export', async (req, res) => {
+  setConversationsSheetCors(req, res);
+  res.setHeader('Cache-Control', 'no-store');
+  if (!requireConversationsViewer(req, res)) return;
+  try {
+    const q = req.query || {};
+    const from = typeof q.from === 'string' ? q.from.trim() : '';
+    const to = typeof q.to === 'string' ? q.to.trim() : '';
+    const payload = await conversationsSheetView.fetchConversationSheetExport(
+      from || to ? { from: from || undefined, to: to || undefined } : {}
+    );
+    const csvBody = conversationsSheetView.rowsToCsv(
+      payload.headers,
+      payload.conversations
+    );
+    const df =
+      payload.dateFilter && typeof payload.dateFilter === 'object'
+        ? payload.dateFilter
+        : {};
+    const fn = conversationsSheetView.exportFilename(df.from, df.to);
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="${fn}"`);
+    res.send(csvBody);
+  } catch (err) {
+    console.error('[conversations-sheet-export]', err.message);
+    res.status(500).json({ ok: false, error: String(err.message || err).slice(0, 500) });
+  }
+});
+
+app.post('/api/conversations-sheet-sync-dashboard', async (req, res) => {
+  setConversationsSheetCors(req, res);
+  res.setHeader('Cache-Control', 'no-store');
+  if (!requireConversationsViewer(req, res)) return;
+  res.status(501).json({
+    ok: false,
+    error:
+      'Dashboard sheet sync (Sheet2) is not enabled on this server yet. Metrics on this page still load from the live API.',
+  });
 });
 
 app.get('/api/conversation-transcript', async (req, res) => {
