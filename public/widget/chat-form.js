@@ -2162,6 +2162,8 @@
     }
 
     var lang = (widget && widget.language) || 'en';
+    var chainTag = request && request.tag ? String(request.tag).trim() : '';
+    if (widget && chainTag) widget.pendingUploadTag = chainTag;
     var prefill = Object.assign(
       {},
       (widget && widget.clientContext) || {},
@@ -2376,6 +2378,7 @@
                 .filter(Boolean)
                 .join(', ');
             }
+            if (widget) widget.pendingUploadTag = '';
             submitUploadThenForm();
           })
           .catch(function () {

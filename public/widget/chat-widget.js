@@ -2871,6 +2871,7 @@
     var uploadTag =
       (request && request.tag) ||
       (vals && vals.tag) ||
+      this.pendingUploadTag ||
       '';
     uploadTag = String(uploadTag || '').trim();
     if (uploadTag) fd.append('tag', uploadTag);
@@ -2954,14 +2955,14 @@
         global.QAChatForm.isFormsEnabled()
       ) {
         chainPromise = chainPromise.then(function () {
-          self.appendMessage('bot', '', {
-            forms: [
-              {
-                formId: payload.nextFormId,
-                prefill: self.clientContext,
-              },
-            ],
-          });
+          var chainTag = String(req.tag || self.pendingUploadTag || '').trim();
+          if (chainTag) self.pendingUploadTag = chainTag;
+          var nextFormReq = {
+            formId: payload.nextFormId,
+            prefill: self.clientContext,
+          };
+          if (chainTag) nextFormReq.tag = chainTag;
+          self.appendMessage('bot', '', { forms: [nextFormReq] });
         });
       }
 
