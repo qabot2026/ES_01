@@ -2259,7 +2259,8 @@
           </button>
         </div>
         <p class="hint-foot">
-          Variable on Railway: <span class="kbd">CONVERSATIONS_SHEET_VIEW_SECRET</span> &mdash; redeploy after edits.
+          Railway: <span class="kbd">CONVERSATIONS_SHEET_VIEW_SECRET</span> or your
+          <span class="kbd">LIVE_AGENT_DESK_TOKEN</span> (auto-filled from service desk settings).
         </p>
       </div>
     </details>
@@ -2460,7 +2461,27 @@
   <script>
     (function () {
       var LS_KEY = "conversations_sheet_secret_v1";
+      var DESK_LS_KEY = "qa_live_agent_desk";
       var secretEl = document.getElementById("secret");
+
+      function deskTokenFromStorage_() {
+        try {
+          var d = JSON.parse(localStorage.getItem(DESK_LS_KEY) || "{}");
+          return d && d.token ? String(d.token).trim() : "";
+        } catch (ignoreDesk) {
+          return "";
+        }
+      }
+
+      /** Viewer secret and/or desk token (same as live-agent settings). */
+      function viewerAuthHeaders_(secret) {
+        var h = {};
+        var s = String(secret || "").trim();
+        if (s) h["X-Conversations-Sheet-Secret"] = s;
+        var desk = deskTokenFromStorage_();
+        if (desk) h["X-Agent-Token"] = desk;
+        return h;
+      }
 
       /** Shared with conversation-transcript.html (localStorage survives new tabs from the eye icon). */
       function persistViewerSecret_(secret) {
@@ -4669,6 +4690,7 @@
 
       try {
         var saved = sessionStorage.getItem(LS_KEY) || localStorage.getItem(LS_KEY);
+        if (!saved) saved = deskTokenFromStorage_();
         if (saved && secretEl) {
           secretEl.value = saved;
           if (authBox) authBox.open = false;
@@ -5290,7 +5312,7 @@
         }
         return fetch(url, {
           method: "POST",
-          headers: { "X-Conversations-Sheet-Secret": secret },
+          headers: viewerAuthHeaders_(secret),
           cache: "no-store",
           credentials: "same-origin"
         })
@@ -5366,7 +5388,7 @@
           }, 120000);
           var res = await fetch(url, {
             method: "GET",
-            headers: { "X-Conversations-Sheet-Secret": secret },
+            headers: viewerAuthHeaders_(secret),
             cache: "no-store",
             credentials: "same-origin",
             signal: ctrl.signal
@@ -5729,7 +5751,7 @@
           }, 180000);
           var res = await fetch(url, {
             method: "GET",
-            headers: { "X-Conversations-Sheet-Secret": secret },
+            headers: viewerAuthHeaders_(secret),
             cache: "no-store",
             credentials: "same-origin",
             signal: ctrl.signal
@@ -5823,7 +5845,7 @@
           downloadReportBtn.textContent = "Preparing…";
           fetch(url, {
             method: "GET",
-            headers: { "X-Conversations-Sheet-Secret": secret },
+            headers: viewerAuthHeaders_(secret),
             cache: "no-store",
             credentials: "same-origin"
           })
