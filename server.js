@@ -309,10 +309,21 @@ app.get('/api/sheets/status', async (_req, res) => {
 
 app.post('/api/sheets/backfill-conv-links', requireDeskAuth, async (_req, res) => {
   try {
+    await sheets.applySheetDateColumnFormat();
     const result = await sheets.backfillConvLinkColumn();
     res.json(result);
   } catch (err) {
     console.error('[sheets/backfill]', err.message);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+app.post('/api/sheets/apply-date-format', requireDeskAuth, async (_req, res) => {
+  try {
+    await sheets.applySheetDateColumnFormat();
+    res.json({ ok: true, message: 'Conv. Date and App. Date columns set to DD/MM/YYYY.' });
+  } catch (err) {
+    console.error('[sheets/apply-date-format]', err.message);
     res.status(500).json({ ok: false, error: err.message });
   }
 });
