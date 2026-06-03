@@ -306,6 +306,16 @@ app.get('/api/sheets/status', async (_req, res) => {
   res.json(status);
 });
 
+app.post('/api/sheets/backfill-conv-links', requireDeskAuth, async (_req, res) => {
+  try {
+    const result = await sheets.backfillConvLinkColumn();
+    res.json(result);
+  } catch (err) {
+    console.error('[sheets/backfill]', err.message);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
 app.post('/api/session-context', (req, res) => {
   const { sessionId } = req.body || {};
   const sid = String(sessionId || '').trim();
