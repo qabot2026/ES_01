@@ -217,7 +217,7 @@
           (r.session_id
             ? '<span class="docs-sep">|</span><a class="docs-link-transcript" href="../transcript.html?session=' +
               encodeURIComponent(r.session_id) +
-              '">Chatscript</a>'
+              '" target="_blank" rel="noopener noreferrer">Chatscript</a>'
             : '') +
           '</div></td></tr>'
         );
