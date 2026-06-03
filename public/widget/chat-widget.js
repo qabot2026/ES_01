@@ -2846,18 +2846,201 @@
       });
   };
 
-  QualityAssistantWidget.prototype.appendTranscriptTurn = function (role, text) {
+  QualityAssistantWidget.prototype.buildRichMetaFromMessageOptions = function (
+    options
+  ) {
+    options = options || {};
+    var rich = {};
+    var has = false;
+    if (options.chips && options.chips.length) {
+      rich.chips = options.chips;
+      has = true;
+    }
+    if (options.chipHeading && String(options.chipHeading).trim()) {
+      rich.chipHeading = String(options.chipHeading).trim();
+      has = true;
+    }
+    if (options.infoCards && options.infoCards.length) {
+      rich.infoCards = options.infoCards;
+      has = true;
+    }
+    if (options.downloads && options.downloads.length) {
+      rich.downloads = options.downloads;
+      has = true;
+    }
+    if (options.dropdowns && options.dropdowns.length) {
+      var d0 = options.dropdowns[0];
+      rich.action = 'dfchat_inline_select';
+      rich.options = d0 && d0.options ? d0.options : [];
+      rich.placeholder = (d0 && d0.message) || '';
+      has = true;
+    }
+    if (options.galleries && options.galleries.length) {
+      var g0 = options.galleries[0];
+      rich.action = 'open_gallery';
+      rich.urls = g0 && g0.urls ? g0.urls : [];
+      rich.message = (g0 && g0.message) || '';
+      has = true;
+    }
+    if (options.cardCarousels && options.cardCarousels.length) {
+      var c0 = options.cardCarousels[0];
+      rich.action = 'open_card_carousel';
+      rich.cards = c0 && c0.cards ? c0.cards : [];
+      rich.message = (c0 && c0.message) || '';
+      has = true;
+    }
+    if (options.forms && options.forms.length) {
+      var f0 = options.forms[0];
+      rich.action = 'open_form';
+      rich.form_id = (f0 && (f0.formId || f0.form_id)) || '';
+      rich.message = (f0 && f0.message) || '';
+      has = true;
+    }
+    return has ? { rich: rich } : undefined;
+  };
+
+  QualityAssistantWidget.prototype.messageHasVisibleContent = function (
+    role,
+    text,
+    options
+  ) {
+    options = options || {};
+    var textStr = text == null ? '' : String(text).trim();
+    var replyParts = options.replyParts || [];
+    var dropdowns = options.dropdowns || [];
+    var galleries = options.galleries || [];
+    var cardCarousels = options.cardCarousels || [];
+    var forms = options.forms || [];
+    var chips = options.chips || [];
+    var chipHeading = (options.chipHeading || '').trim();
+    var infoCards = options.infoCards || [];
+    var downloads = options.downloads || [];
+    var skipBubbleForDropdown =
+      role === 'bot' &&
+      textStr &&
+      (dropdowns.some(function (d) {
+        return String(d.message || '').trim() === textStr;
+      }) ||
+        galleries.some(function (g) {
+          return String(g.message || '').trim() === textStr;
+        }) ||
+        cardCarousels.some(function (c) {
+          return String(c.message || '').trim() === textStr;
+        }) ||
+        forms.some(function (f) {
+          return String(f.message || '').trim() === textStr;
+        }));
+
+    if ((textStr || replyParts.length) && !skipBubbleForDropdown) return true;
+    if (role === 'bot' && chipHeading) return true;
+    if (role === 'bot' && chips.length) return true;
+    if (role === 'bot' && infoCards.length) return true;
+    if (role === 'bot' && downloads.length) return true;
+    if (role === 'bot' && galleries.length) return true;
+    if (role === 'bot' && cardCarousels.length) return true;
+    if (role === 'bot' && dropdowns.length) return true;
+    if (role === 'bot' && forms.length) return true;
+    return false;
+  };
+
+  QualityAssistantWidget.prototype.transcriptTextFromMessage = function (
+    role,
+    text,
+    options
+  ) {
+    options = options || {};
+    var textStr = text == null ? '' : String(text).trim();
+    var replyParts = options.replyParts || [];
+    var dropdowns = options.dropdowns || [];
+    var galleries = options.galleries || [];
+    var cardCarousels = options.cardCarousels || [];
+    var forms = options.forms || [];
+    var chipHeading = (options.chipHeading || '').trim();
+    var skipBubbleForDropdown =
+      role === 'bot' &&
+      textStr &&
+      (dropdowns.some(function (d) {
+        return String(d.message || '').trim() === textStr;
+      }) ||
+        galleries.some(function (g) {
+          return String(g.message || '').trim() === textStr;
+        }) ||
+        cardCarousels.some(function (c) {
+          return String(c.message || '').trim() === textStr;
+        }) ||
+        forms.some(function (f) {
+          return String(f.message || '').trim() === textStr;
+        }));
+
+    if ((textStr || replyParts.length) && !skipBubbleForDropdown) {
+      if (replyParts.length) {
+        var joined = replyParts
+          .map(function (p) {
+            return p && p.text != null ? String(p.text).trim() : '';
+          })
+          .filter(Boolean)
+          .join('\n');
+        if (joined) return joined;
+      }
+      return textStr;
+    }
+    if (role === 'bot' && chipHeading) return chipHeading;
+    if (role === 'bot' && forms.length) {
+      var fm = forms[0] && forms[0].message;
+      if (fm && String(fm).trim()) return String(fm).trim();
+    }
+    if (role === 'bot' && galleries.length) {
+      var gm = galleries[0] && galleries[0].message;
+      if (gm && String(gm).trim()) return String(gm).trim();
+    }
+    if (role === 'bot' && cardCarousels.length) {
+      var cm = cardCarousels[0] && cardCarousels[0].message;
+      if (cm && String(cm).trim()) return String(cm).trim();
+    }
+    if (role === 'bot' && dropdowns.length) {
+      var dm = dropdowns[0] && dropdowns[0].message;
+      if (dm && String(dm).trim()) return String(dm).trim();
+    }
+    return '';
+  };
+
+  QualityAssistantWidget.prototype.syncTranscriptFromMessage = function (
+    role,
+    text,
+    options
+  ) {
+    options = options || {};
+    if (options.skipTranscriptLog) return Promise.resolve();
+    if (!this.messageHasVisibleContent(role, text, options)) {
+      return Promise.resolve();
+    }
+    var line = this.transcriptTextFromMessage(role, text, options);
+    var meta =
+      role === 'bot'
+        ? this.buildRichMetaFromMessageOptions(options)
+        : undefined;
+    if (!line && !meta) return Promise.resolve();
+    return this.appendTranscriptTurn(
+      role,
+      line || '(Rich content)',
+      meta
+    );
+  };
+
+  QualityAssistantWidget.prototype.appendTranscriptTurn = function (role, text, meta) {
     if (!this.apiBase || !this.sessionId) return Promise.resolve();
     var t = text == null ? '' : String(text).trim();
     if (!t) return Promise.resolve();
+    var body = {
+      sessionId: this.sessionId,
+      role: role || 'user',
+      text: t,
+    };
+    if (meta && typeof meta === 'object') body.meta = meta;
     return fetch(this.apiBase + '/api/transcript/append', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        sessionId: this.sessionId,
-        role: role || 'user',
-        text: t,
-      }),
+      body: JSON.stringify(body),
     }).catch(function () {
       return null;
     });
@@ -2972,9 +3155,7 @@
           languageCode: self.getDialogflowLang(),
         },
         { applyResponse: false, showTyping: false, allowWhileSending: true }
-      ).then(function () {
-        if (ack) return self.appendTranscriptTurn('bot', ack);
-      });
+      );
 
       if (onSubmit) {
         chainPromise = chainPromise.then(function () {
@@ -3167,6 +3348,7 @@
     row.appendChild(body);
     this.els.messages.appendChild(row);
     this.els.messages.scrollTop = this.els.messages.scrollHeight;
+    this.syncTranscriptFromMessage(role, text, options);
     return row;
   };
 

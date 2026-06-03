@@ -426,14 +426,14 @@ app.post(
 );
 
 app.post('/api/transcript/append', (req, res) => {
-  const { sessionId, role, text, turns } = req.body || {};
+  const { sessionId, role, text, meta, turns } = req.body || {};
   if (Array.isArray(turns) && turns.length) {
     return res.json({
       ok: true,
       added: chatTranscript.appendTurns(sessionId, turns),
     });
   }
-  const turn = chatTranscript.appendTurn(sessionId, role, text);
+  const turn = chatTranscript.appendTurn(sessionId, role, text, meta);
   res.json({ ok: !!turn, turn });
 });
 
