@@ -70,7 +70,7 @@ Agar row nahi aati:
 
 | Column | Source |
 |--------|--------|
-| Chatscript | Column **A** — clickable **Chatscript** → `/conversation-transcript?session=…` |
+| Conv. Link | Column **A** — `=HYPERLINK(…,"Chatscript")` opens `/conversation-transcript?session=…` |
 | Conv. Date / Time | Columns **B** / **C** — pehla message (default TZ `Asia/Kolkata`) |
 | Name, Mobile, Email | Forms / `clientContext` → `/api/session-context` |
 | User Queries | Saare user messages joined |
