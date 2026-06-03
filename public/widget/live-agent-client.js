@@ -68,6 +68,7 @@
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          clientSessionId: this.sessionId,
           sessionId: this.sessionId,
           userLanguage: this.language || 'en',
         }),
@@ -134,12 +135,13 @@
       this.markUserInteracted();
       this.noteUserActivity();
       this.appendMessage('user', text);
-      fetch(this.apiBase + '/api/live-agent/user-message', {
+      fetch(this.apiBase + '/api/live-agent/visitor-message', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          clientSessionId: this.sessionId,
           sessionId: this.sessionId,
-          message: text,
+          text: text,
         }),
       }).catch(function () {
         self.showError('Could not send message to agent.');
@@ -149,37 +151,64 @@
     p._liveAgentPollTick = function () {
       var self = this;
       if (!this.liveAgentMode || !this.apiBase || !this.sessionId) return;
-      var url =
+      var statusUrl =
         this.apiBase +
-        '/api/live-agent/poll?sessionId=' +
+        '/api/live-agent/status?clientSessionId=' +
+        encodeURIComponent(this.sessionId);
+      var msgUrl =
+        this.apiBase +
+        '/api/live-agent/messages?clientSessionId=' +
         encodeURIComponent(this.sessionId) +
         (this.liveAgentSince
           ? '&since=' + encodeURIComponent(this.liveAgentSince)
           : '');
-      fetch(url)
+      fetch(statusUrl)
         .then(function (r) {
           return r.json();
         })
-        .then(function (data) {
-          if (!data || !data.ok) return;
-          if (data.status === 'ended') {
+        .then(function (st) {
+          if (!st || !st.ok) return;
+          if (st.conversation && st.conversation.status === 'closed') {
             self.stopLiveAgentMode(true);
-            return;
+            return null;
           }
-          if (data.status === 'active' && data.agentName) {
+          var agentLabel =
+            st.assignedAgentDisplayName ||
+            st.agentName ||
+            (st.conversation && st.conversation.assignedAgentEmail
+              ? String(st.conversation.assignedAgentEmail).split('@')[0]
+              : '');
+          if (st.agentConnected && agentLabel) {
             self._showLiveAgentBanner(
-              t(self, 'connected', 'Connected to') + ' ' + data.agentName
+              t(self, 'connected', 'Connected to') + ' ' + agentLabel
             );
           }
+          return fetch(msgUrl).then(function (r) {
+            return r.json();
+          });
+        })
+        .then(function (data) {
+          if (!data || !data.ok) return;
           (data.messages || []).forEach(function (m) {
             if (!m || !m.id || self.liveAgentSeen[m.id]) return;
             self.liveAgentSeen[m.id] = true;
-            if (m.from === 'agent') {
-              self.appendMessage('bot', m.text, { personaLabel: data.agentName || 'Support' });
-            } else if (m.from === 'system') {
+            var from =
+              m.from ||
+              (m.role === 'agent'
+                ? 'agent'
+                : m.role === 'system'
+                  ? 'system'
+                  : '');
+            if (from === 'agent') {
+              self.appendMessage('bot', m.text, {
+                personaLabel: data.agentName || 'Support',
+                skipTranscriptLog: false,
+              });
+            } else if (from === 'system') {
               self.appendMessage('bot', m.text);
             }
-            if (m.at) self.liveAgentSince = m.at;
+            if (m.createdAt) self.liveAgentSince = m.createdAt;
+            else if (m.at) self.liveAgentSince = m.at;
           });
         })
         .catch(function () {});

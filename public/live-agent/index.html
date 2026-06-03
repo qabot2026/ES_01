@@ -1,102 +1,176 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Live Agent Desk</title>
-    <link rel="stylesheet" href="live-agent.css" />
-  </head>
-  <body>
-    <div class="la-app">
-      <header class="la-header">
-        <div class="la-header__brand">
-          <img
-            class="la-header__logo"
-            src="https://storage.googleapis.com/companybucket/Images/cat-icon.png"
-            alt=""
-            width="36"
-            height="36"
-          />
-          <div>
-            <h1 class="la-header__title">Live Agent Desk</h1>
-            <p class="la-header__sub">Chat with website visitors</p>
-          </div>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Agent Service Desk</title>
+  <link rel="stylesheet" href="live-agent.css" />
+</head>
+<body>
+
+  <section id="loginView" class="login-view hidden" aria-label="Unlock inbox">
+    <div class="login-card">
+      <h1>Agent Service Desk</h1>
+      <p class="muted">Sign in with your viewer secret (same as the leads sheet).</p>
+      <form id="loginForm">
+        <label>
+          Viewer secret
+          <input id="loginSecret" type="password" autocomplete="current-password" required
+            placeholder="CONVERSATIONS_SHEET_VIEW_SECRET" />
+        </label>
+        <label>
+          Your email
+          <input id="loginAgentName" type="email" autocomplete="email" required placeholder="you@company.com" />
+        </label>
+        <div class="login-actions">
+          <button type="button" class="btn ghost" id="toggleSecretBtn">Show</button>
+          <button type="submit" class="btn primary" id="loginSubmitBtn">Open service desk</button>
         </div>
-        <div class="la-header__actions">
-          <span id="la-status" class="la-status la-status--ok" title="API connection">Online</span>
-          <span id="la-agent-name" class="la-agent-badge"></span>
-          <a href="../dashboard/" class="la-btn la-btn--outline la-btn--sm">Analytics</a>
-          <a href="settings.html" class="la-btn la-btn--outline la-btn--sm">Change token</a>
-          <button type="button" id="la-refresh" class="la-btn la-btn--outline la-btn--sm">
-            Refresh
-          </button>
+        <p id="loginMessage" class="login-message muted" role="status"></p>
+        <p class="muted small"><a href="/live-agent/settings">Settings</a></p>
+      </form>
+    </div>
+  </section>
+
+  <section id="appView" class="app-view hidden" aria-label="Agent service desk">
+    <header class="top-bar">
+      <div class="top-bar-inner">
+        <div class="brand">
+          <h1>Agent desk</h1>
+          <p class="muted small" id="agentLabel">—</p>
         </div>
-      </header>
+        <div class="top-actions">
+          <label class="filter-label agent-status-label" title="Your availability">
+            You
+            <select id="myAgentStatus">
+              <option value="online" selected>Online</option>
+              <option value="away">Away</option>
+              <option value="offline">Offline</option>
+            </select>
+          </label>
+          <span id="notifyPill" class="notify-pill hidden" title="Waiting for an agent">0 waiting</span>
+          <label class="filter-label">
+            Show
+            <select id="inboxFilter">
+              <option value="all" data-tab="tabAllChats" selected>All</option>
+              <option value="waiting" data-tab="tabAllChats">Waiting</option>
+              <option value="mine" data-tab="tabAllChats">Mine</option>
+              <option value="active" data-tab="tabAgentChats">Active</option>
+              <option value="assigned" data-tab="tabAllAssigned">Assigned</option>
+              <option value="unassigned" data-tab="tabUnassigned">Unassigned</option>
+              <option value="ai" data-tab="tabAiChats">Bot mode</option>
+              <option value="agent" data-tab="tabAgentChats">Human mode</option>
+              <option value="closed" data-tab="tabCompleted">Done</option>
+            </select>
+          </label>
+          <button type="button" class="btn ghost" id="refreshInboxBtn" title="Refresh list">↻</button>
+          <a class="btn ghost nav-link" href="/live-agent/settings" title="Departments &amp; routing">⚙</a>
+          <a class="btn ghost nav-link" href="/conversations-sheet" id="leadsLink" title="Leads sheet">Leads</a>
+          <button type="button" class="btn ghost" id="logoutBtn">Lock</button>
+        </div>
+      </div>
+    </header>
 
-      <main class="la-layout la-layout--3">
-        <aside class="la-sidebar">
-          <div class="la-sidebar__tabs">
-            <button type="button" class="la-tab la-tab--active" data-tab="waiting">
-              Waiting <span id="la-wait-count" class="la-badge">0</span>
-            </button>
-            <button type="button" class="la-tab" data-tab="active">
-              Active <span id="la-active-count" class="la-badge">0</span>
-            </button>
-          </div>
-          <div id="la-panel-waiting" class="la-sidebar__panel">
-            <ul id="la-waiting" class="la-list"></ul>
-          </div>
-          <div id="la-panel-active" class="la-sidebar__panel" hidden>
-            <ul id="la-active" class="la-list"></ul>
-          </div>
-        </aside>
+    <div class="workspace">
+      <aside class="inbox-pane" aria-label="Request queue">
+        <p class="pane-title">Chats</p>
 
-        <section class="la-chat">
-          <div id="la-chat-empty" class="la-chat__empty">
-            <div class="la-chat__empty-icon" aria-hidden="true">💬</div>
-            <h2>No chat selected</h2>
-            <p>Pick a visitor from <strong>Waiting</strong> or <strong>Active</strong>, then click <strong>Take chat</strong>.</p>
-          </div>
-
-          <div id="la-chat-panel" class="la-chat__panel" hidden>
-            <div class="la-chat__toolbar">
-              <div class="la-chat__toolbar-info">
-                <span id="la-chat-status" class="la-chat-status">waiting</span>
-                <strong id="la-chat-title">Visitor</strong>
-              </div>
-              <div class="la-chat__toolbar-btns">
-                <button type="button" id="la-claim" class="la-btn la-btn--primary la-btn--sm">
-                  Take chat
-                </button>
-                <button type="button" id="la-end" class="la-btn la-btn--danger la-btn--sm" hidden>
-                  End chat
-                </button>
-              </div>
+        <section class="agents-panel" aria-label="Agent status">
+          <div class="agents-panel-head">
+            <h3>Team</h3>
+            <div class="agents-panel-actions">
+              <button type="button" class="btn ghost small" id="toggleAgentsPanelBtn">Team</button>
+              <button type="button" class="btn ghost small" id="refreshAgentsBtn" hidden>Refresh</button>
             </div>
-            <div id="la-messages" class="la-messages"></div>
-            <form id="la-reply-form" class="la-reply">
-              <textarea
-                id="la-reply-input"
-                rows="2"
-                placeholder="Write your reply to the visitor…"
-                required
-              ></textarea>
-              <button type="submit" class="la-btn la-btn--primary">Send</button>
-            </form>
+          </div>
+          <div id="agentsPanelBody" class="agents-panel-body hidden">
+            <p id="agentsPanelStatus" class="muted small"></p>
+            <ul id="agentsList" class="agents-list"></ul>
           </div>
         </section>
 
-        <aside id="la-detail" class="la-detail" hidden>
-          <h2 class="la-detail__title">Visitor</h2>
-          <p class="la-detail__id" id="la-detail-id"></p>
-          <a id="la-detail-script" class="la-detail__link" href="#" target="_blank" rel="noopener"
-            >Open chat script</a
-          >
-          <h3 class="la-detail__sub">Preview</h3>
-          <div id="la-detail-preview" class="la-detail__preview"></div>
-        </aside>
+        <p class="inbox-hint muted small">Pick a waiting chat, then press <strong>Accept</strong> in the chat panel.</p>
+        <p id="inboxStatus" class="inbox-status muted">Loading…</p>
+        <button type="button" class="btn ghost small" id="clearTestQueueBtn" hidden>
+          Clear old test chats
+        </button>
+        <ul id="inboxList" class="inbox-list"></ul>
+      </aside>
+
+      <main class="chat-pane" aria-label="Active conversation">
+        <div id="chatEmpty" class="chat-empty">
+          <p class="chat-empty-lead">Select a chat on the left.</p>
+        </div>
+
+        <div id="chatActive" class="chat-active hidden">
+          <header class="chat-head">
+            <div class="chat-head-meta">
+              <button type="button" class="btn ghost small mobile-back-btn" id="mobileBackBtn" hidden aria-label="Back to chat list">← Chats</button>
+              <h2 id="chatTitle">Visitor</h2>
+              <p class="muted" id="chatMeta">—</p>
+            </div>
+            <div class="chat-head-actions" hidden aria-hidden="true"></div>
+          </header>
+
+          <p id="claimHint" class="claim-hint muted small hidden" role="status"></p>
+
+          <div id="chatClosedBanner" class="chat-closed-banner hidden" role="status">
+            <p><strong>Chat closed.</strong></p>
+            <button type="button" class="btn primary small" id="reopenChatBtn">Reopen</button>
+          </div>
+
+          <div class="chat-main">
+            <div id="messageList" class="message-list" role="log" aria-live="polite"></div>
+            <form id="composerForm" class="composer" novalidate>
+              <textarea id="composerInput" rows="3" placeholder="Type a reply to the visitor…" autocomplete="off"></textarea>
+              <button type="submit" class="btn primary" id="sendBtn">Send</button>
+            </form>
+          </div>
+
+          <div id="chatActionsBar" class="chat-actions-bar" aria-label="Chat controls">
+            <p id="chatModeStatus" class="chat-mode-status muted small"></p>
+            <div class="chat-actions-primary">
+              <button type="button" class="btn primary" id="enableChatbotBtn" title="Accept chat or switch bot vs you">
+                Accept
+              </button>
+              <button type="button" class="btn danger" id="endChatFooterBtn" title="End live chat">
+                End chat
+              </button>
+              <button type="button" class="btn ghost small" id="refreshChatBtn" title="Reload messages">↻</button>
+              <a class="btn ghost small" id="transcriptFooterBtn" href="#" target="_blank" rel="noopener noreferrer" title="Full transcript">Transcript</a>
+              <button type="button" class="btn ghost small" id="copySessionBtn" title="Copy session ID">ID</button>
+              <button type="button" class="btn ghost small" id="dismissFooterBtn" title="Remove from queue">Dismiss</button>
+            </div>
+            <div id="handoverBar" class="handover-bar hidden">
+              <label class="handover-label">
+                Hand over to
+                <select id="handoverAgentSelect" class="handover-select"></select>
+              </label>
+              <button type="button" class="btn ghost small" id="handoverBtn">Transfer</button>
+            </div>
+          </div>
+        </div>
       </main>
+
+      <aside class="context-pane" id="contextPane" aria-label="Visitor details">
+        <p class="pane-title">Details</p>
+        <div class="context-scroll">
+          <div id="contextEmpty" class="context-empty muted">
+            <p>Select a chat.</p>
+          </div>
+          <div id="contextBody" class="context-body hidden">
+            <p id="modeStatusLine" class="mode-status muted small">—</p>
+            <dl class="detail-dl" id="contactDl"></dl>
+            <ul id="documentsList" class="documents-list"></ul>
+            <p id="documentsEmpty" class="muted small hidden">No files yet.</p>
+            <p class="context-links"><a id="transcriptLink" href="#" target="_blank" rel="noopener noreferrer">Transcript</a></p>
+          </div>
+        </div>
+      </aside>
     </div>
-    <script src="live-agent.js"></script>
-  </body>
+  </section>
+
+  <script src="live-agent.js?v=es01-desk" defer></script>
+</body>
 </html>
