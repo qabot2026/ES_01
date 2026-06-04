@@ -2854,32 +2854,42 @@
         }
     }
 
-    function formatSystemLineForDesk_(text) {
+    function formatSystemLineForDesk_(text, msg) {
         const t = String(text || "").trim();
         if (!t) {
             return t;
         }
+        const senderEmail =
+            (msg && msg.senderEmail) ||
+            (selectedConv && selectedConv.assignedAgentEmail) ||
+            "";
+        const senderName =
+            (msg && (msg.senderDisplayName || msg.senderName)) ||
+            resolveAgentDisplayName_(senderEmail) ||
+            "Agent";
+        const isMe = agentIdsMatch_(senderEmail, agentId);
+
         if (
             t === "live_agent_human_connected" ||
             /^(.+?)\s+joined the chat\.?$/i.test(t) ||
             /^Agent\s+\S+@\S+\s+accepted the chat\.?$/i.test(t) ||
             /^you are now chatting with\s+/i.test(t)
         ) {
-            const visitor = resolveVisitorDisplayName_(selectedConv, selectedVisitorContext);
-            return "You are now chatting with " + visitor + ".";
+            return isMe ? "You joined the chat." : senderName + " joined the chat.";
         }
         if (
             t === "live_agent_bot_active" ||
+            t === "live_agent_handoff_to_bot" ||
             /ai assistant is replying/i.test(t) ||
-            /the assistant is replying/i.test(t)
+            /the assistant is replying/i.test(t) ||
+            /stepped away/i.test(t)
         ) {
-            return "AI assistant is replying now.";
+            return isMe
+                ? "You stepped away. AI assistant is replying to the visitor."
+                : senderName + " stepped away. AI assistant is replying to the visitor.";
         }
         if (t === "live_agent_human_rejoined" || /joined again/i.test(t)) {
-            const agent = selectedConv
-                ? resolveAgentDisplayName_(selectedConv.assignedAgentEmail)
-                : "Agent";
-            return agent + " joined again.";
+            return isMe ? "You joined again." : senderName + " joined again.";
         }
         return t;
     }
@@ -2905,7 +2915,7 @@
         div.dataset.msgId = m.id;
         let body;
         if (role === "system") {
-            body = escapeHtml(formatSystemLineForDesk_(m.text || ""));
+            body = escapeHtml(formatSystemLineForDesk_(m.text || "", m));
         } else if (role === "internal") {
             const who = escapeHtml(
                 (m.senderDisplayName || m.senderEmail || "Agent").split("@")[0]
