@@ -470,7 +470,7 @@
             return "";
         }
         const dept = c.departmentName || c.departmentId || "General";
-        const parts = [inboxStatusLabel_(c), "Department: " + dept];
+        const parts = ["Department: " + dept];
         const unreadN = Number(c.unreadForAgent) || 0;
         if (unreadN > 0) {
             parts.push("Unread: " + formatUnreadCount_(unreadN));

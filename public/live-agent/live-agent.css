@@ -1400,6 +1400,8 @@ body.live-agent-locked {
 
   body.mobile-desk .composer {
     flex-shrink: 0;
+    flex-direction: row;
+    align-items: flex-end;
     padding: 0.5rem 0.65rem;
     padding-bottom: calc(0.5rem + env(safe-area-inset-bottom, 0px));
     gap: 0.5rem;
@@ -1407,14 +1409,24 @@ body.live-agent-locked {
   }
 
   body.mobile-desk .composer textarea {
-    min-height: 2.75rem;
-    max-height: 6rem;
+    flex: 1 1 auto;
+    min-width: 0;
+    width: 100%;
+    min-height: 3.25rem;
+    max-height: 8rem;
     font-size: 16px;
+    line-height: 1.35;
+    padding: 0.65rem 0.75rem;
   }
 
   body.mobile-desk .composer .btn {
-    min-height: 2.75rem;
-    width: 100%;
+    flex: 0 0 auto;
+    width: auto;
+    min-width: 4.5rem;
+    min-height: 3.25rem;
+    padding: 0.5rem 0.85rem;
+    font-size: 0.9rem;
+    white-space: nowrap;
   }
 
   body.mobile-desk .chat-actions-bar {
