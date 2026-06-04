@@ -90,6 +90,8 @@
     let deskSettings = null;
     /** Last inbox payload — used for instant dismiss without waiting on refetch. */
     let lastInboxConversations_ = [];
+    /** Chats being dismissed — hide until server close completes (avoids GCS race flash). */
+    const dismissingConversationIds_ = new Set();
     const INBOX_POLL_INTERVAL_MS_DESKTOP = 4000;
     const INBOX_POLL_INTERVAL_MS_MOBILE = 6000;
     const CHAT_POLL_INTERVAL_MS = 800;
@@ -1023,6 +1025,7 @@
 
     async function dismissConversation_(conversationId) {
         const id = conversationId;
+        dismissingConversationIds_.add(id);
         removeConversationFromInboxUi_(id);
         if (selectedId === id) {
             clearSelectedChatUi_();
@@ -1044,6 +1047,8 @@
                 }
                 await loadInbox(true);
             }
+        } finally {
+            dismissingConversationIds_.delete(id);
         }
     }
 
@@ -1104,6 +1109,7 @@
         const showClosed = queue === "closed";
         const open = (conversations || []).filter((c) => {
             if (!c.id) return false;
+            if (dismissingConversationIds_.has(c.id)) return false;
             if (showClosed) return c.status === "closed";
             if (c.status === "closed") return false;
             if (seenIds.has(c.id)) return false;

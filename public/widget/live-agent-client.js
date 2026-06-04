@@ -237,6 +237,10 @@
             return r.json();
           })
           .then(function (body) {
+            if (body && body.dismissed) {
+              self.stopLiveAgentMode(true);
+              return;
+            }
             var conv = body && body.conversation;
             if (conv && conv.status === 'closed') {
               self.stopLiveAgentMode(true);
