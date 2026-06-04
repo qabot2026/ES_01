@@ -1998,7 +1998,16 @@
     function formatTime(iso) {
         if (!iso) return "";
         try {
-            return new Date(iso).toLocaleString();
+            const d = new Date(iso);
+            if (Number.isNaN(d.getTime())) return String(iso);
+            let h = d.getHours();
+            const ampm = h >= 12 ? "PM" : "AM";
+            h = h % 12;
+            if (h === 0) h = 12;
+            const hh = String(h).padStart(2, "0");
+            const mm = String(d.getMinutes()).padStart(2, "0");
+            const ss = String(d.getSeconds()).padStart(2, "0");
+            return hh + ":" + mm + ":" + ss + " " + ampm;
         } catch {
             return iso;
         }
