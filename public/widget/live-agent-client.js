@@ -362,7 +362,7 @@
       if (!text) return;
       this.markUserInteracted();
       this.noteUserActivity();
-      this.appendMessage('user', text);
+      this.appendMessage('user', text, { skipTranscriptLog: true });
       fetch(this.apiBase + '/api/live-agent/visitor-typing', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

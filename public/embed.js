@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var QA_ASSET_VERSION = '20260602-bot-on-fast';
+  var QA_ASSET_VERSION = '20260602-dedupe-transcript';
 
   var QA_FORM_SCRIPTS = [
     'contact.js',
