@@ -494,7 +494,7 @@
     global.__qaLiveAgentScriptLoading = true;
     var base = String(this.apiBase).replace(/\/$/, '');
     var s = document.createElement('script');
-    s.src = base + '/widget/live-agent-client.js?v=20260602-dept-routing';
+    s.src = base + '/widget/live-agent-client.js?v=20260602-agent-notices';
     s.onload = function () {
       global.__qaLiveAgentScriptDone = true;
       global.__qaLiveAgentScriptLoading = false;
@@ -3352,7 +3352,11 @@
     }
     var row = document.createElement('div');
     row.className = 'qa-msg qa-msg--' + role;
-    if (options.messageKind === 'agent-connected') {
+    if (
+      options.messageKind === 'agent-connected' ||
+      options.messageKind === 'agent-rejoined' ||
+      options.messageKind === 'agent-disconnected'
+    ) {
       row.classList.add('qa-msg--agent-connected');
     }
     var body = document.createElement('div');
