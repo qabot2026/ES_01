@@ -1340,7 +1340,31 @@
             if (!raw) return;
             const parsed = JSON.parse(raw);
             if (Array.isArray(parsed)) {
-                deskNotifications_ = parsed.slice(0, MAX_DESK_NOTIFICATIONS);
+                deskNotifications_ = parsed
+                    .slice(0, MAX_DESK_NOTIFICATIONS)
+                    .map(function (n) {
+                        if (!n || !n.body) return n;
+                        if (
+                            !isHandoffPreviewNoise_(n.body) &&
+                            !/requested a (chat with an |human )?agent/i.test(
+                                String(n.title || "")
+                            )
+                        ) {
+                            return n;
+                        }
+                        const conv =
+                            lastInboxConversations_.find(function (c) {
+                                return c.id === n.conversationId;
+                            }) || {
+                                id: n.conversationId,
+                                visitorName: n.title,
+                            };
+                        const fmt = formatHandoffNotification_(conv);
+                        return Object.assign({}, n, {
+                            title: fmt.title,
+                            body: fmt.body,
+                        });
+                    });
             }
         } catch (_) {
             deskNotifications_ = [];
@@ -1388,28 +1412,39 @@
         updateMobileNavBadges_(waiting, n);
     }
 
+    function isHandoffPreviewNoise_(text) {
+        const t = String(text || "").trim();
+        if (!t) return true;
+        if (/^__go_/i.test(t)) return true;
+        if (/requested a (chat with an |human )?agent/i.test(t)) return true;
+        if (/visitor requested/i.test(t)) return true;
+        if (/new live agent request/i.test(t)) return true;
+        return false;
+    }
+
     function formatHandoffNotification_(conv) {
-        const name = resolveVisitorDisplayName_(conv, null);
-        const dept = conv.departmentName || conv.departmentId || "General";
-        const preview = conv.lastMessagePreview
-            ? String(conv.lastMessagePreview).trim().slice(0, 140)
-            : "";
-        const title = "New live agent request";
-        let body = name + " requested a human agent";
-        if (dept && String(dept).toLowerCase() !== "general") {
-            body += " · " + dept;
-        } else {
-            body += " · " + dept + " department";
+        const name = resolveVisitorDisplayName_(conv, null) || "Visitor";
+        const dept = String(conv.departmentName || conv.departmentId || "").trim();
+        const deptShort =
+            dept && dept.toLowerCase() !== "general" ? dept : "";
+        const title = name;
+        let body = "Waiting for an agent";
+        if (deptShort) {
+            body += " · " + deptShort;
         }
-        if (preview) {
-            body += ' — "' + preview + '"';
+        const preview = String(conv.lastMessagePreview || "").trim();
+        if (preview && !isHandoffPreviewNoise_(preview)) {
+            body =
+                preview.length > 90 ? preview.slice(0, 87) + "…" : preview;
         }
         return { title, body };
     }
 
     function showDeskHandoffToast_(entry) {
         if (!deskHandoffToast || !entry) return;
-        deskHandoffToast.textContent = entry.body || entry.title || "New live agent request";
+        deskHandoffToast.textContent =
+            (entry.title ? entry.title + " — " : "") +
+            (entry.body || "Waiting for an agent");
         deskHandoffToast.classList.remove("hidden");
         if (deskHandoffToast._hideTimer) {
             clearTimeout(deskHandoffToast._hideTimer);
@@ -1693,10 +1728,10 @@
         }
         document.title = count + " waiting · Live chat";
         showBrowserNotification_(
-            "New live agent request",
+            count === 1 ? "Visitor waiting" : count + " visitors waiting",
             count === 1
-                ? "A visitor is waiting for a human agent."
-                : count + " visitors are waiting for a human agent.",
+                ? "A chat needs an agent."
+                : count + " chats need an agent.",
             "live-agent-waiting"
         );
         playNotificationSound_();

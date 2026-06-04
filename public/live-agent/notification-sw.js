@@ -10,8 +10,8 @@ self.addEventListener('activate', function (event) {
 self.addEventListener('message', function (event) {
   var d = event.data || {};
   if (d.type !== 'SHOW_HANDOFF') return;
-  var title = d.title || 'New live agent request';
-  var body = d.body || 'A visitor is waiting for a human agent.';
+  var title = d.title || 'Visitor waiting';
+  var body = d.body || 'Waiting for an agent.';
   var tag = d.tag || 'live-agent-handoff';
   event.waitUntil(
     self.registration.showNotification(title, {
