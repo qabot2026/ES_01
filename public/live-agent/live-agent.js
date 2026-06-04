@@ -1866,6 +1866,13 @@
     if (mobileDetailsBtn) {
         mobileDetailsBtn.addEventListener("click", () => openMobileDetailsSheet_());
     }
+    const mobileMenuInfoBtn = $("mobileMenuInfoBtn");
+    if (mobileMenuInfoBtn) {
+        mobileMenuInfoBtn.addEventListener("click", () => {
+            setMobileSheetOpen_(null);
+            openMobileDetailsSheet_();
+        });
+    }
     const mobileChatMenuBtn = $("mobileChatMenuBtn");
     if (mobileChatMenuBtn) {
         mobileChatMenuBtn.addEventListener("click", () => setMobileSheetOpen_("chatmenu"));
@@ -2130,12 +2137,20 @@
                 li.classList.add("assigned-to-me");
             }
             const title = resolveVisitorDisplayName_(c, null);
+            const avatar = document.createElement("div");
+            avatar.className = "inbox-avatar";
+            avatar.setAttribute("aria-hidden", "true");
+            const initial = String(title || "?").trim().charAt(0).toUpperCase() || "?";
+            avatar.textContent = initial;
+            li.appendChild(avatar);
             const main = document.createElement("div");
             main.className = "inbox-item-main";
             main.innerHTML =
                 '<p class="inbox-item-title">' +
+                '<span class="inbox-item-name">' +
                 escapeHtml(title) +
-                ' <span class="badge ' +
+                "</span>" +
+                '<span class="badge ' +
                 escapeHtml(c.status) +
                 '">' +
                 escapeHtml(inboxStatusLabel_(c)) +
