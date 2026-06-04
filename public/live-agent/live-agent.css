@@ -842,6 +842,140 @@ body.live-agent-locked {
   border-radius: 999px;
 }
 
+.notifications-wrap {
+  position: relative;
+}
+
+.notifications-btn {
+  position: relative;
+  min-width: 2.25rem;
+  padding: 0.35rem 0.5rem;
+}
+
+.notifications-btn-icon {
+  font-size: 1.05rem;
+  line-height: 1;
+}
+
+.notifications-badge {
+  position: absolute;
+  top: 0;
+  right: 0;
+  transform: translate(25%, -25%);
+  min-width: 1.1rem;
+  height: 1.1rem;
+  padding: 0 0.25rem;
+  border-radius: 999px;
+  background: #dc2626;
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 700;
+  line-height: 1.1rem;
+  text-align: center;
+}
+
+.notifications-badge.hidden {
+  display: none;
+}
+
+.notifications-panel {
+  position: absolute;
+  top: calc(100% + 0.35rem);
+  right: 0;
+  z-index: 120;
+  width: min(22rem, calc(100vw - 1.5rem));
+  max-height: min(24rem, 60vh);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: #0f172a;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+}
+
+.notifications-panel.hidden {
+  display: none;
+}
+
+.notifications-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.65rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.notifications-panel-head h2 {
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+}
+
+.notifications-empty {
+  margin: 0;
+  padding: 0.75rem;
+}
+
+.notifications-empty.hidden {
+  display: none;
+}
+
+.notifications-list {
+  list-style: none;
+  margin: 0;
+  padding: 0.35rem 0;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.notifications-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: none;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  padding: 0.65rem 0.75rem;
+  font: inherit;
+}
+
+.notifications-item:hover {
+  background: rgba(59, 130, 246, 0.12);
+}
+
+.notifications-item.unread {
+  background: rgba(180, 83, 9, 0.15);
+  border-left: 3px solid #f59e0b;
+}
+
+.notifications-item-title {
+  margin: 0 0 0.2rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #f8fafc;
+}
+
+.notifications-item-body {
+  margin: 0 0 0.25rem;
+  font-size: 0.78rem;
+  color: #cbd5e1;
+  line-height: 1.35;
+}
+
+.notifications-item-time {
+  margin: 0;
+  font-size: 0.68rem;
+  color: var(--muted);
+}
+
 .nav-link {
   text-decoration: none;
   display: inline-flex;

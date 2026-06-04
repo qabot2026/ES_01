@@ -17,6 +17,13 @@
     const toggleSecretBtn = $("toggleSecretBtn");
     const agentLabel = $("agentLabel");
     const notifyPill = $("notifyPill");
+    const notificationsWrap = $("notificationsWrap");
+    const notificationsBtn = $("notificationsBtn");
+    const notificationsBadge = $("notificationsBadge");
+    const notificationsPanel = $("notificationsPanel");
+    const notificationsList = $("notificationsList");
+    const notificationsEmpty = $("notificationsEmpty");
+    const markAllNotificationsReadBtn = $("markAllNotificationsReadBtn");
     const inboxFilter = $("inboxFilter");
     const refreshInboxBtn = $("refreshInboxBtn");
     const logoutBtn = $("logoutBtn");
@@ -88,6 +95,14 @@
     let contextPollTicks = 0;
     let lastWaitingCount = 0;
     let notificationsOk = false;
+    /** Conversation ids already seen in waiting queue (avoids duplicate alerts). */
+    const knownHandoffIds_ = new Set();
+    let handoffTrackingSeeded_ = false;
+    /** @type {Array<{id:string,conversationId:string,title:string,body:string,at:string,read:boolean}>} */
+    let deskNotifications_ = [];
+    let notificationsPanelOpen_ = false;
+    const LS_DESK_NOTIFICATIONS = "live_agent_desk_notifications_v1";
+    const MAX_DESK_NOTIFICATIONS = 40;
     let deskSettings = null;
     /** Last inbox payload — used for instant dismiss without waiting on refetch. */
     let lastInboxConversations_ = [];
@@ -212,9 +227,14 @@
                 "Add your work email: lock the desk, sign in again with you@company.com (required for Accept chat).";
         }
         requestNotificationPermission_();
+        loadDeskNotificationsFromStorage_();
+        renderNotificationsPanel_();
+        updateNotificationsBadge_();
         loadDeskSettings_().then(() => {
             checkLiveAgentBackend_().then((ok) => {
-                if (ok) loadInbox();
+                if (ok) {
+                    void pollHandoffNotifications_(false).then(() => loadInbox());
+                }
             });
         });
         startPresence_();
@@ -449,6 +469,7 @@
         if (appView && appView.classList.contains("hidden")) {
             return;
         }
+        void pollHandoffNotifications_(true);
         loadInbox(true);
         if (selectedId) {
             loadMessages(selectedId, true);
@@ -668,6 +689,7 @@
                 void runLiveSync_();
             }
         };
+        void pollHandoffNotifications_(true);
         loadInbox(true);
         if (selectedId) {
             void runLiveSync_();
@@ -679,6 +701,7 @@
             }
             inboxPollTimer = setInterval(() => {
                 if (document.hidden) return;
+                void pollHandoffNotifications_(true);
                 loadInbox(true);
             }, inboxPollIntervalMs_());
         };
@@ -825,13 +848,260 @@
         }
     }
 
-    function notifyNewRequests_(count) {
+    function loadDeskNotificationsFromStorage_() {
+        try {
+            const raw = sessionStorage.getItem(LS_DESK_NOTIFICATIONS);
+            if (!raw) return;
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed)) {
+                deskNotifications_ = parsed.slice(0, MAX_DESK_NOTIFICATIONS);
+            }
+        } catch (_) {
+            deskNotifications_ = [];
+        }
+    }
+
+    function saveDeskNotificationsToStorage_() {
+        try {
+            sessionStorage.setItem(
+                LS_DESK_NOTIFICATIONS,
+                JSON.stringify(deskNotifications_.slice(0, MAX_DESK_NOTIFICATIONS))
+            );
+        } catch (_) {
+            /* ignore */
+        }
+    }
+
+    function unreadNotificationsCount_() {
+        let n = 0;
+        for (const item of deskNotifications_) {
+            if (!item.read) n += 1;
+        }
+        return n;
+    }
+
+    function updateNotificationsBadge_() {
+        if (!notificationsBadge) return;
+        const n = unreadNotificationsCount_();
+        if (n > 0) {
+            notificationsBadge.textContent = n > 99 ? "99+" : String(n);
+            notificationsBadge.classList.remove("hidden");
+        } else {
+            notificationsBadge.classList.add("hidden");
+        }
+    }
+
+    function formatHandoffNotification_(conv) {
+        const name = resolveVisitorDisplayName_(conv, null);
+        const dept = conv.departmentName || conv.departmentId || "General";
+        const preview = conv.lastMessagePreview
+            ? String(conv.lastMessagePreview).trim().slice(0, 140)
+            : "";
+        const title = "New live agent request";
+        let body = name + " requested a human agent";
+        if (dept && String(dept).toLowerCase() !== "general") {
+            body += " · " + dept;
+        } else {
+            body += " · " + dept + " department";
+        }
+        if (preview) {
+            body += ' — "' + preview + '"';
+        }
+        return { title, body };
+    }
+
+    function pushDeskNotification_(conv) {
+        if (!conv || !conv.id) return;
+        const fmt = formatHandoffNotification_(conv);
+        const at = conv.requestedAt || conv.lastMessageAt || new Date().toISOString();
+        const entry = {
+            id: conv.id + "|" + at,
+            conversationId: conv.id,
+            title: fmt.title,
+            body: fmt.body,
+            at,
+            read: false
+        };
+        const dup = deskNotifications_.some(
+            (n) => n.conversationId === entry.conversationId && !n.read
+        );
+        if (dup) return;
+        deskNotifications_.unshift(entry);
+        if (deskNotifications_.length > MAX_DESK_NOTIFICATIONS) {
+            deskNotifications_.length = MAX_DESK_NOTIFICATIONS;
+        }
+        saveDeskNotificationsToStorage_();
+        renderNotificationsPanel_();
+        updateNotificationsBadge_();
+        return entry;
+    }
+
+    function markNotificationRead_(conversationId) {
+        let changed = false;
+        for (const n of deskNotifications_) {
+            if (n.conversationId === conversationId && !n.read) {
+                n.read = true;
+                changed = true;
+            }
+        }
+        if (changed) {
+            saveDeskNotificationsToStorage_();
+            renderNotificationsPanel_();
+            updateNotificationsBadge_();
+        }
+    }
+
+    function markAllNotificationsRead_() {
+        let changed = false;
+        for (const n of deskNotifications_) {
+            if (!n.read) {
+                n.read = true;
+                changed = true;
+            }
+        }
+        if (changed) {
+            saveDeskNotificationsToStorage_();
+            renderNotificationsPanel_();
+            updateNotificationsBadge_();
+        }
+    }
+
+    function renderNotificationsPanel_() {
+        if (!notificationsList) return;
+        notificationsList.innerHTML = "";
+        const items = deskNotifications_.slice();
+        if (notificationsEmpty) {
+            notificationsEmpty.classList.toggle("hidden", items.length > 0);
+        }
+        for (const n of items) {
+            const li = document.createElement("li");
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "notifications-item" + (n.read ? "" : " unread");
+            btn.innerHTML =
+                '<p class="notifications-item-title">' +
+                escapeHtml(n.title) +
+                "</p>" +
+                '<p class="notifications-item-body">' +
+                escapeHtml(n.body) +
+                "</p>" +
+                '<p class="notifications-item-time">' +
+                escapeHtml(formatTime(n.at)) +
+                "</p>";
+            btn.addEventListener("click", () => {
+                n.read = true;
+                saveDeskNotificationsToStorage_();
+                updateNotificationsBadge_();
+                renderNotificationsPanel_();
+                setNotificationsPanelOpen_(false);
+                const hit = lastInboxConversations_.find((c) => c.id === n.conversationId);
+                if (hit) {
+                    selectConversation(hit);
+                } else {
+                    selectedId = n.conversationId;
+                    if (inboxFilter) inboxFilter.value = "waiting";
+                    void loadInbox(false, true).then(() => {
+                        const c = lastInboxConversations_.find((x) => x.id === n.conversationId);
+                        if (c) selectConversation(c);
+                    });
+                }
+            });
+            li.appendChild(btn);
+            notificationsList.appendChild(li);
+        }
+        updateNotificationsBadge_();
+    }
+
+    function setNotificationsPanelOpen_(open) {
+        notificationsPanelOpen_ = !!open;
+        if (notificationsPanel) {
+            notificationsPanel.classList.toggle("hidden", !notificationsPanelOpen_);
+        }
+        if (notificationsBtn) {
+            notificationsBtn.setAttribute("aria-expanded", notificationsPanelOpen_ ? "true" : "false");
+        }
+    }
+
+    function toggleNotificationsPanel_() {
+        setNotificationsPanelOpen_(!notificationsPanelOpen_);
+        if (notificationsPanelOpen_) {
+            renderNotificationsPanel_();
+        }
+    }
+
+    function seedHandoffTracking_(waitingConversations) {
+        for (const c of waitingConversations || []) {
+            if (c && c.id && c.status === "waiting") {
+                knownHandoffIds_.add(c.id);
+            }
+        }
+        handoffTrackingSeeded_ = true;
+    }
+
+    function notifyNewHandoffRequest_(conv) {
+        if (!conv || deskGeneral_().muteServiceDesk) return;
+        const entry = pushDeskNotification_(conv);
+        if (!entry) return;
+        const waitingN = Array.from(knownHandoffIds_).length;
+        document.title = (waitingN > 0 ? waitingN + " waiting · " : "") + "Live chat";
+        if (notificationsOk) {
+            try {
+                new Notification(entry.title, {
+                    body: entry.body,
+                    tag: "live-agent-handoff-" + conv.id
+                });
+            } catch (_) {
+                /* ignore */
+            }
+        }
+        playNotificationSound_();
+    }
+
+    function processNewHandoffRequests_(waitingConversations) {
+        if (deskGeneral_().muteServiceDesk) return;
+        const waiting = (waitingConversations || []).filter((c) => c && c.status === "waiting");
+        if (!handoffTrackingSeeded_) {
+            seedHandoffTracking_(waiting);
+            return;
+        }
+        for (const c of waiting) {
+            if (!c.id || knownHandoffIds_.has(c.id)) continue;
+            knownHandoffIds_.add(c.id);
+            notifyNewHandoffRequest_(c);
+        }
+        for (const id of knownHandoffIds_) {
+            if (!waiting.some((c) => c.id === id)) {
+                knownHandoffIds_.delete(id);
+            }
+        }
+    }
+
+    async function pollHandoffNotifications_(quiet) {
+        if (!viewerSecret || deskGeneral_().muteServiceDesk) return;
+        try {
+            const data = await apiFetch(
+                `${API}/inbox?status=waiting&limit=50${quiet ? "&light=1" : ""}`
+            );
+            processNewHandoffRequests_(data.conversations || []);
+        } catch (_) {
+            /* ignore */
+        }
+    }
+
+    function notifyNewRequests_(count, sampleConv) {
         if (count <= 0 || deskGeneral_().muteServiceDesk) return;
+        if (sampleConv) {
+            notifyNewHandoffRequest_(sampleConv);
+            return;
+        }
         document.title = count + " waiting · Live chat";
         if (notificationsOk) {
             try {
-                new Notification("Live chat — visitor waiting", {
-                    body: count + " request(s) need an agent.",
+                new Notification("New live agent request", {
+                    body:
+                        count === 1
+                            ? "A visitor is waiting for a human agent."
+                            : count + " visitors are waiting for a human agent.",
                     tag: "live-agent-waiting"
                 });
             } catch (_) {
@@ -886,8 +1156,21 @@
             if (c.status === "waiting") waiting += 1;
             if ((c.unreadForAgent || 0) > 0) unreadChats += 1;
         }
-        if (lastWaitingCount > 0 && waiting > lastWaitingCount) {
-            notifyNewRequests_(waiting - lastWaitingCount);
+        if (waiting > lastWaitingCount) {
+            const newConvs = (conversations || []).filter(
+                (c) => c.status === "waiting" && !knownHandoffIds_.has(c.id)
+            );
+            const delta = waiting - lastWaitingCount;
+            if (newConvs.length) {
+                for (const c of newConvs) {
+                    if (!knownHandoffIds_.has(c.id)) {
+                        knownHandoffIds_.add(c.id);
+                        notifyNewHandoffRequest_(c);
+                    }
+                }
+            } else if (handoffTrackingSeeded_ && delta > 0) {
+                notifyNewRequests_(delta);
+            }
         }
         lastWaitingCount = waiting;
         let label = "";
@@ -1078,6 +1361,8 @@
 
     async function dismissConversation_(conversationId) {
         const id = conversationId;
+        markNotificationRead_(id);
+        knownHandoffIds_.delete(id);
         dismissingConversationIds_.add(id);
         removeConversationFromInboxUi_(id);
         if (selectedId === id) {
@@ -1562,6 +1847,8 @@
             if (!data || !data.conversation || !data.conversation.id) {
                 throw new Error("Accept failed — no conversation returned from server");
             }
+            markNotificationRead_(selectedId);
+            knownHandoffIds_.delete(selectedId);
             await selectConversation(data.conversation, { skipRefresh: true });
             loadInbox(true);
             if (sendBtn) sendBtn.disabled = false;

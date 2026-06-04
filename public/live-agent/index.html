@@ -52,7 +52,22 @@
               </select>
             </span>
           </label>
-          <span id="notifyPill" class="notify-pill hidden" title="Waiting for an agent">0 waiting</span>
+          <div class="notifications-wrap" id="notificationsWrap">
+            <button type="button" class="btn ghost notifications-btn" id="notificationsBtn"
+              title="Notifications" aria-expanded="false" aria-controls="notificationsPanel">
+              <span class="notifications-btn-icon" aria-hidden="true">🔔</span>
+              <span id="notificationsBadge" class="notifications-badge hidden">0</span>
+            </button>
+            <div id="notificationsPanel" class="notifications-panel hidden" role="region" aria-label="Notifications">
+              <div class="notifications-panel-head">
+                <h2>Notifications</h2>
+                <button type="button" class="btn ghost small" id="markAllNotificationsReadBtn">Mark all read</button>
+              </div>
+              <p id="notificationsEmpty" class="notifications-empty muted small">No notifications yet.</p>
+              <ul id="notificationsList" class="notifications-list"></ul>
+            </div>
+          </div>
+          <span id="notifyPill" class="notify-pill hidden" title="Chats waiting for an agent">0 waiting</span>
           <label class="filter-label">
             Show
             <select id="inboxFilter">
