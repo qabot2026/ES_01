@@ -521,8 +521,9 @@
   .chat-active .m-actions-row {
     display: flex;
     flex-direction: row;
-    flex-wrap: nowrap;
-    gap: 0.3rem;
+    flex-wrap: wrap;
+    column-gap: 0.3rem;
+    row-gap: 10px;
     align-items: center;
     justify-content: flex-start;
     width: 100%;
