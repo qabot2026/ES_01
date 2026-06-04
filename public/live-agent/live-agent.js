@@ -514,6 +514,7 @@
                         continue;
                     }
                     if (isStaleEndedSystemMsg_(m, selectedConv)) continue;
+                    if (isStaleBotHandoffSystemMsg_(m, selectedConv)) continue;
                     if (m.role === "visitor") gotVisitorMsg = true;
                     appendMessageEl(m);
                     if (m.id) lastMessageId = m.id;
@@ -1487,8 +1488,13 @@
             renderChatActionsBar_(data.conversation);
             if (isAiCopilotConv_(data.conversation)) {
                 clearVisitorTypingDraft_();
+                void loadMessages(selectedId, true);
+            } else {
+                removeStaleBotHandoffMessages_();
+                lastMessageId = "";
+                lastMessageIso = "";
+                void loadMessages(selectedId, false, true);
             }
-            void loadMessages(selectedId, true);
         } catch (e) {
             alert(e.message || "Could not update mode");
             if (selectedConv) {
@@ -1616,6 +1622,23 @@
         if (!m || m.role !== "system" || !conv || conv.status === "closed") return false;
         const t = String(m.text || "").toLowerCase();
         return t.includes("chat has ended") || t.includes("ended.");
+    }
+
+    /** Hide "assistant is replying again" after agent clicks You reply. */
+    function isStaleBotHandoffSystemMsg_(m, conv) {
+        if (!m || m.role !== "system" || !conv) return false;
+        const t = String(m.text || "").toLowerCase();
+        if (!t.includes("assistant is replying")) return false;
+        return !isAiCopilotConv_(conv);
+    }
+
+    function removeStaleBotHandoffMessages_() {
+        if (!messageList) return;
+        messageList.querySelectorAll(".msg.system").forEach((el) => {
+            if (/assistant is replying/i.test(el.textContent || "")) {
+                el.remove();
+            }
+        });
     }
 
     function applyConversationUi_(c, opts) {
@@ -1853,6 +1876,7 @@
                     continue;
                 }
                 if (isStaleEndedSystemMsg_(m, selectedConv)) continue;
+                if (isStaleBotHandoffSystemMsg_(m, selectedConv)) continue;
                 appendMessageEl(m);
                 if (m.id) {
                     lastMessageId = m.id;

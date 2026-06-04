@@ -394,7 +394,16 @@
             skipTranscriptLog: true,
           });
         } else if (from === 'system') {
-          if (/you are now chatting with/i.test(m.text || '')) {
+          if (
+            /assistant is replying/i.test(m.text || '') &&
+            self._liveAgentHumanActive
+          ) {
+            return;
+          }
+          if (
+            /you are now chatting with/i.test(m.text || '') ||
+            m.text === 'live_agent_human_connected'
+          ) {
             var match = String(m.text).match(/chatting with\s+(.+?)\.?$/i);
             var label = match && match[1] ? match[1].trim() : agentName;
             self._liveAgentAnnounceConnected(label, m.text);
