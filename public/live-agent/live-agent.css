@@ -799,6 +799,20 @@ body.live-agent-locked {
   border-top: 1px solid var(--border);
 }
 
+.m-handover-row {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.m-handover-to {
+  font-size: 0.85rem;
+  color: var(--muted);
+  font-weight: 600;
+}
+
 .handover-label {
   display: flex;
   flex-wrap: wrap;
@@ -809,8 +823,8 @@ body.live-agent-locked {
 }
 
 .handover-select {
-  min-width: 10rem;
-  max-width: 100%;
+  min-width: 8rem;
+  max-width: 14rem;
   padding: 0.35rem 0.5rem;
   border-radius: 6px;
   border: 1px solid var(--border);

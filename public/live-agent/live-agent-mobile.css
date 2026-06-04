@@ -461,70 +461,113 @@
     background: transparent;
   }
 
-  body.mobile-desk .m-actions-row {
+  .chat-active .m-actions-row {
     display: flex;
     flex-direction: row;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     gap: 0.35rem;
     align-items: center;
+    justify-content: flex-start;
+    width: 100%;
   }
 
-  body.mobile-desk .m-actions .chat-actions-primary .btn {
-    flex: 1 1 auto;
+  .chat-active .m-actions .chat-actions-primary .btn {
+    flex: 0 0 auto;
+    width: auto;
     max-width: none;
   }
 
-  body.mobile-desk .m-actions-row .btn.m-btn {
-    flex: 1 1 auto;
-    min-width: 0;
-    max-width: 100%;
-    height: 2rem;
-    min-height: 2rem;
-    max-height: 2rem;
-    padding: 0 0.65rem;
+  .chat-active .m-actions-row .btn.m-btn {
+    flex: 0 0 auto;
+    width: auto;
+    max-width: 7.5rem;
+    height: 1.85rem;
+    min-height: 1.85rem;
+    max-height: 1.85rem;
+    padding: 0 0.55rem;
     margin: 0;
     border-radius: 6px;
     border: none;
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     font-weight: 600;
     cursor: pointer;
     font-family: inherit;
-    line-height: 2rem;
+    line-height: 1.85rem;
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
 
-  body.mobile-desk .m-actions-row .btn.m-btn[hidden] {
+  .chat-active .m-actions-row .btn.m-btn[hidden] {
     display: none !important;
   }
 
-  body.mobile-desk .m-btn--primary {
+  .chat-active .m-btn--primary {
     background: var(--wa-green);
     color: #fff;
+    min-width: 4.25rem;
+    max-width: 6.5rem;
   }
 
-  body.mobile-desk .m-btn--danger {
+  .chat-active .m-btn--danger {
     background: transparent;
     color: #f87171;
     border: 1px solid #7f1d1d;
-    flex: 0 1 auto;
-    min-width: 4.5rem;
+    min-width: 2.75rem;
+    max-width: 3.5rem;
+    padding: 0 0.45rem;
   }
 
   body.mobile-desk .chat-actions-extra {
     display: none !important;
   }
 
-  body.mobile-desk .m-actions .handover-bar {
-    margin-top: 0.35rem;
-    font-size: 0.75rem;
-    color: var(--wa-muted);
+  .chat-active .m-handover {
+    margin-top: 0.3rem;
+    padding-top: 0.3rem;
+    border-top: 1px solid var(--wa-border);
   }
 
-  body.mobile-desk .m-actions .handover-select {
-    font-size: 0.8rem;
-    padding: 0.3rem;
+  .chat-active .m-handover-row {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 0.35rem;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .chat-active .m-handover-to {
+    flex: 0 0 auto;
+    font-size: 0.72rem;
+    color: var(--wa-muted);
+    font-weight: 600;
+  }
+
+  .chat-active .m-handover-select {
+    flex: 1 1 auto;
+    min-width: 0;
+    max-width: 9.5rem;
+    height: 1.85rem;
+    padding: 0 0.35rem;
+    font-size: 0.72rem;
+    border-radius: 6px;
+    border: 1px solid var(--wa-border);
+    background: var(--wa-border);
+    color: var(--wa-text);
+  }
+
+  .chat-active .m-handover-transfer {
+    flex: 0 0 auto;
+    height: 1.85rem;
+    min-height: 1.85rem;
+    padding: 0 0.5rem;
+    margin: 0;
+    font-size: 0.72rem;
+    line-height: 1.85rem;
+    border-radius: 6px;
+    background: var(--wa-border);
+    border: 1px solid #3b4a54;
+    color: var(--wa-text);
   }
 
   .chat-active .composer.m-composer,
