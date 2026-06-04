@@ -520,12 +520,20 @@
         ev.preventDefault();
         const status = $("deskConfigStatus");
         try {
-            const data = await apiFetch(`${API}/settings`, {
+            const payload = readDeskPayload_();
+            const kb = payload.knowledgeBase || {};
+            const skippedKb =
+                (kb.articles || []).length === 0 &&
+                $("kbArticlesBody") &&
+                $("kbArticlesBody").querySelectorAll("tr[data-kb-article]").length > 0;
+            await apiFetch(`${API}/settings`, {
                 method: "PUT",
-                body: JSON.stringify(readDeskPayload_())
+                body: JSON.stringify(payload)
             });
-            applyDeskSettings_(data.settings || {});
-            status.textContent = "Configuration saved.";
+            await loadAll();
+            status.textContent = skippedKb
+                ? "Saved. Knowledge rows need both title and answer — incomplete rows were skipped."
+                : "Configuration saved.";
         } catch (e) {
             status.textContent = e.message;
         }
