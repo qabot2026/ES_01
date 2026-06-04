@@ -13,6 +13,7 @@
   --wa-green: #00a884;
   --wa-bubble-in: #1f2c34;
   --wa-bubble-out: #005c4b;
+  --m-composer-input-h: calc(2.5rem + 15px);
 }
 
 @media (max-width: 768px) {
@@ -444,7 +445,7 @@
   }
 
   .chat-active .chat-main .message-list {
-    padding-bottom: calc(6.75rem + env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(6.75rem + 15px + env(safe-area-inset-bottom, 0px));
   }
 
   body.mobile-desk .m-status {
@@ -586,7 +587,7 @@
     align-items: center;
     gap: 0.4rem;
     margin: 0;
-    padding: 0.4rem 0.5rem 0.5rem;
+    padding: 0.5rem 0.5rem calc(0.5rem + 2px);
     border: none;
     background: var(--wa-header);
     visibility: visible;
