@@ -122,18 +122,29 @@
       };
     }
 
+    p._liveAgentResolveAgentLabel_ = function (st) {
+      var label =
+        (st && st.assignedAgentDisplayName) ||
+        (st && st.agentName) ||
+        '';
+      label = String(label || '').trim();
+      if (!label || /^me$/i.test(label)) {
+        label = 'Support Agent';
+      }
+      return label;
+    };
+
     p._liveAgentAnnounceConnected = function (agentLabel, messageText) {
       var name = (agentLabel && String(agentLabel).trim()) || '';
       if (!name || /^me$/i.test(name)) {
-        this._hideLiveAgentBanner();
-        return;
+        name = 'Support Agent';
       }
       var text =
         (messageText && String(messageText).trim()) ||
         t(this, 'connectedPrefix', 'You are now chatting with') + ' ' + name + '.';
       if (!this._liveAgentConnectedAnnounced) {
         this._liveAgentConnectedAnnounced = true;
-        this.appendMessage('bot', text);
+        this.appendMessage('bot', text, { skipTranscriptLog: true });
       }
       this._liveAgentConnectedBanner(name);
     };
@@ -172,15 +183,9 @@
       if (!this.liveAgentMode) {
         this.startLiveAgentMode({ skipHandoffRequest: true });
       }
-      var agentLabel =
-        st.assignedAgentDisplayName ||
-        st.agentName ||
-        (st.conversation && st.conversation.assignedAgentEmail
-          ? String(st.conversation.assignedAgentEmail).split('@')[0]
-          : '');
-      if (st.agentConnected && agentLabel) {
+      if (st.agentConnected) {
         this._liveAgentAnnounceConnected(
-          agentLabel,
+          this._liveAgentResolveAgentLabel_(st),
           st.connectedMessage || ''
         );
       } else if (handoff) {
@@ -191,8 +196,11 @@
       this._liveAgentIngestMessages({
         ok: true,
         messages: st.messages || [],
-        agentName: agentLabel || st.agentName,
+        agentName: this._liveAgentResolveAgentLabel_(st),
       });
+      if (st.lastMessageId) {
+        this._liveAgentLastMessageId = st.lastMessageId;
+      }
     };
 
     p.startLiveAgentMode = function (data) {
@@ -289,11 +297,8 @@
     };
 
     p._liveAgentConnectedBanner = function (name) {
-      var label = (name && String(name).trim()) || '';
-      if (!label || /^me$/i.test(label)) {
-        this._hideLiveAgentBanner();
-        return;
-      }
+      var label = (name && String(name).trim()) || 'Support Agent';
+      if (/^me$/i.test(label)) label = 'Support Agent';
       this._showLiveAgentBanner(
         t(this, 'connectedPrefix', 'You are now chatting with') +
           ' ' +
@@ -335,13 +340,22 @@
           if (!body || !body.ok) {
             throw new Error((body && body.error) || 'Send failed');
           }
+          if (body.revision) self._liveAgentRev = body.revision;
+          if (body.agentConnected) {
+            self._liveAgentAnnounceConnected(
+              self._liveAgentResolveAgentLabel_(body),
+              body.connectedMessage || ''
+            );
+          }
           if (body.messages && body.messages.length) {
             self._liveAgentIngestMessages({
               ok: true,
               messages: body.messages,
-              agentName:
-                body.assignedAgentDisplayName || body.agentName || 'Support',
+              agentName: self._liveAgentResolveAgentLabel_(body),
             });
+          }
+          if (body.lastMessageId) {
+            self._liveAgentLastMessageId = body.lastMessageId;
           }
           self._liveAgentPollTick();
         })
@@ -422,12 +436,12 @@
         }).catch(function () {});
       };
       this.els.input.addEventListener('input', function () {
-        if (!humanChatActive_(self)) return;
+        if (!self.liveAgentMode && !self._liveAgentHumanActive) return;
         clearTimeout(typingTimer);
         var val = self.els.input.value || '';
         typingTimer = setTimeout(function () {
           postTyping(val, true);
-        }, 160);
+        }, 100);
       });
       this.els.input.addEventListener('blur', function () {
         clearTimeout(typingTimer);
@@ -452,39 +466,10 @@
       var self = this;
       this._liveAgentStopStream();
       if (!this.apiBase || !this.sessionId) return;
-      if (typeof EventSource === 'undefined') {
-        this._liveAgentPollTimer = setInterval(function () {
-          self._liveAgentPollTick();
-        }, 600);
-        this._liveAgentPollTick();
-        return;
-      }
-      var rev = this._liveAgentRev || 0;
-      var url =
-        this.apiBase +
-        '/api/live-agent/stream?clientSessionId=' +
-        encodeURIComponent(this.sessionId) +
-        '&rev=' +
-        rev;
-      var es = new EventSource(url);
-      this._liveAgentEventSource = es;
-      es.addEventListener('sync', function (ev) {
-        try {
-          var st = JSON.parse(ev.data);
-          if (st && st.revision) self._liveAgentRev = st.revision;
-          self._liveAgentSetAgentTypingIndicator(st.agentTyping || '');
-          self._applyLiveAgentSyncState(st);
-        } catch (e) {}
-      });
-      es.onerror = function () {
-        es.close();
-        self._liveAgentEventSource = null;
-        self._liveAgentPollTimer = setInterval(function () {
-          self._liveAgentPollTick();
-        }, 600);
-        self._liveAgentPollTick();
-      };
       this._liveAgentPollTick();
+      this._liveAgentPollTimer = setInterval(function () {
+        self._liveAgentPollTick();
+      }, 350);
     };
 
     p._liveAgentPollTick = function () {
@@ -497,14 +482,18 @@
       ) {
         return;
       }
+      if (this._liveAgentPollInFlight) return;
+      this._liveAgentPollInFlight = true;
       var rev = this._liveAgentRev || 0;
+      var msgId = encodeURIComponent(this._liveAgentLastMessageId || '');
       var syncUrl =
         this.apiBase +
         '/api/live-agent/sync?clientSessionId=' +
         encodeURIComponent(this.sessionId) +
         '&rev=' +
         rev +
-        '&waitMs=1200';
+        '&waitMs=8000&lastMessageId=' +
+        msgId;
       fetch(syncUrl)
         .then(function (r) {
           return r.json();
@@ -512,14 +501,14 @@
         .then(function (st) {
           if (!st) return;
           if (st.revision) self._liveAgentRev = st.revision;
-          if (st.unchanged) {
-            self._liveAgentSetAgentTypingIndicator(st.agentTyping || '');
-            return;
-          }
           self._liveAgentSetAgentTypingIndicator(st.agentTyping || '');
+          if (st.unchanged) return;
           self._applyLiveAgentSyncState(st);
         })
-        .catch(function () {});
+        .catch(function () {})
+        .finally(function () {
+          self._liveAgentPollInFlight = false;
+        });
     };
 
     p._liveAgentResumeIfNeeded = function () {

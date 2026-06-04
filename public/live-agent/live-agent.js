@@ -446,9 +446,12 @@
         try {
             const params = new URLSearchParams({
                 rev: String(deskSyncRevision),
-                waitMs: "20000"
+                waitMs: "12000"
             });
-            if (lastMessageId) params.set("sinceId", lastMessageId);
+            if (lastMessageId) {
+                params.set("sinceId", lastMessageId);
+                params.set("lastMessageId", lastMessageId);
+            }
             const data = await apiFetch(
                 `${API}/conversations/${encodeURIComponent(selectedId)}/live-sync?` +
                     params.toString()
@@ -461,6 +464,12 @@
                     data.visitorTyping,
                     data.conversation || selectedConv
                 );
+            } else if (data.unchanged) {
+                renderVisitorTypingPreview_("", data.conversation || selectedConv);
+            }
+            if (data.unchanged) {
+                contextPollTicks += 1;
+                return;
             }
             if (data.conversation) {
                 selectedConv = data.conversation;
@@ -1647,10 +1656,12 @@
 
     if (composerInput) {
         composerInput.addEventListener("input", () => {
-            if (!selectedId || !canReplyActive_()) return;
+            if (!selectedId) return;
+            const st = selectedConv && selectedConv.status;
+            if (st !== "active" && st !== "waiting") return;
             clearTimeout(agentTypingTimer);
             const val = composerInput.value || "";
-            agentTypingTimer = setTimeout(() => postAgentTyping_(val, true), 160);
+            agentTypingTimer = setTimeout(() => postAgentTyping_(val, true), 100);
         });
         composerInput.addEventListener("blur", () => {
             clearTimeout(agentTypingTimer);
