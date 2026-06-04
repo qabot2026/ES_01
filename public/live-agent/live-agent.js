@@ -449,6 +449,10 @@
             visitorTypingPreview.textContent = "";
         }
         if (!messageList) return;
+        if (!shouldShowVisitorTypingDraft_()) {
+            clearVisitorTypingDraft_();
+            return;
+        }
         const t = String(text || "").trim();
         if (!t) {
             removeVisitorTypingDraft_();
@@ -608,7 +612,15 @@
         clearVisitorTypingDraft_();
     }
 
+    function shouldShowVisitorTypingDraft_() {
+        return !!(selectedConv && !isAiCopilotConv_(selectedConv));
+    }
+
     function syncVisitorTypingDraftFromPulse_(data) {
+        if (!shouldShowVisitorTypingDraft_()) {
+            clearVisitorTypingDraft_();
+            return;
+        }
         if (!data || data.visitorTyping == null) return;
         const t = String(data.visitorTyping || "").trim();
         if (t) {
@@ -1448,6 +1460,9 @@
             applyConversationUi_(selectedConv, { skipContextReload: true });
             renderChatActionsBar_(selectedConv);
         }
+        if (patch.humanMode === "ai") {
+            clearVisitorTypingDraft_();
+        }
         const busy = enableChatbotBtn ? [enableChatbotBtn] : [];
         const prevLabel = enableChatbotBtn ? enableChatbotBtn.textContent : "";
         if (enableChatbotBtn) {
@@ -1470,6 +1485,9 @@
             selectedConv = data.conversation;
             applyConversationUi_(data.conversation, { skipContextReload: true });
             renderChatActionsBar_(data.conversation);
+            if (isAiCopilotConv_(data.conversation)) {
+                clearVisitorTypingDraft_();
+            }
             void loadMessages(selectedId, true);
         } catch (e) {
             alert(e.message || "Could not update mode");
@@ -1620,6 +1638,9 @@
             isActive && conv.assignedAgentEmail && !agentIdsMatch_(conv.assignedAgentEmail, agentId);
         const aiCopilot = isAiCopilotConv_(conv);
         const canReply = isMine && !aiCopilot;
+        if (aiCopilot) {
+            clearVisitorTypingDraft_();
+        }
 
         if (chatClosedBanner) chatClosedBanner.classList.toggle("hidden", !isClosed);
         if (claimBtn) claimBtn.hidden = true;
