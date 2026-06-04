@@ -1867,7 +1867,20 @@
         return t;
     }
 
+    function stripOptimisticAgentMessages_() {
+        if (!messageList) return;
+        messageList.querySelectorAll('[data-msg-id^="opt-"]').forEach((el) => el.remove());
+    }
+
     function appendMessageEl(m) {
+        if (!m || !messageList) return;
+        const msgId = m.id ? String(m.id) : "";
+        if (msgId && messageList.querySelector('[data-msg-id="' + msgId + '"]')) {
+            return;
+        }
+        if (msgId && !msgId.startsWith("opt-") && m.role === "agent") {
+            stripOptimisticAgentMessages_();
+        }
         removeVisitorTypingDraft_();
         const div = document.createElement("div");
         div.className = "msg " + (m.role || "visitor");
@@ -1986,11 +1999,23 @@
                 }
             );
             const opt = messageList.querySelector('[data-msg-id="' + optimisticId + '"]');
-            if (opt) opt.remove();
-            if (data.message) {
-                appendMessageEl(data.message);
-                if (data.message.id) lastMessageId = data.message.id;
+            if (data.message && data.message.id) {
+                const realId = String(data.message.id);
+                const existing = messageList.querySelector('[data-msg-id="' + realId + '"]');
+                if (opt && !existing) {
+                    opt.dataset.msgId = realId;
+                    const timeEl = opt.querySelector("time");
+                    if (timeEl && data.message.createdAt) {
+                        timeEl.textContent = formatTime(data.message.createdAt);
+                    }
+                } else {
+                    if (opt) opt.remove();
+                    if (!existing) appendMessageEl(data.message);
+                }
+                lastMessageId = realId;
                 if (data.message.createdAt) lastMessageIso = data.message.createdAt;
+            } else if (opt) {
+                opt.remove();
             }
             if (data.conversation) {
                 selectedConv = data.conversation;
@@ -1999,7 +2024,6 @@
             }
             messageList.scrollTop = messageList.scrollHeight;
             loadInbox(true);
-            void runLiveSync_();
         } catch (e) {
             const opt = messageList.querySelector('[data-msg-id="' + optimisticId + '"]');
             if (opt) opt.remove();
