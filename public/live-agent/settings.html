@@ -77,6 +77,10 @@
               <option value="none">None</option>
             </select>
           </label>
+          <div class="section-save-bar">
+            <button type="button" class="btn primary small section-save-btn" data-section-label="General">Save general</button>
+            <p class="section-save-status muted small" role="status"></p>
+          </div>
         </section>
 
         <section class="settings-card">
@@ -90,6 +94,10 @@
               <input type="checkbox" id="notifyDeskPanel" checked />
               <span>Show new human-agent requests in the desk 🔔 panel</span>
             </label>
+          </div>
+          <div class="section-save-bar">
+            <button type="button" class="btn primary small section-save-btn" data-section-label="Desk alerts">Save desk alerts</button>
+            <p class="section-save-status muted small" role="status"></p>
           </div>
         </section>
 
@@ -114,6 +122,10 @@
               Allow browser pop-ups on this device
             </button>
             <p id="notifyPermissionStatus" class="muted small" role="status">Checking…</p>
+          </div>
+          <div class="section-save-bar">
+            <button type="button" class="btn primary small section-save-btn" data-section-label="Browser pop-ups">Save pop-up settings</button>
+            <p class="section-save-status muted small" role="status"></p>
           </div>
         </section>
 
@@ -151,6 +163,10 @@
               <input id="endConvWaitMinutes" type="number" min="1" max="120" step="1" value="3" />
             </label>
           </div>
+          <div class="section-save-bar">
+            <button type="button" class="btn primary small section-save-btn" data-section-label="Routing">Save routing</button>
+            <p class="section-save-status muted small" role="status"></p>
+          </div>
         </section>
 
         <section class="settings-card">
@@ -173,6 +189,10 @@
               <option value="none">None</option>
             </select>
           </label>
+          <div class="section-save-bar">
+            <button type="button" class="btn primary small section-save-btn" data-section-label="Access control">Save access</button>
+            <p class="section-save-status muted small" role="status"></p>
+          </div>
         </section>
 
         <section class="settings-card">
@@ -191,6 +211,10 @@
             </table>
           </div>
           <button type="button" class="btn ghost small" id="addAgentProfileBtn">Add agent</button>
+          <div class="section-save-bar">
+            <button type="button" class="btn primary small section-save-btn" data-section-label="Agent names">Save agent names</button>
+            <p class="section-save-status muted small" role="status"></p>
+          </div>
         </section>
 
         <section class="settings-card" id="knowledgeBaseSection">
@@ -218,6 +242,10 @@
           </div>
           <button type="button" class="btn ghost small" id="addKbArticleBtn">Add article</button>
           <p class="muted small">Each article needs a title and answer. Leave department empty for all teams.</p>
+          <div class="section-save-bar">
+            <button type="button" class="btn primary small section-save-btn" data-section-label="Knowledge base">Save knowledge base</button>
+            <p class="section-save-status muted small" role="status"></p>
+          </div>
         </section>
 
         <section class="settings-card">
@@ -231,11 +259,16 @@
             <span>Weekly / monthly agent reports</span>
           </label>
           <p class="muted small">Report emails are stored for scheduled jobs; delivery requires server cron or an external scheduler.</p>
+          <div class="section-save-bar">
+            <button type="button" class="btn primary small section-save-btn" data-section-label="Reporting">Save reporting</button>
+            <p class="section-save-status muted small" role="status"></p>
+          </div>
         </section>
 
         <div class="settings-save-bar">
-          <button type="submit" class="btn primary">Save configuration</button>
+          <button type="submit" class="btn primary">Save all configuration</button>
           <p id="deskConfigStatus" class="muted small" role="status"></p>
+          <p class="muted small">Saves every section above (general, alerts, routing, access, names, knowledge, reporting).</p>
         </div>
       </form>
 
@@ -244,7 +277,7 @@
           <h2>Agent status &amp; activity</h2>
           <button type="button" class="btn ghost small" id="refreshAgentsOverviewBtn">Refresh</button>
         </div>
-        <p class="muted small">Tracked by agent email (same as service desk login). Status updates when agents open the desk and send heartbeats.</p>
+        <p class="muted small">Live data only (not saved here). Tracked by agent email when agents use the service desk.</p>
         <p id="agentsOverviewStatus" class="muted small" role="status"></p>
         <div class="agents-table-wrap">
           <table class="agents-table" id="agentsOverviewTable">
@@ -268,6 +301,10 @@
       <section class="settings-card">
         <h2>Departments</h2>
         <p class="muted small"><strong>General Department</strong> is the default when no department is specified. Add agent emails (one per line) for round-robin.</p>
+        <p class="dept-section-note muted small">
+          Departments save separately from the configuration form above.
+          Use <strong>Create department</strong> for new teams, and <strong>Save agents</strong> on each card to update emails.
+        </p>
 
         <form id="deptForm" class="settings-form dept-form">
           <label>

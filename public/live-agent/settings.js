@@ -455,7 +455,7 @@
             const saveBtn = document.createElement("button");
             saveBtn.type = "button";
             saveBtn.className = "btn primary small";
-            saveBtn.textContent = "Save agents";
+            saveBtn.textContent = "Save department";
             saveBtn.addEventListener("click", async () => {
                 saveBtn.disabled = true;
                 try {
@@ -463,7 +463,7 @@
                         method: "PUT",
                         body: JSON.stringify({ agentEmails: parseEmails_(ta.value) })
                     });
-                    $("deptFormStatus").textContent = "Saved " + d.name;
+                    $("deptFormStatus").textContent = "Department saved: " + d.name;
                     await loadAll();
                 } catch (e) {
                     alert(e.message);
@@ -516,26 +516,59 @@
         }
     });
 
+    function kbSaveWarning_(payload) {
+        const kb = (payload && payload.knowledgeBase) || {};
+        return (
+            (kb.articles || []).length === 0 &&
+            $("kbArticlesBody") &&
+            $("kbArticlesBody").querySelectorAll("tr[data-kb-article]").length > 0
+        );
+    }
+
+    async function saveDeskConfiguration_(statusEl, sectionLabel) {
+        if (statusEl) statusEl.textContent = "Saving…";
+        const payload = readDeskPayload_();
+        const skippedKb = kbSaveWarning_(payload);
+        await apiFetch(`${API}/settings`, {
+            method: "PUT",
+            body: JSON.stringify(payload)
+        });
+        await loadAll();
+        const prefix = sectionLabel ? sectionLabel + " saved." : "Configuration saved.";
+        const msg = skippedKb
+            ? prefix + " Knowledge rows need both title and answer — incomplete rows were skipped."
+            : prefix;
+        if (statusEl) statusEl.textContent = msg;
+        return msg;
+    }
+
+    document.querySelectorAll(".section-save-btn").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+            const bar = btn.closest(".section-save-bar");
+            const statusEl = bar && bar.querySelector(".section-save-status");
+            const label = btn.getAttribute("data-section-label") || "";
+            btn.disabled = true;
+            try {
+                await saveDeskConfiguration_(statusEl, label);
+            } catch (e) {
+                if (statusEl) statusEl.textContent = e.message;
+            } finally {
+                btn.disabled = false;
+            }
+        });
+    });
+
     $("deskConfigForm").addEventListener("submit", async (ev) => {
         ev.preventDefault();
         const status = $("deskConfigStatus");
+        const submitBtn = ev.submitter;
+        if (submitBtn) submitBtn.disabled = true;
         try {
-            const payload = readDeskPayload_();
-            const kb = payload.knowledgeBase || {};
-            const skippedKb =
-                (kb.articles || []).length === 0 &&
-                $("kbArticlesBody") &&
-                $("kbArticlesBody").querySelectorAll("tr[data-kb-article]").length > 0;
-            await apiFetch(`${API}/settings`, {
-                method: "PUT",
-                body: JSON.stringify(payload)
-            });
-            await loadAll();
-            status.textContent = skippedKb
-                ? "Saved. Knowledge rows need both title and answer — incomplete rows were skipped."
-                : "Configuration saved.";
+            await saveDeskConfiguration_(status, "All configuration");
         } catch (e) {
             status.textContent = e.message;
+        } finally {
+            if (submitBtn) submitBtn.disabled = false;
         }
     });
 
