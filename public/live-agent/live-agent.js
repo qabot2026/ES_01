@@ -482,12 +482,40 @@
         return st ? st.charAt(0).toUpperCase() + st.slice(1) : "—";
     }
 
+    function deskRoutingMode_() {
+        const r = deskSettings && deskSettings.routing;
+        const algo =
+            (r && r.algorithm) ||
+            deskSettings.routingAlgorithm ||
+            (r && r.mode) ||
+            "online_parallel";
+        return String(algo).toLowerCase() === "round_robin"
+            ? "round_robin"
+            : "online_parallel";
+    }
+
+    function isWaitingOfferedToMe_(c) {
+        if (!c || c.status !== "waiting") return false;
+        if (deskRoutingMode_() !== "round_robin") return true;
+        const offered = (c.currentAssigneeEmail || "").trim();
+        if (!offered) return true;
+        return agentIdsMatch_(offered, agentId);
+    }
+
     function buildInboxItemDetails_(c) {
         if (!c) {
             return "";
         }
         const dept = c.departmentName || c.departmentId || "General";
         const parts = ["Department: " + dept];
+        if (c.status === "waiting" && deskRoutingMode_() === "round_robin") {
+            const offered = (c.currentAssigneeEmail || "").trim();
+            if (offered && agentIdsMatch_(offered, agentId)) {
+                parts.push("Your turn — accept now");
+            } else if (offered) {
+                parts.push("Offered to " + resolveAgentDisplayName_(offered));
+            }
+        }
         const unreadN = Number(c.unreadForAgent) || 0;
         if (unreadN > 0) {
             parts.push("Unread: " + formatUnreadCount_(unreadN));
@@ -1274,6 +1302,20 @@
             return "Typing… · " + dept;
         }
         if (st === "waiting") {
+            if (deskRoutingMode_() === "round_robin") {
+                const offered = (conv.currentAssigneeEmail || "").trim();
+                if (offered && agentIdsMatch_(offered, agentId)) {
+                    return "Your turn — accept · " + dept;
+                }
+                if (offered) {
+                    return (
+                        "Offered to " +
+                        resolveAgentDisplayName_(offered) +
+                        " · " +
+                        dept
+                    );
+                }
+            }
             return "Waiting for an agent · " + dept;
         }
         if (st === "closed") {
@@ -1696,6 +1738,7 @@
         }
         for (const c of waiting) {
             if (!c.id || knownHandoffIds_.has(c.id)) continue;
+            if (!isWaitingOfferedToMe_(c)) continue;
             knownHandoffIds_.add(c.id);
             notifyNewHandoffRequest_(c);
         }
@@ -2668,9 +2711,13 @@
             const aiCopilot = isAiCopilotConv_(conv);
             enableChatbotBtn.hidden = false;
             if (isWaiting) {
+                const myTurn = isWaitingOfferedToMe_(conv);
                 enableChatbotBtn.dataset.deskAction = "accept";
                 enableChatbotBtn.textContent = "Accept";
-                enableChatbotBtn.title = "Accept and reply to this visitor";
+                enableChatbotBtn.title = myTurn
+                    ? "Accept and reply to this visitor"
+                    : "Waiting for another agent’s turn (round robin)";
+                enableChatbotBtn.disabled = !myTurn;
                 enableChatbotBtn.classList.remove("active-mode");
             } else if (isMine && aiCopilot) {
                 enableChatbotBtn.dataset.deskAction = "takeover";
@@ -2685,8 +2732,11 @@
             } else {
                 enableChatbotBtn.dataset.deskAction = "";
                 enableChatbotBtn.hidden = true;
+                enableChatbotBtn.disabled = st === "closed";
             }
-            enableChatbotBtn.disabled = st === "closed";
+            if (!isWaiting) {
+                enableChatbotBtn.disabled = st === "closed";
+            }
         }
         if (endChatFooterBtn) {
             endChatFooterBtn.hidden = st !== "active" && st !== "waiting";
@@ -2951,12 +3001,16 @@
             const showClaimHint = isWaiting && !isClosed && !isMobileAgentDesk_();
             claimHint.hidden = !showClaimHint;
             claimHint.textContent = showClaimHint
-                ? "Use Accept below to take this chat."
+                ? isWaitingOfferedToMe_(conv)
+                    ? "Your turn — use Accept below (round robin)."
+                    : "Another agent’s turn — this chat will rotate to you."
                 : "";
         }
         if (isMobileAgentDesk_() && chatMeta && isWaiting && !isClosed) {
             const dept = conv.departmentName || conv.departmentId || "General";
-            chatMeta.textContent = "Tap Accept below · " + dept;
+            chatMeta.textContent = isWaitingOfferedToMe_(conv)
+                ? "Your turn — tap Accept · " + dept
+                : "Round robin — waiting for next turn · " + dept;
         }
         if (composerForm) composerForm.classList.toggle("hidden", isClosed);
         if (chatActionsBar) chatActionsBar.classList.toggle("hidden", isClosed);

@@ -138,7 +138,11 @@
               <option value="round_robin">Round robin (timed handoff)</option>
             </select>
           </label>
-          <p class="muted small">Round robin assigns one agent at a time; if they do not accept within the wait period, the chat moves to the next agent. Online parallel shows the chat to all agents until someone accepts.</p>
+          <p class="muted small">
+            <strong>Round robin</strong> (per department): only one agent in that department sees the waiting chat at a time.
+            If they do not accept within <strong>Round-robin accept wait</strong>, it moves to the next agent in that department’s email list.
+            <strong>Online parallel</strong>: all department agents see the chat until someone accepts.
+          </p>
           <div class="settings-row-2">
             <label>
               Max concurrent windows
