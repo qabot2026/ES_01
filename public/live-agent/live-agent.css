@@ -853,14 +853,23 @@ body.live-agent-locked {
 }
 
 .chat-actions-primary .btn {
-  min-height: 2.5rem;
-  padding: 0.55rem 1rem;
+  flex: 0 0 auto;
+  min-height: 2rem;
+  max-height: 2.25rem;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.85rem;
   font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
 }
 
-.chat-actions-primary .btn.primary {
-  flex: 1 1 10rem;
-  max-width: 100%;
+.chat-actions-primary .btn.primary,
+.chat-actions-primary .btn.danger,
+.chat-actions-primary #enableChatbotBtn {
+  flex: 0 0 auto;
+  width: auto;
+  max-width: none;
+  min-width: 0;
 }
 
 #enableChatbotBtn.active-mode {
@@ -1357,7 +1366,8 @@ body.live-agent-locked {
   margin: 0 0 0.5rem;
 }
 
-.mobile-chat-menu-btn {
+.mobile-chat-menu-btn,
+.mobile-details-btn {
   display: none;
 }
 
@@ -1380,6 +1390,22 @@ body.live-agent-locked {
     align-items: center;
     column-gap: 0.5rem;
     row-gap: 10px;
+  }
+
+  .chat-active .m-actions-row .btn.m-btn {
+    flex: 0 0 auto;
+    min-height: 2rem;
+    max-height: 2.25rem;
+    height: auto;
+    padding: 0.4rem 0.75rem;
+    font-size: 0.85rem;
+    line-height: 1.2;
+    max-width: none;
+  }
+
+  .chat-active .m-actions-row .btn.m-btn--primary {
+    min-width: 0;
+    max-width: none;
   }
 
   .mobile-inbox-toolbar,

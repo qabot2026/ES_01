@@ -551,17 +551,17 @@
   .chat-active .m-btn--primary {
     background: var(--wa-green);
     color: #fff;
-    min-width: 4.25rem;
-    max-width: 6.5rem;
+    min-width: 0;
+    max-width: none;
   }
 
   .chat-active .m-btn--danger {
     background: transparent;
     color: #f87171;
     border: 1px solid #7f1d1d;
-    min-width: 2.75rem;
-    max-width: 3.5rem;
-    padding: 0 0.45rem;
+    min-width: 0;
+    max-width: none;
+    padding: 0 0.55rem;
   }
 
   body.mobile-desk .chat-actions-extra {
