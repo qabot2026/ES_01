@@ -428,11 +428,13 @@
     this.els = {};
     this.liveAgentMode = false;
     this._liveAgentHumanActive = false;
+    this._liveAgentBotCopilotActive = false;
     this.init();
   }
 
   QualityAssistantWidget.prototype.isHumanChatActive = function () {
-    return !!(this.liveAgentMode || this._liveAgentHumanActive);
+    if (this._liveAgentBotCopilotActive) return false;
+    return !!this._liveAgentHumanActive;
   };
 
   QualityAssistantWidget.prototype.newSessionId = function () {
@@ -492,7 +494,7 @@
     global.__qaLiveAgentScriptLoading = true;
     var base = String(this.apiBase).replace(/\/$/, '');
     var s = document.createElement('script');
-    s.src = base + '/widget/live-agent-client.js?v=20260604-agent-typing';
+    s.src = base + '/widget/live-agent-client.js?v=20260604-bot-on-df';
     s.onload = function () {
       global.__qaLiveAgentScriptDone = true;
       global.__qaLiveAgentScriptLoading = false;

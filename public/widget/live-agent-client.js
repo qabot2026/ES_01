@@ -36,11 +36,14 @@
   }
 
   function humanChatActive_(w) {
-    return !!(w && w._liveAgentHumanActive);
+    if (!w) return false;
+    if (w._liveAgentBotCopilotActive) return false;
+    return !!w._liveAgentHumanActive;
   }
 
   function humanHandoffFromSync_(st) {
     if (!st) return false;
+    if (st.botMode === true || st.aiCopilot === true) return false;
     if (typeof st.humanHandoffActive === 'boolean') {
       return st.humanHandoffActive;
     }
@@ -211,12 +214,16 @@
     p._releaseLiveAgentToBot_ = function () {
       this.liveAgentMode = false;
       this._liveAgentHumanActive = false;
+      this._liveAgentBotCopilotActive = true;
       this._liveAgentLastAgentTyping = '';
       this._liveAgentSetAgentTypingIndicator('');
       this._hideLiveAgentBanner();
     };
 
     p._liveAgentShowBotActiveMessage_ = function () {
+      this._liveAgentBotCopilotActive = true;
+      this._liveAgentHumanActive = false;
+      this.liveAgentMode = false;
       var key = 'bot-active';
       this.liveAgentSeen = this.liveAgentSeen || {};
       if (this.liveAgentSeen[key]) return;
@@ -229,6 +236,9 @@
     };
 
     p._liveAgentApplyBotHandoffFromSync_ = function (st) {
+      this._liveAgentBotCopilotActive = true;
+      this._liveAgentHumanActive = false;
+      this.liveAgentMode = false;
       var msgs = (st && st.messages) || [];
       var found = false;
       for (var i = 0; i < msgs.length; i++) {
@@ -282,6 +292,7 @@
         }
         return;
       }
+      this._liveAgentBotCopilotActive = false;
       this._liveAgentHumanActive = true;
       if (!this.liveAgentMode) {
         this.startLiveAgentMode({ skipHandoffRequest: true });
@@ -366,6 +377,7 @@
     p.stopLiveAgentMode = function (endedByAgent) {
       this.liveAgentMode = false;
       this._liveAgentHumanActive = false;
+      this._liveAgentBotCopilotActive = false;
       this._liveAgentHandoffRequested = false;
       this._liveAgentConnectedAnnounced = false;
       this._liveAgentStopStream();
