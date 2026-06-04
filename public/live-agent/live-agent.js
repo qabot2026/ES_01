@@ -1675,20 +1675,21 @@
         }
         if (composerForm) composerForm.classList.toggle("hidden", isClosed);
         if (chatActionsBar) chatActionsBar.classList.toggle("hidden", isClosed);
+        const canPrivateNote = !isClosed && agentId.includes("@");
         if (composerInput) {
-            composerInput.disabled = isClosed || !canReply;
+            composerInput.disabled = isClosed || (!canReply && !canPrivateNote);
             composerInput.placeholder = isClosed
                 ? "Reopen this chat to reply…"
-                : aiCopilot && isMine
-                  ? "Chatbot is replying — click Take over to message the visitor…"
-                  : canReply
-                    ? "Type a reply to the visitor…"
+                : canReply
+                  ? "Reply to visitor, or start with / for a private team note…"
+                  : canPrivateNote
+                    ? "Private team note (start with /) — visitor cannot see this…"
                     : isWaiting
                       ? "Press Accept below to reply…"
                       : takenByOther
                         ? "Assigned to " +
                           (conv.assignedAgentEmail || "another agent") +
-                          " — use another queue filter or ask them to close it."
+                          " — / for private note to team"
                         : "Select a chat to reply…";
         }
         if (sendBtn) sendBtn.disabled = isClosed || !canReply;
@@ -1938,13 +1939,25 @@
         }
         removeVisitorTypingDraft_();
         const div = document.createElement("div");
-        div.className = "msg " + (m.role || "visitor");
+        const role = m.role || "visitor";
+        div.className = "msg " + role;
         div.dataset.msgId = m.id;
-        let body =
-            m.role === "system"
-                ? escapeHtml(formatSystemLineForDesk_(m.text || ""))
-                : escapeHtml(m.text || "");
-        /* Desk: no agent name prefix — agents see plain message bubbles */
+        let body;
+        if (role === "system") {
+            body = escapeHtml(formatSystemLineForDesk_(m.text || ""));
+        } else if (role === "internal") {
+            const who = escapeHtml(
+                (m.senderDisplayName || m.senderEmail || "Agent").split("@")[0]
+            );
+            body =
+                '<span class="internal-badge">Private note</span> ' +
+                '<span class="internal-author">' +
+                who +
+                "</span>: " +
+                escapeHtml(m.text || "");
+        } else {
+            body = escapeHtml(m.text || "");
+        }
         div.innerHTML = body + "<time>" + escapeHtml(formatTime(m.createdAt)) + "</time>";
         messageList.appendChild(div);
     }
@@ -2022,9 +2035,12 @@
 
     composerForm.addEventListener("submit", async (ev) => {
         ev.preventDefault();
-        const text = composerInput.value.trim();
-        if (!text || !selectedId) return;
-        if (selectedConv && isAiCopilotConv_(selectedConv)) {
+        const raw = composerInput.value.trim();
+        if (!raw || !selectedId) return;
+        const isPrivate = raw.startsWith("/");
+        const text = isPrivate ? raw.replace(/^\//, "").trim() : raw;
+        if (!text) return;
+        if (!isPrivate && selectedConv && isAiCopilotConv_(selectedConv)) {
             alert("Chatbot is replying to the visitor. Click Take over before sending a message.");
             return;
         }
@@ -2036,9 +2052,10 @@
         const optimisticId = "opt-" + Date.now();
         appendMessageEl({
             id: optimisticId,
-            role: "agent",
-            text,
+            role: isPrivate ? "internal" : "agent",
+            text: text,
             senderEmail: agentId,
+            senderDisplayName: agentId.split("@")[0],
             createdAt: new Date().toISOString()
         });
         composerInput.value = "";
@@ -2050,7 +2067,7 @@
                 {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ text })
+                    body: JSON.stringify({ text: isPrivate ? "/" + text : text })
                 }
             );
             const opt = messageList.querySelector('[data-msg-id="' + optimisticId + '"]');
@@ -2059,9 +2076,25 @@
                 const existing = messageList.querySelector('[data-msg-id="' + realId + '"]');
                 if (opt && !existing) {
                     opt.dataset.msgId = realId;
-                    const timeEl = opt.querySelector("time");
-                    if (timeEl && data.message.createdAt) {
-                        timeEl.textContent = formatTime(data.message.createdAt);
+                    if (data.message.role === "internal") {
+                        opt.className = "msg internal";
+                        const who = escapeHtml(
+                            (data.message.senderDisplayName || agentId).split("@")[0]
+                        );
+                        opt.innerHTML =
+                            '<span class="internal-badge">Private note</span> ' +
+                            '<span class="internal-author">' +
+                            who +
+                            "</span>: " +
+                            escapeHtml(data.message.text || "") +
+                            "<time>" +
+                            escapeHtml(formatTime(data.message.createdAt)) +
+                            "</time>";
+                    } else {
+                        const timeEl = opt.querySelector("time");
+                        if (timeEl && data.message.createdAt) {
+                            timeEl.textContent = formatTime(data.message.createdAt);
+                        }
                     }
                 } else {
                     if (opt) opt.remove();
@@ -2082,7 +2115,7 @@
         } catch (e) {
             const opt = messageList.querySelector('[data-msg-id="' + optimisticId + '"]');
             if (opt) opt.remove();
-            composerInput.value = text;
+            composerInput.value = raw;
             alert(e.message || "Send failed");
         } finally {
             if (sendBtn) sendBtn.disabled = !canReplyActive_();
@@ -2092,6 +2125,12 @@
     function canReplyActive_() {
         if (!selectedConv || !selectedId) return false;
         if (selectedConv.status === "closed") return false;
+        if (composerInput) {
+            const raw = (composerInput.value || "").trim();
+            if (raw.startsWith("/") && raw.replace(/^\//, "").trim()) {
+                return true;
+            }
+        }
         if (isAiCopilotConv_(selectedConv)) return false;
         if (selectedConv.status === "waiting") return false;
         if (selectedConv.status !== "active") return false;

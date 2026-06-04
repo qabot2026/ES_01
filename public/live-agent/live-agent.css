@@ -625,6 +625,30 @@ body.live-agent-locked {
   text-align: center;
 }
 
+.msg.internal {
+  align-self: center;
+  max-width: 94%;
+  background: #1e293b;
+  border: 1px dashed #64748b;
+  color: #cbd5e1;
+  font-size: 0.82rem;
+}
+
+.msg.internal .internal-badge {
+  display: inline-block;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #fbbf24;
+  margin-right: 0.35rem;
+}
+
+.msg.internal .internal-author {
+  font-weight: 600;
+  color: #94a3b8;
+}
+
 .msg-agent-name {
   display: block;
   font-size: 0.72rem;
