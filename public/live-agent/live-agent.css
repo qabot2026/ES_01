@@ -249,7 +249,7 @@ body.live-agent-locked {
 
 .workspace {
   display: grid;
-  grid-template-columns: minmax(200px, 20vw) minmax(0, 2fr) minmax(220px, 18vw);
+  grid-template-columns: minmax(200px, 20vw) minmax(0, 2fr) minmax(280px, 22vw);
   flex: 1;
   min-height: 0;
   overflow: hidden;
@@ -471,6 +471,11 @@ body.live-agent-locked {
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
+}
+
+/* Desktop inbox: name only (mobile keeps avatar circle in live-agent-mobile.css). */
+.inbox-avatar {
+  display: none;
 }
 
 .inbox-item {

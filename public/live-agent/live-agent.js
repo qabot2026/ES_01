@@ -437,13 +437,22 @@
         return t.split(/\s+/).filter(Boolean).length <= 5;
     }
 
+    function formatVisitorNameForDisplay_(s) {
+        return String(s || "")
+            .trim()
+            .replace(/\s+/g, " ")
+            .replace(/\b\w/g, (ch) => ch.toUpperCase());
+    }
+
     function resolveVisitorDisplayName_(conv, visitor) {
         const v = visitor && typeof visitor === "object" ? visitor : {};
         const contactName =
-            v.name && isPlausibleVisitorName_(v.name) ? String(v.name).trim() : "";
+            v.name && isPlausibleVisitorName_(v.name)
+                ? formatVisitorNameForDisplay_(v.name)
+                : "";
         const convName =
             conv && conv.visitorName && isPlausibleVisitorName_(conv.visitorName)
-                ? String(conv.visitorName).trim()
+                ? formatVisitorNameForDisplay_(conv.visitorName)
                 : "";
         if (contactName) {
             return contactName;
