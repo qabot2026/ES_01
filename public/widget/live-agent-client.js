@@ -336,19 +336,28 @@
           t(this, 'waiting', 'Waiting for an agent…')
         );
         var waitingMsg =
+          (data.liveAgentMessage && String(data.liveAgentMessage).trim()) ||
           (data.reply && String(data.reply).trim()) ||
           t(this, 'handoffReply', 'Connecting you to our team. Please wait.');
         if (waitingMsg) {
           this.appendMessage('bot', waitingMsg);
         }
+        var dept =
+          (data.liveAgentDepartment && String(data.liveAgentDepartment).trim()) ||
+          (data.department && String(data.department).trim()) ||
+          '';
+        var reqBody = {
+          clientSessionId: this.sessionId,
+          sessionId: this.sessionId,
+          userLanguage: this.language || 'en',
+        };
+        if (dept) {
+          reqBody.department = dept;
+        }
         fetch(this.apiBase + '/api/live-agent/request', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            clientSessionId: this.sessionId,
-            sessionId: this.sessionId,
-            userLanguage: this.language || 'en',
-          }),
+          body: JSON.stringify(reqBody),
         })
           .then(function (r) {
             return r.json();

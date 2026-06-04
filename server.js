@@ -147,6 +147,9 @@ app.post('/api/chat', async (req, res) => {
         userLanguage: uiLang,
         previewMessage: message ? message.trim() : '',
         visitorName: handoffVisitorName,
+        department:
+          (result.liveAgentDepartment && String(result.liveAgentDepartment).trim()) ||
+          '',
       });
       if (handoff && handoff.dismissed) {
         return res.json({

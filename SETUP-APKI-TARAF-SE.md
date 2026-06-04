@@ -25,9 +25,12 @@ Last step par custom payload:
 ```json
 {
   "action": "request_live_agent",
+  "department": "Sales",
   "message": "Connecting you to our team. Please wait…"
 }
 ```
+
+`department` must match a department in **Live Agent Settings** (name or id, e.g. `Sales` or `sales`). Only agents listed under that department see the chat in the service desk inbox.
 
 Ya intent name: **`Live Agent`**
 
