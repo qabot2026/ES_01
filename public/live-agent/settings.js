@@ -73,6 +73,7 @@
                 disableUserTextTranslation: $("disableUserTextTranslation").checked,
                 sortChatsByLastMessage: $("sortChatsByLastMessage").checked,
                 notificationSound: $("notificationSound").value || "default",
+                notifyDeskPanel: $("notifyDeskPanel").checked,
                 notifyDesktopPopup: $("notifyDesktopPopup").checked,
                 notifyMobilePopup: $("notifyMobilePopup").checked,
                 agentProfiles: readAgentProfilesFromDom_()
@@ -116,6 +117,7 @@
         setChecked_("disableUserTextTranslation", g.disableUserTextTranslation);
         setChecked_("sortChatsByLastMessage", g.sortChatsByLastMessage !== false);
         setVal_("notificationSound", g.notificationSound || "default");
+        setChecked_("notifyDeskPanel", g.notifyDeskPanel !== false);
         setChecked_("notifyDesktopPopup", g.notifyDesktopPopup !== false);
         setChecked_("notifyMobilePopup", g.notifyMobilePopup !== false);
         setVal_("routingAlgorithm", r.algorithm || "online_parallel");

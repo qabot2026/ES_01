@@ -80,24 +80,37 @@
         </section>
 
         <section class="settings-card">
-          <h2>Browser notification pop-ups</h2>
+          <h2>Service desk notification panel</h2>
           <p class="muted small">
-            Chrome and Safari require a tap <strong>Allow notifications on this device</strong> (especially on mobile).
-            The in-desk 🔔 panel always works when the desk is open.
+            New live-agent requests appear in the <strong>🔔 Notifications</strong> panel on the agent desk
+            (works on mobile and desktop — no phone permission needed).
+          </p>
+          <div class="toggle-grid">
+            <label class="toggle-row">
+              <input type="checkbox" id="notifyDeskPanel" checked />
+              <span>Show new human-agent requests in the desk 🔔 panel</span>
+            </label>
+          </div>
+        </section>
+
+        <section class="settings-card settings-card--optional">
+          <h2>Browser pop-ups (optional)</h2>
+          <p class="muted small">
+            Separate from the desk panel — system notifications outside the browser. Not required for the 🔔 panel.
           </p>
           <div class="toggle-grid">
             <label class="toggle-row">
               <input type="checkbox" id="notifyDesktopPopup" checked />
-              <span>Desktop — Chrome / Edge / Firefox pop-ups</span>
+              <span>Desktop browser pop-ups</span>
             </label>
             <label class="toggle-row">
               <input type="checkbox" id="notifyMobilePopup" checked />
-              <span>Mobile — Chrome / Safari pop-ups</span>
+              <span>Mobile browser pop-ups</span>
             </label>
           </div>
           <div class="notify-permission-row">
-            <button type="button" class="btn primary small" id="allowNotifyThisDeviceBtn">
-              Allow notifications on this device
+            <button type="button" class="btn ghost small" id="allowNotifyThisDeviceBtn">
+              Allow browser pop-ups on this device
             </button>
             <p id="notifyPermissionStatus" class="muted small" role="status">Checking…</p>
           </div>

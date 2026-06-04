@@ -68,7 +68,8 @@
     const refreshAgentsBtn = $("refreshAgentsBtn");
     const agentsPanelStatus = $("agentsPanelStatus");
     const mobileBackBtn = $("mobileBackBtn");
-    const enableNotifyBtn = $("enableNotifyBtn");
+    const deskHandoffToast = $("deskHandoffToast");
+    const notificationsBackdrop = $("notificationsBackdrop");
 
     let viewerSecret = "";
     let agentId = "Agent";
@@ -823,6 +824,12 @@
         return false;
     }
 
+    function deskPanelNotificationsEnabled_() {
+        const g = deskGeneral_();
+        if (g.muteServiceDesk) return false;
+        return g.notifyDeskPanel !== false;
+    }
+
     function browserPopupEnabled_() {
         const g = deskGeneral_();
         if (g.muteServiceDesk) return false;
@@ -843,12 +850,6 @@
 
     function updateNotificationPermissionUi_() {
         syncNotificationsPermissionState_();
-        if (!enableNotifyBtn) return;
-        const showBtn =
-            browserPopupEnabled_() &&
-            "Notification" in window &&
-            Notification.permission !== "granted";
-        enableNotifyBtn.classList.toggle("hidden", !showBtn);
         if (Notification.permission === "granted" && notificationsBtn) {
             notificationsBtn.classList.remove("notifications-btn--pulse");
         }
@@ -926,11 +927,6 @@
         if (!browserPopupEnabled_()) return false;
         syncNotificationsPermissionState_();
         if (!notificationsOk) {
-            tryMobileVibrate_();
-            if (notificationsBtn) {
-                notificationsBtn.classList.add("notifications-btn--pulse");
-            }
-            setNotificationsPanelOpen_(true);
             return false;
         }
         if (
@@ -1054,7 +1050,10 @@
 
     function loadDeskNotificationsFromStorage_() {
         try {
-            const raw = sessionStorage.getItem(LS_DESK_NOTIFICATIONS);
+            let raw = localStorage.getItem(LS_DESK_NOTIFICATIONS);
+            if (!raw) {
+                raw = sessionStorage.getItem(LS_DESK_NOTIFICATIONS);
+            }
             if (!raw) return;
             const parsed = JSON.parse(raw);
             if (Array.isArray(parsed)) {
@@ -1066,11 +1065,16 @@
     }
 
     function saveDeskNotificationsToStorage_() {
+        const payload = JSON.stringify(
+            deskNotifications_.slice(0, MAX_DESK_NOTIFICATIONS)
+        );
         try {
-            sessionStorage.setItem(
-                LS_DESK_NOTIFICATIONS,
-                JSON.stringify(deskNotifications_.slice(0, MAX_DESK_NOTIFICATIONS))
-            );
+            localStorage.setItem(LS_DESK_NOTIFICATIONS, payload);
+        } catch (_) {
+            /* ignore */
+        }
+        try {
+            sessionStorage.setItem(LS_DESK_NOTIFICATIONS, payload);
         } catch (_) {
             /* ignore */
         }
@@ -1114,8 +1118,30 @@
         return { title, body };
     }
 
+    function showDeskHandoffToast_(entry) {
+        if (!deskHandoffToast || !entry) return;
+        deskHandoffToast.textContent = entry.body || entry.title || "New live agent request";
+        deskHandoffToast.classList.remove("hidden");
+        if (deskHandoffToast._hideTimer) {
+            clearTimeout(deskHandoffToast._hideTimer);
+        }
+        deskHandoffToast._hideTimer = setTimeout(function () {
+            deskHandoffToast.classList.add("hidden");
+        }, 12000);
+        deskHandoffToast.onclick = function () {
+            deskHandoffToast.classList.add("hidden");
+            setNotificationsPanelOpen_(true);
+            const hit = lastInboxConversations_.find(function (c) {
+                return c.id === entry.conversationId;
+            });
+            if (hit) {
+                selectConversation(hit);
+            }
+        };
+    }
+
     function pushDeskNotification_(conv) {
-        if (!conv || !conv.id) return;
+        if (!conv || !conv.id || !deskPanelNotificationsEnabled_()) return;
         const fmt = formatHandoffNotification_(conv);
         const at = conv.requestedAt || conv.lastMessageAt || new Date().toISOString();
         const entry = {
@@ -1137,7 +1163,28 @@
         saveDeskNotificationsToStorage_();
         renderNotificationsPanel_();
         updateNotificationsBadge_();
+        showDeskHandoffToast_(entry);
+        if (notificationsBtn) {
+            notificationsBtn.classList.add("notifications-btn--pulse");
+        }
+        if (isMobileDevice_()) {
+            setNotificationsPanelOpen_(true);
+        }
+        tryMobileVibrate_();
         return entry;
+    }
+
+    function syncDeskPanelFromWaiting_(waitingConversations) {
+        if (!deskPanelNotificationsEnabled_()) return;
+        for (const c of waitingConversations || []) {
+            if (!c || c.status !== "waiting") continue;
+            const hasUnread = deskNotifications_.some(function (n) {
+                return n.conversationId === c.id && !n.read;
+            });
+            if (!hasUnread) {
+                pushDeskNotification_(c);
+            }
+        }
     }
 
     function markNotificationRead_(conversationId) {
@@ -1221,8 +1268,18 @@
         if (notificationsPanel) {
             notificationsPanel.classList.toggle("hidden", !notificationsPanelOpen_);
         }
+        if (notificationsBackdrop) {
+            notificationsBackdrop.classList.toggle("hidden", !notificationsPanelOpen_);
+            notificationsBackdrop.setAttribute(
+                "aria-hidden",
+                notificationsPanelOpen_ ? "false" : "true"
+            );
+        }
         if (notificationsBtn) {
             notificationsBtn.setAttribute("aria-expanded", notificationsPanelOpen_ ? "true" : "false");
+        }
+        if (notificationsPanelOpen_) {
+            renderNotificationsPanel_();
         }
     }
 
@@ -1258,16 +1315,19 @@
     function notifyNewHandoffRequest_(conv) {
         if (!conv || deskGeneral_().muteServiceDesk) return;
         const entry = pushDeskNotification_(conv);
-        if (!entry) return;
         const waitingN = Array.from(knownHandoffIds_).length;
         document.title = (waitingN > 0 ? waitingN + " waiting · " : "") + "Live chat";
-        showBrowserNotification_(
-            entry.title,
-            entry.body,
-            "live-agent-handoff-" + conv.id,
-            conv.id
-        );
-        playNotificationSound_();
+        if (entry && browserPopupEnabled_()) {
+            showBrowserNotification_(
+                entry.title,
+                entry.body,
+                "live-agent-handoff-" + conv.id,
+                conv.id
+            );
+        }
+        if (deskPanelNotificationsEnabled_() || browserPopupEnabled_()) {
+            playNotificationSound_();
+        }
     }
 
     function processNewHandoffRequests_(waitingConversations) {
@@ -1295,7 +1355,9 @@
             const data = await apiFetch(
                 `${API}/inbox?status=waiting&limit=50&fresh=1${quiet ? "&light=1" : ""}`
             );
-            processNewHandoffRequests_(data.conversations || []);
+            const waiting = data.conversations || [];
+            processNewHandoffRequests_(waiting);
+            syncDeskPanelFromWaiting_(waiting);
         } catch (_) {
             /* ignore */
         }
@@ -1343,6 +1405,9 @@
     function normalizeDeskSettings_(settings) {
         const s = settings || {};
         s.general = s.general || {};
+        if (s.general.notifyDeskPanel === undefined) {
+            s.general.notifyDeskPanel = true;
+        }
         if (s.general.notifyDesktopPopup === undefined) {
             s.general.notifyDesktopPopup = true;
         }
@@ -1490,21 +1555,14 @@
 
     refreshInboxBtn.addEventListener("click", () => loadInbox());
 
-    if (enableNotifyBtn) {
-        enableNotifyBtn.addEventListener("click", () => {
-            void requestNotificationPermission_(true);
+    if (notificationsBackdrop) {
+        notificationsBackdrop.addEventListener("click", () => {
+            setNotificationsPanelOpen_(false);
         });
     }
     if (notificationsBtn) {
         notificationsBtn.addEventListener("click", (ev) => {
             ev.stopPropagation();
-            if (
-                browserPopupEnabled_() &&
-                "Notification" in window &&
-                Notification.permission === "default"
-            ) {
-                void requestNotificationPermission_(true);
-            }
             toggleNotificationsPanel_();
         });
     }

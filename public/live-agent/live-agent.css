@@ -842,8 +842,38 @@ body.live-agent-locked {
   border-radius: 999px;
 }
 
+.desk-handoff-toast {
+  flex-shrink: 0;
+  margin: 0;
+  padding: 0.65rem 1rem;
+  background: linear-gradient(90deg, #92400e, #b45309);
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+  z-index: 50;
+}
+
+.desk-handoff-toast.hidden {
+  display: none;
+}
+
+.notifications-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 1999;
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.notifications-backdrop:not(.hidden) {
+  display: block;
+}
+
 .notifications-wrap {
   position: relative;
+  z-index: 2001;
 }
 
 .notifications-btn {
@@ -1115,6 +1145,29 @@ body.live-agent-locked {
   .top-actions {
     width: 100%;
     justify-content: flex-start;
+  }
+
+  .notifications-panel {
+    position: fixed;
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    max-width: none;
+    max-height: min(75vh, 520px);
+    border-radius: 14px 14px 0 0;
+    z-index: 2000;
+    box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.5);
+  }
+
+  .notifications-btn {
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+  }
+
+  .notifications-item {
+    padding: 0.85rem 1rem;
   }
 
   .workspace {

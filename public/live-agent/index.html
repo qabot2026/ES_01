@@ -52,8 +52,6 @@
               </select>
             </span>
           </label>
-          <button type="button" class="btn primary small hidden" id="enableNotifyBtn"
-            title="Allow Chrome / Safari notification pop-ups">Allow alerts</button>
           <div class="notifications-wrap" id="notificationsWrap">
             <button type="button" class="btn ghost notifications-btn" id="notificationsBtn"
               title="Notifications" aria-expanded="false" aria-controls="notificationsPanel">
@@ -91,6 +89,9 @@
         </div>
       </div>
     </header>
+
+    <div id="deskHandoffToast" class="desk-handoff-toast hidden" role="status" aria-live="polite"></div>
+    <div id="notificationsBackdrop" class="notifications-backdrop hidden" aria-hidden="true"></div>
 
     <div class="workspace">
       <aside class="inbox-pane" aria-label="Request queue">
