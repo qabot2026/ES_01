@@ -437,6 +437,11 @@
         if (el) el.remove();
     }
 
+    function clearVisitorTypingDraft_() {
+        lastPulseVisitorTyping = "";
+        removeVisitorTypingDraft_();
+    }
+
     /** Live draft as last message bubble (not a bar at the top). */
     function renderVisitorTypingPreview_(text, conv) {
         if (visitorTypingPreview) {
@@ -487,13 +492,7 @@
             if (data.revision != null) {
                 deskSyncRevision = Number(data.revision) || deskSyncRevision;
             }
-            if (data.visitorTyping != null && String(data.visitorTyping).trim()) {
-                lastPulseVisitorTyping = data.visitorTyping;
-                renderVisitorTypingPreview_(
-                    data.visitorTyping,
-                    data.conversation || selectedConv
-                );
-            }
+            syncVisitorTypingDraftFromPulse_(data);
             if (data.unchanged) {
                 contextPollTicks += 1;
                 return;
@@ -504,17 +503,22 @@
             }
             if (!data.unchanged && data.messages && data.messages.length) {
                 let maxIso = lastMessageIso;
+                let gotVisitorMsg = false;
                 for (const m of data.messages) {
                     if (document.querySelector('[data-msg-id="' + m.id + '"]')) {
                         if (m.id) lastMessageId = m.id;
                         continue;
                     }
                     if (isStaleEndedSystemMsg_(m, selectedConv)) continue;
+                    if (m.role === "visitor") gotVisitorMsg = true;
                     appendMessageEl(m);
                     if (m.id) lastMessageId = m.id;
                     if (m.createdAt && (!maxIso || m.createdAt > maxIso)) {
                         maxIso = m.createdAt;
                     }
+                }
+                if (gotVisitorMsg) {
+                    clearVisitorTypingDraft_();
                 }
                 if (maxIso) lastMessageIso = maxIso;
                 messageList.scrollTop = messageList.scrollHeight;
@@ -570,15 +574,12 @@
                     Number(data.revision) || deskSyncRevision
                 );
             }
-            if (data.visitorTyping != null && String(data.visitorTyping).trim()) {
-                lastPulseVisitorTyping = data.visitorTyping;
-                renderVisitorTypingPreview_(
-                    data.visitorTyping,
-                    data.conversation || selectedConv
-                );
-            } else if (data.newMessage) {
-                lastPulseVisitorTyping = "";
-                removeVisitorTypingDraft_();
+            syncVisitorTypingDraftFromPulse_(data);
+            if (
+                data.newMessage ||
+                data.lastMessageRole === "visitor"
+            ) {
+                clearVisitorTypingDraft_();
             }
             if (data.newMessage) {
                 void loadMessages(selectedId, true);
@@ -604,7 +605,18 @@
             clearInterval(typingPulseTimer);
             typingPulseTimer = null;
         }
-        lastPulseVisitorTyping = "";
+        clearVisitorTypingDraft_();
+    }
+
+    function syncVisitorTypingDraftFromPulse_(data) {
+        if (!data || data.visitorTyping == null) return;
+        const t = String(data.visitorTyping || "").trim();
+        if (t) {
+            lastPulseVisitorTyping = t;
+            renderVisitorTypingPreview_(t, data.conversation || selectedConv);
+        } else {
+            clearVisitorTypingDraft_();
+        }
     }
 
     function startPolling() {
@@ -1721,7 +1733,7 @@
         lastMessageIso = "";
         lastMessageId = "";
         lastSelectedUnreadAgent = c.unreadForAgent || 0;
-        renderVisitorTypingPreview_("", c);
+        clearVisitorTypingDraft_();
         messageList.innerHTML = "";
         chatEmpty.classList.add("hidden");
         chatActive.classList.remove("hidden");
@@ -1802,12 +1814,10 @@
             if (data.revision != null) {
                 deskSyncRevision = Number(data.revision) || deskSyncRevision;
             }
-            if (data.visitorTyping != null && String(data.visitorTyping).trim()) {
-                lastPulseVisitorTyping = data.visitorTyping;
-                renderVisitorTypingPreview_(data.visitorTyping, data.conversation || selectedConv);
-            } else if (messages.some((m) => m.role === "visitor")) {
-                lastPulseVisitorTyping = "";
-                removeVisitorTypingDraft_();
+            if (messages.some((m) => m.role === "visitor")) {
+                clearVisitorTypingDraft_();
+            } else if (data.visitorTyping != null) {
+                syncVisitorTypingDraftFromPulse_(data);
             }
             if (!messages.length && quiet) return;
             let maxIso = lastMessageIso;

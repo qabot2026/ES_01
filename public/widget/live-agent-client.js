@@ -411,9 +411,27 @@
       if (el) el.remove();
     };
 
-    /** Visitors only see agent messages after send — never a live typing preview. */
-    p._liveAgentSetAgentTypingIndicator = function (_text) {
-      this._liveAgentRemoveTypingDraft_();
+    /** Visitors see "Typing..." only — not the agent's unsent message text. */
+    p._liveAgentSetAgentTypingIndicator = function (text) {
+      if (!this.els || !this.els.messages) return;
+      var on = !!String(text || '').trim();
+      if (!on) {
+        this._liveAgentRemoveTypingDraft_();
+        return;
+      }
+      var el = this.els.messages.querySelector('[data-typing-draft-agent]');
+      if (!el) {
+        el = document.createElement('div');
+        el.className = 'qa-msg qa-msg--bot qa-msg--typing-draft';
+        el.dataset.typingDraftAgent = '1';
+        this.els.messages.appendChild(el);
+      }
+      var label = t(this, 'agentTyping', 'Typing...');
+      el.innerHTML =
+        '<div class="qa-msg__body"><div class="qa-msg__bubble">' +
+        escapeHtmlWidget(label) +
+        '</div></div>';
+      this.els.messages.scrollTop = this.els.messages.scrollHeight;
     };
 
     function escapeHtmlWidget(s) {
@@ -502,6 +520,7 @@
         .then(function (st) {
           if (!st || !st.ok) return;
           if (st.revision) self._liveAgentRev = Math.max(rev, st.revision);
+          self._liveAgentSetAgentTypingIndicator(st.agentTyping || '');
           if (st.newMessage) {
             self._liveAgentPollTick();
           }
@@ -575,6 +594,7 @@
         .then(function (st) {
           if (!st) return;
           if (st.revision) self._liveAgentRev = st.revision;
+          self._liveAgentSetAgentTypingIndicator(st.agentTyping || '');
           if (st.unchanged) return;
           self._applyLiveAgentSyncState(st);
         })
@@ -621,6 +641,7 @@
   global.QA_CHAT_LIVE_STRINGS = {
     en: {
       waiting: 'Waiting for an agent…',
+      agentTyping: 'Typing...',
       connectedPrefix: 'You are now chatting with',
       handoffReply: 'Connecting you to our team. Please wait.',
       handoffError: 'Could not reach support. Try again.',

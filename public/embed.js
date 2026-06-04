@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var QA_ASSET_VERSION = '20260604-typing-ux';
+  var QA_ASSET_VERSION = '20260604-typing-v2';
 
   var QA_FORM_SCRIPTS = [
     'contact.js',
