@@ -32,6 +32,7 @@
     const chatClosedBanner = $("chatClosedBanner");
     const reopenChatBtn = $("reopenChatBtn");
     const messageList = $("messageList");
+    const visitorTypingPreview = $("visitorTypingPreview");
     const composerForm = $("composerForm");
     const composerInput = $("composerInput");
     const sendBtn = $("sendBtn");
@@ -76,6 +77,9 @@
     let messagesInFlight = false;
     let messagesPollPending = false;
     let messagePollsSinceFullSync = 0;
+    let deskSyncRevision = 0;
+    let liveSyncInFlight = false;
+    let agentTypingTimer = null;
     let contextPollTicks = 0;
     let lastWaitingCount = 0;
     let notificationsOk = false;
@@ -84,7 +88,7 @@
     let lastInboxConversations_ = [];
     const INBOX_POLL_INTERVAL_MS_DESKTOP = 4000;
     const INBOX_POLL_INTERVAL_MS_MOBILE = 6000;
-    const CHAT_POLL_INTERVAL_MS = 1000;
+    const CHAT_POLL_INTERVAL_MS = 800;
     const PRESENCE_INTERVAL_MS = 180000;
     let agentsPanelLoaded = false;
     let presenceTimer = null;
@@ -421,6 +425,94 @@
         }
     }
 
+    function renderVisitorTypingPreview_(text, conv) {
+        if (!visitorTypingPreview) return;
+        const t = String(text || "").trim();
+        if (!t) {
+            visitorTypingPreview.classList.add("hidden");
+            visitorTypingPreview.textContent = "";
+            return;
+        }
+        const name = resolveVisitorDisplayName_(conv || selectedConv, selectedVisitorContext);
+        visitorTypingPreview.textContent = name + " is typing: " + t;
+        visitorTypingPreview.classList.remove("hidden");
+    }
+
+    async function runLiveSync_() {
+        if (!selectedId || liveSyncInFlight) return;
+        const st = selectedConv && selectedConv.status;
+        if (st !== "active" && st !== "waiting") return;
+        liveSyncInFlight = true;
+        try {
+            const params = new URLSearchParams({
+                rev: String(deskSyncRevision),
+                waitMs: "20000"
+            });
+            if (lastMessageId) params.set("sinceId", lastMessageId);
+            const data = await apiFetch(
+                `${API}/conversations/${encodeURIComponent(selectedId)}/live-sync?` +
+                    params.toString()
+            );
+            if (data.revision != null) {
+                deskSyncRevision = Number(data.revision) || deskSyncRevision;
+            }
+            if (data.visitorTyping != null) {
+                renderVisitorTypingPreview_(
+                    data.visitorTyping,
+                    data.conversation || selectedConv
+                );
+            }
+            if (data.conversation) {
+                selectedConv = data.conversation;
+                applyConversationUi_(selectedConv, { skipContextReload: true });
+            }
+            if (!data.unchanged && data.messages && data.messages.length) {
+                let maxIso = lastMessageIso;
+                for (const m of data.messages) {
+                    if (document.querySelector('[data-msg-id="' + m.id + '"]')) {
+                        if (m.id) lastMessageId = m.id;
+                        continue;
+                    }
+                    if (isStaleEndedSystemMsg_(m, selectedConv)) continue;
+                    appendMessageEl(m);
+                    if (m.id) lastMessageId = m.id;
+                    if (m.createdAt && (!maxIso || m.createdAt > maxIso)) {
+                        maxIso = m.createdAt;
+                    }
+                }
+                if (maxIso) lastMessageIso = maxIso;
+                messageList.scrollTop = messageList.scrollHeight;
+            }
+            contextPollTicks += 1;
+            const v = selectedVisitorContext || {};
+            const sparseContact = !v.name && !v.email && !v.mobile;
+            const contextEvery = sparseContact ? 4 : 15;
+            if (contextPollTicks % contextEvery === 0) {
+                void loadContext(selectedId);
+            }
+        } catch (e) {
+            console.warn("[live-agent] live-sync", e.message);
+        } finally {
+            liveSyncInFlight = false;
+            if (
+                selectedId &&
+                selectedConv &&
+                (selectedConv.status === "active" || selectedConv.status === "waiting")
+            ) {
+                setTimeout(runLiveSync_, 40);
+            }
+        }
+    }
+
+    function postAgentTyping_(text, active) {
+        if (!selectedId || !agentId.includes("@")) return;
+        apiFetch(`${API}/conversations/${encodeURIComponent(selectedId)}/typing`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ text: text || "", active: active !== false })
+        }).catch(() => {});
+    }
+
     function startPolling() {
         stopPolling();
         const tick = () => {
@@ -430,19 +522,11 @@
                 selectedConv &&
                 (selectedConv.status === "active" || selectedConv.status === "waiting")
             ) {
-                loadMessages(selectedId, true);
-                contextPollTicks += 1;
-                const v = selectedVisitorContext || {};
-                const sparseContact = !v.name && !v.email && !v.mobile;
-                const contextEvery = sparseContact ? 4 : 15;
-                if (contextPollTicks % contextEvery === 0) {
-                    void loadContext(selectedId);
-                }
+                void runLiveSync_();
             }
         };
         loadInbox(true);
-        tick();
-        pollTimer = setInterval(tick, CHAT_POLL_INTERVAL_MS);
+        if (selectedId) void runLiveSync_();
         const scheduleInboxPoll = () => {
             if (inboxPollTimer) {
                 clearInterval(inboxPollTimer);
@@ -1531,9 +1615,11 @@
         const skipRefresh = opts && opts.skipRefresh === true;
         selectedId = c.id;
         selectedConv = c;
+        deskSyncRevision = Number(c.revision) || 0;
         lastMessageIso = "";
         lastMessageId = "";
         lastSelectedUnreadAgent = c.unreadForAgent || 0;
+        renderVisitorTypingPreview_("", c);
         messageList.innerHTML = "";
         chatEmpty.classList.add("hidden");
         chatActive.classList.remove("hidden");
@@ -1556,6 +1642,20 @@
             loadContext(c.id);
         }
         loadMessages(c.id);
+        void runLiveSync_();
+    }
+
+    if (composerInput) {
+        composerInput.addEventListener("input", () => {
+            if (!selectedId || !canReplyActive_()) return;
+            clearTimeout(agentTypingTimer);
+            const val = composerInput.value || "";
+            agentTypingTimer = setTimeout(() => postAgentTyping_(val, true), 160);
+        });
+        composerInput.addEventListener("blur", () => {
+            clearTimeout(agentTypingTimer);
+            postAgentTyping_("", false);
+        });
     }
 
     async function loadMessages(conversationId, quiet, forceFull) {
@@ -1585,6 +1685,12 @@
                     qParts.join("&")
             );
             const messages = data.messages || [];
+            if (data.revision != null) {
+                deskSyncRevision = Number(data.revision) || deskSyncRevision;
+            }
+            if (data.visitorTyping != null) {
+                renderVisitorTypingPreview_(data.visitorTyping, data.conversation || selectedConv);
+            }
             if (!messages.length && quiet) return;
             let maxIso = lastMessageIso;
             for (const m of messages) {
@@ -1749,6 +1855,7 @@
             createdAt: new Date().toISOString()
         });
         composerInput.value = "";
+        postAgentTyping_("", false);
         messageList.scrollTop = messageList.scrollHeight;
         try {
             const data = await apiFetch(
@@ -1768,11 +1875,12 @@
             }
             if (data.conversation) {
                 selectedConv = data.conversation;
+                deskSyncRevision = Number(data.conversation.revision) || deskSyncRevision;
                 applyConversationUi_(data.conversation);
             }
             messageList.scrollTop = messageList.scrollHeight;
             loadInbox(true);
-            loadMessages(selectedId, true);
+            void runLiveSync_();
         } catch (e) {
             const opt = messageList.querySelector('[data-msg-id="' + optimisticId + '"]');
             if (opt) opt.remove();

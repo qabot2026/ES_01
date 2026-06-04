@@ -2455,6 +2455,15 @@ textarea.qa-form__input {
 }
 
 /* Appointment calendar — compact */
+.qa-live-agent-agent-typing {
+  padding: 0.35rem 0.75rem;
+  font-size: 0.75rem;
+  color: #0ea5e9;
+  background: rgba(14, 165, 233, 0.08);
+  border-bottom: 1px solid rgba(14, 165, 233, 0.2);
+  font-style: italic;
+}
+
 .qa-live-agent-banner {
   flex-shrink: 0;
   padding: 6px 12px;

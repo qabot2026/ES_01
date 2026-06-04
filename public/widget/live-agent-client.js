@@ -146,6 +146,7 @@
 
     p._applyLiveAgentSyncState = function (st) {
       if (!st || !st.ok) return;
+      if (st.revision) this._liveAgentRev = st.revision;
       var self = this;
       var handoff = humanHandoffFromSync_(st);
       if (st.conversation && st.conversation.status === 'closed') {
@@ -240,14 +241,8 @@
             );
           });
       }
-      if (this._liveAgentPollTimer) {
-        clearInterval(this._liveAgentPollTimer);
-      }
-      var pollMs = Math.max(500, Math.min(cfg.pollIntervalMs || 800, 1000));
-      this._liveAgentPollTimer = setInterval(function () {
-        self._liveAgentPollTick();
-      }, pollMs);
-      this._liveAgentPollTick();
+      this._liveAgentBindTyping();
+      this._liveAgentStartStream();
     };
 
     p.stopLiveAgentMode = function (endedByAgent) {
@@ -255,11 +250,9 @@
       this._liveAgentHumanActive = false;
       this._liveAgentHandoffRequested = false;
       this._liveAgentConnectedAnnounced = false;
-      if (this._liveAgentPollTimer) {
-        clearInterval(this._liveAgentPollTimer);
-        this._liveAgentPollTimer = null;
-      }
+      this._liveAgentStopStream();
       this._hideLiveAgentBanner();
+      this._liveAgentSetAgentTypingIndicator('');
       if (endedByAgent) {
         this.appendMessage(
           'bot',
@@ -316,6 +309,16 @@
       this.markUserInteracted();
       this.noteUserActivity();
       this.appendMessage('user', text);
+      fetch(this.apiBase + '/api/live-agent/visitor-typing', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          clientSessionId: this.sessionId,
+          sessionId: this.sessionId,
+          text: '',
+          active: false,
+        }),
+      }).catch(function () {});
       fetch(this.apiBase + '/api/live-agent/visitor-message', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -383,6 +386,107 @@
       });
     };
 
+    p._liveAgentSetAgentTypingIndicator = function (text) {
+      if (!this.els || !this.els.panel) return;
+      var el = this.els.panel.querySelector('.qa-live-agent-agent-typing');
+      if (!text) {
+        if (el) el.hidden = true;
+        return;
+      }
+      if (!el) {
+        el = document.createElement('div');
+        el.className = 'qa-live-agent-agent-typing';
+        var scroll = this.els.panel.querySelector('.qa-panel__scroll');
+        if (scroll) scroll.parentNode.insertBefore(el, scroll);
+      }
+      el.textContent = 'Agent is typing…';
+      el.hidden = false;
+    };
+
+    p._liveAgentBindTyping = function () {
+      var self = this;
+      if (!this.els || !this.els.input || this._liveAgentTypingBound) return;
+      this._liveAgentTypingBound = true;
+      var typingTimer = null;
+      var postTyping = function (text, active) {
+        if (!self.apiBase || !self.sessionId) return;
+        fetch(self.apiBase + '/api/live-agent/visitor-typing', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            clientSessionId: self.sessionId,
+            sessionId: self.sessionId,
+            text: text || '',
+            active: active !== false,
+          }),
+        }).catch(function () {});
+      };
+      this.els.input.addEventListener('input', function () {
+        if (!humanChatActive_(self)) return;
+        clearTimeout(typingTimer);
+        var val = self.els.input.value || '';
+        typingTimer = setTimeout(function () {
+          postTyping(val, true);
+        }, 160);
+      });
+      this.els.input.addEventListener('blur', function () {
+        clearTimeout(typingTimer);
+        postTyping('', false);
+      });
+    };
+
+    p._liveAgentStopStream = function () {
+      if (this._liveAgentPollTimer) {
+        clearInterval(this._liveAgentPollTimer);
+        this._liveAgentPollTimer = null;
+      }
+      if (this._liveAgentEventSource) {
+        try {
+          this._liveAgentEventSource.close();
+        } catch (e) {}
+        this._liveAgentEventSource = null;
+      }
+    };
+
+    p._liveAgentStartStream = function () {
+      var self = this;
+      this._liveAgentStopStream();
+      if (!this.apiBase || !this.sessionId) return;
+      if (typeof EventSource === 'undefined') {
+        this._liveAgentPollTimer = setInterval(function () {
+          self._liveAgentPollTick();
+        }, 600);
+        this._liveAgentPollTick();
+        return;
+      }
+      var rev = this._liveAgentRev || 0;
+      var url =
+        this.apiBase +
+        '/api/live-agent/stream?clientSessionId=' +
+        encodeURIComponent(this.sessionId) +
+        '&rev=' +
+        rev;
+      var es = new EventSource(url);
+      this._liveAgentEventSource = es;
+      es.addEventListener('sync', function (ev) {
+        try {
+          var st = JSON.parse(ev.data);
+          if (st && st.revision) self._liveAgentRev = st.revision;
+          self._liveAgentSetAgentTypingIndicator(st.agentTyping || '');
+          self._applyLiveAgentSyncState(st);
+        } catch (e) {}
+      });
+      es.onerror = function () {
+        es.close();
+        self._liveAgentEventSource = null;
+        self._liveAgentPollTimer = setInterval(function () {
+          self._liveAgentPollTick();
+        }, 600);
+        self._liveAgentPollTick();
+      };
+      this._liveAgentPollTick();
+    };
+
     p._liveAgentPollTick = function () {
       var self = this;
       if (!this.apiBase || !this.sessionId) return;
@@ -393,15 +497,26 @@
       ) {
         return;
       }
+      var rev = this._liveAgentRev || 0;
       var syncUrl =
         this.apiBase +
         '/api/live-agent/sync?clientSessionId=' +
-        encodeURIComponent(this.sessionId);
+        encodeURIComponent(this.sessionId) +
+        '&rev=' +
+        rev +
+        '&waitMs=1200';
       fetch(syncUrl)
         .then(function (r) {
           return r.json();
         })
         .then(function (st) {
+          if (!st) return;
+          if (st.revision) self._liveAgentRev = st.revision;
+          if (st.unchanged) {
+            self._liveAgentSetAgentTypingIndicator(st.agentTyping || '');
+            return;
+          }
+          self._liveAgentSetAgentTypingIndicator(st.agentTyping || '');
           self._applyLiveAgentSyncState(st);
         })
         .catch(function () {});
