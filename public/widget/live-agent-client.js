@@ -211,6 +211,8 @@
     p._releaseLiveAgentToBot_ = function () {
       this.liveAgentMode = false;
       this._liveAgentHumanActive = false;
+      this._liveAgentLastAgentTyping = '';
+      this._liveAgentSetAgentTypingIndicator('');
       this._hideLiveAgentBanner();
     };
 
@@ -283,6 +285,8 @@
       this._liveAgentHumanActive = true;
       if (!this.liveAgentMode) {
         this.startLiveAgentMode({ skipHandoffRequest: true });
+      } else if (!this._liveAgentPollTimer) {
+        this._liveAgentStartStream();
       }
       this._liveAgentApplyHumanRejoinFromSync_(st);
       if (st.agentConnected) {
@@ -611,6 +615,7 @@
       this._liveAgentTypingPulseInFlight = true;
       var rev = this._liveAgentRev || 0;
       var msgId = encodeURIComponent(this._liveAgentLastMessageId || '');
+      var prevTyping = encodeURIComponent(this._liveAgentLastAgentTyping || '');
       fetch(
         this.apiBase +
           '/api/live-agent/typing-pulse?clientSessionId=' +
@@ -618,7 +623,9 @@
           '&rev=' +
           rev +
           '&lastMessageId=' +
-          msgId
+          msgId +
+          '&agentTyping=' +
+          prevTyping
       )
         .then(function (r) {
           return r.json();
@@ -626,7 +633,8 @@
         .then(function (st) {
           if (!st || !st.ok) return;
           if (st.revision) self._liveAgentRev = Math.max(rev, st.revision);
-          self._liveAgentSetAgentTypingIndicator(st.agentTyping || '');
+          self._liveAgentLastAgentTyping = st.agentTyping || '';
+          self._liveAgentSetAgentTypingIndicator(self._liveAgentLastAgentTyping);
           if (st.newMessage) {
             self._liveAgentPollTick();
           }
@@ -700,7 +708,8 @@
         .then(function (st) {
           if (!st) return;
           if (st.revision) self._liveAgentRev = st.revision;
-          self._liveAgentSetAgentTypingIndicator(st.agentTyping || '');
+          self._liveAgentLastAgentTyping = st.agentTyping || '';
+          self._liveAgentSetAgentTypingIndicator(self._liveAgentLastAgentTyping);
           if (st.unchanged) return;
           self._applyLiveAgentSyncState(st);
         })

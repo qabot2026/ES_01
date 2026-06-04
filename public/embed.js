@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var QA_ASSET_VERSION = '20260604-agent-rejoined';
+  var QA_ASSET_VERSION = '20260604-agent-typing';
 
   var QA_FORM_SCRIPTS = [
     'contact.js',
