@@ -2701,7 +2701,13 @@
                           " — / for private note to team"
                         : "Select a chat to reply…";
         }
-        if (sendBtn) sendBtn.disabled = isClosed || !canReply;
+        if (sendBtn) {
+            sendBtn.disabled = isClosed || !canReply;
+            sendBtn.classList.remove("hidden");
+        }
+        if (composerForm && !isClosed) {
+            composerForm.classList.remove("hidden");
+        }
 
         if (!skipContextReload) {
             renderContextPanel(conv, selectedVisitorContext);
@@ -2791,6 +2797,13 @@
         messageList.innerHTML = "";
         chatEmpty.classList.add("hidden");
         chatActive.classList.remove("hidden");
+        const chatFooter = $("waChatFooter");
+        if (chatFooter) {
+            chatFooter.classList.remove("hidden");
+        }
+        if (composerForm) {
+            composerForm.classList.remove("hidden");
+        }
         syncMobileDeskLayout_();
 
         applyConversationUi_(c);
