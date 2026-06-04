@@ -56,6 +56,11 @@
     );
   }
 
+  function isHumanRejoinMessageText_(text) {
+    var t = String(text || '').trim().toLowerCase();
+    return t === 'live_agent_human_rejoined' || /joined again\.?$/i.test(t);
+  }
+
   function patchWidget() {
     var C = global.QualityAssistantWidget;
     if (!C || !C.prototype) return false;
@@ -141,6 +146,46 @@
         label = 'Support Agent';
       }
       return label;
+    };
+
+    p._liveAgentAnnounceHumanRejoined_ = function (agentLabel, messageText, dedupeKey) {
+      var name = (agentLabel && String(agentLabel).trim()) || '';
+      if (!name || /^me$/i.test(name)) {
+        name = 'Support Agent';
+      }
+      var text = messageText && String(messageText).trim();
+      if (!text || text === 'live_agent_human_rejoined') {
+        text = name + ' joined again.';
+      }
+      var key = dedupeKey || 'rejoin|' + text.toLowerCase();
+      this.liveAgentSeen = this.liveAgentSeen || {};
+      if (this.liveAgentSeen[key]) return;
+      this.liveAgentSeen[key] = true;
+      this._hideLiveAgentBanner();
+      this.appendMessage('bot', text, {
+        skipTranscriptLog: true,
+        personaLabel: name,
+        liveAgentHuman: true,
+        messageKind: 'agent-rejoined',
+      });
+    };
+
+    p._liveAgentApplyHumanRejoinFromSync_ = function (st) {
+      var msgs = (st && st.messages) || [];
+      var agentName = this._liveAgentResolveAgentLabel_(st);
+      for (var i = 0; i < msgs.length; i++) {
+        var m = msgs[i];
+        if (!m) continue;
+        var role = m.role || m.from || '';
+        if (role !== 'system') continue;
+        if (!isHumanRejoinMessageText_(m.text)) continue;
+        var mk = messageKey(m) || 'rejoin|' + String(m.text || '');
+        var label =
+          m.senderDisplayName ||
+          agentName ||
+          (String(m.text || '').match(/^(.+?)\s+joined again/i) || [])[1];
+        this._liveAgentAnnounceHumanRejoined_(label, m.text, mk);
+      }
     };
 
     p._liveAgentAnnounceConnected = function (agentLabel, messageText) {
@@ -239,6 +284,7 @@
       if (!this.liveAgentMode) {
         this.startLiveAgentMode({ skipHandoffRequest: true });
       }
+      this._liveAgentApplyHumanRejoinFromSync_(st);
       if (st.agentConnected) {
         this._liveAgentAnnounceConnected(
           this._liveAgentResolveAgentLabel_(st),
@@ -441,6 +487,14 @@
         } else if (from === 'system') {
           if (isBotHandoffMessageText_(m.text)) {
             self._liveAgentShowBotActiveMessage_();
+            return;
+          }
+          if (isHumanRejoinMessageText_(m.text)) {
+            self._liveAgentAnnounceHumanRejoined_(
+              m.senderDisplayName || agentName,
+              m.text,
+              key
+            );
             return;
           }
           if (
@@ -698,6 +752,7 @@
       handoffReply: 'Connecting you to our team. Please wait.',
       handoffError: 'Could not reach support. Try again.',
       ended: 'Chat with agent ended. You can continue with the assistant.',
+      agentRejoined: 'An agent joined again.',
     },
     hi: {
       waiting: 'एजेंट का इंतज़ार…',

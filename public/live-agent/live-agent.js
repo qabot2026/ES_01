@@ -1961,6 +1961,12 @@
         ) {
             return "AI assistant is replying now.";
         }
+        if (t === "live_agent_human_rejoined" || /joined again/i.test(t)) {
+            const agent = selectedConv
+                ? resolveAgentDisplayName_(selectedConv.assignedAgentEmail)
+                : "Agent";
+            return agent + " joined again.";
+        }
         return t;
     }
 
