@@ -490,7 +490,7 @@
     global.__qaLiveAgentScriptLoading = true;
     var base = String(this.apiBase).replace(/\/$/, '');
     var s = document.createElement('script');
-    s.src = base + '/widget/live-agent-client.js?v=20260604-live-v11';
+    s.src = base + '/widget/live-agent-client.js?v=20260604-typing-ux';
     s.onload = function () {
       global.__qaLiveAgentScriptDone = true;
       global.__qaLiveAgentScriptLoading = false;

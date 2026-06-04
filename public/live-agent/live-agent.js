@@ -487,13 +487,12 @@
             if (data.revision != null) {
                 deskSyncRevision = Number(data.revision) || deskSyncRevision;
             }
-            if (data.visitorTyping != null) {
+            if (data.visitorTyping != null && String(data.visitorTyping).trim()) {
+                lastPulseVisitorTyping = data.visitorTyping;
                 renderVisitorTypingPreview_(
                     data.visitorTyping,
                     data.conversation || selectedConv
                 );
-            } else if (data.unchanged) {
-                renderVisitorTypingPreview_("", data.conversation || selectedConv);
             }
             if (data.unchanged) {
                 contextPollTicks += 1;
@@ -571,12 +570,15 @@
                     Number(data.revision) || deskSyncRevision
                 );
             }
-            if (data.visitorTyping != null) {
+            if (data.visitorTyping != null && String(data.visitorTyping).trim()) {
                 lastPulseVisitorTyping = data.visitorTyping;
                 renderVisitorTypingPreview_(
                     data.visitorTyping,
                     data.conversation || selectedConv
                 );
+            } else if (data.newMessage) {
+                lastPulseVisitorTyping = "";
+                removeVisitorTypingDraft_();
             }
             if (data.newMessage) {
                 void loadMessages(selectedId, true);
@@ -1800,8 +1802,12 @@
             if (data.revision != null) {
                 deskSyncRevision = Number(data.revision) || deskSyncRevision;
             }
-            if (data.visitorTyping != null) {
+            if (data.visitorTyping != null && String(data.visitorTyping).trim()) {
+                lastPulseVisitorTyping = data.visitorTyping;
                 renderVisitorTypingPreview_(data.visitorTyping, data.conversation || selectedConv);
+            } else if (messages.some((m) => m.role === "visitor")) {
+                lastPulseVisitorTyping = "";
+                removeVisitorTypingDraft_();
             }
             if (!messages.length && quiet) return;
             let maxIso = lastMessageIso;

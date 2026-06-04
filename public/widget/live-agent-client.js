@@ -411,25 +411,9 @@
       if (el) el.remove();
     };
 
-    p._liveAgentSetAgentTypingIndicator = function (text) {
-      if (!this.els || !this.els.messages) return;
-      var t = String(text || '').trim();
-      if (!t) {
-        this._liveAgentRemoveTypingDraft_();
-        return;
-      }
-      var el = this.els.messages.querySelector('[data-typing-draft-agent]');
-      if (!el) {
-        el = document.createElement('div');
-        el.className = 'qa-msg qa-msg--bot qa-msg--typing-draft';
-        el.dataset.typingDraftAgent = '1';
-        this.els.messages.appendChild(el);
-      }
-      el.innerHTML =
-        '<div class="qa-msg__body"><div class="qa-msg__bubble">' +
-        escapeHtmlWidget(t) +
-        '</div><div class="qa-msg__typing-hint">Typing…</div></div>';
-      this.els.messages.scrollTop = this.els.messages.scrollHeight;
+    /** Visitors only see agent messages after send — never a live typing preview. */
+    p._liveAgentSetAgentTypingIndicator = function (_text) {
+      this._liveAgentRemoveTypingDraft_();
     };
 
     function escapeHtmlWidget(s) {
@@ -475,7 +459,10 @@
       });
       this.els.input.addEventListener('blur', function () {
         clearTimeout(typingTimer);
-        postTyping('', false);
+        var val = self.els.input.value || '';
+        if (val.trim()) {
+          postTyping(val, false);
+        }
       });
     };
 
@@ -515,7 +502,6 @@
         .then(function (st) {
           if (!st || !st.ok) return;
           if (st.revision) self._liveAgentRev = Math.max(rev, st.revision);
-          self._liveAgentSetAgentTypingIndicator(st.agentTyping || '');
           if (st.newMessage) {
             self._liveAgentPollTick();
           }
@@ -589,7 +575,6 @@
         .then(function (st) {
           if (!st) return;
           if (st.revision) self._liveAgentRev = st.revision;
-          self._liveAgentSetAgentTypingIndicator(st.agentTyping || '');
           if (st.unchanged) return;
           self._applyLiveAgentSyncState(st);
         })
