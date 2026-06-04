@@ -249,8 +249,7 @@ body.live-agent-locked {
 
 .workspace {
   display: grid;
-  /* Middle (chat) column 50px narrower than before; details column +50px */
-  grid-template-columns: minmax(200px, 20vw) minmax(0, calc(2fr - 50px)) minmax(270px, 18vw);
+  grid-template-columns: minmax(200px, 20vw) minmax(0, 2fr) minmax(220px, 18vw);
   flex: 1;
   min-height: 0;
   overflow: hidden;
@@ -472,11 +471,6 @@ body.live-agent-locked {
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
-}
-
-/* Avatar circles are mobile-only; on desktop they showed as a stray initial (e.g. "R ranjit"). */
-.inbox-avatar {
-  display: none;
 }
 
 .inbox-item {
