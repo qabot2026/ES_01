@@ -79,7 +79,11 @@
     let messagePollsSinceFullSync = 0;
     let deskSyncRevision = 0;
     let liveSyncInFlight = false;
+    let typingPulseInFlight = false;
+    let typingPulseTimer = null;
+    let lastPulseVisitorTyping = "";
     let agentTypingTimer = null;
+    let lastAgentTypingSendMs = 0;
     let contextPollTicks = 0;
     let lastWaitingCount = 0;
     let notificationsOk = false;
@@ -468,7 +472,7 @@
         try {
             const params = new URLSearchParams({
                 rev: String(deskSyncRevision),
-                waitMs: "6000"
+                waitMs: "2200"
             });
             if (lastMessageId) {
                 params.set("sinceId", lastMessageId);
@@ -544,6 +548,61 @@
         }).catch(() => {});
     }
 
+    async function runTypingPulse_() {
+        if (!selectedId || typingPulseInFlight) return;
+        const st = selectedConv && selectedConv.status;
+        if (st !== "active" && st !== "waiting") return;
+        typingPulseInFlight = true;
+        try {
+            const params = new URLSearchParams({
+                rev: String(deskSyncRevision),
+                visitorTyping: lastPulseVisitorTyping,
+                lastMessageId: lastMessageId || ""
+            });
+            const data = await apiFetch(
+                `${API}/conversations/${encodeURIComponent(selectedId)}/typing-pulse?` +
+                    params.toString()
+            );
+            if (data.revision != null) {
+                deskSyncRevision = Math.max(
+                    deskSyncRevision,
+                    Number(data.revision) || deskSyncRevision
+                );
+            }
+            if (data.visitorTyping != null) {
+                lastPulseVisitorTyping = data.visitorTyping;
+                renderVisitorTypingPreview_(
+                    data.visitorTyping,
+                    data.conversation || selectedConv
+                );
+            }
+            if (data.newMessage) {
+                void loadMessages(selectedId, true);
+            }
+        } catch (e) {
+            /* ignore pulse errors */
+        } finally {
+            typingPulseInFlight = false;
+        }
+    }
+
+    function startTypingPulse_() {
+        stopTypingPulse_();
+        typingPulseTimer = setInterval(() => {
+            if (document.hidden) return;
+            void runTypingPulse_();
+        }, 100);
+        void runTypingPulse_();
+    }
+
+    function stopTypingPulse_() {
+        if (typingPulseTimer) {
+            clearInterval(typingPulseTimer);
+            typingPulseTimer = null;
+        }
+        lastPulseVisitorTyping = "";
+    }
+
     function startPolling() {
         stopPolling();
         const tick = () => {
@@ -557,7 +616,10 @@
             }
         };
         loadInbox(true);
-        if (selectedId) void runLiveSync_();
+        if (selectedId) {
+            void runLiveSync_();
+            startTypingPulse_();
+        }
         const scheduleInboxPoll = () => {
             if (inboxPollTimer) {
                 clearInterval(inboxPollTimer);
@@ -572,6 +634,7 @@
     }
 
     function stopPolling() {
+        stopTypingPulse_();
         if (pollTimer) {
             clearInterval(pollTimer);
             pollTimer = null;
@@ -1673,6 +1736,7 @@
             loadContext(c.id);
         }
         loadMessages(c.id);
+        startTypingPulse_();
         void runLiveSync_();
     }
 
@@ -1681,9 +1745,18 @@
             if (!selectedId) return;
             const st = selectedConv && selectedConv.status;
             if (st !== "active" && st !== "waiting") return;
-            clearTimeout(agentTypingTimer);
             const val = composerInput.value || "";
-            agentTypingTimer = setTimeout(() => postAgentTyping_(val, true), 80);
+            const now = Date.now();
+            if (now - lastAgentTypingSendMs > 45) {
+                lastAgentTypingSendMs = now;
+                postAgentTyping_(val, true);
+            } else {
+                clearTimeout(agentTypingTimer);
+                agentTypingTimer = setTimeout(() => {
+                    lastAgentTypingSendMs = Date.now();
+                    postAgentTyping_(val, true);
+                }, 45);
+            }
         });
         composerInput.addEventListener("blur", () => {
             clearTimeout(agentTypingTimer);

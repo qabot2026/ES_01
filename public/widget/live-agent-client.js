@@ -440,6 +440,7 @@
       if (!this.els || !this.els.input || this._liveAgentTypingBound) return;
       this._liveAgentTypingBound = true;
       var typingTimer = null;
+      var lastTypingSendMs = 0;
       var postTyping = function (text, active) {
         if (!self.apiBase || !self.sessionId) return;
         fetch(self.apiBase + '/api/live-agent/visitor-typing', {
@@ -455,11 +456,18 @@
       };
       this.els.input.addEventListener('input', function () {
         if (!self.liveAgentMode && !self._liveAgentHumanActive) return;
-        clearTimeout(typingTimer);
         var val = self.els.input.value || '';
-        typingTimer = setTimeout(function () {
+        var now = Date.now();
+        if (now - lastTypingSendMs > 45) {
+          lastTypingSendMs = now;
           postTyping(val, true);
-        }, 70);
+        } else {
+          clearTimeout(typingTimer);
+          typingTimer = setTimeout(function () {
+            lastTypingSendMs = Date.now();
+            postTyping(val, true);
+          }, 45);
+        }
       });
       this.els.input.addEventListener('blur', function () {
         clearTimeout(typingTimer);
@@ -467,7 +475,64 @@
       });
     };
 
+    p._liveAgentStopTypingPulse = function () {
+      if (this._liveAgentTypingPulseTimer) {
+        clearInterval(this._liveAgentTypingPulseTimer);
+        this._liveAgentTypingPulseTimer = null;
+      }
+    };
+
+    p._liveAgentTypingPulseTick = function () {
+      var self = this;
+      if (!this.apiBase || !this.sessionId) return;
+      if (
+        !this.liveAgentMode &&
+        !this._liveAgentHumanActive &&
+        !this._liveAgentHandoffRequested
+      ) {
+        return;
+      }
+      if (this._liveAgentTypingPulseInFlight) return;
+      this._liveAgentTypingPulseInFlight = true;
+      var rev = this._liveAgentRev || 0;
+      var msgId = encodeURIComponent(this._liveAgentLastMessageId || '');
+      fetch(
+        this.apiBase +
+          '/api/live-agent/typing-pulse?clientSessionId=' +
+          encodeURIComponent(this.sessionId) +
+          '&rev=' +
+          rev +
+          '&lastMessageId=' +
+          msgId
+      )
+        .then(function (r) {
+          return r.json();
+        })
+        .then(function (st) {
+          if (!st || !st.ok) return;
+          if (st.revision) self._liveAgentRev = Math.max(rev, st.revision);
+          self._liveAgentSetAgentTypingIndicator(st.agentTyping || '');
+          if (st.newMessage) {
+            self._liveAgentPollTick();
+          }
+        })
+        .catch(function () {})
+        .finally(function () {
+          self._liveAgentTypingPulseInFlight = false;
+        });
+    };
+
+    p._liveAgentStartTypingPulse = function () {
+      var self = this;
+      this._liveAgentStopTypingPulse();
+      this._liveAgentTypingPulseTick();
+      this._liveAgentTypingPulseTimer = setInterval(function () {
+        self._liveAgentTypingPulseTick();
+      }, 100);
+    };
+
     p._liveAgentStopStream = function () {
+      this._liveAgentStopTypingPulse();
       if (this._liveAgentPollTimer) {
         clearInterval(this._liveAgentPollTimer);
         this._liveAgentPollTimer = null;
@@ -484,10 +549,11 @@
       var self = this;
       this._liveAgentStopStream();
       if (!this.apiBase || !this.sessionId) return;
+      this._liveAgentStartTypingPulse();
       this._liveAgentPollTick();
       this._liveAgentPollTimer = setInterval(function () {
         self._liveAgentPollTick();
-      }, 250);
+      }, 180);
     };
 
     p._liveAgentPollTick = function () {
@@ -510,7 +576,7 @@
         encodeURIComponent(this.sessionId) +
         '&rev=' +
         rev +
-        '&waitMs=5000&lastMessageId=' +
+        '&waitMs=2200&lastMessageId=' +
         msgId;
       fetch(syncUrl)
         .then(function (r) {
