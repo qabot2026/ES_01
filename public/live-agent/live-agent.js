@@ -68,6 +68,7 @@
     const refreshAgentsBtn = $("refreshAgentsBtn");
     const agentsPanelStatus = $("agentsPanelStatus");
     const mobileBackBtn = $("mobileBackBtn");
+    const enableNotifyBtn = $("enableNotifyBtn");
 
     let viewerSecret = "";
     let agentId = "Agent";
@@ -226,11 +227,14 @@
             inboxStatus.textContent =
                 "Add your work email: lock the desk, sign in again with you@company.com (required for Accept chat).";
         }
-        requestNotificationPermission_();
         loadDeskNotificationsFromStorage_();
         renderNotificationsPanel_();
         updateNotificationsBadge_();
         loadDeskSettings_().then(() => {
+            updateNotificationPermissionUi_();
+            if (!isMobileDevice_()) {
+                void requestNotificationPermission_(false);
+            }
             checkLiveAgentBackend_().then((ok) => {
                 if (ok) {
                     void pollHandoffNotifications_(false).then(() => loadInbox());
@@ -756,15 +760,150 @@
         return data;
     }
 
-    function requestNotificationPermission_() {
-        if (!("Notification" in window) || Notification.permission === "granted") {
-            notificationsOk = Notification.permission === "granted";
-            return;
+    function isMobileDevice_() {
+        if (isMobileAgentDesk_()) return true;
+        return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent || "");
+    }
+
+    function notificationIconUrl_() {
+        try {
+            return new URL("/widget/logo-powered.svg", window.location.origin).href;
+        } catch (_) {
+            return "/widget/logo-powered.svg";
         }
-        if (Notification.permission === "default") {
-            Notification.requestPermission().then((p) => {
-                notificationsOk = p === "granted";
+    }
+
+    function browserPopupEnabled_() {
+        const g = deskGeneral_();
+        if (g.muteServiceDesk) return false;
+        if (isMobileDevice_()) {
+            return g.notifyMobilePopup !== false;
+        }
+        return g.notifyDesktopPopup !== false;
+    }
+
+    function syncNotificationsPermissionState_() {
+        notificationsOk =
+            !!(
+                "Notification" in window &&
+                Notification.permission === "granted" &&
+                browserPopupEnabled_()
+            );
+    }
+
+    function updateNotificationPermissionUi_() {
+        syncNotificationsPermissionState_();
+        if (!enableNotifyBtn) return;
+        const showBtn =
+            browserPopupEnabled_() &&
+            "Notification" in window &&
+            Notification.permission !== "granted";
+        enableNotifyBtn.classList.toggle("hidden", !showBtn);
+        if (Notification.permission === "granted" && notificationsBtn) {
+            notificationsBtn.classList.remove("notifications-btn--pulse");
+        }
+    }
+
+    async function requestNotificationPermission_(userInitiated) {
+        if (!browserPopupEnabled_()) {
+            syncNotificationsPermissionState_();
+            updateNotificationPermissionUi_();
+            return false;
+        }
+        if (!("Notification" in window)) {
+            notificationsOk = false;
+            updateNotificationPermissionUi_();
+            return false;
+        }
+        if (Notification.permission === "granted") {
+            notificationsOk = true;
+            updateNotificationPermissionUi_();
+            return true;
+        }
+        if (Notification.permission === "denied") {
+            notificationsOk = false;
+            updateNotificationPermissionUi_();
+            return false;
+        }
+        if (isMobileDevice_() && !userInitiated) {
+            updateNotificationPermissionUi_();
+            return false;
+        }
+        try {
+            const p = await Notification.requestPermission();
+            notificationsOk = p === "granted" && browserPopupEnabled_();
+            updateNotificationPermissionUi_();
+            if (notificationsOk) {
+                try {
+                    new Notification("Live agent alerts enabled", {
+                        body: "Pop-ups are on for new visitor requests.",
+                        tag: "live-agent-enabled",
+                        icon: notificationIconUrl_()
+                    });
+                } catch (_) {
+                    /* ignore */
+                }
+            }
+            return notificationsOk;
+        } catch (_) {
+            notificationsOk = false;
+            updateNotificationPermissionUi_();
+            return false;
+        }
+    }
+
+    function tryMobileVibrate_() {
+        try {
+            if (isMobileDevice_() && navigator.vibrate) {
+                navigator.vibrate([120, 60, 120]);
+            }
+        } catch (_) {
+            /* ignore */
+        }
+    }
+
+    function showBrowserNotification_(title, body, tag, conversationId) {
+        if (!browserPopupEnabled_()) return false;
+        syncNotificationsPermissionState_();
+        if (!notificationsOk) {
+            tryMobileVibrate_();
+            if (notificationsBtn) {
+                notificationsBtn.classList.add("notifications-btn--pulse");
+            }
+            setNotificationsPanelOpen_(true);
+            return false;
+        }
+        try {
+            const n = new Notification(title, {
+                body: body,
+                tag: tag || "live-agent",
+                icon: notificationIconUrl_(),
+                renotify: true
             });
+            n.onclick = function () {
+                try {
+                    window.focus();
+                    n.close();
+                } catch (_) {
+                    /* ignore */
+                }
+                if (conversationId) {
+                    const hit = lastInboxConversations_.find((c) => c.id === conversationId);
+                    if (hit) {
+                        selectConversation(hit);
+                    } else {
+                        selectedId = conversationId;
+                        if (inboxFilter) inboxFilter.value = "waiting";
+                        void loadInbox(false, true).then(() => {
+                            const c = lastInboxConversations_.find((x) => x.id === conversationId);
+                            if (c) selectConversation(c);
+                        });
+                    }
+                }
+            };
+            return true;
+        } catch (_) {
+            return false;
         }
     }
 
@@ -1044,16 +1183,12 @@
         if (!entry) return;
         const waitingN = Array.from(knownHandoffIds_).length;
         document.title = (waitingN > 0 ? waitingN + " waiting · " : "") + "Live chat";
-        if (notificationsOk) {
-            try {
-                new Notification(entry.title, {
-                    body: entry.body,
-                    tag: "live-agent-handoff-" + conv.id
-                });
-            } catch (_) {
-                /* ignore */
-            }
-        }
+        showBrowserNotification_(
+            entry.title,
+            entry.body,
+            "live-agent-handoff-" + conv.id,
+            conv.id
+        );
         playNotificationSound_();
     }
 
@@ -1095,19 +1230,13 @@
             return;
         }
         document.title = count + " waiting · Live chat";
-        if (notificationsOk) {
-            try {
-                new Notification("New live agent request", {
-                    body:
-                        count === 1
-                            ? "A visitor is waiting for a human agent."
-                            : count + " visitors are waiting for a human agent.",
-                    tag: "live-agent-waiting"
-                });
-            } catch (_) {
-                /* ignore */
-            }
-        }
+        showBrowserNotification_(
+            "New live agent request",
+            count === 1
+                ? "A visitor is waiting for a human agent."
+                : count + " visitors are waiting for a human agent.",
+            "live-agent-waiting"
+        );
         playNotificationSound_();
     }
 
@@ -1138,6 +1267,7 @@
             const data = await apiFetch(`${API}/settings`);
             deskSettings = data.settings || null;
             applyInboxFilterOptions_();
+            updateNotificationPermissionUi_();
         } catch (_) {
             deskSettings = null;
         }
@@ -1269,6 +1399,36 @@
     }
 
     refreshInboxBtn.addEventListener("click", () => loadInbox());
+
+    if (enableNotifyBtn) {
+        enableNotifyBtn.addEventListener("click", () => {
+            void requestNotificationPermission_(true);
+        });
+    }
+    if (notificationsBtn) {
+        notificationsBtn.addEventListener("click", (ev) => {
+            ev.stopPropagation();
+            if (
+                browserPopupEnabled_() &&
+                "Notification" in window &&
+                Notification.permission === "default"
+            ) {
+                void requestNotificationPermission_(true);
+            }
+            toggleNotificationsPanel_();
+        });
+    }
+    if (markAllNotificationsReadBtn) {
+        markAllNotificationsReadBtn.addEventListener("click", (ev) => {
+            ev.stopPropagation();
+            markAllNotificationsRead_();
+        });
+    }
+    document.addEventListener("click", (ev) => {
+        if (!notificationsPanelOpen_ || !notificationsWrap) return;
+        if (notificationsWrap.contains(ev.target)) return;
+        setNotificationsPanelOpen_(false);
+    });
     if (refreshAgentsBtn) {
         refreshAgentsBtn.addEventListener("click", () => loadAgentsPanel_(true));
     }

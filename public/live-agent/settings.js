@@ -49,6 +49,7 @@
         $("loginView").classList.add("hidden");
         $("appView").classList.remove("hidden");
         loadAll();
+        updateNotifyPermissionStatus_();
     }
 
     function setChecked_(id, on) {
@@ -72,6 +73,8 @@
                 disableUserTextTranslation: $("disableUserTextTranslation").checked,
                 sortChatsByLastMessage: $("sortChatsByLastMessage").checked,
                 notificationSound: $("notificationSound").value || "default",
+                notifyDesktopPopup: $("notifyDesktopPopup").checked,
+                notifyMobilePopup: $("notifyMobilePopup").checked,
                 agentProfiles: readAgentProfilesFromDom_()
             },
             routing: {
@@ -113,6 +116,8 @@
         setChecked_("disableUserTextTranslation", g.disableUserTextTranslation);
         setChecked_("sortChatsByLastMessage", g.sortChatsByLastMessage !== false);
         setVal_("notificationSound", g.notificationSound || "default");
+        setChecked_("notifyDesktopPopup", g.notifyDesktopPopup !== false);
+        setChecked_("notifyMobilePopup", g.notifyMobilePopup !== false);
         setVal_("routingAlgorithm", r.algorithm || "online_parallel");
         setVal_("maxConcurrentChats", r.maxConcurrentChats || 2);
         setVal_("agentInactivityMinutes", r.agentInactivityMinutes || 15);
@@ -457,6 +462,53 @@
 
     if ($("addAgentProfileBtn")) {
         $("addAgentProfileBtn").addEventListener("click", () => addAgentProfileRow_("", ""));
+    }
+
+    function updateNotifyPermissionStatus_() {
+        const el = $("notifyPermissionStatus");
+        if (!el) return;
+        if (!("Notification" in window)) {
+            el.textContent =
+                "This browser does not support pop-ups. Use the 🔔 panel on the service desk.";
+            return;
+        }
+        const p = Notification.permission;
+        if (p === "granted") {
+            el.textContent = "Allowed on this device — pop-ups are enabled.";
+        } else if (p === "denied") {
+            el.textContent =
+                "Blocked. In Chrome: site settings → Notifications → Allow, then tap the button again.";
+        } else {
+            el.textContent = "Not allowed yet — tap the button (required on mobile Chrome).";
+        }
+    }
+
+    const allowNotifyThisDeviceBtn = $("allowNotifyThisDeviceBtn");
+    if (allowNotifyThisDeviceBtn) {
+        allowNotifyThisDeviceBtn.addEventListener("click", async () => {
+            if (!("Notification" in window)) {
+                updateNotifyPermissionStatus_();
+                return;
+            }
+            try {
+                const p = await Notification.requestPermission();
+                updateNotifyPermissionStatus_();
+                if (p === "granted") {
+                    try {
+                        new Notification("Live agent alerts enabled", {
+                            body: "You will get pop-ups when a visitor requests a human agent.",
+                            tag: "live-agent-settings-test",
+                            icon: "/widget/logo-powered.svg"
+                        });
+                    } catch (_) {
+                        /* ignore */
+                    }
+                }
+            } catch (e) {
+                const el = $("notifyPermissionStatus");
+                if (el) el.textContent = e.message || "Could not request permission";
+            }
+        });
     }
 
     loadSecret();

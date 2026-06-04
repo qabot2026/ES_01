@@ -26,6 +26,18 @@
   font-size: 1.1rem;
 }
 
+.notify-permission-row {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: flex-start;
+}
+
+.notify-permission-row p {
+  margin: 0;
+}
+
 .settings-form label {
   display: block;
   margin: 0.85rem 0 0.35rem;

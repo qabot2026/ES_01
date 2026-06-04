@@ -80,6 +80,30 @@
         </section>
 
         <section class="settings-card">
+          <h2>Browser notification pop-ups</h2>
+          <p class="muted small">
+            Chrome and Safari require a tap <strong>Allow notifications on this device</strong> (especially on mobile).
+            The in-desk 🔔 panel always works when the desk is open.
+          </p>
+          <div class="toggle-grid">
+            <label class="toggle-row">
+              <input type="checkbox" id="notifyDesktopPopup" checked />
+              <span>Desktop — Chrome / Edge / Firefox pop-ups</span>
+            </label>
+            <label class="toggle-row">
+              <input type="checkbox" id="notifyMobilePopup" checked />
+              <span>Mobile — Chrome / Safari pop-ups</span>
+            </label>
+          </div>
+          <div class="notify-permission-row">
+            <button type="button" class="btn primary small" id="allowNotifyThisDeviceBtn">
+              Allow notifications on this device
+            </button>
+            <p id="notifyPermissionStatus" class="muted small" role="status">Checking…</p>
+          </div>
+        </section>
+
+        <section class="settings-card">
           <h2>Routing &amp; limits</h2>
           <label>
             Agent routing algorithm
