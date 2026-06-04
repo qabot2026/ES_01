@@ -36,7 +36,15 @@
   }
 
   function humanChatActive_(w) {
-    return !!(w && (w.liveAgentMode || w._liveAgentHumanActive));
+    return !!(w && w._liveAgentHumanActive);
+  }
+
+  function humanHandoffFromSync_(st) {
+    if (!st) return false;
+    if (typeof st.humanHandoffActive === 'boolean') {
+      return st.humanHandoffActive;
+    }
+    return !!st.humanActive;
   }
 
   function patchWidget() {
@@ -115,7 +123,11 @@
     }
 
     p._liveAgentAnnounceConnected = function (agentLabel, messageText) {
-      var name = (agentLabel && String(agentLabel).trim()) || 'an agent';
+      var name = (agentLabel && String(agentLabel).trim()) || '';
+      if (!name || /^me$/i.test(name)) {
+        this._hideLiveAgentBanner();
+        return;
+      }
       var text =
         (messageText && String(messageText).trim()) ||
         t(this, 'connectedPrefix', 'You are now chatting with') + ' ' + name + '.';
@@ -126,21 +138,79 @@
       this._liveAgentConnectedBanner(name);
     };
 
+    p._releaseLiveAgentToBot_ = function () {
+      this.liveAgentMode = false;
+      this._liveAgentHumanActive = false;
+      this._hideLiveAgentBanner();
+    };
+
+    p._applyLiveAgentSyncState = function (st) {
+      if (!st || !st.ok) return;
+      var self = this;
+      var handoff = humanHandoffFromSync_(st);
+      if (st.conversation && st.conversation.status === 'closed') {
+        this.stopLiveAgentMode(true);
+        this._liveAgentHandoffRequested = false;
+        return;
+      }
+      if (!handoff) {
+        if (
+          st.sessionOpen ||
+          (st.conversation &&
+            (st.conversation.status === 'waiting' ||
+              st.conversation.status === 'active'))
+        ) {
+          this._releaseLiveAgentToBot_();
+        } else {
+          this._liveAgentHumanActive = false;
+          this._hideLiveAgentBanner();
+        }
+        return;
+      }
+      this._liveAgentHumanActive = true;
+      if (!this.liveAgentMode) {
+        this.startLiveAgentMode({ skipHandoffRequest: true });
+      }
+      var agentLabel =
+        st.assignedAgentDisplayName ||
+        st.agentName ||
+        (st.conversation && st.conversation.assignedAgentEmail
+          ? String(st.conversation.assignedAgentEmail).split('@')[0]
+          : '');
+      if (st.agentConnected && agentLabel) {
+        this._liveAgentAnnounceConnected(
+          agentLabel,
+          st.connectedMessage || ''
+        );
+      } else if (handoff) {
+        this._showLiveAgentBanner(
+          t(this, 'waiting', 'Waiting for an agent…')
+        );
+      }
+      this._liveAgentIngestMessages({
+        ok: true,
+        messages: st.messages || [],
+        agentName: agentLabel || st.agentName,
+      });
+    };
+
     p.startLiveAgentMode = function (data) {
+      data = data || {};
       var self = this;
       if (!liveEnabled() || !this.apiBase) return;
       var cfg = liveCfg();
       var starting = !this.liveAgentMode;
       this.liveAgentMode = true;
       this._liveAgentHumanActive = true;
-      if (starting) {
+      if (starting && !data.skipHandoffRequest && !this._liveAgentHandoffRequested) {
+        this._liveAgentHandoffRequested = true;
         this.liveAgentSeen = this.liveAgentSeen || {};
         this._liveAgentConnectedAnnounced = false;
         this._showLiveAgentBanner(
           t(this, 'waiting', 'Waiting for an agent…')
         );
         var waitingMsg =
-          (data && data.reply && String(data.reply).trim()) ||
+          (data.reply && String(data.reply).trim()) ||
           t(this, 'handoffReply', 'Connecting you to our team. Please wait.');
         if (waitingMsg) {
           this.appendMessage('bot', waitingMsg);
@@ -173,6 +243,7 @@
     p.stopLiveAgentMode = function (endedByAgent) {
       this.liveAgentMode = false;
       this._liveAgentHumanActive = false;
+      this._liveAgentHandoffRequested = false;
       this._liveAgentConnectedAnnounced = false;
       if (this._liveAgentPollTimer) {
         clearInterval(this._liveAgentPollTimer);
@@ -215,7 +286,11 @@
     };
 
     p._liveAgentConnectedBanner = function (name) {
-      var label = (name && String(name).trim()) || 'an agent';
+      var label = (name && String(name).trim()) || '';
+      if (!label || /^me$/i.test(label)) {
+        this._hideLiveAgentBanner();
+        return;
+      }
       this._showLiveAgentBanner(
         t(this, 'connectedPrefix', 'You are now chatting with') +
           ' ' +
@@ -293,7 +368,13 @@
     p._liveAgentPollTick = function () {
       var self = this;
       if (!this.apiBase || !this.sessionId) return;
-      if (!this.liveAgentMode && !this._liveAgentHumanActive) return;
+      if (
+        !this.liveAgentMode &&
+        !this._liveAgentHumanActive &&
+        !this._liveAgentHandoffRequested
+      ) {
+        return;
+      }
       var syncUrl =
         this.apiBase +
         '/api/live-agent/sync?clientSessionId=' +
@@ -303,39 +384,7 @@
           return r.json();
         })
         .then(function (st) {
-          if (!st || !st.ok) return;
-          self._liveAgentHumanActive = !!st.humanActive;
-          if (!st.humanActive) {
-            self._liveAgentHumanActive = false;
-          }
-          if (st.conversation && st.conversation.status === 'closed') {
-            self.stopLiveAgentMode(true);
-            return;
-          }
-          if (st.humanActive && !self.liveAgentMode) {
-            self.startLiveAgentMode({});
-          }
-          var agentLabel =
-            st.assignedAgentDisplayName ||
-            st.agentName ||
-            (st.conversation && st.conversation.assignedAgentEmail
-              ? String(st.conversation.assignedAgentEmail).split('@')[0]
-              : '');
-          if (st.agentConnected && agentLabel) {
-            self._liveAgentAnnounceConnected(
-              agentLabel,
-              st.connectedMessage || ''
-            );
-          } else if (st.humanActive) {
-            self._showLiveAgentBanner(
-              t(self, 'waiting', 'Waiting for an agent…')
-            );
-          }
-          self._liveAgentIngestMessages({
-            ok: true,
-            messages: st.messages || [],
-            agentName: agentLabel || st.agentName,
-          });
+          self._applyLiveAgentSyncState(st);
         })
         .catch(function () {});
     };
@@ -358,15 +407,13 @@
           return r.json();
         })
         .then(function (st) {
-          if (!st || !st.ok || !st.humanActive) return;
-          self._liveAgentHumanActive = true;
-          self.startLiveAgentMode({});
-          if (st.agentConnected && st.assignedAgentDisplayName) {
-            self._liveAgentAnnounceConnected(
-              st.assignedAgentDisplayName,
-              st.connectedMessage || ''
-            );
+          if (!st || !st.ok) return;
+          if (!humanHandoffFromSync_(st)) {
+            if (st.sessionOpen) self._releaseLiveAgentToBot_();
+            return;
           }
+          self._liveAgentHandoffRequested = true;
+          self._applyLiveAgentSyncState(st);
         })
         .catch(function () {});
     };

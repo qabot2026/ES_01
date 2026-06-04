@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var QA_ASSET_VERSION = '20260604-live-v4';
+  var QA_ASSET_VERSION = '20260604-live-v5';
 
   var QA_FORM_SCRIPTS = [
     'contact.js',
