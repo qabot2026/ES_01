@@ -420,6 +420,22 @@
             return r.json();
           })
           .then(function (body) {
+            if (body && body.outsideHours) {
+              self.liveAgentMode = false;
+              self._liveAgentHumanActive = false;
+              self._liveAgentHandoffRequested = false;
+              self._liveAgentStopStream();
+              self._hideLiveAgentBanner();
+              var closedMsg =
+                (body.message && String(body.message).trim()) ||
+                t(
+                  self,
+                  'outsideHours',
+                  'Our live support team is currently unavailable. Please try again during business hours.'
+                );
+              self.appendMessage('bot', closedMsg);
+              return;
+            }
             if (body && body.dismissed) {
               self.stopLiveAgentMode(true);
               return;
@@ -836,6 +852,8 @@
       agentTyping: 'Typing...',
       connectedPrefix: 'You are now chatting with',
       handoffReply: 'Connecting you to our team. Please wait.',
+      outsideHours:
+        'Our live support team is currently unavailable. Please try again during business hours.',
       handoffError: 'Could not reach support. Try again.',
       ended: 'Chat with agent ended. You can continue with the assistant.',
       agentRejoined: 'An agent joined again.',

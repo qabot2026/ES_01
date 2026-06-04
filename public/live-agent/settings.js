@@ -64,6 +64,52 @@
         if (el) el.value = v == null ? "" : String(v);
     }
 
+    const BH_DAY_FIELDS_ = [
+        { id: "bhMon", day: "monday" },
+        { id: "bhTue", day: "tuesday" },
+        { id: "bhWed", day: "wednesday" },
+        { id: "bhThu", day: "thursday" },
+        { id: "bhFri", day: "friday" },
+        { id: "bhSat", day: "saturday" },
+        { id: "bhSun", day: "sunday" }
+    ];
+
+    function readBusinessHoursFromDom_() {
+        const workDays = [];
+        for (const f of BH_DAY_FIELDS_) {
+            const el = $(f.id);
+            if (el && el.checked) workDays.push(f.day);
+        }
+        return {
+            enabled: $("bhEnabled") && $("bhEnabled").checked,
+            timezone: $("bhTimezone") && $("bhTimezone").value ? $("bhTimezone").value.trim() : "Asia/Kolkata",
+            workDays,
+            start: $("bhStart") && $("bhStart").value ? $("bhStart").value.trim() : "9:00 AM",
+            end: $("bhEnd") && $("bhEnd").value ? $("bhEnd").value.trim() : "5:00 PM",
+            outsideHoursMessage:
+                $("bhMessage") && $("bhMessage").value
+                    ? $("bhMessage").value.trim()
+                    : ""
+        };
+    }
+
+    function applyBusinessHours_(bh) {
+        const base = bh && typeof bh === "object" ? bh : {};
+        setChecked_("bhEnabled", base.enabled === true);
+        setVal_("bhTimezone", base.timezone || "Asia/Kolkata");
+        setVal_("bhStart", base.start || "9:00 AM");
+        setVal_("bhEnd", base.end || "5:00 PM");
+        setVal_("bhMessage", base.outsideHoursMessage || "");
+        const days = new Set(
+            (Array.isArray(base.workDays) ? base.workDays : ["monday", "tuesday", "wednesday", "thursday", "friday"]).map(
+                (d) => String(d).toLowerCase()
+            )
+        );
+        for (const f of BH_DAY_FIELDS_) {
+            setChecked_(f.id, days.has(f.day));
+        }
+    }
+
     function readDeskPayload_() {
         return {
             claimWaitSeconds: Number($("claimWaitSeconds").value) || 30,
@@ -100,7 +146,8 @@
                 dailyRecipients: $("dailyRecipients").value.trim(),
                 weeklyMonthlyEnabled: $("weeklyMonthlyEnabled").checked
             },
-            knowledgeBase: readKnowledgeBaseFromDom_()
+            knowledgeBase: readKnowledgeBaseFromDom_(),
+            businessHours: readBusinessHoursFromDom_()
         };
     }
 
@@ -357,6 +404,7 @@
         setChecked_("weeklyMonthlyEnabled", rep.weeklyMonthlyEnabled);
         renderAgentProfiles_((g.agentProfiles || []));
         renderKnowledgeBase_(settings.knowledgeBase || {});
+        applyBusinessHours_(settings.businessHours || {});
     }
 
     function readAgentProfilesFromDom_() {

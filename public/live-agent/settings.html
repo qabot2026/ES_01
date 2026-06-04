@@ -33,7 +33,7 @@
       <div class="top-bar-inner">
         <div class="brand">
           <h1>Live Agent Settings</h1>
-          <p class="muted">General, knowledge base, routing, access control, reporting, departments</p>
+          <p class="muted">General, agent timing, knowledge base, routing, departments, reporting</p>
         </div>
         <div class="top-actions">
           <a class="btn ghost nav-link" href="/live-agent">Service desk</a>
@@ -165,6 +165,52 @@
           </div>
           <div class="section-save-bar">
             <button type="button" class="btn primary small section-save-btn" data-section-label="Routing">Save routing</button>
+            <p class="section-save-status muted small" role="status"></p>
+          </div>
+        </section>
+
+        <section class="settings-card" id="businessHoursSection">
+          <h2>Agent timing (business hours)</h2>
+          <p class="muted small">
+            When enabled, visitors who request a human agent <strong>outside</strong> these hours see your message below — they are not added to the waiting queue.
+          </p>
+          <label class="toggle-row">
+            <input type="checkbox" id="bhEnabled" />
+            <span>Enable business hours check</span>
+          </label>
+          <label>
+            Timezone
+            <input id="bhTimezone" type="text" value="Asia/Kolkata" placeholder="Asia/Kolkata" autocomplete="off" />
+          </label>
+          <p class="muted small">Use an IANA timezone (e.g. Asia/Kolkata, America/New_York).</p>
+          <fieldset class="bh-days-fieldset">
+            <legend class="muted small">Working days</legend>
+            <div class="bh-days-grid">
+              <label class="toggle-row"><input type="checkbox" id="bhMon" checked /><span>Mon</span></label>
+              <label class="toggle-row"><input type="checkbox" id="bhTue" checked /><span>Tue</span></label>
+              <label class="toggle-row"><input type="checkbox" id="bhWed" checked /><span>Wed</span></label>
+              <label class="toggle-row"><input type="checkbox" id="bhThu" checked /><span>Thu</span></label>
+              <label class="toggle-row"><input type="checkbox" id="bhFri" checked /><span>Fri</span></label>
+              <label class="toggle-row"><input type="checkbox" id="bhSat" /><span>Sat</span></label>
+              <label class="toggle-row"><input type="checkbox" id="bhSun" /><span>Sun</span></label>
+            </div>
+          </fieldset>
+          <div class="settings-row-2">
+            <label>
+              Start time
+              <input id="bhStart" type="text" value="9:00 AM" placeholder="9:00 AM" autocomplete="off" />
+            </label>
+            <label>
+              End time
+              <input id="bhEnd" type="text" value="5:00 PM" placeholder="5:00 PM" autocomplete="off" />
+            </label>
+          </div>
+          <label>
+            Message when agents are unavailable
+            <textarea id="bhMessage" rows="4" placeholder="Our live support team is currently unavailable…"></textarea>
+          </label>
+          <div class="section-save-bar">
+            <button type="button" class="btn primary small section-save-btn" data-section-label="Agent timing">Save agent timing</button>
             <p class="section-save-status muted small" role="status"></p>
           </div>
         </section>

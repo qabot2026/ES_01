@@ -301,6 +301,23 @@
   display: none;
 }
 
+.bh-days-fieldset {
+  border: none;
+  margin: 0.75rem 0 0;
+  padding: 0;
+}
+
+.bh-days-fieldset legend {
+  padding: 0;
+  margin-bottom: 0.35rem;
+}
+
+.bh-days-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1rem;
+}
+
 .dept-section-note {
   margin: 0 0 1rem;
   padding: 0.65rem 0.85rem;

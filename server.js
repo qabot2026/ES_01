@@ -151,6 +151,23 @@ app.post('/api/chat', async (req, res) => {
           (result.liveAgentDepartment && String(result.liveAgentDepartment).trim()) ||
           '',
       });
+      if (handoff && handoff.outsideHours) {
+        const closedMsg =
+          (handoff.message && String(handoff.message).trim()) ||
+          'Our live support team is currently unavailable. Please try again during business hours.';
+        return res.json({
+          sessionId: sid,
+          reply: closedMsg,
+          replyParts: [],
+          chips: [],
+          forms: [],
+          messages: [],
+          liveAgent: false,
+          humanActive: false,
+          skipBot: false,
+          outsideHours: true,
+        });
+      }
       if (handoff && handoff.dismissed) {
         return res.json({
           sessionId: sid,
