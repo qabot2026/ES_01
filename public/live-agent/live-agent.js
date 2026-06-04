@@ -1936,14 +1936,6 @@
     forwardMobileMenuClick_("mobileMenuRefreshBtn", refreshChatBtn);
     forwardMobileMenuClick_("mobileMenuCopyIdBtn", copySessionBtn);
     forwardMobileMenuClick_("mobileMenuDismissBtn", dismissFooterBtn);
-    const mobileMenuTransferBtn = $("mobileMenuTransferBtn");
-    if (mobileMenuTransferBtn && handoverBar) {
-        mobileMenuTransferBtn.addEventListener("click", () => {
-            setMobileSheetOpen_(null);
-            handoverBar.classList.remove("hidden");
-            handoverBar.scrollIntoView({ block: "nearest", behavior: "smooth" });
-        });
-    }
     const mobileMenuTranscriptBtn = $("mobileMenuTranscriptBtn");
     if (mobileMenuTranscriptBtn) {
         mobileMenuTranscriptBtn.addEventListener("click", () => setMobileSheetOpen_(null));
@@ -2980,6 +2972,9 @@
         if (!t) {
             return t;
         }
+        if (!t.startsWith("live_agent_") && !/^Agent\s+\S+@\S+\s+accepted the chat/i.test(t)) {
+            return t;
+        }
         const senderEmail =
             (msg && msg.senderEmail) ||
             (selectedConv && selectedConv.assignedAgentEmail) ||
@@ -2989,14 +2984,14 @@
             resolveAgentDisplayName_(senderEmail) ||
             "Agent";
         const isMe = agentIdsMatch_(senderEmail, agentId);
+        const visitorName = resolveVisitorDisplayName_(selectedConv, selectedVisitorContext);
 
         if (
             t === "live_agent_human_connected" ||
-            /^(.+?)\s+joined the chat\.?$/i.test(t) ||
             /^Agent\s+\S+@\S+\s+accepted the chat\.?$/i.test(t) ||
             /^you are now chatting with\s+/i.test(t)
         ) {
-            return isMe ? "You joined the chat." : senderName + " joined the chat.";
+            return visitorName + " joined the chat.";
         }
         if (
             t === "live_agent_bot_active" ||
