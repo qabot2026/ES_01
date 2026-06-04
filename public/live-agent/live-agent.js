@@ -56,6 +56,7 @@
     const transcriptLink = $("transcriptLink");
     const leadsLink = $("leadsLink");
     const myAgentStatus = $("myAgentStatus");
+    const myAgentStatusIcon = $("myAgentStatusIcon");
     const agentsList = $("agentsList");
     const refreshAgentsBtn = $("refreshAgentsBtn");
     const agentsPanelStatus = $("agentsPanelStatus");
@@ -242,6 +243,7 @@
                     myAgentStatus.value = data.agent.status || eff;
                 }
             }
+            syncMyAgentStatusIcon_();
         } catch (_) {
             /* ignore */
         }
@@ -251,6 +253,7 @@
         stopPresence_();
         if (!agentId || !agentId.includes("@")) return;
         const st = myAgentStatus ? myAgentStatus.value || "online" : "online";
+        syncMyAgentStatusIcon_();
         postPresence_(st);
         presenceTimer = setInterval(() => {
             if (document.hidden) return;
@@ -259,11 +262,31 @@
         }, PRESENCE_INTERVAL_MS);
     }
 
-    function agentStatusLabel_(s) {
+    function agentStatusClass_(s) {
         const x = String(s || "offline").toLowerCase();
+        if (x === "online" || x === "away") return x;
+        return "offline";
+    }
+
+    function agentStatusLabel_(s) {
+        const x = agentStatusClass_(s);
         if (x === "online") return "Online";
         if (x === "away") return "Away";
         return "Offline";
+    }
+
+    function agentStatusIconMarkup_(s) {
+        return (
+            '<span class="status-dot status-dot--' +
+            escapeHtml(agentStatusClass_(s)) +
+            '" aria-hidden="true"></span>'
+        );
+    }
+
+    function syncMyAgentStatusIcon_() {
+        if (!myAgentStatusIcon || !myAgentStatus) return;
+        myAgentStatusIcon.className =
+            "status-dot status-dot--" + agentStatusClass_(myAgentStatus.value);
     }
 
     async function loadAgentsPanel_(force) {
@@ -299,6 +322,7 @@
                 '<span class="agents-list-email">' +
                 escapeHtml(a.email) +
                 '</span><span class="agents-list-badge">' +
+                agentStatusIconMarkup_(a.effectiveStatus) +
                 escapeHtml(agentStatusLabel_(a.effectiveStatus)) +
                 '</span><span class="agents-list-meta muted small">' +
                 escapeHtml(stats) +
@@ -976,7 +1000,9 @@
         });
     }
     if (myAgentStatus) {
+        syncMyAgentStatusIcon_();
         myAgentStatus.addEventListener("change", () => {
+            syncMyAgentStatusIcon_();
             postPresence_(myAgentStatus.value);
         });
     }
