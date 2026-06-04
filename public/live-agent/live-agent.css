@@ -630,6 +630,77 @@ body.live-agent-locked {
   text-overflow: ellipsis;
 }
 
+/* Active chat: one header row — name · status · actions (not stacked). */
+.chat-active .chat-head-meta {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  min-width: 0;
+}
+
+.chat-active .chat-head-text {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  gap: 0.15rem;
+}
+
+.chat-active .chat-head-text h2 {
+  flex: 0 1 auto;
+  max-width: 42%;
+  margin: 0;
+  padding: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chat-active .chat-head-meta p,
+.chat-active .chat-head-subtitle {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  font-size: 0.8rem;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chat-active .chat-head-subtitle::before {
+  content: "·";
+  margin: 0 0.35rem;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.chat-active .chat-head-subtitle:empty::before {
+  content: none;
+  margin: 0;
+}
+
+.chat-active .mobile-details-btn {
+  flex-shrink: 0;
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+.chat-active .mobile-back-btn,
+.chat-active .mobile-chat-menu-btn {
+  flex-shrink: 0;
+}
+
 .chat-head-actions {
   display: flex;
   gap: 0.5rem;
@@ -1312,7 +1383,9 @@ body.live-agent-locked {
   .m-actions-row {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.5rem;
+    align-items: center;
+    column-gap: 0.5rem;
+    row-gap: 10px;
   }
 
   .mobile-inbox-toolbar,
