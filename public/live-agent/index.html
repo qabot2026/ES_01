@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="robots" content="noindex, nofollow" />
   <title>Agent Service Desk</title>
-  <link rel="stylesheet" href="live-agent.css?v=20260602-desk-messages" />
+  <link rel="stylesheet" href="live-agent.css?v=20260602-chat-footer" />
 </head>
 <body>
 
@@ -167,6 +167,10 @@
           <div class="chat-main">
             <div id="visitorTypingPreview" class="visitor-typing-preview hidden" aria-hidden="true"></div>
             <div id="messageList" class="message-list" role="log" aria-live="polite"></div>
+            <form id="composerForm" class="composer" novalidate>
+              <textarea id="composerInput" rows="2" placeholder="Reply… or /note" autocomplete="off"></textarea>
+              <button type="submit" class="btn primary" id="sendBtn">Send</button>
+            </form>
             <div id="chatActionsBar" class="chat-actions-bar" aria-label="Chat controls">
               <p id="chatModeStatus" class="chat-mode-status muted small"></p>
               <div class="chat-actions-primary">
@@ -174,12 +178,12 @@
                   Accept
                 </button>
                 <button type="button" class="btn danger" id="endChatFooterBtn" title="End live chat">
-                  End chat
+                  End
                 </button>
                 <button type="button" class="btn ghost small" id="refreshChatBtn" title="Reload messages">↻</button>
-                <a class="btn ghost small" id="transcriptFooterBtn" href="#" target="_blank" rel="noopener noreferrer" title="Full transcript">Transcript</a>
+                <a class="btn ghost small" id="transcriptFooterBtn" href="#" target="_blank" rel="noopener noreferrer" title="Transcript">Tx</a>
                 <button type="button" class="btn ghost small" id="copySessionBtn" title="Copy session ID">ID</button>
-                <button type="button" class="btn ghost small" id="dismissFooterBtn" title="Remove from queue">Dismiss</button>
+                <button type="button" class="btn ghost small" id="dismissFooterBtn" title="Dismiss">✕</button>
               </div>
               <div id="handoverBar" class="handover-bar hidden">
                 <label class="handover-label">
@@ -189,10 +193,6 @@
                 <button type="button" class="btn ghost small" id="handoverBtn">Transfer</button>
               </div>
             </div>
-            <form id="composerForm" class="composer" novalidate>
-              <textarea id="composerInput" rows="3" placeholder="Reply to visitor, or / for private note to team…" autocomplete="off"></textarea>
-              <button type="submit" class="btn primary" id="sendBtn">Send</button>
-            </form>
           </div>
         </div>
       </main>
@@ -266,6 +266,6 @@
     <div id="mobileSheetBackdrop" class="mobile-sheet-backdrop hidden" aria-hidden="true"></div>
   </section>
 
-  <script src="live-agent.js?v=20260602-desk-messages" defer></script>
+  <script src="live-agent.js?v=20260602-chat-footer" defer></script>
 </body>
 </html>

@@ -1172,7 +1172,7 @@ body.live-agent-locked {
   }
 
   body.mobile-desk .app-view {
-    padding-bottom: calc(3.75rem + env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(3.25rem + env(safe-area-inset-bottom, 0px));
   }
 
   body.mobile-desk .top-bar-inner {
@@ -1405,114 +1405,139 @@ body.live-agent-locked {
 
   body.mobile-desk .message-list {
     flex: 1 1 auto;
-    min-height: 8rem;
+    min-height: 0;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
-    padding: 0.65rem 0.75rem;
+    padding: 0.45rem 0.6rem;
   }
 
   body.mobile-desk .composer {
+    flex: 0 0 auto;
     flex-shrink: 0;
     flex-direction: row;
-    align-items: flex-end;
-    padding: 0.5rem 0.65rem;
-    padding-bottom: calc(0.5rem + env(safe-area-inset-bottom, 0px));
-    gap: 0.5rem;
+    align-items: center;
+    padding: 0.35rem 0.5rem;
+    gap: 0.35rem;
     border-top: 1px solid var(--border);
+    background: var(--surface);
+    z-index: 2;
   }
 
   body.mobile-desk .composer textarea {
     flex: 1 1 auto;
     min-width: 0;
-    width: 100%;
-    min-height: 2.5rem;
-    max-height: 5rem;
+    min-height: 2.1rem;
+    max-height: 3.5rem;
     font-size: 16px;
-    line-height: 1.35;
-    padding: 0.5rem 0.65rem;
+    line-height: 1.3;
+    padding: 0.4rem 0.5rem;
+    resize: none;
   }
 
   body.mobile-desk .composer .btn {
     flex: 0 0 auto;
     width: auto;
-    min-width: 3.5rem;
-    min-height: 2.5rem;
-    padding: 0.4rem 0.65rem;
-    font-size: 0.82rem;
+    min-width: 3rem;
+    min-height: 2.1rem;
+    padding: 0.35rem 0.55rem;
+    font-size: 0.75rem;
     white-space: nowrap;
   }
 
   body.mobile-desk .chat-actions-bar {
+    flex: 0 0 auto;
     flex-shrink: 0;
-    padding: 0.35rem 0.65rem;
+    padding: 0.3rem 0.5rem 0.35rem;
     border-top: 1px solid var(--border);
-    background: var(--surface);
+    background: #0b1220;
+    z-index: 1;
+  }
+
+  body.mobile-desk.mobile-tab-chat .chat-actions-bar {
+    padding-bottom: calc(0.35rem + env(safe-area-inset-bottom, 0px));
   }
 
   body.mobile-desk .chat-mode-status {
-    margin: 0 0 0.25rem;
-    font-size: 0.72rem;
-    line-height: 1.3;
+    display: none;
   }
 
   body.mobile-desk .chat-actions-primary {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     align-items: center;
-    gap: 0.3rem;
+    gap: 0.25rem;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  body.mobile-desk .chat-actions-primary::-webkit-scrollbar {
+    display: none;
   }
 
   body.mobile-desk .chat-actions-primary .btn {
-    min-height: 1.85rem;
-    padding: 0.3rem 0.5rem;
-    font-size: 0.72rem;
+    flex: 0 0 auto;
+    min-height: 1.65rem;
+    padding: 0.22rem 0.45rem;
+    font-size: 0.68rem;
     margin: 0;
-    line-height: 1.2;
+    line-height: 1.15;
   }
 
   body.mobile-desk .chat-actions-primary .btn.primary {
-    flex: 1 1 100%;
-    min-height: 2rem;
-    font-size: 0.78rem;
+    min-height: 1.75rem;
+    font-size: 0.72rem;
   }
 
   body.mobile-desk .chat-actions-primary .btn.danger {
-    flex: 1 1 calc(50% - 0.2rem);
-    min-height: 2rem;
+    min-height: 1.75rem;
   }
 
   body.mobile-desk .handover-bar {
-    margin-top: 0.35rem;
-    gap: 0.35rem;
+    margin-top: 0.25rem;
+    gap: 0.25rem;
+    font-size: 0.68rem;
   }
 
   body.mobile-desk .handover-bar .btn,
   body.mobile-desk .handover-select {
-    min-height: 1.85rem;
-    font-size: 0.72rem;
+    min-height: 1.6rem;
+    font-size: 0.68rem;
   }
 
   body.mobile-desk .btn {
-    min-height: 1.85rem;
-    padding: 0.35rem 0.55rem;
-    font-size: 0.78rem;
+    min-height: 1.65rem;
+    padding: 0.28rem 0.45rem;
+    font-size: 0.72rem;
   }
 
   body.mobile-desk .btn.small {
-    min-height: 1.75rem;
-    padding: 0.28rem 0.45rem;
-    font-size: 0.7rem;
+    min-height: 1.55rem;
+    padding: 0.2rem 0.38rem;
+    font-size: 0.65rem;
   }
 
   body.mobile-desk .mobile-icon-btn,
   body.mobile-desk .mobile-back-btn,
   body.mobile-desk .mobile-details-btn {
-    min-width: 2.25rem;
-    min-height: 2.25rem;
+    min-width: 2rem;
+    min-height: 2rem;
+    font-size: 1rem;
   }
 
   body.mobile-desk .mobile-nav-btn {
-    min-height: 2.75rem;
+    min-height: 2.5rem;
+    padding: 0.25rem;
+  }
+
+  body.mobile-desk .mobile-nav-label {
+    font-size: 0.62rem;
+  }
+
+  body.mobile-desk .claim-hint,
+  body.mobile-desk .chat-closed-banner {
+    padding: 0.35rem 0.5rem;
+    font-size: 0.72rem;
   }
 
   body.mobile-desk .chat-empty {
