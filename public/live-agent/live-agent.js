@@ -483,7 +483,7 @@
         try {
             const params = new URLSearchParams({
                 rev: String(deskSyncRevision),
-                waitMs: "2200"
+                waitMs: "900"
             });
             if (lastMessageId) {
                 params.set("sinceId", lastMessageId);
@@ -544,7 +544,7 @@
                 selectedConv &&
                 (selectedConv.status === "active" || selectedConv.status === "waiting")
             ) {
-                setTimeout(runLiveSync_, 15);
+                setTimeout(runLiveSync_, 5);
             }
         }
     }
@@ -1628,14 +1628,22 @@
     function isStaleBotHandoffSystemMsg_(m, conv) {
         if (!m || m.role !== "system" || !conv) return false;
         const t = String(m.text || "").toLowerCase();
-        if (!t.includes("assistant is replying")) return false;
+        if (
+            !t.includes("assistant is replying") &&
+            !t.includes("ai assistant is replying")
+        ) {
+            return false;
+        }
         return !isAiCopilotConv_(conv);
     }
 
     function removeStaleBotHandoffMessages_() {
         if (!messageList) return;
         messageList.querySelectorAll(".msg.system").forEach((el) => {
-            if (/assistant is replying/i.test(el.textContent || "")) {
+            if (
+                /assistant is replying/i.test(el.textContent || "") ||
+                /ai assistant is replying/i.test(el.textContent || "")
+            ) {
                 el.remove();
             }
         });
@@ -1919,6 +1927,13 @@
         ) {
             const visitor = resolveVisitorDisplayName_(selectedConv, selectedVisitorContext);
             return "You are now chatting with " + visitor + ".";
+        }
+        if (
+            t === "live_agent_bot_active" ||
+            /ai assistant is replying/i.test(t) ||
+            /the assistant is replying/i.test(t)
+        ) {
+            return "AI assistant is replying now.";
         }
         return t;
     }

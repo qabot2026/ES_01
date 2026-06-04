@@ -47,6 +47,15 @@
     return !!st.humanActive;
   }
 
+  function isBotHandoffMessageText_(text) {
+    var t = String(text || '').trim().toLowerCase();
+    return (
+      t === 'live_agent_bot_active' ||
+      t.indexOf('ai assistant is replying') >= 0 ||
+      t.indexOf('the assistant is replying') >= 0
+    );
+  }
+
   function patchWidget() {
     var C = global.QualityAssistantWidget;
     if (!C || !C.prototype) return false;
@@ -160,6 +169,47 @@
       this._hideLiveAgentBanner();
     };
 
+    p._liveAgentShowBotActiveMessage_ = function () {
+      var key = 'bot-active';
+      this.liveAgentSeen = this.liveAgentSeen || {};
+      if (this.liveAgentSeen[key]) return;
+      this.liveAgentSeen[key] = true;
+      this.appendMessage(
+        'bot',
+        t(this, 'botActive', 'AI assistant is replying now.'),
+        { skipTranscriptLog: true }
+      );
+    };
+
+    p._liveAgentApplyBotHandoffFromSync_ = function (st) {
+      var msgs = (st && st.messages) || [];
+      var found = false;
+      for (var i = 0; i < msgs.length; i++) {
+        var m = msgs[i];
+        if (!m) continue;
+        var role = m.role || m.from || '';
+        if (role !== 'system') continue;
+        if (!isBotHandoffMessageText_(m.text)) continue;
+        var mk = messageKey(m) || 'bot-active';
+        this.liveAgentSeen = this.liveAgentSeen || {};
+        if (this.liveAgentSeen[mk]) {
+          found = true;
+          continue;
+        }
+        this.liveAgentSeen[mk] = true;
+        this.liveAgentSeen['bot-active'] = true;
+        this.appendMessage(
+          'bot',
+          t(this, 'botActive', 'AI assistant is replying now.'),
+          { skipTranscriptLog: true }
+        );
+        found = true;
+      }
+      if (!found && st && (st.botMode || st.aiCopilot)) {
+        this._liveAgentShowBotActiveMessage_();
+      }
+    };
+
     p._applyLiveAgentSyncState = function (st) {
       if (!st || !st.ok) return;
       if (st.revision) this._liveAgentRev = st.revision;
@@ -171,6 +221,7 @@
         return;
       }
       if (!handoff) {
+        this._liveAgentApplyBotHandoffFromSync_(st);
         if (
           st.sessionOpen ||
           (st.conversation &&
@@ -388,10 +439,8 @@
             skipTranscriptLog: true,
           });
         } else if (from === 'system') {
-          if (
-            /assistant is replying/i.test(m.text || '') &&
-            self._liveAgentHumanActive
-          ) {
+          if (isBotHandoffMessageText_(m.text)) {
+            self._liveAgentShowBotActiveMessage_();
             return;
           }
           if (
@@ -565,7 +614,7 @@
       this._liveAgentPollTick();
       this._liveAgentPollTimer = setInterval(function () {
         self._liveAgentPollTick();
-      }, 180);
+      }, 80);
     };
 
     p._liveAgentPollTick = function () {
@@ -588,7 +637,7 @@
         encodeURIComponent(this.sessionId) +
         '&rev=' +
         rev +
-        '&waitMs=2200&lastMessageId=' +
+        '&waitMs=900&lastMessageId=' +
         msgId;
       fetch(syncUrl)
         .then(function (r) {
