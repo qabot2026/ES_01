@@ -494,7 +494,7 @@
     global.__qaLiveAgentScriptLoading = true;
     var base = String(this.apiBase).replace(/\/$/, '');
     var s = document.createElement('script');
-    s.src = base + '/widget/live-agent-client.js?v=20260602-agent-notices';
+    s.src = base + '/widget/live-agent-client.js?v=20260603-typing-handoff';
     s.onload = function () {
       global.__qaLiveAgentScriptDone = true;
       global.__qaLiveAgentScriptLoading = false;

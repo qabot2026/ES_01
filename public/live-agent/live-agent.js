@@ -844,6 +844,36 @@
         return !!(selectedConv && !isAiCopilotConv_(selectedConv));
     }
 
+    function isHandoffRequestLine_(text) {
+        const t = String(text || "").trim();
+        return /requested a (chat with an|human) agent/i.test(t) || /^__GO_/i.test(t);
+    }
+
+    function getLastVisitorBubbleText_() {
+        if (!messageList) return "";
+        const nodes = messageList.querySelectorAll(
+            ".msg.visitor:not(.typing-draft)[data-msg-id]"
+        );
+        if (!nodes.length) return "";
+        const last = nodes[nodes.length - 1];
+        const timeEl = last.querySelector("time");
+        if (timeEl) {
+            return String(last.textContent || "")
+                .slice(0, Math.max(0, last.textContent.length - timeEl.textContent.length))
+                .trim();
+        }
+        return String(last.textContent || "").trim();
+    }
+
+    function shouldRenderVisitorTypingPreview_(text) {
+        const t = String(text || "").trim();
+        if (!t) return false;
+        if (isHandoffRequestLine_(t)) return false;
+        const sent = getLastVisitorBubbleText_();
+        if (sent && t === sent) return false;
+        return true;
+    }
+
     function syncVisitorTypingDraftFromPulse_(data) {
         if (!shouldShowVisitorTypingDraft_()) {
             clearVisitorTypingDraft_();
@@ -851,7 +881,7 @@
         }
         if (!data || data.visitorTyping == null) return;
         const t = String(data.visitorTyping || "").trim();
-        if (t) {
+        if (t && shouldRenderVisitorTypingPreview_(t)) {
             lastPulseVisitorTyping = t;
             renderVisitorTypingPreview_(t, data.conversation || selectedConv);
             refreshChatHeaderMeta_(data.conversation || selectedConv);
@@ -3052,7 +3082,6 @@
         if (msgId && !msgId.startsWith("opt-") && m.role === "agent") {
             stripOptimisticAgentMessages_();
         }
-        removeVisitorTypingDraft_();
         const div = document.createElement("div");
         const role = m.role || "visitor";
         div.className = "msg " + role;
@@ -3075,6 +3104,14 @@
             if (!line) {
                 return;
             }
+            if (isHandoffRequestLine_(line)) {
+                if (messageList.querySelector("[data-handoff-request]")) {
+                    return;
+                }
+                div.dataset.handoffRequest = "1";
+            }
+            removeVisitorTypingDraft_();
+            lastPulseVisitorTyping = "";
             body = escapeHtml(line);
         } else {
             body = escapeHtml(m.text || "");

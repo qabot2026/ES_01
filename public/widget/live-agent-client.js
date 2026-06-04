@@ -651,7 +651,7 @@
         if (!self.liveAgentMode && !self._liveAgentHumanActive) return;
         var val = self.els.input.value || '';
         var now = Date.now();
-        if (now - lastTypingSendMs > 45) {
+        if (now - lastTypingSendMs > 35) {
           lastTypingSendMs = now;
           postTyping(val, true);
         } else {
@@ -659,7 +659,7 @@
           typingTimer = setTimeout(function () {
             lastTypingSendMs = Date.now();
             postTyping(val, true);
-          }, 45);
+          }, 35);
         }
       });
       this.els.input.addEventListener('blur', function () {
