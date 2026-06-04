@@ -878,8 +878,20 @@ body.live-agent-locked {
 
 .notifications-btn {
   position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
   min-width: 2.25rem;
   padding: 0.35rem 0.5rem;
+}
+
+.notifications-btn-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+#enablePhoneNotifyBtn.hidden {
+  display: none;
 }
 
 .notifications-btn--pulse {
@@ -1164,6 +1176,11 @@ body.live-agent-locked {
   .notifications-btn {
     min-width: 2.75rem;
     min-height: 2.75rem;
+    padding: 0.45rem 0.65rem;
+  }
+
+  .notifications-btn-label {
+    display: inline;
   }
 
   .notifications-item {

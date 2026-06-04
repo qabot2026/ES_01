@@ -52,15 +52,18 @@
               </select>
             </span>
           </label>
+          <button type="button" class="btn primary small hidden" id="enablePhoneNotifyBtn"
+            title="Show alerts in Chrome / phone notification list">Phone alerts</button>
           <div class="notifications-wrap" id="notificationsWrap">
             <button type="button" class="btn ghost notifications-btn" id="notificationsBtn"
-              title="Notifications" aria-expanded="false" aria-controls="notificationsPanel">
+              title="Open alert panel (new live-agent requests)" aria-expanded="false" aria-controls="notificationsPanel">
+              <span class="notifications-btn-label">Alerts</span>
               <span class="notifications-btn-icon" aria-hidden="true">🔔</span>
               <span id="notificationsBadge" class="notifications-badge hidden">0</span>
             </button>
             <div id="notificationsPanel" class="notifications-panel hidden" role="region" aria-label="Notifications">
               <div class="notifications-panel-head">
-                <h2>Notifications</h2>
+                <h2>Alert panel</h2>
                 <button type="button" class="btn ghost small" id="markAllNotificationsReadBtn">Mark all read</button>
               </div>
               <p id="notificationsEmpty" class="notifications-empty muted small">No notifications yet.</p>
