@@ -494,14 +494,36 @@
                 const p = await Notification.requestPermission();
                 updateNotifyPermissionStatus_();
                 if (p === "granted") {
-                    try {
-                        new Notification("Live agent alerts enabled", {
-                            body: "You will get pop-ups when a visitor requests a human agent.",
-                            tag: "live-agent-settings-test",
-                            icon: "/widget/logo-powered.svg"
-                        });
-                    } catch (_) {
-                        /* ignore */
+                    const title = "Live agent alerts enabled";
+                    const body = "You will get pop-ups when a visitor requests a human agent.";
+                    let shown = false;
+                    if ("serviceWorker" in navigator) {
+                        try {
+                            const reg = await navigator.serviceWorker.register(
+                                "/live-agent/notification-sw.js",
+                                { scope: "/live-agent/" }
+                            );
+                            await navigator.serviceWorker.ready;
+                            const active = reg.active || navigator.serviceWorker.controller;
+                            if (active) {
+                                active.postMessage({
+                                    type: "SHOW_HANDOFF",
+                                    title: title,
+                                    body: body,
+                                    tag: "live-agent-settings-test"
+                                });
+                                shown = true;
+                            }
+                        } catch (_) {
+                            /* fallback below */
+                        }
+                    }
+                    if (!shown) {
+                        try {
+                            new Notification(title, { body: body, tag: "live-agent-settings-test" });
+                        } catch (_) {
+                            /* ignore */
+                        }
                     }
                 }
             } catch (e) {
