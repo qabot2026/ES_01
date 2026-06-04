@@ -3010,6 +3010,25 @@
         return t;
     }
 
+    function formatVisitorLineForDesk_(text) {
+        const raw = String(text || "").trim();
+        if (!raw) {
+            return "";
+        }
+        const inner = raw.replace(/^(?:query|event):/i, "").trim() || raw;
+        if (/^__GO_/i.test(inner) && /human\s*agent/i.test(inner)) {
+            const name = resolveVisitorDisplayName_(selectedConv, selectedVisitorContext);
+            if (name && name !== "Visitor") {
+                return name + " requested a chat with an agent.";
+            }
+            return "Visitor requested a chat with an agent.";
+        }
+        if (/^__GO_/i.test(inner)) {
+            return "";
+        }
+        return raw;
+    }
+
     function stripOptimisticAgentMessages_() {
         if (!messageList) return;
         messageList.querySelectorAll('[data-msg-id^="opt-"]').forEach((el) => el.remove());
@@ -3042,6 +3061,12 @@
                 who +
                 "</span>: " +
                 escapeHtml(m.text || "");
+        } else if (role === "visitor") {
+            const line = formatVisitorLineForDesk_(m.text || "");
+            if (!line) {
+                return;
+            }
+            body = escapeHtml(line);
         } else {
             body = escapeHtml(m.text || "");
         }
