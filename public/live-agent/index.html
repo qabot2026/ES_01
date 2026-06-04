@@ -7,8 +7,8 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="robots" content="noindex, nofollow" />
   <title>Agent Service Desk</title>
-  <link rel="stylesheet" href="live-agent.css?v=20260603-compact-actions" />
-  <link rel="stylesheet" href="live-agent-mobile.css?v=20260603-compact-actions" />
+  <link rel="stylesheet" href="live-agent.css?v=20260603-actions-row" />
+  <link rel="stylesheet" href="live-agent-mobile.css?v=20260603-actions-row" />
 </head>
 <body>
 
@@ -179,19 +179,17 @@
                   <button type="button" class="btn danger m-btn m-btn--danger" id="endChatFooterBtn" title="End live chat">
                     End
                   </button>
+                  <div id="handoverBar" class="handover-bar m-handover-inline hidden">
+                    <span class="m-handover-to">To</span>
+                    <select id="handoverAgentSelect" class="handover-select m-handover-select" aria-label="Hand over to agent"></select>
+                    <button type="button" class="btn ghost small m-handover-transfer" id="handoverBtn">Transfer</button>
+                  </div>
                 </div>
                 <div class="chat-actions-extra">
                   <button type="button" class="btn ghost small" id="refreshChatBtn" title="Reload messages">↻</button>
                   <a class="btn ghost small" id="transcriptFooterBtn" href="#" target="_blank" rel="noopener noreferrer" title="Transcript">Transcript</a>
                   <button type="button" class="btn ghost small" id="copySessionBtn" title="Copy session ID">Copy ID</button>
                   <button type="button" class="btn ghost small" id="dismissFooterBtn" title="Remove from queue">Dismiss</button>
-                </div>
-                <div id="handoverBar" class="handover-bar m-handover hidden">
-                  <div class="m-handover-row">
-                    <span class="m-handover-to">To</span>
-                    <select id="handoverAgentSelect" class="handover-select m-handover-select" aria-label="Hand over to agent"></select>
-                    <button type="button" class="btn ghost small m-handover-transfer" id="handoverBtn">Transfer</button>
-                  </div>
                 </div>
               </div>
               <form id="composerForm" class="composer m-composer" novalidate>

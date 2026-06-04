@@ -799,12 +799,18 @@ body.live-agent-locked {
   border-top: 1px solid var(--border);
 }
 
-.m-handover-row {
-  display: flex;
+.m-handover-row,
+.m-handover-inline {
+  display: inline-flex;
   flex-wrap: nowrap;
   align-items: center;
   gap: 0.5rem;
-  width: 100%;
+}
+
+.m-actions-row .m-handover-inline {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
 }
 
 .m-handover-to {
