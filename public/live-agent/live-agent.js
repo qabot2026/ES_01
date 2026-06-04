@@ -1091,17 +1091,15 @@
                 const n = lastInboxConversations_.length;
                 inboxStatus.textContent = n ? n + " request(s)" : "No conversations in this queue.";
             }
-            void loadInbox(true);
+            await loadInbox(true, true);
         } catch (e) {
             const msg = e.message || "Dismiss failed";
             if (!/closed/i.test(msg)) {
                 if (inboxStatus) {
                     inboxStatus.textContent = msg;
                 }
-                await loadInbox(true);
+                await loadInbox(true, true);
             }
-        } finally {
-            dismissingConversationIds_.delete(id);
         }
     }
 
@@ -1155,7 +1153,17 @@
         }
     }
 
+    function pruneDismissingConversationIds_(conversations) {
+        for (const id of dismissingConversationIds_) {
+            const hit = (conversations || []).find((c) => c.id === id);
+            if (!hit || hit.status === "closed") {
+                dismissingConversationIds_.delete(id);
+            }
+        }
+    }
+
     function renderInbox(conversations) {
+        pruneDismissingConversationIds_(conversations);
         inboxList.innerHTML = "";
         const seenIds = new Set();
         const queue = inboxFilter ? inboxFilter.value || "all" : "all";
@@ -1218,15 +1226,16 @@
         }
     }
 
-    async function loadInbox(quiet) {
+    async function loadInbox(quiet, fresh) {
         if (inboxInFlight) return;
         inboxInFlight = true;
         if (!quiet) inboxStatus.textContent = "Loading…";
         try {
             const status = inboxFilter.value || "waiting";
             const light = quiet ? "&light=1" : "";
+            const forcePull = fresh ? "&fresh=1" : "";
             const data = await apiFetch(
-                `${API}/inbox?status=${encodeURIComponent(status)}&limit=50${light}`
+                `${API}/inbox?status=${encodeURIComponent(status)}&limit=50${light}${forcePull}`
             );
             const list = data.conversations || [];
             lastInboxConversations_ = list;
