@@ -142,11 +142,16 @@
       var text =
         (messageText && String(messageText).trim()) ||
         t(this, 'connectedPrefix', 'You are now chatting with') + ' ' + name + '.';
+      this._hideLiveAgentBanner();
       if (!this._liveAgentConnectedAnnounced) {
         this._liveAgentConnectedAnnounced = true;
-        this.appendMessage('bot', text, { skipTranscriptLog: true });
+        this.appendMessage('bot', text, {
+          skipTranscriptLog: true,
+          personaLabel: name,
+          liveAgentHuman: true,
+          messageKind: 'agent-connected',
+        });
       }
-      this._liveAgentConnectedBanner(name);
     };
 
     p._releaseLiveAgentToBot_ = function () {
@@ -298,17 +303,6 @@
       if (!this.els || !this.els.panel) return;
       var el = this.els.panel.querySelector('.qa-live-agent-banner');
       if (el) el.hidden = true;
-    };
-
-    p._liveAgentConnectedBanner = function (name) {
-      var label = (name && String(name).trim()) || 'Support Agent';
-      if (/^me$/i.test(label)) label = 'Support Agent';
-      this._showLiveAgentBanner(
-        t(this, 'connectedPrefix', 'You are now chatting with') +
-          ' ' +
-          label +
-          '.'
-      );
     };
 
     p._liveAgentSendUser = function (text) {

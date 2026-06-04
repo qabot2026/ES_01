@@ -10,6 +10,8 @@
     restart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M1 4v6h6M23 20v-6h-6"/><path d="M20.49 9A9 9 0 005.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 013.51 15"/></svg>',
     chat: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>',
     header: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>',
+    agentHuman:
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><circle cx="12" cy="8" r="3.25"/><path d="M5 20v-.75C5 16.13 8.13 14 12 14s7 2.13 7 5.25V20"/><path d="M16.5 9.5l1.2 1.2 2.3-2.3" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   };
 
   function getRootCfg() {
@@ -490,7 +492,7 @@
     global.__qaLiveAgentScriptLoading = true;
     var base = String(this.apiBase).replace(/\/$/, '');
     var s = document.createElement('script');
-    s.src = base + '/widget/live-agent-client.js?v=20260604-you-reply';
+    s.src = base + '/widget/live-agent-client.js?v=20260604-agent-connected';
     s.onload = function () {
       global.__qaLiveAgentScriptDone = true;
       global.__qaLiveAgentScriptLoading = false;
@@ -2037,6 +2039,18 @@
     return ICONS.user;
   };
 
+  QualityAssistantWidget.prototype.agentHumanAvatarHtml = function () {
+    var ap = getRootCfg().agentPersona || {};
+    if (ap.mode === 'image' && ap.imageUrl) {
+      return (
+        '<img src="' +
+        this.escape(ap.imageUrl) +
+        '" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover"/>'
+      );
+    }
+    return ICONS.agentHuman;
+  };
+
   QualityAssistantWidget.prototype.buildPersonaRow = function (role, options) {
     options = options || {};
     var bp = getRootCfg().botPersona || {};
@@ -2053,15 +2067,20 @@
 
     var avatar = document.createElement('div');
     avatar.className = 'qa-msg__avatar qa-msg__avatar--' + role;
-    if (role === 'bot' && bp.mode === 'image' && bp.imageUrl) {
+    if (options.liveAgentHuman) {
+      avatar.classList.add('qa-msg__avatar--agent-human');
+    } else if (role === 'bot' && bp.mode === 'image' && bp.imageUrl) {
       avatar.classList.add('qa-msg__avatar--image');
     }
     if (role === 'user') {
       avatar.classList.add('qa-msg__avatar--sm');
     }
     avatar.setAttribute('aria-hidden', 'true');
-    avatar.innerHTML =
-      role === 'bot' ? this.botAvatarHtml() : this.userAvatarHtml();
+    avatar.innerHTML = options.liveAgentHuman
+      ? this.agentHumanAvatarHtml()
+      : role === 'bot'
+        ? this.botAvatarHtml()
+        : this.userAvatarHtml();
 
     var meta = document.createElement('div');
     meta.className = 'qa-msg__persona-meta';
@@ -3331,6 +3350,9 @@
     }
     var row = document.createElement('div');
     row.className = 'qa-msg qa-msg--' + role;
+    if (options.messageKind === 'agent-connected') {
+      row.classList.add('qa-msg--agent-connected');
+    }
     var body = document.createElement('div');
     body.className = 'qa-msg__body';
     body.appendChild(this.buildPersonaRow(role, options));

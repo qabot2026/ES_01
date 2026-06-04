@@ -2478,9 +2478,34 @@ textarea.qa-form__input {
   font-size: 0.75rem;
   font-weight: 600;
   text-align: center;
-  background: #ecfdf5;
-  color: #047857;
-  border-bottom: 1px solid #a7f3d0;
+  background: #eff6ff;
+  color: #1d4ed8;
+  border-bottom: 1px solid #bfdbfe;
+}
+
+/* Live agent connected — in chat thread, not header bar */
+.qa-msg--agent-connected .qa-msg__avatar--agent-human {
+  background: linear-gradient(145deg, #0f766e, #0369a1);
+  border: 2px solid #99f6e4;
+  box-shadow: 0 2px 8px rgba(15, 118, 110, 0.25);
+}
+
+.qa-msg--agent-connected .qa-msg__avatar--agent-human svg {
+  width: 62%;
+  height: 62%;
+}
+
+.qa-msg--agent-connected .qa-msg__persona-name {
+  color: #0f766e;
+  font-weight: 700;
+}
+
+.qa-msg--agent-connected .qa-msg__bubble {
+  background: linear-gradient(180deg, #f0fdfa 0%, #ecfeff 100%);
+  border: 1px solid #99f6e4;
+  color: #134e4a;
+  font-weight: 500;
+  line-height: 1.45;
 }
 
 .qa-form__field--calendar {

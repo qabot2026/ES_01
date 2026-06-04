@@ -134,6 +134,13 @@ window.QA_CHAT_UI_CONFIG = {
       messageTimeIncludesDate: false,
     },
 
+    /** Shown when a human agent joins (live-agent handoff). */
+    agentPersona: {
+      mode: 'icon',
+      label: 'Support Agent',
+      imageUrl: '',
+    },
+
     userPersona: {
       label: 'You',
       avatarSizePx: 18,
