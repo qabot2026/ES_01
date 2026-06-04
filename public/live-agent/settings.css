@@ -156,10 +156,20 @@
 
 .kb-article-fields {
   display: grid;
-  grid-template-columns: 1fr 1fr auto auto;
+  grid-template-columns: 1fr 1fr 10rem auto;
   gap: 0.5rem;
-  align-items: center;
+  align-items: end;
   margin-bottom: 0.5rem;
+}
+
+.kb-field-block {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.kb-validation-banner.hidden {
+  display: none;
 }
 
 .kb-article-fields input,
@@ -172,6 +182,54 @@
   color: var(--text);
   font-family: inherit;
   font-size: 0.88rem;
+}
+
+.kb-article-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.kb-article-head .kb-article-label {
+  font-size: 0.95rem;
+}
+
+.kb-article-head .kb-saved-hint {
+  font-size: 0.78rem;
+}
+
+.kb-field-label {
+  display: block;
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin: 0.35rem 0 0.2rem;
+}
+
+.kb-field-label .required {
+  color: #f87171;
+}
+
+.kb-row-invalid {
+  outline: 2px solid rgba(248, 113, 113, 0.45);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+.kb-field-missing {
+  border-color: #f87171 !important;
+  box-shadow: 0 0 0 1px rgba(248, 113, 113, 0.35);
+}
+
+.kb-validation-banner {
+  margin: 0.75rem 0 0;
+  padding: 0.55rem 0.75rem;
+  border-radius: 8px;
+  background: rgba(248, 113, 113, 0.12);
+  border: 1px solid rgba(248, 113, 113, 0.35);
+  color: #fecaca;
+  font-size: 0.85rem;
 }
 
 .kb-article-cell textarea {
@@ -190,6 +248,10 @@
 @media (max-width: 720px) {
   .kb-article-fields {
     grid-template-columns: 1fr;
+  }
+
+  .kb-article-fields .kb-remove {
+    justify-self: start;
   }
 }
 

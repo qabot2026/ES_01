@@ -241,7 +241,11 @@
             </table>
           </div>
           <button type="button" class="btn ghost small" id="addKbArticleBtn">Add article</button>
-          <p class="muted small">Each article needs a title and answer. Leave department empty for all teams.</p>
+          <p id="kbValidationBanner" class="kb-validation-banner hidden" role="alert"></p>
+          <p class="muted small">
+            Each article must have a <strong>title</strong> and <strong>reply text</strong> (both required).
+            Saved articles stay on this page so you can edit them anytime. Leave department empty for all teams.
+          </p>
           <div class="section-save-bar">
             <button type="button" class="btn primary small section-save-btn" data-section-label="Knowledge base">Save knowledge base</button>
             <p class="section-save-status muted small" role="status"></p>

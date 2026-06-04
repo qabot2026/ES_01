@@ -104,6 +104,105 @@
         };
     }
 
+    function kbRowValues_(tr) {
+        const titleEl = tr.querySelector("[data-kb-title]");
+        const keysEl = tr.querySelector("[data-kb-keywords]");
+        const answerEl = tr.querySelector("[data-kb-answer]");
+        const deptEl = tr.querySelector("[data-kb-dept]");
+        const title = titleEl && titleEl.value ? titleEl.value.trim() : "";
+        const answer = answerEl && answerEl.value ? answerEl.value.trim() : "";
+        const keywords = keysEl && keysEl.value ? keysEl.value.trim() : "";
+        const departmentId = deptEl && deptEl.value ? deptEl.value.trim() : "";
+        const hasAny = !!(title || answer || keywords || departmentId);
+        const complete = !!(title && answer);
+        return { titleEl, answerEl, keysEl, deptEl, title, answer, keywords, departmentId, hasAny, complete };
+    }
+
+    function clearKbValidationUi_() {
+        const banner = $("kbValidationBanner");
+        if (banner) {
+            banner.textContent = "";
+            banner.classList.add("hidden");
+        }
+        const body = $("kbArticlesBody");
+        if (!body) return;
+        for (const tr of body.querySelectorAll("tr[data-kb-article]")) {
+            tr.classList.remove("kb-row-invalid");
+            for (const el of tr.querySelectorAll(".kb-field-missing")) {
+                el.classList.remove("kb-field-missing");
+            }
+        }
+    }
+
+    function updateKbArticleLabels_() {
+        const body = $("kbArticlesBody");
+        if (!body) return;
+        const rows = body.querySelectorAll("tr[data-kb-article]");
+        rows.forEach((tr, idx) => {
+            const label = tr.querySelector(".kb-article-label");
+            const hint = tr.querySelector(".kb-saved-hint");
+            const v = kbRowValues_(tr);
+            const n = idx + 1;
+            if (label) {
+                label.textContent = v.title
+                    ? "Article " + n + ": " + (v.title.length > 48 ? v.title.slice(0, 45) + "…" : v.title)
+                    : "Article " + n;
+            }
+            if (hint) {
+                hint.textContent = tr.dataset.kbId
+                    ? "Saved — edit below and save again"
+                    : "New — add title and reply text, then save";
+            }
+        });
+    }
+
+    function validateKnowledgeBaseDom_() {
+        clearKbValidationUi_();
+        const body = $("kbArticlesBody");
+        if (!body) return { ok: true };
+        const rows = [...body.querySelectorAll("tr[data-kb-article]")];
+        const problems = [];
+        let completeCount = 0;
+        for (let i = 0; i < rows.length; i++) {
+            const tr = rows[i];
+            const v = kbRowValues_(tr);
+            if (!v.hasAny) continue;
+            if (v.complete) {
+                completeCount++;
+                continue;
+            }
+            tr.classList.add("kb-row-invalid");
+            const missing = [];
+            if (!v.title) {
+                missing.push("title");
+                if (v.titleEl) v.titleEl.classList.add("kb-field-missing");
+            }
+            if (!v.answer) {
+                missing.push("reply text");
+                if (v.answerEl) v.answerEl.classList.add("kb-field-missing");
+            }
+            problems.push({ index: i + 1, missing });
+        }
+        if (!problems.length) return { ok: true, completeCount };
+        const first = problems[0];
+        const msg =
+            "Article " +
+            first.index +
+            " is incomplete — add " +
+            first.missing.join(" and ") +
+            " before saving. Your text was not cleared.";
+        const banner = $("kbValidationBanner");
+        if (banner) {
+            banner.textContent = msg;
+            banner.classList.remove("hidden");
+        }
+        const kbSection = $("knowledgeBaseSection");
+        if (kbSection && typeof kbSection.scrollIntoView === "function") {
+            kbSection.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        }
+        return { ok: false, message: msg, problems };
+    }
+
     function readKnowledgeBaseFromDom_() {
         const body = $("kbArticlesBody");
         const articles = [];
@@ -112,20 +211,14 @@
         }
         const rows = body.querySelectorAll("tr[data-kb-article]");
         for (const tr of rows) {
-            const titleEl = tr.querySelector("[data-kb-title]");
-            const keysEl = tr.querySelector("[data-kb-keywords]");
-            const answerEl = tr.querySelector("[data-kb-answer]");
-            const deptEl = tr.querySelector("[data-kb-dept]");
-            const id = tr.dataset.kbId || "";
-            const title = titleEl && titleEl.value ? titleEl.value.trim() : "";
-            const answer = answerEl && answerEl.value ? answerEl.value.trim() : "";
-            if (!title || !answer) continue;
+            const v = kbRowValues_(tr);
+            if (!v.complete) continue;
             articles.push({
-                id: id || undefined,
-                title,
-                keywords: keysEl && keysEl.value ? keysEl.value.trim() : "",
-                answer,
-                departmentId: deptEl && deptEl.value ? deptEl.value.trim() : "",
+                id: tr.dataset.kbId || undefined,
+                title: v.title,
+                keywords: v.keywords,
+                answer: v.answer,
+                departmentId: v.departmentId,
                 enabled: true
             });
         }
@@ -164,29 +257,56 @@
         tr.dataset.kbId = a.id || "";
         tr.innerHTML =
             '<td colspan="4" class="kb-article-cell">' +
+            '<div class="kb-article-head">' +
+            '<strong class="kb-article-label">Article</strong>' +
+            '<span class="kb-saved-hint muted small"></span>' +
+            "</div>" +
             '<div class="kb-article-fields">' +
-            '<input type="text" data-kb-title placeholder="Title (e.g. Refund policy)" value="' +
+            '<div class="kb-field-block">' +
+            '<span class="kb-field-label">Title <span class="required">*</span></span>' +
+            '<input type="text" data-kb-title placeholder="e.g. Refund policy" value="' +
             escapeHtml_(a.title || "") +
             '" />' +
-            '<input type="text" data-kb-keywords placeholder="Keywords: refund, cancel" value="' +
+            "</div>" +
+            '<div class="kb-field-block">' +
+            '<span class="kb-field-label">Keywords</span>' +
+            '<input type="text" data-kb-keywords placeholder="refund, cancel, return" value="' +
             escapeHtml_(a.keywords || "") +
             '" />' +
+            "</div>" +
+            '<div class="kb-field-block">' +
+            '<span class="kb-field-label">Department</span>' +
             '<select data-kb-dept>' +
             deptOptionsHtml_(a.departmentId || "") +
             "</select>" +
+            "</div>" +
             '<button type="button" class="btn ghost small kb-remove">Remove</button>' +
             "</div>" +
-            '<textarea data-kb-answer rows="4" placeholder="Reply text agents can paste to the visitor…">' +
+            '<span class="kb-field-label">Reply text <span class="required">*</span></span>' +
+            '<textarea data-kb-answer rows="5" placeholder="Full reply agents can paste to the visitor…">' +
             escapeHtml_(a.answer || "") +
             "</textarea>" +
             "</td>";
-        tr.querySelector(".kb-remove").addEventListener("click", () => tr.remove());
+        const onInput = () => {
+            clearKbValidationUi_();
+            updateKbArticleLabels_();
+        };
+        tr.querySelectorAll("input, textarea, select").forEach((el) => {
+            el.addEventListener("input", onInput);
+            el.addEventListener("change", onInput);
+        });
+        tr.querySelector(".kb-remove").addEventListener("click", () => {
+            tr.remove();
+            updateKbArticleLabels_();
+        });
         body.appendChild(tr);
+        updateKbArticleLabels_();
     }
 
     function renderKnowledgeBase_(kb) {
         const body = $("kbArticlesBody");
         if (!body) return;
+        clearKbValidationUi_();
         const base = kb && typeof kb === "object" ? kb : {};
         setChecked_("kbEnabled", base.enabled !== false);
         body.innerHTML = "";
@@ -197,7 +317,9 @@
             for (const a of list) {
                 addKbArticleRow_(a);
             }
+            addKbArticleRow_({});
         }
+        updateKbArticleLabels_();
     }
 
     function applyDeskSettings_(s) {
@@ -516,28 +638,29 @@
         }
     });
 
-    function kbSaveWarning_(payload) {
-        const kb = (payload && payload.knowledgeBase) || {};
-        return (
-            (kb.articles || []).length === 0 &&
-            $("kbArticlesBody") &&
-            $("kbArticlesBody").querySelectorAll("tr[data-kb-article]").length > 0
-        );
-    }
-
     async function saveDeskConfiguration_(statusEl, sectionLabel) {
+        const kbCheck = validateKnowledgeBaseDom_();
+        if (!kbCheck.ok) {
+            if (statusEl) statusEl.textContent = kbCheck.message;
+            throw new Error(kbCheck.message);
+        }
         if (statusEl) statusEl.textContent = "Saving…";
         const payload = readDeskPayload_();
-        const skippedKb = kbSaveWarning_(payload);
+        const kbCount = (payload.knowledgeBase && payload.knowledgeBase.articles) || [];
         await apiFetch(`${API}/settings`, {
             method: "PUT",
             body: JSON.stringify(payload)
         });
         await loadAll();
-        const prefix = sectionLabel ? sectionLabel + " saved." : "Configuration saved.";
-        const msg = skippedKb
-            ? prefix + " Knowledge rows need both title and answer — incomplete rows were skipped."
-            : prefix;
+        let msg = sectionLabel ? sectionLabel + " saved." : "Configuration saved.";
+        if (sectionLabel === "Knowledge base" || (kbCount.length && sectionLabel)) {
+            msg +=
+                " " +
+                kbCount.length +
+                " article" +
+                (kbCount.length === 1 ? "" : "s") +
+                " — scroll up in Knowledge base to edit.";
+        }
         if (statusEl) statusEl.textContent = msg;
         return msg;
     }
