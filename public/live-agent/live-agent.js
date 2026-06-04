@@ -256,6 +256,7 @@
         renderNotificationsPanel_();
         updateNotificationsBadge_();
         syncMobileDeskLayout_();
+        syncMobileNavVisibility_();
         setMobileDeskTab_("chats");
         loadDeskSettings_().then(() => {
             updateNotificationPermissionUi_();
@@ -492,19 +493,31 @@
     function setMobileSheetOpen_(which) {
         const menu = which === "menu";
         const details = which === "details";
+        const chatmenu = which === "chatmenu";
+        const mobileChatMenuSheet = $("mobileChatMenuSheet");
         if (mobileMenuSheet) {
             mobileMenuSheet.classList.toggle("hidden", !menu);
         }
         if (mobileDetailsSheet) {
             mobileDetailsSheet.classList.toggle("hidden", !details);
         }
-        if (mobileSheetBackdrop) {
-            mobileSheetBackdrop.classList.toggle("hidden", !menu && !details);
-            mobileSheetBackdrop.setAttribute(
-                "aria-hidden",
-                menu || details ? "false" : "true"
-            );
+        if (mobileChatMenuSheet) {
+            mobileChatMenuSheet.classList.toggle("hidden", !chatmenu);
         }
+        const open = menu || details || chatmenu;
+        if (mobileSheetBackdrop) {
+            mobileSheetBackdrop.classList.toggle("hidden", !open);
+            mobileSheetBackdrop.setAttribute("aria-hidden", open ? "false" : "true");
+        }
+    }
+
+    function syncMobileNavVisibility_() {
+        if (!mobileDeskNav) return;
+        const mobile = isMobileAgentDesk_();
+        const inChatView =
+            mobile && document.body.classList.contains("mobile-tab-chat");
+        mobileDeskNav.hidden = !mobile || inChatView;
+        document.body.classList.toggle("mobile-hide-bottom-nav", inChatView);
     }
 
     function setMobileDeskTab_(tab) {
@@ -533,6 +546,7 @@
                 );
             });
         }
+        syncMobileNavVisibility_();
     }
 
     function updateMobileNavBadges_(waitingCount, unreadAlerts) {
@@ -604,9 +618,7 @@
         document.body.classList.toggle("mobile-desk", mobile);
         const inChat = mobile && !!selectedId;
         document.body.classList.toggle("mobile-chat-focus", inChat);
-        if (mobileDeskNav) {
-            mobileDeskNav.hidden = !mobile;
-        }
+        syncMobileNavVisibility_();
         if (mobileBackBtn) {
             mobileBackBtn.hidden = !mobile || !inChat;
         }
@@ -1854,6 +1866,36 @@
     if (mobileDetailsBtn) {
         mobileDetailsBtn.addEventListener("click", () => openMobileDetailsSheet_());
     }
+    const mobileChatMenuBtn = $("mobileChatMenuBtn");
+    if (mobileChatMenuBtn) {
+        mobileChatMenuBtn.addEventListener("click", () => setMobileSheetOpen_("chatmenu"));
+    }
+    if ($("closeMobileChatMenuBtn")) {
+        $("closeMobileChatMenuBtn").addEventListener("click", () => setMobileSheetOpen_(null));
+    }
+    function forwardMobileMenuClick_(sourceId, target) {
+        const src = $(sourceId);
+        if (!src || !target) return;
+        src.addEventListener("click", () => {
+            setMobileSheetOpen_(null);
+            target.click();
+        });
+    }
+    forwardMobileMenuClick_("mobileMenuRefreshBtn", refreshChatBtn);
+    forwardMobileMenuClick_("mobileMenuCopyIdBtn", copySessionBtn);
+    forwardMobileMenuClick_("mobileMenuDismissBtn", dismissFooterBtn);
+    const mobileMenuTransferBtn = $("mobileMenuTransferBtn");
+    if (mobileMenuTransferBtn && handoverBar) {
+        mobileMenuTransferBtn.addEventListener("click", () => {
+            setMobileSheetOpen_(null);
+            handoverBar.classList.remove("hidden");
+            handoverBar.scrollIntoView({ block: "nearest", behavior: "smooth" });
+        });
+    }
+    const mobileMenuTranscriptBtn = $("mobileMenuTranscriptBtn");
+    if (mobileMenuTranscriptBtn) {
+        mobileMenuTranscriptBtn.addEventListener("click", () => setMobileSheetOpen_(null));
+    }
     if ($("closeMobileMenuBtn")) {
         $("closeMobileMenuBtn").addEventListener("click", () => setMobileSheetOpen_(null));
     }
@@ -2364,6 +2406,10 @@
         }
         if (transcriptFooterBtn && selectedId) {
             transcriptFooterBtn.href = transcriptUrlForSession_(selectedId, null);
+        }
+        const mobileMenuTx = $("mobileMenuTranscriptBtn");
+        if (mobileMenuTx && transcriptFooterBtn) {
+            mobileMenuTx.href = transcriptFooterBtn.href;
         }
     }
 
