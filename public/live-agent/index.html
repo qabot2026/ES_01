@@ -2,10 +2,12 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="robots" content="noindex, nofollow" />
   <title>Agent Service Desk</title>
-  <link rel="stylesheet" href="live-agent.css" />
+  <link rel="stylesheet" href="live-agent.css?v=20260602-mobile-desk" />
 </head>
 <body>
 
@@ -61,7 +63,7 @@
               <span class="notifications-btn-icon" aria-hidden="true">🔔</span>
               <span id="notificationsBadge" class="notifications-badge hidden">0</span>
             </button>
-            <div id="notificationsPanel" class="notifications-panel hidden" role="region" aria-label="Notifications">
+            <div id="notificationsPanel" class="notifications-panel notifications-panel--dropdown hidden" role="region" aria-label="Alert dropdown">
               <div class="notifications-panel-head">
                 <h2>Alert panel</h2>
                 <button type="button" class="btn ghost small" id="markAllNotificationsReadBtn">Mark all read</button>
@@ -98,9 +100,15 @@
 
     <div class="workspace">
       <aside class="inbox-pane" aria-label="Request queue">
-        <p class="pane-title">Chats</p>
+        <div class="mobile-inbox-toolbar">
+          <p class="pane-title mobile-pane-title">Chats</p>
+          <div class="mobile-inbox-toolbar-actions">
+            <button type="button" class="btn ghost small mobile-icon-btn" id="mobileRefreshInboxBtn" title="Refresh">↻</button>
+          </div>
+        </div>
+        <div class="mobile-filter-chips" id="mobileFilterChips" role="tablist" aria-label="Queue filter"></div>
 
-        <section class="agents-panel" aria-label="Agent status">
+        <section class="agents-panel mobile-hide-when-narrow" aria-label="Agent status">
           <div class="agents-panel-head">
             <h3>Team</h3>
             <div class="agents-panel-actions">
@@ -114,7 +122,7 @@
           </div>
         </section>
 
-        <p class="inbox-hint muted small">Pick a waiting chat, then press <strong>Accept</strong> in the chat panel.</p>
+        <p class="inbox-hint muted small mobile-hide-when-narrow">Tap a chat, then <strong>Accept</strong> to reply.</p>
         <p id="inboxStatus" class="inbox-status muted">Loading…</p>
         <button type="button" class="btn ghost small" id="clearTestQueueBtn" hidden>
           Clear old test chats
@@ -122,19 +130,31 @@
         <ul id="inboxList" class="inbox-list"></ul>
       </aside>
 
+      <section id="mobileAlertsView" class="mobile-full-pane" aria-label="Alerts" hidden>
+        <header class="mobile-full-pane-head">
+          <h2>Alerts</h2>
+          <button type="button" class="btn ghost small" id="markAllNotificationsReadBtnMobile">Mark all read</button>
+        </header>
+        <p id="notificationsEmptyMobile" class="notifications-empty muted small">No new handoff alerts yet.</p>
+        <ul id="notificationsListMobile" class="notifications-list mobile-alerts-list"></ul>
+      </section>
+
       <main class="chat-pane" aria-label="Active conversation">
         <div id="chatEmpty" class="chat-empty">
-          <p class="chat-empty-lead">Select a chat on the left.</p>
+          <p class="chat-empty-lead">Select a chat from the list.</p>
+          <p class="muted small mobile-only-hint">Use the bottom bar: <strong>Chats</strong> or <strong>Alerts</strong>.</p>
         </div>
 
         <div id="chatActive" class="chat-active hidden">
           <header class="chat-head">
             <div class="chat-head-meta">
-              <button type="button" class="btn ghost small mobile-back-btn" id="mobileBackBtn" hidden aria-label="Back to chat list">← Chats</button>
-              <h2 id="chatTitle">Visitor</h2>
-              <p class="muted" id="chatMeta">—</p>
+              <button type="button" class="btn ghost mobile-back-btn" id="mobileBackBtn" hidden aria-label="Back to chat list">←</button>
+              <div class="chat-head-text">
+                <h2 id="chatTitle">Visitor</h2>
+                <p class="muted" id="chatMeta">—</p>
+              </div>
+              <button type="button" class="btn ghost small mobile-details-btn" id="mobileDetailsBtn" title="Visitor details">Info</button>
             </div>
-            <div class="chat-head-actions" hidden aria-hidden="true"></div>
           </header>
 
           <p id="claimHint" class="claim-hint muted small hidden" role="status"></p>
@@ -194,8 +214,59 @@
         </div>
       </aside>
     </div>
+
+    <nav class="mobile-desk-nav" id="mobileDeskNav" aria-label="Mobile navigation" hidden>
+      <button type="button" class="mobile-nav-btn" data-mobile-tab="chats" aria-current="page">
+        <span class="mobile-nav-icon" aria-hidden="true">💬</span>
+        <span class="mobile-nav-label">Chats</span>
+        <span id="mobileNavWaitingBadge" class="mobile-nav-badge hidden">0</span>
+      </button>
+      <button type="button" class="mobile-nav-btn" data-mobile-tab="alerts">
+        <span class="mobile-nav-icon" aria-hidden="true">🔔</span>
+        <span class="mobile-nav-label">Alerts</span>
+        <span id="mobileNavAlertsBadge" class="mobile-nav-badge hidden">0</span>
+      </button>
+      <button type="button" class="mobile-nav-btn" data-mobile-tab="menu">
+        <span class="mobile-nav-icon" aria-hidden="true">☰</span>
+        <span class="mobile-nav-label">More</span>
+      </button>
+    </nav>
+
+    <div id="mobileMenuSheet" class="mobile-sheet hidden" role="dialog" aria-label="Menu">
+      <div class="mobile-sheet-head">
+        <h2>Menu</h2>
+        <button type="button" class="btn ghost small" id="closeMobileMenuBtn" aria-label="Close">✕</button>
+      </div>
+      <div class="mobile-sheet-body">
+        <label class="mobile-menu-status">
+          Your status
+          <span class="agent-status-picker">
+            <span id="myAgentStatusIconMenu" class="status-dot status-dot--online" aria-hidden="true"></span>
+            <select id="myAgentStatusMenu">
+              <option value="online" selected>Online</option>
+              <option value="away">Away</option>
+              <option value="offline">Offline</option>
+            </select>
+          </span>
+        </label>
+        <button type="button" class="btn ghost mobile-menu-item hidden" id="enablePhoneNotifyBtnMenu">Allow phone alerts</button>
+        <a class="btn ghost mobile-menu-item" href="/live-agent/settings">Settings</a>
+        <a class="btn ghost mobile-menu-item" href="/conversations-sheet" id="leadsLinkMenu">Leads sheet</a>
+        <button type="button" class="btn ghost mobile-menu-item" id="logoutBtnMenu">Lock desk</button>
+      </div>
+    </div>
+
+    <div id="mobileDetailsSheet" class="mobile-sheet mobile-sheet--tall hidden" role="dialog" aria-label="Visitor details">
+      <div class="mobile-sheet-head">
+        <h2>Visitor details</h2>
+        <button type="button" class="btn ghost small" id="closeMobileDetailsBtn" aria-label="Close">✕</button>
+      </div>
+      <div class="mobile-sheet-body mobile-details-body" id="mobileDetailsBody"></div>
+    </div>
+
+    <div id="mobileSheetBackdrop" class="mobile-sheet-backdrop hidden" aria-hidden="true"></div>
   </section>
 
-  <script src="live-agent.js?v=20260604-dismiss-fix" defer></script>
+  <script src="live-agent.js?v=20260602-mobile-desk" defer></script>
 </body>
 </html>

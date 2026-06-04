@@ -71,6 +71,20 @@
     const deskHandoffToast = $("deskHandoffToast");
     const notificationsBackdrop = $("notificationsBackdrop");
     const enablePhoneNotifyBtn = $("enablePhoneNotifyBtn");
+    const mobileDeskNav = $("mobileDeskNav");
+    const mobileFilterChips = $("mobileFilterChips");
+    const mobileAlertsView = $("mobileAlertsView");
+    const notificationsListMobile = $("notificationsListMobile");
+    const notificationsEmptyMobile = $("notificationsEmptyMobile");
+    const mobileMenuSheet = $("mobileMenuSheet");
+    const mobileDetailsSheet = $("mobileDetailsSheet");
+    const mobileDetailsBody = $("mobileDetailsBody");
+    const mobileSheetBackdrop = $("mobileSheetBackdrop");
+    const mobileNavWaitingBadge = $("mobileNavWaitingBadge");
+    const mobileNavAlertsBadge = $("mobileNavAlertsBadge");
+    const mobileRefreshInboxBtn = $("mobileRefreshInboxBtn");
+    const mobileDetailsBtn = $("mobileDetailsBtn");
+    let mobileDeskTab_ = "chats";
 
     let viewerSecret = "";
     let agentId = "Agent";
@@ -228,6 +242,7 @@
         deskSessionStartedAt_ = Date.now();
         handoffTrackingSeeded_ = false;
         knownHandoffIds_.clear();
+        mobileDeskTab_ = "chats";
         document.body.classList.add("live-agent-locked");
         loginView.classList.add("hidden");
         appView.classList.remove("hidden");
@@ -240,6 +255,8 @@
         loadDeskNotificationsFromStorage_();
         renderNotificationsPanel_();
         updateNotificationsBadge_();
+        syncMobileDeskLayout_();
+        setMobileDeskTab_("chats");
         loadDeskSettings_().then(() => {
             updateNotificationPermissionUi_();
             if (!isMobileDevice_()) {
@@ -318,9 +335,15 @@
     }
 
     function syncMyAgentStatusIcon_() {
-        if (!myAgentStatusIcon || !myAgentStatus) return;
-        myAgentStatusIcon.className =
-            "status-dot status-dot--" + agentStatusClass_(myAgentStatus.value);
+        if (!myAgentStatus) return;
+        const cls = "status-dot status-dot--" + agentStatusClass_(myAgentStatus.value);
+        if (myAgentStatusIcon) {
+            myAgentStatusIcon.className = cls;
+        }
+        const menuIcon = $("myAgentStatusIconMenu");
+        if (menuIcon) {
+            menuIcon.className = cls;
+        }
     }
 
     async function loadAgentsPanel_(force) {
@@ -466,12 +489,144 @@
         return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent || "");
     }
 
+    function setMobileSheetOpen_(which) {
+        const menu = which === "menu";
+        const details = which === "details";
+        if (mobileMenuSheet) {
+            mobileMenuSheet.classList.toggle("hidden", !menu);
+        }
+        if (mobileDetailsSheet) {
+            mobileDetailsSheet.classList.toggle("hidden", !details);
+        }
+        if (mobileSheetBackdrop) {
+            mobileSheetBackdrop.classList.toggle("hidden", !menu && !details);
+            mobileSheetBackdrop.setAttribute(
+                "aria-hidden",
+                menu || details ? "false" : "true"
+            );
+        }
+    }
+
+    function setMobileDeskTab_(tab) {
+        if (!isMobileAgentDesk_()) return;
+        if (tab === "chat" && !selectedId) {
+            tab = "chats";
+        }
+        mobileDeskTab_ = tab;
+        document.body.classList.toggle("mobile-tab-chats", tab === "chats");
+        document.body.classList.toggle("mobile-tab-alerts", tab === "alerts");
+        document.body.classList.toggle("mobile-tab-chat", tab === "chat");
+        if (mobileAlertsView) {
+            mobileAlertsView.hidden = tab !== "alerts";
+        }
+        if (tab === "alerts") {
+            setNotificationsPanelOpen_(false);
+            renderNotificationsPanel_();
+        }
+        if (mobileDeskNav) {
+            mobileDeskNav.querySelectorAll(".mobile-nav-btn").forEach((btn) => {
+                const t = btn.getAttribute("data-mobile-tab");
+                btn.classList.toggle("active", t === tab || (tab === "chat" && t === "chats"));
+                btn.setAttribute(
+                    "aria-current",
+                    t === tab || (tab === "chat" && t === "chats") ? "page" : "false"
+                );
+            });
+        }
+    }
+
+    function updateMobileNavBadges_(waitingCount, unreadAlerts) {
+        const w = Number(waitingCount) || 0;
+        const a = Number(unreadAlerts) || 0;
+        if (mobileNavWaitingBadge) {
+            mobileNavWaitingBadge.textContent = w > 99 ? "99+" : String(w);
+            mobileNavWaitingBadge.classList.toggle("hidden", w <= 0);
+        }
+        if (mobileNavAlertsBadge) {
+            mobileNavAlertsBadge.textContent = a > 99 ? "99+" : String(a);
+            mobileNavAlertsBadge.classList.toggle("hidden", a <= 0);
+        }
+    }
+
+    function buildMobileFilterChips_() {
+        if (!mobileFilterChips || !inboxFilter) return;
+        if (mobileFilterChips.dataset.built === "1") return;
+        mobileFilterChips.dataset.built = "1";
+        mobileFilterChips.innerHTML = "";
+        const presets = [
+            { value: "waiting", label: "Waiting" },
+            { value: "mine", label: "Mine" },
+            { value: "active", label: "Active" },
+            { value: "all", label: "All" },
+            { value: "unassigned", label: "New" }
+        ];
+        for (const p of presets) {
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "mobile-filter-chip";
+            btn.setAttribute("data-filter", p.value);
+            btn.textContent = p.label;
+            btn.addEventListener("click", () => {
+                inboxFilter.value = p.value;
+                mobileFilterChips.querySelectorAll(".mobile-filter-chip").forEach((el) => {
+                    el.classList.toggle("active", el.getAttribute("data-filter") === p.value);
+                });
+                loadInbox();
+            });
+            mobileFilterChips.appendChild(btn);
+        }
+        const cur = inboxFilter.value || "waiting";
+        mobileFilterChips.querySelectorAll(".mobile-filter-chip").forEach((el) => {
+            el.classList.toggle("active", el.getAttribute("data-filter") === cur);
+        });
+    }
+
+    function syncMobileFilterChips_() {
+        if (!mobileFilterChips || !inboxFilter) return;
+        const cur = inboxFilter.value || "waiting";
+        mobileFilterChips.querySelectorAll(".mobile-filter-chip").forEach((el) => {
+            el.classList.toggle("active", el.getAttribute("data-filter") === cur);
+        });
+    }
+
+    function openMobileDetailsSheet_() {
+        if (!mobileDetailsBody || !contextBody) return;
+        mobileDetailsBody.innerHTML = "";
+        const clone = contextBody.cloneNode(true);
+        clone.classList.remove("hidden");
+        clone.id = "";
+        mobileDetailsBody.appendChild(clone);
+        setMobileSheetOpen_("details");
+    }
+
     function syncMobileDeskLayout_() {
         const mobile = isMobileAgentDesk_();
         document.body.classList.toggle("mobile-desk", mobile);
-        document.body.classList.toggle("mobile-chat-focus", mobile && !!selectedId);
+        const inChat = mobile && !!selectedId;
+        document.body.classList.toggle("mobile-chat-focus", inChat);
+        if (mobileDeskNav) {
+            mobileDeskNav.hidden = !mobile;
+        }
         if (mobileBackBtn) {
-            mobileBackBtn.hidden = !mobile || !selectedId;
+            mobileBackBtn.hidden = !mobile || !inChat;
+        }
+        if (mobile) {
+            buildMobileFilterChips_();
+            syncMobileFilterChips_();
+            if (inChat) {
+                setMobileDeskTab_("chat");
+            } else if (mobileDeskTab_ === "chat") {
+                setMobileDeskTab_("chats");
+            }
+        } else {
+            document.body.classList.remove(
+                "mobile-tab-chats",
+                "mobile-tab-alerts",
+                "mobile-tab-chat"
+            );
+            if (mobileAlertsView) {
+                mobileAlertsView.hidden = true;
+            }
         }
     }
 
@@ -862,6 +1017,18 @@
                 Notification.permission !== "granted";
             enablePhoneNotifyBtn.classList.toggle("hidden", !showPhone);
         }
+        const enablePhoneMenu = $("enablePhoneNotifyBtnMenu");
+        if (enablePhoneMenu) {
+            enablePhoneMenu.classList.toggle(
+                "hidden",
+                !(
+                    isMobileDevice_() &&
+                    browserPopupEnabled_() &&
+                    "Notification" in window &&
+                    Notification.permission !== "granted"
+                )
+            );
+        }
     }
 
     async function requestNotificationPermission_(userInitiated) {
@@ -1098,14 +1265,20 @@
     }
 
     function updateNotificationsBadge_() {
-        if (!notificationsBadge) return;
         const n = unreadNotificationsCount_();
-        if (n > 0) {
-            notificationsBadge.textContent = n > 99 ? "99+" : String(n);
-            notificationsBadge.classList.remove("hidden");
-        } else {
-            notificationsBadge.classList.add("hidden");
+        if (notificationsBadge) {
+            if (n > 0) {
+                notificationsBadge.textContent = n > 99 ? "99+" : String(n);
+                notificationsBadge.classList.remove("hidden");
+            } else {
+                notificationsBadge.classList.add("hidden");
+            }
         }
+        let waiting = 0;
+        for (const c of lastInboxConversations_ || []) {
+            if (c.status === "waiting") waiting += 1;
+        }
+        updateMobileNavBadges_(waiting, n);
     }
 
     function formatHandoffNotification_(conv) {
@@ -1178,6 +1351,9 @@
             if (notificationsBtn) {
                 notificationsBtn.classList.add("notifications-btn--pulse");
             }
+            if (isMobileAgentDesk_() && mobileDeskTab_ !== "chat") {
+                /* user stays on current tab; badge updates */
+            }
             tryMobileVibrate_();
             if (browserPopupEnabled_()) {
                 showBrowserNotification_(
@@ -1244,13 +1420,33 @@
         }
     }
 
-    function renderNotificationsPanel_() {
-        if (!notificationsList) return;
-        notificationsList.innerHTML = "";
-        const items = deskNotifications_.slice();
-        if (notificationsEmpty) {
-            notificationsEmpty.classList.toggle("hidden", items.length > 0);
+    function onNotificationItemClick_(n) {
+        n.read = true;
+        saveDeskNotificationsToStorage_();
+        updateNotificationsBadge_();
+        renderNotificationsPanel_();
+        setNotificationsPanelOpen_(false);
+        setMobileSheetOpen_(null);
+        if (isMobileAgentDesk_()) {
+            setMobileDeskTab_("chat");
         }
+        const hit = lastInboxConversations_.find((c) => c.id === n.conversationId);
+        if (hit) {
+            selectConversation(hit);
+        } else {
+            selectedId = n.conversationId;
+            if (inboxFilter) inboxFilter.value = "waiting";
+            void loadInbox(false, true).then(() => {
+                const c = lastInboxConversations_.find((x) => x.id === n.conversationId);
+                if (c) selectConversation(c);
+            });
+        }
+    }
+
+    function appendNotificationItemsToList_(root) {
+        if (!root) return;
+        root.innerHTML = "";
+        const items = deskNotifications_.slice();
         for (const n of items) {
             const li = document.createElement("li");
             const btn = document.createElement("button");
@@ -1266,31 +1462,31 @@
                 '<p class="notifications-item-time">' +
                 escapeHtml(formatTime(n.at)) +
                 "</p>";
-            btn.addEventListener("click", () => {
-                n.read = true;
-                saveDeskNotificationsToStorage_();
-                updateNotificationsBadge_();
-                renderNotificationsPanel_();
-                setNotificationsPanelOpen_(false);
-                const hit = lastInboxConversations_.find((c) => c.id === n.conversationId);
-                if (hit) {
-                    selectConversation(hit);
-                } else {
-                    selectedId = n.conversationId;
-                    if (inboxFilter) inboxFilter.value = "waiting";
-                    void loadInbox(false, true).then(() => {
-                        const c = lastInboxConversations_.find((x) => x.id === n.conversationId);
-                        if (c) selectConversation(c);
-                    });
-                }
-            });
+            btn.addEventListener("click", () => onNotificationItemClick_(n));
             li.appendChild(btn);
-            notificationsList.appendChild(li);
+            root.appendChild(li);
+        }
+        return items.length;
+    }
+
+    function renderNotificationsPanel_() {
+        appendNotificationItemsToList_(notificationsList);
+        appendNotificationItemsToList_(notificationsListMobile);
+        const has = deskNotifications_.length > 0;
+        if (notificationsEmpty) {
+            notificationsEmpty.classList.toggle("hidden", has);
+        }
+        if (notificationsEmptyMobile) {
+            notificationsEmptyMobile.classList.toggle("hidden", has);
         }
         updateNotificationsBadge_();
     }
 
     function setNotificationsPanelOpen_(open) {
+        if (isMobileAgentDesk_() && open) {
+            setMobileDeskTab_("alerts");
+            return;
+        }
         notificationsPanelOpen_ = !!open;
         if (notificationsPanel) {
             notificationsPanel.classList.toggle("hidden", !notificationsPanelOpen_);
@@ -1477,6 +1673,7 @@
             }
         }
         lastWaitingCount = waiting;
+        updateMobileNavBadges_(waiting, unreadNotificationsCount_());
         let label = "";
         if (waiting > 0) {
             label = waiting + (waiting === 1 ? " waiting" : " waiting");
@@ -1621,11 +1818,88 @@
             postPresence_(myAgentStatus.value);
         });
     }
-    inboxFilter.addEventListener("change", () => loadInbox());
+    inboxFilter.addEventListener("change", () => {
+        syncMobileFilterChips_();
+        loadInbox();
+    });
     if (mobileBackBtn) {
         mobileBackBtn.addEventListener("click", () => {
             clearSelectedChatUi_();
             loadInbox(true);
+        });
+    }
+    if (mobileDeskNav) {
+        mobileDeskNav.querySelectorAll(".mobile-nav-btn").forEach((btn) => {
+            btn.addEventListener("click", () => {
+                const tab = btn.getAttribute("data-mobile-tab");
+                if (tab === "menu") {
+                    setMobileSheetOpen_("menu");
+                    return;
+                }
+                setMobileSheetOpen_(null);
+                if (tab === "chats") {
+                    clearSelectedChatUi_();
+                    setMobileDeskTab_("chats");
+                    return;
+                }
+                if (tab === "alerts") {
+                    setMobileDeskTab_("alerts");
+                }
+            });
+        });
+    }
+    if (mobileRefreshInboxBtn) {
+        mobileRefreshInboxBtn.addEventListener("click", () => loadInbox());
+    }
+    if (mobileDetailsBtn) {
+        mobileDetailsBtn.addEventListener("click", () => openMobileDetailsSheet_());
+    }
+    if ($("closeMobileMenuBtn")) {
+        $("closeMobileMenuBtn").addEventListener("click", () => setMobileSheetOpen_(null));
+    }
+    if ($("closeMobileDetailsBtn")) {
+        $("closeMobileDetailsBtn").addEventListener("click", () => setMobileSheetOpen_(null));
+    }
+    if (mobileSheetBackdrop) {
+        mobileSheetBackdrop.addEventListener("click", () => setMobileSheetOpen_(null));
+    }
+    const markAllMobile = $("markAllNotificationsReadBtnMobile");
+    if (markAllMobile) {
+        markAllMobile.addEventListener("click", (ev) => {
+            ev.stopPropagation();
+            markAllNotificationsRead_();
+        });
+    }
+    const myAgentStatusMenu = $("myAgentStatusMenu");
+    if (myAgentStatusMenu && myAgentStatus) {
+        myAgentStatusMenu.addEventListener("change", () => {
+            myAgentStatus.value = myAgentStatusMenu.value;
+            syncMyAgentStatusIcon_();
+            postPresence_(myAgentStatusMenu.value);
+        });
+        myAgentStatus.addEventListener("change", () => {
+            myAgentStatusMenu.value = myAgentStatus.value;
+        });
+    }
+    const logoutBtnMenu = $("logoutBtnMenu");
+    if (logoutBtnMenu && logoutBtn) {
+        logoutBtnMenu.addEventListener("click", () => logoutBtn.click());
+    }
+    const leadsLinkMenu = $("leadsLinkMenu");
+    if (leadsLinkMenu && leadsLink) {
+        leadsLinkMenu.addEventListener("click", () => {
+            try {
+                sessionStorage.setItem(LS_SECRET, viewerSecret);
+                localStorage.setItem(LS_SECRET, viewerSecret);
+            } catch (_) {
+                /* ignore */
+            }
+        });
+    }
+    const enablePhoneMenu = $("enablePhoneNotifyBtnMenu");
+    if (enablePhoneMenu) {
+        enablePhoneMenu.addEventListener("click", () => {
+            void requestNotificationPermission_(true).then(() => updateNotificationPermissionUi_());
         });
     }
     window.addEventListener("resize", () => syncMobileDeskLayout_());
@@ -1682,6 +1956,9 @@
         contextBody.classList.add("hidden");
         if (chatActionsBar) {
             chatActionsBar.classList.add("hidden");
+        }
+        if (isMobileAgentDesk_()) {
+            setMobileDeskTab_("chats");
         }
         syncMobileDeskLayout_();
     }
