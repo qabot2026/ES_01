@@ -616,6 +616,15 @@ body.live-agent-locked {
   font-size: 0.8rem;
 }
 
+.chat-head-subtitle {
+  margin: 0.15rem 0 0;
+  font-size: 0.8rem;
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .chat-head-actions {
   display: flex;
   gap: 0.5rem;

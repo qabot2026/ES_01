@@ -666,6 +666,7 @@
     function clearVisitorTypingDraft_() {
         lastPulseVisitorTyping = "";
         removeVisitorTypingDraft_();
+        refreshChatHeaderMeta_(selectedConv);
     }
 
     /** Live draft as last message bubble (not a bar at the top). */
@@ -853,6 +854,7 @@
         if (t) {
             lastPulseVisitorTyping = t;
             renderVisitorTypingPreview_(t, data.conversation || selectedConv);
+            refreshChatHeaderMeta_(data.conversation || selectedConv);
         } else {
             clearVisitorTypingDraft_();
         }
@@ -1188,7 +1190,7 @@
         return hm === "ai" && conv.aiEnabled !== false;
     }
 
-    /** One-line status for chat header and side panel. */
+    /** One-line status for footer / side panel (desk-oriented). */
     function formatConvStatusShort_(conv) {
         if (!conv) {
             return "";
@@ -1208,6 +1210,49 @@
             return "You are replying";
         }
         return st || "—";
+    }
+
+    /** WhatsApp-style subtitle under visitor name in chat header. */
+    function formatChatHeaderSubtitle_(conv, opts) {
+        if (!conv) {
+            return "";
+        }
+        const o = opts || {};
+        const dept = conv.departmentName || conv.departmentId || "General";
+        const st = conv.status || "";
+        if (o.visitorTyping) {
+            return "Typing… · " + dept;
+        }
+        if (st === "waiting") {
+            return "Waiting for an agent · " + dept;
+        }
+        if (st === "closed") {
+            return "Chat closed · " + dept;
+        }
+        if (st === "active") {
+            if (isAiCopilotConv_(conv)) {
+                return "AI assistant is replying · " + dept;
+            }
+            const assignee = (conv.assignedAgentEmail || "").trim();
+            if (assignee && agentIdsMatch_(assignee, agentId)) {
+                return "You · " + dept;
+            }
+            if (assignee) {
+                return resolveAgentDisplayName_(assignee) + " · " + dept;
+            }
+            return "Active · " + dept;
+        }
+        return dept;
+    }
+
+    function refreshChatHeaderMeta_(conv) {
+        if (!chatMeta) {
+            return;
+        }
+        const c = conv || selectedConv;
+        chatMeta.textContent = formatChatHeaderSubtitle_(c, {
+            visitorTyping: !!(lastPulseVisitorTyping && String(lastPulseVisitorTyping).trim()),
+        });
     }
 
     function agentLabelForMessage_(m) {
@@ -2306,6 +2351,7 @@
         }
         if (chatTitle && conv) {
             chatTitle.textContent = resolveVisitorDisplayName_(conv, v);
+            refreshChatHeaderMeta_(conv);
         }
     }
 
@@ -2656,11 +2702,7 @@
         if (!conv || !selectedId) return;
 
         chatTitle.textContent = resolveVisitorDisplayName_(conv, selectedVisitorContext);
-        let meta = formatConvStatusShort_(conv);
-        if (conv.assignedAgentEmail && conv.status === "active") {
-            meta += " · " + resolveAgentDisplayName_(conv.assignedAgentEmail);
-        }
-        chatMeta.textContent = meta;
+        refreshChatHeaderMeta_(conv);
 
         const isClosed = conv.status === "closed";
         const isWaiting = conv.status === "waiting";
@@ -2677,10 +2719,15 @@
         if (chatClosedBanner) chatClosedBanner.classList.toggle("hidden", !isClosed);
         if (claimBtn) claimBtn.hidden = true;
         if (claimHint) {
-            claimHint.hidden = !isWaiting || isClosed;
-            claimHint.textContent = isWaiting
+            const showClaimHint = isWaiting && !isClosed && !isMobileAgentDesk_();
+            claimHint.hidden = !showClaimHint;
+            claimHint.textContent = showClaimHint
                 ? "Use Accept below to take this chat."
                 : "";
+        }
+        if (isMobileAgentDesk_() && chatMeta && isWaiting && !isClosed) {
+            const dept = conv.departmentName || conv.departmentId || "General";
+            chatMeta.textContent = "Tap Accept below · " + dept;
         }
         if (composerForm) composerForm.classList.toggle("hidden", isClosed);
         if (chatActionsBar) chatActionsBar.classList.toggle("hidden", isClosed);
