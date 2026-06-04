@@ -84,7 +84,7 @@
     let lastInboxConversations_ = [];
     const INBOX_POLL_INTERVAL_MS_DESKTOP = 4000;
     const INBOX_POLL_INTERVAL_MS_MOBILE = 6000;
-    const CHAT_POLL_INTERVAL_MS = 2000;
+    const CHAT_POLL_INTERVAL_MS = 1000;
     const PRESENCE_INTERVAL_MS = 180000;
     let agentsPanelLoaded = false;
     let presenceTimer = null;

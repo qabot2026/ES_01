@@ -243,7 +243,7 @@
       if (this._liveAgentPollTimer) {
         clearInterval(this._liveAgentPollTimer);
       }
-      var pollMs = Math.min(cfg.pollIntervalMs || 2000, 1200);
+      var pollMs = Math.max(500, Math.min(cfg.pollIntervalMs || 800, 1000));
       this._liveAgentPollTimer = setInterval(function () {
         self._liveAgentPollTick();
       }, pollMs);
@@ -331,6 +331,14 @@
         .then(function (body) {
           if (!body || !body.ok) {
             throw new Error((body && body.error) || 'Send failed');
+          }
+          if (body.messages && body.messages.length) {
+            self._liveAgentIngestMessages({
+              ok: true,
+              messages: body.messages,
+              agentName:
+                body.assignedAgentDisplayName || body.agentName || 'Support',
+            });
           }
           self._liveAgentPollTick();
         })
