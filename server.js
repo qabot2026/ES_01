@@ -143,11 +143,25 @@ app.post('/api/chat', async (req, res) => {
       } catch {
         /* ignore */
       }
-      await liveAgent.requestHandoff(sid, {
+      const handoff = await liveAgent.requestHandoff(sid, {
         userLanguage: uiLang,
         previewMessage: message ? message.trim() : '',
         visitorName: handoffVisitorName,
       });
+      if (handoff && handoff.dismissed) {
+        return res.json({
+          sessionId: sid,
+          reply:
+            'This chat was closed by our team. You can continue with the assistant below.',
+          replyParts: [],
+          chips: [],
+          forms: [],
+          messages: [],
+          liveAgent: false,
+          humanActive: false,
+          skipBot: false,
+        });
+      }
       chatTranscript.mergeSessionMeta(sid, {
         channel: 'Web',
         liveAgentRequested: true,

@@ -857,6 +857,7 @@
                 const n = lastInboxConversations_.length;
                 inboxStatus.textContent = n ? n + " request(s)" : "No conversations in this queue.";
             }
+            void loadInbox(true);
         } catch (e) {
             const msg = e.message || "Dismiss failed";
             if (!/closed/i.test(msg)) {

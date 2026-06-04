@@ -223,12 +223,22 @@
             sessionId: this.sessionId,
             userLanguage: this.language || 'en',
           }),
-        }).catch(function () {
-          self.appendMessage(
-            'bot',
-            t(self, 'handoffError', 'Could not reach support. Try again.')
-          );
-        });
+        })
+          .then(function (r) {
+            return r.json();
+          })
+          .then(function (body) {
+            var conv = body && body.conversation;
+            if (conv && conv.status === 'closed') {
+              self.stopLiveAgentMode(true);
+            }
+          })
+          .catch(function () {
+            self.appendMessage(
+              'bot',
+              t(self, 'handoffError', 'Could not reach support. Try again.')
+            );
+          });
       }
       if (this._liveAgentPollTimer) {
         clearInterval(this._liveAgentPollTimer);
