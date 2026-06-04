@@ -163,6 +163,22 @@
               <input id="endConvWaitMinutes" type="number" min="1" max="120" step="1" value="3" />
             </label>
           </div>
+          <h3 class="settings-subhead">Visitor queue (no agent accepted)</h3>
+          <p class="muted small">
+            If nobody accepts within the max wait, the visitor leaves the queue and sees your reply below (assistant chat continues).
+          </p>
+          <label class="toggle-row">
+            <input type="checkbox" id="queueMaxWaitEnabled" checked />
+            <span>Enable max wait for waiting visitors</span>
+          </label>
+          <label>
+            Max wait (minutes)
+            <input id="queueMaxWaitMinutes" type="number" min="1" max="180" step="1" value="10" />
+          </label>
+          <label>
+            Reply when no agent accepted in time
+            <textarea id="queueTimeoutReply" rows="3" placeholder="All our agents are busy…"></textarea>
+          </label>
           <div class="section-save-bar">
             <button type="button" class="btn primary small section-save-btn" data-section-label="Routing">Save routing</button>
             <p class="section-save-status muted small" role="status"></p>

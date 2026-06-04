@@ -314,12 +314,46 @@
       }
     };
 
+    p._applyLiveAgentQueueTimeout_ = function (st) {
+      var reply =
+        (st.queueTimeoutReply && String(st.queueTimeoutReply).trim()) ||
+        t(
+          this,
+          'queueTimeout',
+          'All our agents are busy at the moment. Please continue with the assistant below.'
+        );
+      this._liveAgentStopStream();
+      this._hideLiveAgentBanner();
+      this.liveAgentMode = false;
+      this._liveAgentHumanActive = false;
+      this._liveAgentHandoffRequested = false;
+      this._liveAgentConnectedAnnounced = false;
+      this._liveAgentIngestMessages(
+        { ok: true, messages: st.messages || [] },
+        ''
+      );
+      var key = 'queue-timeout|' + reply.toLowerCase();
+      this.liveAgentSeen = this.liveAgentSeen || {};
+      if (!this.liveAgentSeen[key]) {
+        this.liveAgentSeen[key] = true;
+        this.appendMessage('bot', reply, { skipTranscriptLog: true });
+      }
+    };
+
     p._applyLiveAgentSyncState = function (st) {
       if (!st || !st.ok) return;
       if (st.revision) this._liveAgentRev = st.revision;
       var self = this;
+      if (st.queueTimedOut) {
+        this._applyLiveAgentQueueTimeout_(st);
+        return;
+      }
       var handoff = humanHandoffFromSync_(st);
       if (st.conversation && st.conversation.status === 'closed') {
+        if (st.conversation.closedReason === 'queue_timeout') {
+          this._applyLiveAgentQueueTimeout_(st);
+          return;
+        }
         this.stopLiveAgentMode(true);
         this._liveAgentHandoffRequested = false;
         return;
@@ -854,6 +888,8 @@
       handoffReply: 'Connecting you to our team. Please wait.',
       outsideHours:
         'Our live support team is currently unavailable. Please try again during business hours.',
+      queueTimeout:
+        'All our agents are busy at the moment. Please continue with the assistant below.',
       handoffError: 'Could not reach support. Try again.',
       ended: 'Chat with agent ended. You can continue with the assistant.',
       agentRejoined: 'An agent joined again.',

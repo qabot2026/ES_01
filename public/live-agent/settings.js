@@ -114,6 +114,12 @@
         return {
             claimWaitSeconds: Number($("claimWaitSeconds").value) || 30,
             endConvWaitMinutes: Number($("endConvWaitMinutes").value) || 3,
+            queueMaxWaitEnabled: !$("queueMaxWaitEnabled") || $("queueMaxWaitEnabled").checked,
+            queueMaxWaitMinutes: Number($("queueMaxWaitMinutes").value) || 10,
+            queueTimeoutReply:
+                $("queueTimeoutReply") && $("queueTimeoutReply").value
+                    ? $("queueTimeoutReply").value.trim()
+                    : "",
             general: {
                 muteServiceDesk: $("muteServiceDesk").checked,
                 showAgentNameInChat: $("showAgentNameInChat").checked,
@@ -379,6 +385,9 @@
 
         setVal_("claimWaitSeconds", settings.claimWaitSeconds || 30);
         setVal_("endConvWaitMinutes", settings.endConvWaitMinutes || 3);
+        setChecked_("queueMaxWaitEnabled", settings.queueMaxWaitEnabled !== false);
+        setVal_("queueMaxWaitMinutes", settings.queueMaxWaitMinutes || 10);
+        setVal_("queueTimeoutReply", settings.queueTimeoutReply || "");
         setChecked_("muteServiceDesk", g.muteServiceDesk);
         setChecked_("showAgentNameInChat", g.showAgentNameInChat !== false);
         setChecked_("enableAgentChatFeedback", g.enableAgentChatFeedback);
