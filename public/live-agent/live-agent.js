@@ -425,17 +425,39 @@
         }
     }
 
+    function removeVisitorTypingDraft_() {
+        if (!messageList) return;
+        const el = messageList.querySelector("[data-typing-draft]");
+        if (el) el.remove();
+    }
+
+    /** Live draft as last message bubble (not a bar at the top). */
     function renderVisitorTypingPreview_(text, conv) {
-        if (!visitorTypingPreview) return;
-        const t = String(text || "").trim();
-        if (!t) {
+        if (visitorTypingPreview) {
             visitorTypingPreview.classList.add("hidden");
             visitorTypingPreview.textContent = "";
+        }
+        if (!messageList) return;
+        const t = String(text || "").trim();
+        if (!t) {
+            removeVisitorTypingDraft_();
             return;
         }
+        let el = messageList.querySelector("[data-typing-draft]");
+        if (!el) {
+            el = document.createElement("div");
+            el.className = "msg visitor typing-draft";
+            el.dataset.typingDraft = "1";
+            messageList.appendChild(el);
+        }
         const name = resolveVisitorDisplayName_(conv || selectedConv, selectedVisitorContext);
-        visitorTypingPreview.textContent = name + " is typing: " + t;
-        visitorTypingPreview.classList.remove("hidden");
+        el.innerHTML =
+            '<span class="typing-draft-name">' +
+            escapeHtml(name) +
+            '</span><p class="typing-draft-text">' +
+            escapeHtml(t) +
+            '</p><span class="typing-draft-hint" aria-hidden="true">●●●</span>';
+        messageList.scrollTop = messageList.scrollHeight;
     }
 
     async function runLiveSync_() {
@@ -446,7 +468,7 @@
         try {
             const params = new URLSearchParams({
                 rev: String(deskSyncRevision),
-                waitMs: "12000"
+                waitMs: "6000"
             });
             if (lastMessageId) {
                 params.set("sinceId", lastMessageId);
@@ -508,7 +530,7 @@
                 selectedConv &&
                 (selectedConv.status === "active" || selectedConv.status === "waiting")
             ) {
-                setTimeout(runLiveSync_, 40);
+                setTimeout(runLiveSync_, 15);
             }
         }
     }
@@ -1661,7 +1683,7 @@
             if (st !== "active" && st !== "waiting") return;
             clearTimeout(agentTypingTimer);
             const val = composerInput.value || "";
-            agentTypingTimer = setTimeout(() => postAgentTyping_(val, true), 100);
+            agentTypingTimer = setTimeout(() => postAgentTyping_(val, true), 80);
         });
         composerInput.addEventListener("blur", () => {
             clearTimeout(agentTypingTimer);
@@ -1761,6 +1783,7 @@
     }
 
     function appendMessageEl(m) {
+        removeVisitorTypingDraft_();
         const div = document.createElement("div");
         div.className = "msg " + (m.role || "visitor");
         div.dataset.msgId = m.id;

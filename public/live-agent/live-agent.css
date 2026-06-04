@@ -39,18 +39,49 @@ body.live-agent-locked {
 }
 
 .visitor-typing-preview {
-  flex-shrink: 0;
-  padding: 0.5rem 0.75rem;
-  margin: 0 0.5rem 0.35rem;
-  font-size: 0.8125rem;
+  display: none !important;
+}
+
+.msg.visitor.typing-draft {
+  align-self: flex-start;
+  background: var(--visitor-bg);
+  border: 1px dashed rgba(148, 163, 184, 0.55);
+  opacity: 0.92;
+  max-width: 85%;
+}
+
+.msg.visitor.typing-draft .typing-draft-name {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--muted);
+  margin-bottom: 0.25rem;
+}
+
+.msg.visitor.typing-draft .typing-draft-text {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.msg.visitor.typing-draft .typing-draft-hint {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 0.7rem;
   color: var(--accent-hover);
-  background: rgba(14, 165, 233, 0.12);
-  border: 1px solid rgba(14, 165, 233, 0.35);
-  border-radius: 8px;
-  font-style: italic;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  letter-spacing: 0.15em;
+  animation: typing-dots-pulse 1s ease-in-out infinite;
+}
+
+@keyframes typing-dots-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
 }
 
 .muted {

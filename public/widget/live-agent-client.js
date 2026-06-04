@@ -384,6 +384,7 @@
               ? 'system'
               : '');
         if (from === 'agent' && m.text) {
+          self._liveAgentRemoveTypingDraft_();
           self.appendMessage('bot', m.text, {
             personaLabel: m.senderDisplayName || agentName,
             skipTranscriptLog: true,
@@ -400,22 +401,39 @@
       });
     };
 
+    p._liveAgentRemoveTypingDraft_ = function () {
+      if (!this.els || !this.els.messages) return;
+      var el = this.els.messages.querySelector('[data-typing-draft-agent]');
+      if (el) el.remove();
+    };
+
     p._liveAgentSetAgentTypingIndicator = function (text) {
-      if (!this.els || !this.els.panel) return;
-      var el = this.els.panel.querySelector('.qa-live-agent-agent-typing');
-      if (!text) {
-        if (el) el.hidden = true;
+      if (!this.els || !this.els.messages) return;
+      var t = String(text || '').trim();
+      if (!t) {
+        this._liveAgentRemoveTypingDraft_();
         return;
       }
+      var el = this.els.messages.querySelector('[data-typing-draft-agent]');
       if (!el) {
         el = document.createElement('div');
-        el.className = 'qa-live-agent-agent-typing';
-        var scroll = this.els.panel.querySelector('.qa-panel__scroll');
-        if (scroll) scroll.parentNode.insertBefore(el, scroll);
+        el.className = 'qa-msg qa-msg--bot qa-msg--typing-draft';
+        el.dataset.typingDraftAgent = '1';
+        this.els.messages.appendChild(el);
       }
-      el.textContent = 'Agent is typing…';
-      el.hidden = false;
+      el.innerHTML =
+        '<div class="qa-msg__body"><div class="qa-msg__bubble">' +
+        escapeHtmlWidget(t) +
+        '</div><div class="qa-msg__typing-hint">Typing…</div></div>';
+      this.els.messages.scrollTop = this.els.messages.scrollHeight;
     };
+
+    function escapeHtmlWidget(s) {
+      return String(s || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+    }
 
     p._liveAgentBindTyping = function () {
       var self = this;
@@ -441,7 +459,7 @@
         var val = self.els.input.value || '';
         typingTimer = setTimeout(function () {
           postTyping(val, true);
-        }, 100);
+        }, 70);
       });
       this.els.input.addEventListener('blur', function () {
         clearTimeout(typingTimer);
@@ -469,7 +487,7 @@
       this._liveAgentPollTick();
       this._liveAgentPollTimer = setInterval(function () {
         self._liveAgentPollTick();
-      }, 350);
+      }, 250);
     };
 
     p._liveAgentPollTick = function () {
@@ -492,7 +510,7 @@
         encodeURIComponent(this.sessionId) +
         '&rev=' +
         rev +
-        '&waitMs=8000&lastMessageId=' +
+        '&waitMs=5000&lastMessageId=' +
         msgId;
       fetch(syncUrl)
         .then(function (r) {
