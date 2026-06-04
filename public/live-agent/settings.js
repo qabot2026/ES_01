@@ -9,6 +9,8 @@
     let viewerSecret = "";
     /** @type {Record<string, unknown> | null} */
     let lastDeskSettings = null;
+    /** @type {{ id: string, name: string }[]} */
+    let lastDepartments_ = [];
 
     function authHeaders_() {
         return {
@@ -97,8 +99,105 @@
             reporting: {
                 dailyRecipients: $("dailyRecipients").value.trim(),
                 weeklyMonthlyEnabled: $("weeklyMonthlyEnabled").checked
-            }
+            },
+            knowledgeBase: readKnowledgeBaseFromDom_()
         };
+    }
+
+    function readKnowledgeBaseFromDom_() {
+        const body = $("kbArticlesBody");
+        const articles = [];
+        if (!body) {
+            return { enabled: $("kbEnabled") && $("kbEnabled").checked, articles: [] };
+        }
+        const rows = body.querySelectorAll("tr[data-kb-article]");
+        for (const tr of rows) {
+            const titleEl = tr.querySelector("[data-kb-title]");
+            const keysEl = tr.querySelector("[data-kb-keywords]");
+            const answerEl = tr.querySelector("[data-kb-answer]");
+            const deptEl = tr.querySelector("[data-kb-dept]");
+            const id = tr.dataset.kbId || "";
+            const title = titleEl && titleEl.value ? titleEl.value.trim() : "";
+            const answer = answerEl && answerEl.value ? answerEl.value.trim() : "";
+            if (!title || !answer) continue;
+            articles.push({
+                id: id || undefined,
+                title,
+                keywords: keysEl && keysEl.value ? keysEl.value.trim() : "",
+                answer,
+                departmentId: deptEl && deptEl.value ? deptEl.value.trim() : "",
+                enabled: true
+            });
+        }
+        return {
+            enabled: !$("kbEnabled") || $("kbEnabled").checked,
+            articles
+        };
+    }
+
+    function deptOptionsHtml_(selected) {
+        const sel = String(selected || "").toLowerCase();
+        let html =
+            '<option value="">All departments</option><option value="general">General</option>';
+        for (const d of lastDepartments_) {
+            if (!d || !d.id || d.id === "general") continue;
+            const id = String(d.id);
+            const name = String(d.name || id);
+            html +=
+                '<option value="' +
+                escapeHtml_(id) +
+                '"' +
+                (sel === id.toLowerCase() ? " selected" : "") +
+                ">" +
+                escapeHtml_(name) +
+                "</option>";
+        }
+        return html;
+    }
+
+    function addKbArticleRow_(article) {
+        const body = $("kbArticlesBody");
+        if (!body) return;
+        const a = article || {};
+        const tr = document.createElement("tr");
+        tr.dataset.kbArticle = "1";
+        tr.dataset.kbId = a.id || "";
+        tr.innerHTML =
+            '<td colspan="4" class="kb-article-cell">' +
+            '<div class="kb-article-fields">' +
+            '<input type="text" data-kb-title placeholder="Title (e.g. Refund policy)" value="' +
+            escapeHtml_(a.title || "") +
+            '" />' +
+            '<input type="text" data-kb-keywords placeholder="Keywords: refund, cancel" value="' +
+            escapeHtml_(a.keywords || "") +
+            '" />' +
+            '<select data-kb-dept>' +
+            deptOptionsHtml_(a.departmentId || "") +
+            "</select>" +
+            '<button type="button" class="btn ghost small kb-remove">Remove</button>' +
+            "</div>" +
+            '<textarea data-kb-answer rows="4" placeholder="Reply text agents can paste to the visitor…">' +
+            escapeHtml_(a.answer || "") +
+            "</textarea>" +
+            "</td>";
+        tr.querySelector(".kb-remove").addEventListener("click", () => tr.remove());
+        body.appendChild(tr);
+    }
+
+    function renderKnowledgeBase_(kb) {
+        const body = $("kbArticlesBody");
+        if (!body) return;
+        const base = kb && typeof kb === "object" ? kb : {};
+        setChecked_("kbEnabled", base.enabled !== false);
+        body.innerHTML = "";
+        const list = Array.isArray(base.articles) ? base.articles : [];
+        if (!list.length) {
+            addKbArticleRow_({});
+        } else {
+            for (const a of list) {
+                addKbArticleRow_(a);
+            }
+        }
     }
 
     function applyDeskSettings_(s) {
@@ -135,6 +234,7 @@
         setVal_("dailyRecipients", rep.dailyRecipients || "");
         setChecked_("weeklyMonthlyEnabled", rep.weeklyMonthlyEnabled);
         renderAgentProfiles_((g.agentProfiles || []));
+        renderKnowledgeBase_(settings.knowledgeBase || {});
     }
 
     function readAgentProfilesFromDom_() {
@@ -320,6 +420,8 @@
     async function loadAll() {
         const data = await apiFetch(`${API}/settings`);
         applyDeskSettings_(data.settings || {});
+        lastDepartments_ = data.departments || [];
+        renderKnowledgeBase_(data.knowledgeBase || (data.settings && data.settings.knowledgeBase) || {});
         renderDepartments(data.departments || []);
         loadAgentsOverview_();
     }
@@ -473,6 +575,10 @@
 
     if ($("addAgentProfileBtn")) {
         $("addAgentProfileBtn").addEventListener("click", () => addAgentProfileRow_("", ""));
+    }
+
+    if ($("addKbArticleBtn")) {
+        $("addKbArticleBtn").addEventListener("click", () => addKbArticleRow_({}));
     }
 
     function updateNotifyPermissionStatus_() {

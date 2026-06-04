@@ -33,7 +33,7 @@
       <div class="top-bar-inner">
         <div class="brand">
           <h1>Live Agent Settings</h1>
-          <p class="muted">General, routing, access control, reporting, departments</p>
+          <p class="muted">General, knowledge base, routing, access control, reporting, departments</p>
         </div>
         <div class="top-actions">
           <a class="btn ghost nav-link" href="/live-agent">Service desk</a>
@@ -191,6 +191,33 @@
             </table>
           </div>
           <button type="button" class="btn ghost small" id="addAgentProfileBtn">Add agent</button>
+        </section>
+
+        <section class="settings-card" id="knowledgeBaseSection">
+          <h2>Knowledge base</h2>
+          <p class="muted small">
+            Add ready-made answers agents can search on the service desk and paste into replies.
+            Use <strong>Keywords</strong> so agents find articles quickly (e.g. refund, pricing, hours).
+          </p>
+          <label class="toggle-row">
+            <input type="checkbox" id="kbEnabled" checked />
+            <span>Enable knowledge base on service desk</span>
+          </label>
+          <div class="kb-articles-wrap">
+            <table class="agents-table kb-articles-table">
+              <thead>
+                <tr>
+                  <th>Title</th>
+                  <th>Keywords</th>
+                  <th>Department</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="kbArticlesBody"></tbody>
+            </table>
+          </div>
+          <button type="button" class="btn ghost small" id="addKbArticleBtn">Add article</button>
+          <p class="muted small">Each article needs a title and answer. Leave department empty for all teams.</p>
         </section>
 
         <section class="settings-card">

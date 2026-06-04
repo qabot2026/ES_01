@@ -79,6 +79,13 @@
     const mobileMenuSheet = $("mobileMenuSheet");
     const mobileDetailsSheet = $("mobileDetailsSheet");
     const mobileDetailsBody = $("mobileDetailsBody");
+    const mobileKbSheet = $("mobileKbSheet");
+    const kbPane = $("kbPane");
+    const kbSearchInput = $("kbSearchInput");
+    const kbResultsList = $("kbResultsList");
+    const kbSearchHint = $("kbSearchHint");
+    const kbSearchInputMobile = $("kbSearchInputMobile");
+    const kbResultsListMobile = $("kbResultsListMobile");
     const mobileSheetBackdrop = $("mobileSheetBackdrop");
     const mobileNavWaitingBadge = $("mobileNavWaitingBadge");
     const mobileNavAlertsBadge = $("mobileNavAlertsBadge");
@@ -494,6 +501,7 @@
         const menu = which === "menu";
         const details = which === "details";
         const chatmenu = which === "chatmenu";
+        const kb = which === "kb";
         const mobileChatMenuSheet = $("mobileChatMenuSheet");
         if (mobileMenuSheet) {
             mobileMenuSheet.classList.toggle("hidden", !menu);
@@ -501,10 +509,13 @@
         if (mobileDetailsSheet) {
             mobileDetailsSheet.classList.toggle("hidden", !details);
         }
+        if (mobileKbSheet) {
+            mobileKbSheet.classList.toggle("hidden", !kb);
+        }
         if (mobileChatMenuSheet) {
             mobileChatMenuSheet.classList.toggle("hidden", !chatmenu);
         }
-        const open = menu || details || chatmenu;
+        const open = menu || details || chatmenu || kb;
         if (mobileSheetBackdrop) {
             mobileSheetBackdrop.classList.toggle("hidden", !open);
             mobileSheetBackdrop.setAttribute("aria-hidden", open ? "false" : "true");
@@ -1716,17 +1727,146 @@
         if (s.general.notifyMobilePopup === undefined) {
             s.general.notifyMobilePopup = true;
         }
+        s.knowledgeBase = s.knowledgeBase || { enabled: true, articles: [] };
         return s;
+    }
+
+    function kbEnabled_() {
+        const kb = deskSettings && deskSettings.knowledgeBase;
+        return !!(kb && kb.enabled !== false);
+    }
+
+    function syncKbPaneVisibility_() {
+        if (!kbPane) return;
+        kbPane.classList.toggle("hidden", !kbEnabled_());
+    }
+
+    let kbSearchTimer = null;
+    let kbSearchInFlight = false;
+
+    function insertKbAnswerIntoComposer_(text) {
+        if (!composerInput || !text) return;
+        const add = String(text).trim();
+        if (!add) return;
+        const cur = (composerInput.value || "").trim();
+        composerInput.value = cur ? cur + "\n\n" + add : add;
+        composerInput.focus();
+        composerInput.dispatchEvent(new Event("input", { bubbles: true }));
+        messageList.scrollTop = messageList.scrollHeight;
+    }
+
+    function renderKbResults_(results, listEl) {
+        const ul = listEl || kbResultsList;
+        if (!ul) return;
+        ul.innerHTML = "";
+        const items = results || [];
+        if (!items.length) {
+            const li = document.createElement("li");
+            li.className = "kb-result-empty muted small";
+            li.textContent = "No matching articles.";
+            ul.appendChild(li);
+            return;
+        }
+        for (const r of items) {
+            const li = document.createElement("li");
+            li.className = "kb-result-item";
+            const title = document.createElement("p");
+            title.className = "kb-result-title";
+            title.textContent = r.title || "Article";
+            const preview = document.createElement("p");
+            preview.className = "kb-result-preview muted small";
+            const ans = String(r.answer || "");
+            preview.textContent = ans.length > 120 ? ans.slice(0, 117) + "…" : ans;
+            const actions = document.createElement("div");
+            actions.className = "kb-result-actions";
+            const useBtn = document.createElement("button");
+            useBtn.type = "button";
+            useBtn.className = "btn primary small";
+            useBtn.textContent = "Use reply";
+            useBtn.addEventListener("click", () => {
+                insertKbAnswerIntoComposer_(r.answer);
+                setMobileSheetOpen_(null);
+            });
+            const copyBtn = document.createElement("button");
+            copyBtn.type = "button";
+            copyBtn.className = "btn ghost small";
+            copyBtn.textContent = "Copy";
+            copyBtn.addEventListener("click", () => {
+                const t = String(r.answer || "");
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(t).catch(() => {});
+                }
+            });
+            actions.appendChild(useBtn);
+            actions.appendChild(copyBtn);
+            li.appendChild(title);
+            li.appendChild(preview);
+            li.appendChild(actions);
+            ul.appendChild(li);
+        }
+    }
+
+    async function runKbSearch_(query) {
+        const q = String(query || "").trim();
+        if (!kbEnabled_() || q.length < 2) {
+            if (kbResultsList) kbResultsList.innerHTML = "";
+            if (kbResultsListMobile) kbResultsListMobile.innerHTML = "";
+            if (kbSearchHint) {
+                kbSearchHint.textContent = kbEnabled_()
+                    ? "Type keywords (refund, hours, pricing…)"
+                    : "Knowledge base is disabled in Settings.";
+            }
+            return;
+        }
+        if (kbSearchInFlight) return;
+        kbSearchInFlight = true;
+        const dept =
+            (selectedConv && (selectedConv.departmentId || selectedConv.departmentName)) ||
+            "general";
+        try {
+            const data = await apiFetch(
+                `${API}/knowledge/search?q=${encodeURIComponent(q)}&departmentId=${encodeURIComponent(dept)}`
+            );
+            renderKbResults_(data.results || [], kbResultsList);
+            renderKbResults_(data.results || [], kbResultsListMobile);
+            if (kbSearchHint) {
+                const n = (data.results || []).length;
+                kbSearchHint.textContent = n
+                    ? n + " article(s) — tap Use reply to paste into your message."
+                    : "No matches — try different keywords.";
+            }
+        } catch (e) {
+            if (kbSearchHint) kbSearchHint.textContent = e.message || "Search failed";
+        } finally {
+            kbSearchInFlight = false;
+        }
+    }
+
+    function scheduleKbSearch_(query) {
+        clearTimeout(kbSearchTimer);
+        kbSearchTimer = setTimeout(() => {
+            void runKbSearch_(query);
+        }, 280);
+    }
+
+    function bindKbSearchInput_(input) {
+        if (!input) return;
+        input.addEventListener("input", () => scheduleKbSearch_(input.value));
     }
 
     async function loadDeskSettings_() {
         try {
             const data = await apiFetch(`${API}/settings`);
             deskSettings = normalizeDeskSettings_(data.settings || null);
+            if (data.knowledgeBase) {
+                deskSettings.knowledgeBase = data.knowledgeBase;
+            }
+            syncKbPaneVisibility_();
             applyInboxFilterOptions_();
             updateNotificationPermissionUi_();
         } catch (_) {
             deskSettings = null;
+            syncKbPaneVisibility_();
         }
     }
 
@@ -1976,6 +2116,20 @@
     if ($("closeMobileDetailsBtn")) {
         $("closeMobileDetailsBtn").addEventListener("click", () => setMobileSheetOpen_(null));
     }
+    if ($("mobileMenuKbBtn")) {
+        $("mobileMenuKbBtn").addEventListener("click", () => {
+            setMobileSheetOpen_("kb");
+            if (kbSearchInputMobile && kbSearchInput && kbSearchInputMobile.value !== kbSearchInput.value) {
+                kbSearchInputMobile.value = kbSearchInput.value;
+            }
+            void runKbSearch_(kbSearchInputMobile && kbSearchInputMobile.value);
+        });
+    }
+    if ($("closeMobileKbBtn")) {
+        $("closeMobileKbBtn").addEventListener("click", () => setMobileSheetOpen_(null));
+    }
+    bindKbSearchInput_(kbSearchInput);
+    bindKbSearchInput_(kbSearchInputMobile);
     if (mobileSheetBackdrop) {
         mobileSheetBackdrop.addEventListener("click", () => setMobileSheetOpen_(null));
     }

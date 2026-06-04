@@ -217,6 +217,17 @@
             <p id="documentsEmpty" class="muted small hidden">No files yet.</p>
             <p class="context-links"><a id="transcriptLink" href="#" target="_blank" rel="noopener noreferrer">Transcript</a></p>
           </div>
+          <section class="kb-pane" id="kbPane" aria-label="Knowledge base">
+            <div class="kb-pane-head">
+              <h3>Knowledge base</h3>
+            </div>
+            <label class="kb-search-label">
+              <span class="sr-only">Search articles</span>
+              <input type="search" id="kbSearchInput" class="kb-search-input" placeholder="Search answers…" autocomplete="off" />
+            </label>
+            <p id="kbSearchHint" class="muted small">Type keywords (refund, hours, pricing…)</p>
+            <ul id="kbResultsList" class="kb-results-list"></ul>
+          </section>
         </div>
       </aside>
     </div>
@@ -274,11 +285,23 @@
         <button type="button" class="btn ghost small" id="closeMobileChatMenuBtn" aria-label="Close">✕</button>
       </div>
       <div class="mobile-sheet-body">
+        <button type="button" class="btn ghost mobile-menu-item" id="mobileMenuKbBtn">Knowledge base</button>
         <button type="button" class="btn ghost mobile-menu-item" id="mobileMenuInfoBtn">Visitor info</button>
         <button type="button" class="btn ghost mobile-menu-item" id="mobileMenuRefreshBtn">Refresh messages</button>
         <a class="btn ghost mobile-menu-item" id="mobileMenuTranscriptBtn" href="#" target="_blank" rel="noopener noreferrer">Open transcript</a>
         <button type="button" class="btn ghost mobile-menu-item" id="mobileMenuCopyIdBtn">Copy session ID</button>
         <button type="button" class="btn ghost mobile-menu-item" id="mobileMenuDismissBtn">Dismiss from queue</button>
+      </div>
+    </div>
+
+    <div id="mobileKbSheet" class="mobile-sheet mobile-sheet--tall hidden" role="dialog" aria-label="Knowledge base">
+      <div class="mobile-sheet-head">
+        <h2>Knowledge base</h2>
+        <button type="button" class="btn ghost small" id="closeMobileKbBtn" aria-label="Close">✕</button>
+      </div>
+      <div class="mobile-sheet-body">
+        <input type="search" id="kbSearchInputMobile" class="kb-search-input" placeholder="Search answers…" autocomplete="off" />
+        <ul id="kbResultsListMobile" class="kb-results-list"></ul>
       </div>
     </div>
 
@@ -293,6 +316,6 @@
     <div id="mobileSheetBackdrop" class="mobile-sheet-backdrop hidden" aria-hidden="true"></div>
   </section>
 
-  <script src="live-agent.js?v=20260603-typing-handoff" defer></script>
+  <script src="live-agent.js?v=20260603-knowledge-base" defer></script>
 </body>
 </html>
