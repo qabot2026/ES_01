@@ -13,7 +13,7 @@
         <div>
           <h1>Appointments</h1>
           <p class="dash-muted">
-            Bookings from the chatbot appointment form — date and time collected when visitors submit
+            Shows today’s appointments by default (App. date). Change From/To to see other days.
           </p>
         </div>
         <nav class="dash-nav">
@@ -49,6 +49,7 @@
           To
           <input type="text" id="appt-to" placeholder="DD/MM/YYYY" inputmode="numeric" autocomplete="off" />
         </label>
+        <button type="button" id="appt-today" class="dash-btn dash-btn--ghost">Today</button>
         <button type="button" id="appt-apply" class="dash-btn dash-btn--ghost">Apply</button>
         <p id="appt-meta" class="dash-muted appt-meta"></p>
       </section>

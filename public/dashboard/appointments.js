@@ -26,6 +26,27 @@
     return String(raw || '').trim();
   }
 
+  function localTodayIso() {
+    var d = new Date();
+    return (
+      d.getFullYear() +
+      '-' +
+      String(d.getMonth() + 1).padStart(2, '0') +
+      '-' +
+      String(d.getDate()).padStart(2, '0')
+    );
+  }
+
+  function todayDmy() {
+    return formatDmy(localTodayIso());
+  }
+
+  function initDefaultDates() {
+    var today = todayDmy();
+    if ($('appt-from') && !$('appt-from').value) $('appt-from').value = today;
+    if ($('appt-to') && !$('appt-to').value) $('appt-to').value = today;
+  }
+
   function buildUrl() {
     var base = auth.apiBase() + '/api/appointments?';
     var fromRaw = $('appt-from') ? $('appt-from').value : '';
@@ -50,7 +71,7 @@
     var rows = (data && data.appointments) || [];
     if (!rows.length) {
       body.innerHTML =
-        '<tr><td colspan="8" class="appt-empty">No appointment bookings in this period.</td></tr>';
+        '<tr><td colspan="8" class="appt-empty">No appointments for the selected date(s).</td></tr>';
     } else {
       body.innerHTML = rows
         .map(function (row) {
@@ -94,6 +115,14 @@
 
     if (meta) {
       var parts = [rows.length + ' appointment' + (rows.length === 1 ? '' : 's')];
+      var df = data && data.dateFilter;
+      if (df && df.from && df.to) {
+        parts.push(
+          df.from === df.to
+            ? 'App. date: ' + df.from
+            : 'App. dates: ' + df.from + ' – ' + df.to
+        );
+      }
       if (data && data.source) parts.push('source: ' + data.source);
       if (data && data.sheetsConfigured === false) {
         parts.push('Google Sheet not configured — showing transcript data only');
@@ -186,6 +215,14 @@
   }
 
   $('appt-refresh').addEventListener('click', load);
+  if ($('appt-today')) {
+    $('appt-today').addEventListener('click', function () {
+      var today = todayDmy();
+      if ($('appt-from')) $('appt-from').value = today;
+      if ($('appt-to')) $('appt-to').value = today;
+      load();
+    });
+  }
   $('appt-apply').addEventListener('click', load);
   if ($('appt-unlock-btn')) {
     $('appt-unlock-btn').addEventListener('click', unlockAndLoad);
@@ -195,5 +232,6 @@
       if (ev.key === 'Enter') unlockAndLoad();
     });
   }
+  initDefaultDates();
   load();
 })();
