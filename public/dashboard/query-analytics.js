@@ -160,10 +160,10 @@
         return (
           '<tr>' +
           queryCellHtml(q.query) +
-          '<td class="num"><strong>' +
+          '<td class="num qa-times-cell"><strong>' +
           (q.times || 0) +
           '</strong></td>' +
-          '<td class="num">' +
+          '<td class="num qa-sessions-cell">' +
           (q.sessions || 0) +
           '</td>' +
           '<td class="num qa-date-cell">' +
@@ -314,6 +314,7 @@
     $('qa-apply-range').addEventListener('click', load);
   }
   toggleCustomRange();
+  bindQueryCopyHandler();
   if ($('qa-unlock-btn')) {
     $('qa-unlock-btn').addEventListener('click', unlockAndLoad);
   }

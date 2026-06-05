@@ -184,49 +184,71 @@
 
 .qa-table {
   width: 100%;
-  table-layout: fixed;
+  table-layout: auto;
   border-collapse: collapse;
   font-size: 0.85rem;
 }
 
 .qa-table th,
 .qa-table td {
-  padding: 10px 10px;
+  padding: 8px 6px;
   border-bottom: 1px solid var(--dash-border);
   vertical-align: top;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .qa-table th {
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
+  font-size: 0.8rem;
+  text-transform: none;
+  letter-spacing: normal;
   color: var(--dash-muted);
   font-weight: 600;
+  white-space: nowrap;
+  overflow: visible;
 }
 
 .qa-col-query,
 .qa-table .qa-query-cell {
-  width: 48%;
+  width: auto;
+  max-width: 380px;
   text-align: left;
+  padding-right: 10px;
 }
 
-.qa-col-num,
-.qa-table td.num {
-  width: 12%;
+.qa-col-times,
+.qa-table .qa-times-cell {
+  width: 1%;
+  min-width: 3.25rem;
   text-align: right;
   white-space: nowrap;
+  padding-left: 4px;
+  padding-right: 6px;
+}
+
+.qa-col-sessions,
+.qa-table .qa-sessions-cell,
+.qa-table thead th.qa-col-sessions {
+  width: 1%;
+  min-width: 4.75rem;
+  text-align: right;
+  white-space: nowrap;
+  padding-left: 4px;
+  padding-right: 6px;
+}
+
+.qa-table thead th.qa-col-times,
+.qa-table thead th.qa-col-sessions {
+  text-align: right;
 }
 
 .qa-col-date,
 .qa-table td.qa-date-cell {
-  width: 28%;
+  width: 1%;
+  min-width: 7.5rem;
   text-align: right;
   white-space: nowrap;
+  padding-left: 8px;
 }
 
-.qa-table thead th.qa-col-num,
 .qa-table thead th.qa-col-date {
   text-align: right;
 }
