@@ -514,6 +514,7 @@ app.post(
     }
     try {
       const uploadTag = String(req.body.tag || req.body.upload_tag || '').trim();
+      const channel = String(req.body.channel || req.body.source || 'Web').trim();
       const pack = await gcsUpload.uploadSubmissionFilesToGcs(files, {
         mobile: req.body.mobile,
         dialCode: req.body.dial_code || req.body.dialCode,
@@ -521,6 +522,7 @@ app.post(
         name: req.body.name,
         email: req.body.email,
         tag: uploadTag,
+        channel,
       });
       const meta = {
         document: pack.document_names || '',
@@ -542,6 +544,7 @@ app.post(
         meta.dial_code = String(req.body.dial_code || req.body.dialCode).trim();
       }
       if (uploadTag) meta.tag = uploadTag;
+      if (channel) meta.channel = channel;
       meta.userEngaged = true;
       meta.last_upload_at = new Date().toISOString();
       chatTranscript.mergeSessionMeta(sessionId, meta);

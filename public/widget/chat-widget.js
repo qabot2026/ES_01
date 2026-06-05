@@ -3366,6 +3366,7 @@
       '';
     uploadTag = String(uploadTag || '').trim();
     if (uploadTag) fd.append('tag', uploadTag);
+    fd.append('channel', this.qaMode ? 'QA' : 'Web');
     var mobile = vals.mobile != null ? String(vals.mobile).trim() : String(ctx.mobile || '').trim();
     var dial = vals.dial_code != null ? String(vals.dial_code).trim() : String(ctx.dial_code || '').trim();
     if (mobile) fd.append('mobile', mobile);

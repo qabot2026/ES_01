@@ -115,6 +115,8 @@
           session_id: file.session_id || f.session_id || '',
           storage_folder: f.storage_folder || '',
           tag: file.tag || f.tag || '',
+          channel: file.channel || f.channel || '',
+          external: !!file.external,
           storage_link: file.storage_link || '',
         });
       });
@@ -191,6 +193,8 @@
           ' ' +
           (r.session_id || '') +
           ' ' +
+          (r.channel || '') +
+          ' ' +
           (r.tag || '');
         return hay.toLowerCase().indexOf(q) >= 0;
       });
@@ -204,7 +208,7 @@
 
     if (!state.filtered.length) {
       tbody.innerHTML =
-        '<tr><td colspan="8" class="docs-table__empty">No documents found.</td></tr>';
+        '<tr><td colspan="9" class="docs-table__empty">No documents found.</td></tr>';
       return;
     }
 
@@ -217,6 +221,9 @@
           '<td><span class="docs-file-name">' +
           escapeHtml(r.file_name) +
           '</span></td>' +
+          '<td>' +
+          escapeHtml(r.channel || '—') +
+          '</td>' +
           '<td>' +
           escapeHtml(r.tag || '—') +
           '</td>' +
@@ -238,6 +245,8 @@
           '<td><div class="docs-actions">' +
           '<button type="button" class="docs-view" data-object="' +
           escapeHtml(r.gcs_object) +
+          '" data-external-url="' +
+          escapeHtml(r.external ? r.storage_link || '' : '') +
           '">View</button>' +
           '<span class="docs-sep">|</span>' +
           '<button type="button" class="docs-download" data-object="' +
@@ -353,7 +362,12 @@
 
   function openView(btn) {
     var object = btn.getAttribute('data-object');
+    var externalUrl = btn.getAttribute('data-external-url') || '';
     if (!object) return;
+    if (externalUrl) {
+      window.open(externalUrl, '_blank', 'noopener,noreferrer');
+      return;
+    }
     btn.disabled = true;
     var prev = btn.textContent;
     btn.textContent = '…';
@@ -459,7 +473,7 @@
   function load() {
     showAlert('');
     document.getElementById('docs-tbody').innerHTML =
-      '<tr><td colspan="8" class="docs-table__empty">Loading…</td></tr>';
+      '<tr><td colspan="9" class="docs-table__empty">Loading…</td></tr>';
     fetch(apiBase() + '/api/documents/catalog?limit=500', {
       headers: headers(),
       cache: 'no-store',
@@ -478,14 +492,14 @@
             showAlert(data.message || 'Could not load documents.');
           }
           document.getElementById('docs-tbody').innerHTML =
-            '<tr><td colspan="8" class="docs-table__empty">—</td></tr>';
+            '<tr><td colspan="9" class="docs-table__empty">—</td></tr>';
           return;
         }
         updateStorageMeta(data);
         state.rows = foldersToRows(data.folders || []);
         if (!state.rows.length) {
           showAlert(
-            'No files in storage yet. Upload from production chat (not /qa), then click Refresh. Composer uploads show Tag “Composer”.'
+            'No documents yet. Uploads from Web, WhatsApp, Instagram, or Facebook appear here after sheet sync or GCS save — click Refresh.'
           );
         }
         applyFilter();
