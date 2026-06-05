@@ -2,7 +2,7 @@
   'use strict';
 
   var auth = window.DashboardDeskAuth;
-  var state = { rows: [], filtered: [] };
+  var state = { rows: [], filtered: [], dateFilterActive: true };
 
   if (!auth || !auth.requireAuthOrRedirect('dashboard/documents.html')) {
     return;
@@ -93,6 +93,92 @@
     el.textContent = msg || '';
   }
 
+  function pad2(n) {
+    return String(n).padStart(2, '0');
+  }
+
+  function localIsoYmd(d) {
+    return (
+      d.getFullYear() +
+      '-' +
+      pad2(d.getMonth() + 1) +
+      '-' +
+      pad2(d.getDate())
+    );
+  }
+
+  function todayIsoYmd() {
+    return localIsoYmd(new Date());
+  }
+
+  function rowDateIso(r) {
+    var candidates = [r && r.uploaded_at, r && r.updated_at];
+    var i;
+    for (i = 0; i < candidates.length; i += 1) {
+      var raw = candidates[i];
+      if (!raw) continue;
+      var d = new Date(raw);
+      if (!isNaN(d.getTime())) return localIsoYmd(d);
+    }
+    var display = String((r && r.date_display) || '').trim();
+    if (display) {
+      var dd = window.QADateDisplay;
+      if (dd && dd.parseToIsoYmd) {
+        var parsed = dd.parseToIsoYmd(display);
+        if (parsed) return parsed;
+      }
+      var parts = display.split('/');
+      if (parts.length === 3) {
+        return (
+          parts[2] +
+          '-' +
+          pad2(parts[1]) +
+          '-' +
+          pad2(parts[0])
+        );
+      }
+    }
+    return '';
+  }
+
+  function getDateRangeFromInputs() {
+    var fromEl = document.getElementById('docs-date-from');
+    var toEl = document.getElementById('docs-date-to');
+    var fromIso = fromEl ? String(fromEl.value || '').trim() : '';
+    var toIso = toEl ? String(toEl.value || '').trim() : '';
+    if (fromIso && toIso && fromIso > toIso) {
+      var swap = fromIso;
+      fromIso = toIso;
+      toIso = swap;
+      if (fromEl) fromEl.value = fromIso;
+      if (toEl) toEl.value = toIso;
+    }
+    return { fromIso: fromIso, toIso: toIso };
+  }
+
+  function initDefaultDateRange() {
+    var today = todayIsoYmd();
+    var fromEl = document.getElementById('docs-date-from');
+    var toEl = document.getElementById('docs-date-to');
+    if (fromEl) fromEl.value = today;
+    if (toEl) toEl.value = today;
+    state.dateFilterActive = true;
+  }
+
+  function dateRangeLabel(fromIso, toIso) {
+    var dd = window.QADateDisplay;
+    var fmt = dd && dd.formatDateDisplay ? dd.formatDateDisplay.bind(dd) : function (x) {
+      return x;
+    };
+    if (fromIso && toIso) {
+      if (fromIso === toIso) return fmt(fromIso);
+      return fmt(fromIso) + ' – ' + fmt(toIso);
+    }
+    if (fromIso) return 'from ' + fmt(fromIso);
+    if (toIso) return 'until ' + fmt(toIso);
+    return '';
+  }
+
   function foldersToRows(folders) {
     var rows = [];
     var seenObjects = {};
@@ -166,39 +252,56 @@
       state.filtered.length
     );
     document.getElementById('docs-count-size').textContent = formatBytes(totalBytes);
-    document.getElementById('docs-showing').textContent =
+    var range = getDateRangeFromInputs();
+    var rangeText = dateRangeLabel(range.fromIso, range.toIso);
+    var base =
       state.filtered.length === state.rows.length
         ? 'Showing all ' + state.rows.length + ' documents'
         : 'Showing ' + state.filtered.length + ' of ' + state.rows.length;
+    if (state.dateFilterActive && rangeText) {
+      base += ' · ' + rangeText;
+    } else if (!state.dateFilterActive) {
+      base += ' · all dates';
+    }
+    document.getElementById('docs-showing').textContent = base;
   }
 
   function applyFilter() {
     var q = String(document.getElementById('docs-search').value || '')
       .trim()
       .toLowerCase();
-    if (!q) {
-      state.filtered = state.rows.slice();
-    } else {
-      state.filtered = state.rows.filter(function (r) {
-        var hay =
-          (r.file_name || '') +
-          ' ' +
-          (r.name || '') +
-          ' ' +
-          (r.mobile || '') +
-          ' ' +
-          (r.email || '') +
-          ' ' +
-          (r.storage_folder || '') +
-          ' ' +
-          (r.session_id || '') +
-          ' ' +
-          (r.channel || '') +
-          ' ' +
-          (r.tag || '');
-        return hay.toLowerCase().indexOf(q) >= 0;
-      });
-    }
+    var range = getDateRangeFromInputs();
+    var fromIso = range.fromIso;
+    var toIso = range.toIso;
+    var useDateFilter =
+      state.dateFilterActive && (fromIso || toIso);
+
+    state.filtered = state.rows.filter(function (r) {
+      if (useDateFilter) {
+        var rowIso = rowDateIso(r);
+        if (!rowIso) return false;
+        if (fromIso && rowIso < fromIso) return false;
+        if (toIso && rowIso > toIso) return false;
+      }
+      if (!q) return true;
+      var hay =
+        (r.file_name || '') +
+        ' ' +
+        (r.name || '') +
+        ' ' +
+        (r.mobile || '') +
+        ' ' +
+        (r.email || '') +
+        ' ' +
+        (r.storage_folder || '') +
+        ' ' +
+        (r.session_id || '') +
+        ' ' +
+        (r.channel || '') +
+        ' ' +
+        (r.tag || '');
+      return hay.toLowerCase().indexOf(q) >= 0;
+    });
     renderTable();
   }
 
@@ -509,6 +612,22 @@
           showAlert(
             'No documents yet. Upload from production chat (not /qa), wait for bot success, then Refresh.'
           );
+        } else if (state.dateFilterActive) {
+          var range = getDateRangeFromInputs();
+          var inRange = state.rows.filter(function (r) {
+            var rowIso = rowDateIso(r);
+            if (!rowIso) return false;
+            if (range.fromIso && rowIso < range.fromIso) return false;
+            if (range.toIso && rowIso > range.toIso) return false;
+            return true;
+          });
+          if (!inRange.length) {
+            showAlert(
+              'No documents for ' +
+                dateRangeLabel(range.fromIso, range.toIso) +
+                '. Change the date range or click All dates.'
+            );
+          }
         }
         applyFilter();
       })
@@ -521,5 +640,23 @@
 
   document.getElementById('docs-refresh').addEventListener('click', load);
   document.getElementById('docs-search').addEventListener('input', applyFilter);
+  document.getElementById('docs-date-from').addEventListener('change', function () {
+    state.dateFilterActive = true;
+    applyFilter();
+  });
+  document.getElementById('docs-date-to').addEventListener('change', function () {
+    state.dateFilterActive = true;
+    applyFilter();
+  });
+  document.getElementById('docs-date-all').addEventListener('click', function () {
+    var fromEl = document.getElementById('docs-date-from');
+    var toEl = document.getElementById('docs-date-to');
+    if (fromEl) fromEl.value = '';
+    if (toEl) toEl.value = '';
+    state.dateFilterActive = false;
+    showAlert('');
+    applyFilter();
+  });
+  initDefaultDateRange();
   load();
 })();

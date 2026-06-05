@@ -54,9 +54,61 @@
   border-color: var(--dash-primary);
 }
 
+.docs-date-range {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.docs-date-range__field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.75rem;
+  color: var(--dash-muted);
+  font-weight: 600;
+}
+
+.docs-date-range__label {
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.docs-date-input {
+  border: 1px solid var(--dash-border);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 0.875rem;
+  background: var(--dash-surface);
+  min-width: 148px;
+  color: var(--dash-text);
+}
+
+.docs-date-input:focus {
+  outline: 2px solid rgba(2, 132, 199, 0.35);
+  border-color: var(--dash-primary);
+}
+
+.docs-date-all {
+  padding: 8px 12px;
+  font-size: 0.8125rem;
+  white-space: nowrap;
+}
+
 .docs-showing {
   font-size: 0.8125rem;
   color: var(--dash-muted);
+  flex: 1 1 100%;
+  min-width: 200px;
+}
+
+@media (min-width: 900px) {
+  .docs-showing {
+    flex: 0 1 auto;
+    text-align: right;
+  }
 }
 
 .docs-alert {
