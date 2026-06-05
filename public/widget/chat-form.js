@@ -8,8 +8,20 @@
 
   function parseToIsoYmdClient(raw) {
     if (dateDisplayApi.parseToIsoYmd) return dateDisplayApi.parseToIsoYmd(raw);
-    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(raw || '').trim());
-    return m ? m[0] : '';
+    var s = String(raw || '').trim();
+    if (!s) return '';
+    var iso = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+    if (iso) return iso[0];
+    var dmy = /^(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{4})$/.exec(s);
+    if (dmy) {
+      var dd = parseInt(dmy[1], 10);
+      var mo = parseInt(dmy[2], 10);
+      var y = parseInt(dmy[3], 10);
+      if (mo >= 1 && mo <= 12 && dd >= 1 && dd <= 31) {
+        return y + '-' + String(mo).padStart(2, '0') + '-' + String(dd).padStart(2, '0');
+      }
+    }
+    return '';
   }
 
   function isoYmdToDdMmYyyyClient(raw) {
@@ -410,7 +422,7 @@
       return String(p.h).padStart(2, '0') + ':' + String(p.min).padStart(2, '0');
     }
     var m12 = s.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
-    if (!m12) return s;
+    if (!m12) return '';
     var h = parseInt(m12[1], 10);
     var min = m12[2];
     var pm = m12[3].toUpperCase() === 'PM';
@@ -1683,10 +1695,13 @@
   function bookAppointmentBeforeSubmit(widget, formId, values) {
     var dateDmy = values && values.appointmentdate;
     var time = values && values.appointmenttime;
-    if (!dateDmy || !time) {
+    if ((!dateDmy && !(values && values._appointmentDateIso)) || !time) {
       return Promise.resolve({ ok: true, skipped: true });
     }
-    var dateIso = parseToIsoYmdClient(dateDmy);
+    var dateIso =
+      (values && values._appointmentDateIso) ||
+      parseToIsoYmdClient(dateDmy) ||
+      parseToIsoYmdClient(values && values.appointmentdate);
     if (!dateIso) {
       return Promise.resolve({ ok: false, data: { error: 'invalid_date_or_time' } });
     }
@@ -2111,6 +2126,8 @@
       }
     });
 
+    wrap._getSelectedIso = getSelectedIso;
+
     wrap._validateAppt = function () {
       var selIso = getSelectedIso();
       if (!selIso || !timeHidden.value) {
@@ -2190,13 +2207,19 @@
       }
 
       if (isAppointmentCalendarField(field, def)) {
+        var calWrap = form.querySelector('.qa-form__field--calendar');
         var apptDateRaw =
           (form.querySelector('[name="appointmentdate"]') || {}).value || '';
-        values.appointmentdate = formatDateDisplayClient(apptDateRaw);
+        values._appointmentDateIso =
+          calWrap && calWrap._getSelectedIso
+            ? calWrap._getSelectedIso()
+            : parseToIsoYmdClient(apptDateRaw);
+        values.appointmentdate = values._appointmentDateIso
+          ? formatDateDisplayClient(values._appointmentDateIso)
+          : formatDateDisplayClient(apptDateRaw);
         var apptTimeRaw =
           (form.querySelector('[name="appointmenttime"]') || {}).value || '';
         values.appointmenttime = to12hClient(apptTimeRaw);
-        var calWrap = form.querySelector('.qa-form__field--calendar');
         if (field.required !== false && calWrap && calWrap._validateAppt && !calWrap._validateAppt()) {
           valid = false;
         }
@@ -2531,11 +2554,13 @@
             var errText =
               errCode === 'slot_unavailable'
                 ? t(lang, 'calSlotTaken')
-                : errCode === 'past_date' || errCode === 'invalid_date_or_time'
-                  ? t(lang, 'calSlotInvalid')
-                  : errCode === 'network_error'
-                    ? t(lang, 'calNetworkError')
-                    : t(lang, 'calBookFailed');
+                : errCode === 'today_not_allowed'
+                  ? t(lang, 'calTodayHidden')
+                  : errCode === 'past_date' || errCode === 'invalid_date_or_time'
+                    ? t(lang, 'calSlotInvalid')
+                    : errCode === 'network_error'
+                      ? t(lang, 'calNetworkError')
+                      : t(lang, 'calBookFailed');
             if (calWrap) {
               var calErr = calWrap.querySelector('.qa-form__error');
               if (calErr) {

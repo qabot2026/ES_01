@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var QA_ASSET_VERSION = '20260605-dd-mm-yyyy';
+  var QA_ASSET_VERSION = '20260605-appt-book-fix';
 
   var QA_FORM_SCRIPTS = [
     'contact.js',
