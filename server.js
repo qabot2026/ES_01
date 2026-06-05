@@ -653,10 +653,26 @@ app.get('/conversation-transcript', (_req, res) => {
   res.sendFile(path.join(publicDir, 'conversation-transcript.html'));
 });
 
-app.get('/conversations-sheet', (_req, res) => {
+function sendConversationsDashboardPage(res) {
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
   res.setHeader('Pragma', 'no-cache');
   res.sendFile(path.join(publicDir, 'conversations-sheet.html'));
+}
+
+app.get('/uc-conversations', (_req, res) => {
+  sendConversationsDashboardPage(res);
+});
+
+app.get('/ua-conversations', (_req, res) => {
+  sendConversationsDashboardPage(res);
+});
+
+app.get('/conversations-sheet', (_req, res) => {
+  res.redirect(301, '/uc-conversations');
+});
+
+app.get('/conversations.html', (_req, res) => {
+  res.redirect(301, '/uc-conversations');
 });
 
 function setConversationsSheetCors(req, res) {

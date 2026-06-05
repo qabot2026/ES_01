@@ -8,7 +8,8 @@ Matches **Only Refer** Agent Service Desk (`/live-agent/`).
 |------|---------|
 | `/live-agent/` | Agent service desk (queue, chat, visitor details) |
 | `/live-agent/settings` | Departments, routing, agent emails |
-| `/conversations-sheet` | Conversation leads (same viewer secret) |
+| `/uc-conversations` | Bot / AI conversation leads — Sheet1 (same viewer secret) |
+| `/ua-conversations` | Human agent chats only — Sheet2 (same viewer secret) |
 
 ## Auth
 

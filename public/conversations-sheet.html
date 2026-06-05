@@ -780,6 +780,16 @@
     .lead-stats.lead-stats--live-tab #leadStatsErr {
       display: none !important;
     }
+    body.page-mode-ua #sheetSourceTabs {
+      display: none !important;
+    }
+    body.page-mode-ua #leadStatsList,
+    body.page-mode-ua #leadStatsErr {
+      display: none !important;
+    }
+    body.page-mode-ua #downloadReportBtn {
+      display: none !important;
+    }
     .sheet-table-toolbar {
       display: flex;
       flex-wrap: wrap;
@@ -2250,13 +2260,19 @@
   <div class="app">
     <header class="topbar">
       <div class="brand-block">
-        <h1>Conversation leads</h1>
-        <span class="sub"
+        <h1 id="pageTitle">Conversation leads</h1>
+        <span class="sub" id="pageSubtitle"
           >Browse conversations from every channel in one place. Filter by column values or date, page through results &mdash;
           columns stay in the original capture order.</span
         >
       </div>
       <div class="topbar-actions">
+        <a class="pill pill-link" href="/uc-conversations" id="ucNavLink" hidden title="Bot / AI conversation leads (Sheet1)"
+          >Bot leads</a
+        >
+        <a class="pill pill-link" href="/ua-conversations" id="uaNavLink" hidden title="Human agent chats from Sheet2"
+          >Human agent chats</a
+        >
         <a class="pill pill-link" href="/live-agent" id="liveAgentNavLink" title="Human agent inbox (same viewer secret)"
           >Live chat inbox</a
         >
@@ -2579,7 +2595,9 @@
       var lastLeadStatsPayload = null;
       var LEAD_STATS_VIEW_KEY = "lead_stats_view";
       var dashboardSheetSyncBusy = false;
-      var activeSheetTab = "bot";
+      var PAGE_MODE = /\/ua-conversations\/?$/i.test(window.location.pathname) ? "ua" : "uc";
+      document.body.classList.add("page-mode-" + PAGE_MODE);
+      var activeSheetTab = PAGE_MODE === "ua" ? "live-agent" : "bot";
       var SHEET_TAB_KEY = "conversations_sheet_tab_v1";
       var sheetSourceTabs = document.getElementById("sheetSourceTabs");
       var sheetTabBot = document.getElementById("sheetTabBot");
@@ -2587,8 +2605,33 @@
       var leadStatsWrap = document.getElementById("leadStatsWrap");
 
       function isLiveAgentSheetTab() {
-        return activeSheetTab === "live-agent";
+        return PAGE_MODE === "ua" || activeSheetTab === "live-agent";
       }
+
+      function initPageModeUi() {
+        var titleEl = document.getElementById("pageTitle");
+        var subEl = document.getElementById("pageSubtitle");
+        var ucNav = document.getElementById("ucNavLink");
+        var uaNav = document.getElementById("uaNavLink");
+        if (PAGE_MODE === "ua") {
+          document.title = "Human agent conversations";
+          if (titleEl) titleEl.textContent = "Human agent conversations";
+          if (subEl) {
+            subEl.textContent =
+              "Human handoff chats from Google Sheet2. Filter by date or column, open Chatscript for the full transcript.";
+          }
+          if (ucNav) ucNav.hidden = false;
+          if (uaNav) uaNav.hidden = true;
+          if (refreshBtn) {
+            refreshBtn.title = "Load human agent table from Sheet2";
+          }
+          if (syncSheet2Btn) syncSheet2Btn.textContent = "Sync Sheet2";
+        } else {
+          if (ucNav) ucNav.hidden = true;
+          if (uaNav) uaNav.hidden = false;
+        }
+      }
+      initPageModeUi();
 
       function applySheetTabUi() {
         var isLive = isLiveAgentSheetTab();
@@ -2611,6 +2654,7 @@
       }
 
       function setActiveSheetTab(tab, opts) {
+        if (PAGE_MODE === "ua") return;
         opts = opts || {};
         var next = tab === "live-agent" ? "live-agent" : "bot";
         if (next === activeSheetTab && !opts.force) return;
@@ -2626,10 +2670,12 @@
       }
 
       (function restoreSheetTab() {
-        try {
-          var saved = sessionStorage.getItem(SHEET_TAB_KEY);
-          if (saved === "live-agent" || saved === "bot") activeSheetTab = saved;
-        } catch (ignoreRestore) {}
+        if (PAGE_MODE !== "ua") {
+          try {
+            var saved = sessionStorage.getItem(SHEET_TAB_KEY);
+            if (saved === "live-agent" || saved === "bot") activeSheetTab = saved;
+          } catch (ignoreRestore) {}
+        }
         applySheetTabUi();
       })();
 

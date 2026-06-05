@@ -99,7 +99,8 @@ Agar row nahi aati:
 
 - Jab visitor **live agent** request kare → row Sheet2 par append/update
 - Agent reply / chat end par wahi row update
-- **Conversations leads** page par **Sync dashboard** → date filter ke hisaab se bulk sync
+- **`/ua-conversations`** page par Sheet2 table + **Sync Sheet2** → date filter ke hisaab se bulk sync
+- **`/uc-conversations`** par bot leads (Sheet1) + optional live-agent tab
 
 ### Chatscript link
 
