@@ -3279,6 +3279,17 @@
     );
   };
 
+  QualityAssistantWidget.prototype.shouldShowUploadSuccessAck = function (up) {
+    var cfg = this.getComposerUploadCfg();
+    if (this.qaMode && up && up.simulated) return true;
+    return cfg.showSuccessAck === true;
+  };
+
+  QualityAssistantWidget.prototype.shouldShowUploadingStatus = function () {
+    var cfg = this.getComposerUploadCfg();
+    return cfg.showUploadingStatus === true;
+  };
+
   QualityAssistantWidget.prototype.buildUploadAckMessage = function (up, fallbackNames) {
     var cfg = this.getComposerUploadCfg();
     var names = this.uploadDocumentNames(up, fallbackNames);
@@ -3318,6 +3329,7 @@
   };
 
   QualityAssistantWidget.prototype.showUploadAcknowledgement = function (up, fallbackNames, statusRow) {
+    if (!this.shouldShowUploadSuccessAck(up)) return;
     var msg = this.buildUploadAckMessage(up, fallbackNames);
     if (statusRow) {
       var kind = up && up.ok ? 'success' : 'failed';
@@ -3360,14 +3372,17 @@
     this.noteUserActivity();
     this.setComposerUploadBusy(true);
     this.appendMessage('user', emoji + (names ? ' ' + names : ''));
-    var uploadingMsg = this.composerUploadLabel(
-      cfg.uploadingByLanguage,
-      'Uploading your document(s)…'
-    );
-    var statusRow = this.appendMessage('bot', uploadingMsg, {
-      skipTranscriptLog: true,
-    });
-    this.updateBotMessageText(statusRow, uploadingMsg, 'pending');
+    var statusRow = null;
+    if (self.shouldShowUploadingStatus()) {
+      var uploadingMsg = self.composerUploadLabel(
+        cfg.uploadingByLanguage,
+        'Uploading your document(s)…'
+      );
+      statusRow = self.appendMessage('bot', uploadingMsg, {
+        skipTranscriptLog: true,
+      });
+      self.updateBotMessageText(statusRow, uploadingMsg, 'pending');
+    }
 
     this.uploadFormDocuments(files, {}, { tag: 'composer' })
       .then(function (up) {
@@ -3377,10 +3392,12 @@
         }
         if (up && up.ok) {
           var docNames = self.uploadDocumentNames(up, names);
-          self.appendMessage('bot', self.buildUploadAckMessage(up, names), {
-            messageKind: 'upload-success',
-            skipTranscriptLog: true,
-          });
+          if (self.shouldShowUploadSuccessAck(up)) {
+            self.appendMessage('bot', self.buildUploadAckMessage(up, names), {
+              messageKind: 'upload-success',
+              skipTranscriptLog: true,
+            });
+          }
           if (!self.qaMode) {
             self.appendTranscriptTurn('user', emoji + (docNames ? ' ' + docNames : ''));
             self.pushSessionContext();

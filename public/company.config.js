@@ -206,6 +206,10 @@ window.QA_CHAT_UI_CONFIG = {
         display: 'rich',
         emoji: '📎',
         tiltDeg: -18,
+        /** false = no bot “Upload successful!” message after 📎 upload */
+        showSuccessAck: false,
+        /** false = no “Uploading…” bot message while upload runs */
+        showUploadingStatus: false,
         accept:
           'image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.rtf,.odt,.ods,.odp,.zip,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,text/plain,text/csv,application/zip,application/x-zip-compressed',
         successByLanguage: {
