@@ -15,6 +15,7 @@ const documentsCatalog = require('./lib/documents-catalog');
 const conversationTranscriptView = require('./lib/conversation-transcript-view');
 const conversationsSheetView = require('./lib/conversations-sheet-view');
 const queryAnalytics = require('./lib/query-analytics');
+const appointmentsView = require('./lib/appointments-view');
 
 const app = express();
 const PORT = process.env.PORT || 4567;
@@ -323,6 +324,39 @@ app.get('/api/appointment-schedule', (_req, res) => {
   res.json(formApi.getAppointmentSchedule());
 });
 
+app.post('/api/appointment-book', (req, res) => {
+  try {
+    const body = req.body || {};
+    const formId = String(body.formId || body.form_id || 'appointment').trim();
+    const date = String(body.date || body.appointmentdate || '').trim();
+    const time = String(body.time || body.appointmenttime || '').trim();
+    const result = formApi.bookAppointmentSlot(formId, date, time);
+    if (!result.ok) {
+      return res.status(409).json(result);
+    }
+    const sid = String(body.sessionId || '').trim();
+    if (sid) {
+      const meta = conversationSheet.metaFromClientBody({
+        form_id: formId,
+        appointmentdate: date,
+        appointmenttime: result.time || time,
+        appointmentDateDisplay: date,
+        appointmentTimeDisplay: result.time || time,
+        name: body.name,
+        mobile: body.mobile,
+        email: body.email,
+      });
+      if (Object.keys(meta).length) {
+        chatTranscript.mergeSessionMeta(sid, meta);
+      }
+    }
+    res.json(result);
+  } catch (err) {
+    console.error('[appointment-book]', err.message);
+    res.status(500).json({ ok: false, error: err.message || 'book_failed' });
+  }
+});
+
 function requireDeskAuth(req, res, next) {
   if (liveAgent.verifyDeskToken(req).ok) return next();
   res.status(401).json({ ok: false, ...liveAgent.deskAuthFailed() });
@@ -511,7 +545,8 @@ function setConversationsSheetCors(req, res) {
   );
 }
 
-function requireConversationsViewer(req, res) {
+function requireConversationsViewer(req, res, opts) {
+  const options = opts || {};
   const auth = conversationTranscriptView.verifyViewerAuth(req);
   if (!auth.ok) {
     res.status(401).json({
@@ -522,7 +557,7 @@ function requireConversationsViewer(req, res) {
     });
     return false;
   }
-  if (!sheets.isConfigured()) {
+  if (!options.allowWithoutSheet && !sheets.isConfigured()) {
     res.status(503).json({
       ok: false,
       error:
@@ -611,6 +646,31 @@ app.get('/api/conversations-sheet-stats', async (req, res) => {
     const status = msg.includes('Invalid date parameter') ? 400 : 500;
     res.status(status).json({ ok: false, error: msg.slice(0, 500) });
   }
+});
+
+app.get('/api/appointments', async (req, res) => {
+  setConversationsSheetCors(req, res);
+  res.setHeader('Cache-Control', 'no-store');
+  if (!requireConversationsViewer(req, res, { allowWithoutSheet: true })) return;
+  try {
+    const rawFrom =
+      req.query && typeof req.query.from === 'string' ? req.query.from.trim() : '';
+    const rawTo =
+      req.query && typeof req.query.to === 'string' ? req.query.to.trim() : '';
+    const payload = await appointmentsView.fetchAppointmentsList({
+      from: rawFrom,
+      to: rawTo,
+    });
+    res.json(payload);
+  } catch (err) {
+    console.error('[appointments]', err.message);
+    res.status(500).json({ ok: false, error: err.message || 'appointments_failed' });
+  }
+});
+
+app.options('/api/appointments', (req, res) => {
+  setConversationsSheetCors(req, res);
+  res.status(204).end();
 });
 
 app.get('/api/conversations-sheet-export', async (req, res) => {

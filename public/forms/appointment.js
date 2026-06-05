@@ -13,7 +13,12 @@
       hi: "अपॉइंटमेंट",
       mr: "अपॉइंटमेंट"
     },
-    showSubtitle: false,
+    showSubtitle: true,
+    subtitleByLanguage: {
+      en: "Pick a date, then choose an available time. Red = already booked.",
+      hi: "तारीख चुनें, फिर उपलब्ध समय। लाल = पहले से बुक।",
+      mr: "तारीख निवडा, नंतर उपलब्ध वेळ. लाल = आधीच बुक."
+    },
     maxCardHeightPx: 540,
     chatSummaryFieldNames: ["appointmentdate", "appointmenttime"],
     fields: [

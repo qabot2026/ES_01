@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Appointments</title>
+    <link rel="stylesheet" href="dashboard.css" />
+    <link rel="stylesheet" href="appointments.css" />
+  </head>
+  <body>
+    <div class="dash-app appt-app">
+      <header class="dash-header">
+        <div>
+          <h1>Appointments</h1>
+          <p class="dash-muted">
+            Bookings from the chatbot appointment form — date and time collected when visitors submit
+          </p>
+        </div>
+        <nav class="dash-nav">
+          <a href="index.html" class="dash-btn dash-btn--ghost">Dashboard</a>
+          <a href="/conversations-sheet" class="dash-btn dash-btn--ghost">Conversation leads</a>
+          <button type="button" id="appt-refresh" class="dash-btn dash-btn--primary">Refresh</button>
+        </nav>
+      </header>
+
+      <section id="appt-unlock" class="appt-unlock hidden" aria-label="Unlock appointments">
+        <h2>Viewer secret required</h2>
+        <p class="dash-muted">
+          Same secret as
+          <a href="/conversations-sheet">Conversation leads</a>
+          (<code>CONVERSATIONS_SHEET_VIEW_SECRET</code> on Railway).
+        </p>
+        <div class="appt-unlock-row">
+          <label>
+            Viewer secret
+            <input id="appt-secret" type="password" autocomplete="current-password" />
+          </label>
+          <button type="button" id="appt-unlock-btn" class="dash-btn dash-btn--primary">Unlock</button>
+        </div>
+        <p id="appt-unlock-msg" class="appt-unlock-msg" role="status"></p>
+      </section>
+
+      <section class="appt-toolbar">
+        <label>
+          From
+          <input type="date" id="appt-from" />
+        </label>
+        <label>
+          To
+          <input type="date" id="appt-to" />
+        </label>
+        <button type="button" id="appt-apply" class="dash-btn dash-btn--ghost">Apply</button>
+        <p id="appt-meta" class="dash-muted appt-meta"></p>
+      </section>
+
+      <section class="appt-panel">
+        <div class="appt-table-wrap">
+          <table class="appt-table">
+            <thead>
+              <tr>
+                <th>App. date</th>
+                <th>App. time</th>
+                <th>Name</th>
+                <th>Mobile</th>
+                <th>Email</th>
+                <th>Conv. date</th>
+                <th>Channel</th>
+                <th>Chat</th>
+              </tr>
+            </thead>
+            <tbody id="appt-body">
+              <tr><td colspan="8" class="appt-loading">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+    <script src="desk-auth.js"></script>
+    <script src="appointments.js"></script>
+  </body>
+</html>

@@ -75,6 +75,8 @@
       calNoMoreSlotsToday: 'No more times left today. Try another date.',
       calOutsideWindow: 'You can only book within the allowed number of days.',
       calLoading: 'Loading…',
+      calSlotTaken: 'That time was just booked. Pick another slot.',
+      calBookFailed: 'Could not book this slot. Try again.',
       formSubmitThanks: 'Thank you for sharing.',
       formSubmitThanksAppointment: 'Your appointment request has been submitted.',
       closeForm: 'Close form',
@@ -126,6 +128,8 @@
       calNoMoreSlotsToday: 'आज के लिए और समय उपलब्ध नहीं। दूसरी तारीख चुनें।',
       calOutsideWindow: 'केवल निर्धारित दिनों के भीतर ही बुक कर सकते हैं।',
       calLoading: 'लोड हो रहा है…',
+      calSlotTaken: 'यह समय अभी बुक हो गया। दूसरा स्लॉट चुनें।',
+      calBookFailed: 'बुकिंग नहीं हो सकी। फिर कोशिश करें।',
       formSubmitThanks: 'साझा करने के लिए धन्यवाद।',
       formSubmitThanksAppointment: 'आपका अपॉइंटमेंट अनुरोध जमा हो गया है।',
       closeForm: 'फ़ॉर्म बंद करें',
@@ -177,6 +181,8 @@
       calNoMoreSlotsToday: 'आजसाठी आणखी वेळ उपलब्ध नाही. दुसरी तारीख निवडा.',
       calOutsideWindow: 'फक्त ठरवलेल्या दिवसांमध्येच बुकिंग करता येईल.',
       calLoading: 'लोड होत आहे…',
+      calSlotTaken: 'हा वेळ आत्ताच बुक झाला. दुसरा स्लॉट निवडा.',
+      calBookFailed: 'बुकिंग होऊ शकली नाही. पुन्हा प्रयत्न करा.',
       formSubmitThanks: 'माहिती शेअर केल्याबद्दल धन्यवाद.',
       formSubmitThanksAppointment: 'तुमची अपॉइंटमेंट विनंती जमा झाली आहे.',
       closeForm: 'फॉर्म बंद करा',
@@ -1609,6 +1615,50 @@
     );
   }
 
+  function isAppointmentFormDef(def, formId) {
+    if (def && String(def.formType || '').toLowerCase() === 'appointment') return true;
+    var id = String(formId || '').toLowerCase();
+    return (
+      id === 'appointment' ||
+      id === 'appintmentformgeneral' ||
+      id === 'appintmentformdoctor'
+    );
+  }
+
+  function bookAppointmentBeforeSubmit(widget, formId, values) {
+    var date = values && values.appointmentdate;
+    var time = values && values.appointmenttime;
+    if (!date || !time) {
+      return Promise.resolve({ ok: true, skipped: true });
+    }
+    var base = apiBase(widget);
+    if (!base) return Promise.resolve({ ok: true, skipped: true });
+    var ctx = (widget && widget.clientContext) || {};
+    return fetch(base + '/api/appointment-book', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        formId: formId,
+        date: date,
+        time: time,
+        sessionId: widget && widget.sessionId,
+        name: values.name || ctx.name || '',
+        mobile: values.mobile || ctx.mobile || '',
+        email: values.email || ctx.email || '',
+        appointmentdate: date,
+        appointmenttime: time,
+      }),
+    })
+      .then(function (r) {
+        return r.json().then(function (data) {
+          return { ok: r.ok, status: r.status, data: data };
+        });
+      })
+      .catch(function () {
+        return { ok: false, data: { error: 'network_error' } };
+      });
+  }
+
   function apptSlotsQuery(formId, dateIso) {
     return (
       '/api/appointment-slots?formId=' +
@@ -2342,62 +2392,95 @@
         }
       };
 
-      var selectedFiles = form._selectedFiles || [];
-      if (
-        isUploadForm(def, formId) &&
-        selectedFiles.length &&
-        widget &&
-        typeof widget.uploadFormDocuments === 'function'
-      ) {
-        if (wrap.classList.contains('qa-form--uploading')) return;
-        wrap.classList.add('qa-form--uploading');
-        form.querySelectorAll('input, select, textarea, button').forEach(function (el) {
-          el.disabled = true;
-        });
-        widget
-          .uploadFormDocuments(selectedFiles, result.values, request)
-          .then(function (up) {
-            if (!up || !up.ok) {
+      var finishSubmit = function () {
+        if (
+          isUploadForm(def, formId) &&
+          (form._selectedFiles || []).length &&
+          widget &&
+          typeof widget.uploadFormDocuments === 'function'
+        ) {
+          if (wrap.classList.contains('qa-form--uploading')) return;
+          wrap.classList.add('qa-form--uploading');
+          form.querySelectorAll('input, select, textarea, button').forEach(function (el) {
+            el.disabled = true;
+          });
+          widget
+            .uploadFormDocuments(form._selectedFiles || [], result.values, request)
+            .then(function (up) {
+              if (!up || !up.ok) {
+                wrap.classList.remove('qa-form--uploading');
+                wrap.classList.remove('qa-form--submitted');
+                form.querySelectorAll('input, select, textarea, button').forEach(function (el) {
+                  el.disabled = false;
+                });
+                var errEl = form.querySelector('.qa-form__upload-error');
+                if (!errEl) {
+                  errEl = document.createElement('p');
+                  errEl.className = 'qa-form__upload-error';
+                  errEl.setAttribute('role', 'alert');
+                  form.querySelector('.qa-form__footer').prepend(errEl);
+                }
+                errEl.textContent =
+                  (up && up.message) || 'Could not upload file. Try again.';
+                return;
+              }
+              if (up.document_names) {
+                result.values.document = up.document_names;
+              } else if (up.uploads && up.uploads.length) {
+                result.values.document = up.uploads
+                  .map(function (u) {
+                    return u.original_name;
+                  })
+                  .filter(Boolean)
+                  .join(', ');
+              }
+              if (widget) widget.pendingUploadTag = '';
+              submitUploadThenForm();
+            })
+            .catch(function () {
               wrap.classList.remove('qa-form--uploading');
               wrap.classList.remove('qa-form--submitted');
               form.querySelectorAll('input, select, textarea, button').forEach(function (el) {
                 el.disabled = false;
               });
-              var errEl = form.querySelector('.qa-form__upload-error');
-              if (!errEl) {
-                errEl = document.createElement('p');
-                errEl.className = 'qa-form__upload-error';
-                errEl.setAttribute('role', 'alert');
-                form.querySelector('.qa-form__footer').prepend(errEl);
-              }
-              errEl.textContent =
-                (up && up.message) || 'Could not upload file. Try again.';
-              return;
-            }
-            if (up.document_names) {
-              result.values.document = up.document_names;
-            } else if (up.uploads && up.uploads.length) {
-              result.values.document = up.uploads
-                .map(function (u) {
-                  return u.original_name;
-                })
-                .filter(Boolean)
-                .join(', ');
-            }
-            if (widget) widget.pendingUploadTag = '';
-            submitUploadThenForm();
-          })
-          .catch(function () {
-            wrap.classList.remove('qa-form--uploading');
-            wrap.classList.remove('qa-form--submitted');
-            form.querySelectorAll('input, select, textarea, button').forEach(function (el) {
-              el.disabled = false;
             });
-          });
+          return;
+        }
+        submitUploadThenForm();
+      };
+
+      if (isAppointmentFormDef(def, formId)) {
+        bookAppointmentBeforeSubmit(widget, formId, result.values).then(function (booked) {
+          if (!booked.ok) {
+            var calWrap = form.querySelector('.qa-form__field--calendar');
+            var errText =
+              (booked.data && booked.data.error) === 'slot_unavailable'
+                ? t(lang, 'calSlotTaken')
+                : t(lang, 'calBookFailed');
+            if (calWrap) {
+              var calErr = calWrap.querySelector('.qa-form__error');
+              if (calErr) {
+                calErr.textContent = errText;
+                calErr.hidden = false;
+              }
+            } else {
+              var footerErr = form.querySelector('.qa-form__book-error');
+              if (!footerErr) {
+                footerErr = document.createElement('p');
+                footerErr.className = 'qa-form__book-error';
+                footerErr.setAttribute('role', 'alert');
+                form.querySelector('.qa-form__footer').prepend(footerErr);
+              }
+              footerErr.textContent = errText;
+            }
+            return;
+          }
+          finishSubmit();
+        });
         return;
       }
 
-      submitUploadThenForm();
+      finishSubmit();
     });
 
     wrap.appendChild(form);
