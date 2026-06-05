@@ -56,11 +56,11 @@
         <div id="qa-custom-range" class="qa-custom-range hidden" aria-label="Custom date range">
           <label>
             From
-            <input type="date" id="qa-from" />
+            <input type="text" id="qa-from" placeholder="DD/MM/YYYY" inputmode="numeric" autocomplete="off" />
           </label>
           <label>
             To
-            <input type="date" id="qa-to" />
+            <input type="text" id="qa-to" placeholder="DD/MM/YYYY" inputmode="numeric" autocomplete="off" />
           </label>
           <button type="button" id="qa-apply-range" class="dash-btn dash-btn--ghost">Apply</button>
         </div>
@@ -175,6 +175,7 @@
       </section>
     </div>
     <script src="desk-auth.js"></script>
+    <script src="date-display.js"></script>
     <script src="query-analytics.js"></script>
   </body>
 </html>

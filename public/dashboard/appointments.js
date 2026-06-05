@@ -14,13 +14,31 @@
     return d.innerHTML;
   }
 
+  function parseInputDate(raw) {
+    var dd = window.QADateDisplay;
+    if (dd && dd.parseToIsoYmd) return dd.parseToIsoYmd(raw);
+    return String(raw || '').trim();
+  }
+
+  function formatDmy(raw) {
+    var dd = window.QADateDisplay;
+    if (dd && dd.formatDateDisplay) return dd.formatDateDisplay(raw);
+    return String(raw || '').trim();
+  }
+
   function buildUrl() {
     var base = auth.apiBase() + '/api/appointments?';
-    var from = $('appt-from') ? $('appt-from').value : '';
-    var to = $('appt-to') ? $('appt-to').value : '';
+    var fromRaw = $('appt-from') ? $('appt-from').value : '';
+    var toRaw = $('appt-to') ? $('appt-to').value : '';
     var qs = [];
-    if (from) qs.push('from=' + encodeURIComponent(from));
-    if (to) qs.push('to=' + encodeURIComponent(to));
+    if (fromRaw) {
+      var from = parseInputDate(fromRaw);
+      if (from) qs.push('from=' + encodeURIComponent(from));
+    }
+    if (toRaw) {
+      var to = parseInputDate(toRaw);
+      if (to) qs.push('to=' + encodeURIComponent(to));
+    }
     return base + qs.join('&');
   }
 
@@ -45,7 +63,7 @@
           return (
             '<tr>' +
             '<td>' +
-            esc(row.appointmentDate || '—') +
+            esc(formatDmy(row.appointmentDate) || '—') +
             '</td>' +
             '<td>' +
             esc(row.appointmentTime || '—') +
@@ -60,7 +78,7 @@
             esc(row.email || '—') +
             '</td>' +
             '<td>' +
-            esc(row.conversationDate || '—') +
+            esc(formatDmy(row.conversationDate) || '—') +
             '</td>' +
             '<td>' +
             esc(row.channel || '—') +

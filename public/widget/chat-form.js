@@ -4,6 +4,29 @@
 (function (global) {
   'use strict';
 
+  var dateDisplayApi = global.QADateDisplay || {};
+
+  function parseToIsoYmdClient(raw) {
+    if (dateDisplayApi.parseToIsoYmd) return dateDisplayApi.parseToIsoYmd(raw);
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(raw || '').trim());
+    return m ? m[0] : '';
+  }
+
+  function isoYmdToDdMmYyyyClient(raw) {
+    if (dateDisplayApi.isoYmdToDdMmYyyy) {
+      return dateDisplayApi.isoYmdToDdMmYyyy(raw);
+    }
+    var iso = parseToIsoYmdClient(raw);
+    if (!iso) return String(raw || '').trim();
+    var p = iso.split('-');
+    return p[2] + '/' + p[1] + '/' + p[0];
+  }
+
+  function formatDateDisplayClient(raw) {
+    if (dateDisplayApi.formatDateDisplay) return dateDisplayApi.formatDateDisplay(raw);
+    return isoYmdToDdMmYyyyClient(raw) || String(raw || '').trim();
+  }
+
   var ICONS = {
     user:
       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg>',
@@ -36,6 +59,8 @@
       invalidOtp: 'Enter a valid OTP code.',
       invalidPastBirthDate: 'Choose a date before today.',
       invalidFutureDate: 'Choose today or a later date.',
+      invalidDateFormat: 'Use DD/MM/YYYY.',
+      datePlaceholder: 'DD/MM/YYYY',
       namePlaceholder: 'Your name',
       mobilePlaceholder: 'Mobile number',
       emailPlaceholder: 'Email address',
@@ -89,6 +114,8 @@
       invalidOtp: 'मान्य OTP दर्ज करें।',
       invalidPastBirthDate: 'आज से पहले की तारीख चुनें।',
       invalidFutureDate: 'आज या उसके बाद की तारीख चुनें।',
+      invalidDateFormat: 'DD/MM/YYYY प्रारूप में दर्ज करें।',
+      datePlaceholder: 'DD/MM/YYYY',
       namePlaceholder: 'आपका नाम',
       mobilePlaceholder: 'मोबाइल नंबर',
       emailPlaceholder: 'ईमेल पता',
@@ -142,6 +169,8 @@
       invalidOtp: 'वैध OTP टाका.',
       invalidPastBirthDate: 'आजपूर्वीची तारीख निवडा.',
       invalidFutureDate: 'आज किंवा नंतरची तारीख निवडा.',
+      invalidDateFormat: 'DD/MM/YYYY स्वरूपात भरा.',
+      datePlaceholder: 'DD/MM/YYYY',
       namePlaceholder: 'तुमचे नाव',
       mobilePlaceholder: 'मोबाईल नंबर',
       emailPlaceholder: 'ईमेल पत्ता',
@@ -397,9 +426,7 @@
   }
 
   function formatAppointmentDateDisplay(iso) {
-    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso || '').trim());
-    if (!m) return String(iso || '').trim();
-    return m[3] + '/' + m[2] + '/' + m[1];
+    return formatDateDisplayClient(iso);
   }
 
   function submitThanksMessage(def, lang) {
@@ -438,8 +465,12 @@
       }
       if (/^\d{10,}_\d{2}_\d{2}_\d{4}_/.test(val)) return val;
     }
-    if (def && def.formType === 'appointment' && name === 'appointmentdate') {
-      return formatAppointmentDateDisplay(val);
+    if (
+      name === 'appointmentdate' ||
+      name === 'birthdate' ||
+      (field && field.type === 'date')
+    ) {
+      return formatDateDisplayClient(val);
     }
     if (name === 'appointmenttime' || (field && field.type === 'time')) {
       return to12hClient(val);
@@ -498,23 +529,30 @@
     }
   }
 
-  function isPastAppointmentDate(iso) {
-    return String(iso || '').trim() < todayLocalIso();
+  function isPastAppointmentDate(raw) {
+    var iso = parseToIsoYmdClient(raw);
+    if (!iso) return false;
+    return iso < todayLocalIso();
   }
 
   function validatePastDate(val, field, lang) {
     if (!val) return t(lang, 'required');
+    var iso = parseToIsoYmdClient(val);
+    if (!iso) return t(lang, 'invalidDateFormat');
     var max = yesterdayIso();
-    if (field.pastDateMin && val < field.pastDateMin) {
-      return t(lang, 'invalidPastBirthDate');
+    if (field.pastDateMin) {
+      var minIso = parseToIsoYmdClient(field.pastDateMin) || field.pastDateMin;
+      if (iso < minIso) return t(lang, 'invalidPastBirthDate');
     }
-    if (val > max) return t(lang, 'invalidPastBirthDate');
+    if (iso > max) return t(lang, 'invalidPastBirthDate');
     return '';
   }
 
   function validateFutureDate(val, lang) {
     if (!val) return t(lang, 'required');
-    if (isPastAppointmentDate(val)) return t(lang, 'invalidFutureDate');
+    var iso = parseToIsoYmdClient(val);
+    if (!iso) return t(lang, 'invalidDateFormat');
+    if (iso < todayLocalIso()) return t(lang, 'invalidFutureDate');
     return '';
   }
 
@@ -569,6 +607,7 @@
   }
 
   function applyDateConstraints(input, field) {
+    if (String(field.type || '').toLowerCase() === 'date') return;
     if (field.pastDateOnly) {
       input.max = yesterdayIso();
       if (field.pastDateMin) input.min = field.pastDateMin;
@@ -1313,6 +1352,7 @@
     if (rowOpts.role === 'mobile') wrap.classList.add('qa-form__field--mobile');
     var type = String(field.type || 'text').toLowerCase();
     var isDialCodeField = field.name === 'dial_code' || field.autoDetectDialCode;
+    var phText = fieldPlaceholder(field, lang);
 
     var controlWrap = document.createElement('div');
     controlWrap.className = 'qa-form__control';
@@ -1348,6 +1388,12 @@
       input.type = 'file';
       if (field.accept) input.accept = field.accept;
       if (field.multiple) input.multiple = true;
+    } else if (type === 'date') {
+      input = document.createElement('input');
+      input.type = 'text';
+      input.inputMode = 'numeric';
+      input.autocomplete = field.autocomplete || 'off';
+      input.placeholder = phText || t(lang, 'datePlaceholder');
     } else {
       input = document.createElement('input');
       input.type = type === 'tel' ? 'tel' : type;
@@ -1366,15 +1412,18 @@
     if (field.pattern) input.pattern = field.pattern;
     applyDateConstraints(input, field);
 
-    var phText = fieldPlaceholder(field, lang);
-    if (phText && type !== 'select' && type !== 'file') {
+    if (phText && type !== 'select' && type !== 'file' && type !== 'date') {
       input.placeholder = phText;
     }
 
     if (prefill[field.name] != null && !(type === 'select' && isDialCodeField)) {
-      input.value = String(prefill[field.name]);
+      input.value =
+        type === 'date'
+          ? formatDateDisplayClient(prefill[field.name])
+          : String(prefill[field.name]);
     } else if (field.value != null && type !== 'file' && !(type === 'select' && isDialCodeField)) {
-      input.value = String(field.value);
+      input.value =
+        type === 'date' ? formatDateDisplayClient(field.value) : String(field.value);
     }
 
     if (type === 'select' && isDialCodeField && field.autoDetectDialCode && prefill[field.name] == null && !rowOpts.skipAutoDetect) {
@@ -1626,10 +1675,14 @@
   }
 
   function bookAppointmentBeforeSubmit(widget, formId, values) {
-    var date = values && values.appointmentdate;
+    var dateDmy = values && values.appointmentdate;
     var time = values && values.appointmenttime;
-    if (!date || !time) {
+    if (!dateDmy || !time) {
       return Promise.resolve({ ok: true, skipped: true });
+    }
+    var dateIso = parseToIsoYmdClient(dateDmy);
+    if (!dateIso) {
+      return Promise.resolve({ ok: false, data: { error: 'invalid_date_or_time' } });
     }
     var base = apiBase(widget);
     if (!base) return Promise.resolve({ ok: true, skipped: true });
@@ -1639,13 +1692,13 @@
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         formId: formId,
-        date: date,
+        date: dateIso,
         time: time,
         sessionId: widget && widget.sessionId,
         name: values.name || ctx.name || '',
         mobile: values.mobile || ctx.mobile || '',
         email: values.email || ctx.email || '',
-        appointmentdate: date,
+        appointmentdate: formatDateDisplayClient(dateIso),
         appointmenttime: time,
       }),
     })
@@ -1688,19 +1741,37 @@
     dateHidden.type = 'hidden';
     dateHidden.name = 'appointmentdate';
     dateHidden.id = field.hiddenDateId || field.id + '-date';
-    var initialDate = prefill.appointmentdate || '';
-    if (isPastAppointmentDate(initialDate)) {
-      initialDate = '';
+    var initialIso = parseToIsoYmdClient(prefill.appointmentdate || '');
+    if (isPastAppointmentDate(initialIso)) {
+      initialIso = '';
     }
-    dateHidden.value = initialDate;
+    var selectedDate = initialIso || '';
 
     var timeHidden = document.createElement('input');
     timeHidden.type = 'hidden';
     timeHidden.name = 'appointmenttime';
     timeHidden.id = field.hiddenTimeId || field.id + '-time';
-    timeHidden.value = isPastAppointmentDate(prefill.appointmentdate)
+    timeHidden.value = isPastAppointmentDate(initialIso)
       ? ''
       : to24hClient(prefill.appointmenttime || '');
+
+    function setSelectedDate(iso) {
+      selectedDate = String(iso || '').trim();
+      dateHidden.value = selectedDate ? isoYmdToDdMmYyyyClient(selectedDate) : '';
+      var titleEl = wrap.querySelector('.qa-form-cal__slots-title');
+      if (titleEl) {
+        titleEl.textContent = selectedDate
+          ? t(lang, 'calPickTime') + ' — ' + isoYmdToDdMmYyyyClient(selectedDate)
+          : t(lang, 'calPickTime');
+      }
+    }
+
+    function getSelectedIso() {
+      if (selectedDate) return selectedDate;
+      return parseToIsoYmdClient(dateHidden.value);
+    }
+
+    setSelectedDate(selectedDate);
 
     form.appendChild(dateHidden);
     form.appendChild(timeHidden);
@@ -1760,7 +1831,6 @@
     var calBookingMax = '';
     var calMaxBookingDays = 30;
     var calBusinessTz = '';
-    var selectedDate = dateHidden.value || '';
 
     function calendarTodayIso() {
       return calBusinessTz ? todayIsoInTimeZone(calBusinessTz) : todayLocalIso();
@@ -1846,9 +1916,8 @@
         slotsWrap.innerHTML = '';
         slotsHead.hidden = true;
         slotsWrap.hidden = true;
-        dateHidden.value = '';
+        setSelectedDate('');
         timeHidden.value = '';
-        selectedDate = '';
         return;
       }
       slotsWrap.innerHTML = '';
@@ -1877,9 +1946,8 @@
           closedMsg.className = 'qa-form-cal__closed-msg';
           closedMsg.textContent = t(lang, 'calClosedDay');
           slotsWrap.appendChild(closedMsg);
-          dateHidden.value = '';
+          setSelectedDate('');
           timeHidden.value = '';
-          selectedDate = '';
           return;
         }
         var slotList = (data && data.slots) || [];
@@ -1915,7 +1983,7 @@
           b.textContent =
             cap > 1 ? slot12 + ' (' + bookedN + '/' + cap + ')' : slot12;
           b.setAttribute('data-slot-24', slot24);
-          if (to24hClient(timeHidden.value) === slot24 && dateHidden.value === iso) {
+          if (to24hClient(timeHidden.value) === slot24 && getSelectedIso() === iso) {
             b.classList.add('qa-form-cal__slot--active');
           }
           b.addEventListener(
@@ -1923,9 +1991,8 @@
             (function (d, t24, full, btn) {
               return function () {
                 if (full) return;
-                dateHidden.value = d;
+                setSelectedDate(d);
                 timeHidden.value = t24;
-                selectedDate = d;
                 slotsWrap.querySelectorAll('.qa-form-cal__slot').forEach(function (el) {
                   el.classList.remove('qa-form-cal__slot--active');
                 });
@@ -1987,7 +2054,7 @@
           cell.classList.add('qa-form-cal__day--booked');
           cell.classList.add('qa-form-cal__day--full');
         }
-        if (iso === selectedDate) {
+        if (iso === getSelectedIso()) {
           cell.classList.add('qa-form-cal__day--active');
         }
         cell.addEventListener(
@@ -1995,8 +2062,7 @@
           (function (d, closed, todayBlocked, outside, dayBtn) {
             return function () {
               if (d < today || closed || todayBlocked || outside) return;
-              selectedDate = d;
-              dateHidden.value = d;
+              setSelectedDate(d);
               grid.querySelectorAll('.qa-form-cal__day').forEach(function (el) {
                 el.classList.remove('qa-form-cal__day--active');
               });
@@ -2035,44 +2101,45 @@
     syncPrevNav();
     fetchMonthBooked().then(function () {
       renderGrid();
-      if (dateHidden.value && !isPastAppointmentDate(dateHidden.value)) {
-        renderSlots(dateHidden.value);
+      var initIso = getSelectedIso();
+      if (initIso && !isPastAppointmentDate(initIso)) {
+        renderSlots(initIso);
       }
     });
 
     wrap._validateAppt = function () {
-      if (!dateHidden.value || !timeHidden.value) {
+      var selIso = getSelectedIso();
+      if (!selIso || !timeHidden.value) {
         err.textContent = t(lang, 'required');
         err.hidden = false;
         wrap.classList.add('qa-form__field--invalid');
         return false;
       }
-      if (isPastAppointmentDate(dateHidden.value)) {
+      if (isPastAppointmentDate(selIso)) {
         err.textContent = t(lang, 'invalidFutureDate');
         err.hidden = false;
         wrap.classList.add('qa-form__field--invalid');
-        dateHidden.value = '';
+        setSelectedDate('');
         timeHidden.value = '';
-        selectedDate = '';
         renderGrid();
         return false;
       }
-      if (closedDates.indexOf(dateHidden.value) >= 0) {
+      if (closedDates.indexOf(selIso) >= 0) {
         err.textContent = t(lang, 'calClosedDay');
         err.hidden = false;
         wrap.classList.add('qa-form__field--invalid');
         return false;
       }
-      if (dateHidden.value === calendarTodayIso() && !calAllowToday) {
+      if (selIso === calendarTodayIso() && !calAllowToday) {
         err.textContent = t(lang, 'calTodayHidden');
         err.hidden = false;
         wrap.classList.add('qa-form__field--invalid');
         return false;
       }
       if (
-        dateHidden.value &&
-        ((calBookingMin && dateHidden.value < calBookingMin) ||
-          (calBookingMax && dateHidden.value > calBookingMax))
+        selIso &&
+        ((calBookingMin && selIso < calBookingMin) ||
+          (calBookingMax && selIso > calBookingMax))
       ) {
         err.textContent = t(lang, 'calOutsideWindow');
         err.hidden = false;
@@ -2119,8 +2186,9 @@
       }
 
       if (isAppointmentCalendarField(field, def)) {
-        values.appointmentdate =
+        var apptDateRaw =
           (form.querySelector('[name="appointmentdate"]') || {}).value || '';
+        values.appointmentdate = formatDateDisplayClient(apptDateRaw);
         var apptTimeRaw =
           (form.querySelector('[name="appointmenttime"]') || {}).value || '';
         values.appointmenttime = to12hClient(apptTimeRaw);
@@ -2158,6 +2226,8 @@
       var raw = input ? (input.tagName === 'SELECT' ? input.value : input.value) : '';
       if (field.name === 'appointmenttime' || field.type === 'time') {
         raw = to12hClient(raw);
+      } else if (type === 'date') {
+        raw = formatDateDisplayClient(raw);
       }
       values[field.name] = raw;
       var errMsg = validateValue(field, raw, lang);

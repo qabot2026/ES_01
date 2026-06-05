@@ -27,13 +27,16 @@
     if (dateDisplay) return dateDisplay;
     if (!iso) return '—';
     try {
-      return new Date(iso).toLocaleString('en-IN', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
+      var dd = window.QADateDisplay;
+      var dayPart = dd && dd.formatDateDisplay
+        ? dd.formatDateDisplay(String(iso).slice(0, 10))
+        : String(iso).slice(0, 10);
+      var timePart = new Date(iso).toLocaleString('en-GB', {
         hour: '2-digit',
         minute: '2-digit',
+        hour12: true,
       });
+      return dayPart + ', ' + timePart;
     } catch (e) {
       return iso;
     }

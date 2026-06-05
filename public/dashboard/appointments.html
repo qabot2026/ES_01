@@ -43,11 +43,11 @@
       <section class="appt-toolbar">
         <label>
           From
-          <input type="date" id="appt-from" />
+          <input type="text" id="appt-from" placeholder="DD/MM/YYYY" inputmode="numeric" autocomplete="off" />
         </label>
         <label>
           To
-          <input type="date" id="appt-to" />
+          <input type="text" id="appt-to" placeholder="DD/MM/YYYY" inputmode="numeric" autocomplete="off" />
         </label>
         <button type="button" id="appt-apply" class="dash-btn dash-btn--ghost">Apply</button>
         <p id="appt-meta" class="dash-muted appt-meta"></p>
@@ -76,6 +76,7 @@
       </section>
     </div>
     <script src="desk-auth.js"></script>
+    <script src="date-display.js"></script>
     <script src="appointments.js"></script>
   </body>
 </html>

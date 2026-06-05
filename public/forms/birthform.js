@@ -29,6 +29,11 @@
         pastDateMin: "1900-01-01",
         icon: "calendar",
         i18nPlaceholder: "birthDatePlaceholder",
+        placeholderByLanguage: {
+          en: "DD/MM/YYYY",
+          hi: "DD/MM/YYYY",
+          mr: "DD/MM/YYYY"
+        },
         i18nSummaryLabel: "summaryBirthDateLabel",
         i18nInvalidMessage: "invalidPastBirthDate",
         autocomplete: "bday"

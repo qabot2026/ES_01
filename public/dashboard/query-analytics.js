@@ -98,11 +98,24 @@
     return y + '-' + m + '-' + day;
   }
 
+  function formatDmy(d) {
+    var dd = window.QADateDisplay;
+    if (dd && dd.isoYmdToDdMmYyyy) return dd.isoYmdToDdMmYyyy(isoDate(d));
+    var parts = isoDate(d).split('-');
+    return parts[2] + '/' + parts[1] + '/' + parts[0];
+  }
+
+  function parseInputDate(raw) {
+    var dd = window.QADateDisplay;
+    if (dd && dd.parseToIsoYmd) return dd.parseToIsoYmd(raw);
+    return String(raw || '').trim();
+  }
+
   function defaultCustomDates() {
     var to = new Date();
     var from = new Date();
     from.setDate(from.getDate() - 29);
-    return { from: isoDate(from), to: isoDate(to) };
+    return { from: formatDmy(from), to: formatDmy(to) };
   }
 
   function toggleCustomRange() {
@@ -139,10 +152,15 @@
       '&unansweredPage=' +
       encodeURIComponent(pageState.unansweredPage);
     if (period === 'custom') {
-      var from = $('qa-from') ? $('qa-from').value : '';
-      var to = $('qa-to') ? $('qa-to').value : '';
-      if (!from || !to) {
+      var fromRaw = $('qa-from') ? $('qa-from').value : '';
+      var toRaw = $('qa-to') ? $('qa-to').value : '';
+      if (!fromRaw || !toRaw) {
         return null;
+      }
+      var from = parseInputDate(fromRaw);
+      var to = parseInputDate(toRaw);
+      if (!from || !to) {
+        return { error: 'Use DD/MM/YYYY for From and To dates.' };
       }
       if (from > to) {
         return { error: 'From date must be on or before To date.' };
@@ -231,12 +249,14 @@
 
   function formatPeriodLabel(period) {
     if (!period) return '';
-    var from = period.from ? new Date(period.from) : null;
-    var to = period.to ? new Date(period.to) : null;
-    if (!from || !to) return '';
-    return (
-      from.toLocaleDateString() + ' → ' + to.toLocaleDateString()
-    );
+    var dd = window.QADateDisplay;
+    var fromRaw = period.from ? String(period.from).slice(0, 10) : '';
+    var toRaw = period.to ? String(period.to).slice(0, 10) : '';
+    if (!fromRaw || !toRaw) return '';
+    if (dd && dd.formatDateDisplay) {
+      return dd.formatDateDisplay(fromRaw) + ' → ' + dd.formatDateDisplay(toRaw);
+    }
+    return fromRaw + ' → ' + toRaw;
   }
 
   function renderQueryRows(list, emptyLabel) {

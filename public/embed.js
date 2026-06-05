@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var QA_ASSET_VERSION = '20260605-appointment-book';
+  var QA_ASSET_VERSION = '20260605-dd-mm-yyyy';
 
   var QA_FORM_SCRIPTS = [
     'contact.js',
@@ -70,6 +70,7 @@
     loadJs(assetUrl(base + '/company.config.js'), function () {
       loadFormScripts(0, function () {
         loadCss(base + '/widget/chat-widget.css');
+        loadJs(assetUrl(base + '/widget/date-display.js'), function () {
         loadJs(assetUrl(base + '/widget/chat-form.js'), function () {
           loadJs(assetUrl(base + '/widget/chat-widget.js'), function () {
             loadJs(assetUrl(base + '/widget/live-agent-client.js'), function () {
@@ -84,6 +85,7 @@
               });
             });
           });
+        });
         });
       });
     });
