@@ -3309,6 +3309,17 @@
           if (self.qaMode && up.simulated) {
             botMsg =
               'QA test mode: upload preview only — file was not saved.';
+          } else if (up.duplicate_skipped) {
+            botMsg =
+              'These file(s) were already received for this chat: ' +
+              (docNames || names) +
+              '. Check Dashboard → Customer documents → Refresh.';
+          } else if (up.storage_folder) {
+            botMsg =
+              botMsg +
+              ' Staff: Dashboard → Customer documents → Refresh (folder ' +
+              up.storage_folder +
+              ').';
           }
           self.appendMessage('bot', botMsg);
           if (!self.qaMode) {
@@ -3385,12 +3396,16 @@
         if (res.status >= 200 && res.status < 300 && res.data && res.data.ok) {
           return res.data;
         }
-        return {
-          ok: false,
-          message:
-            (res.data && (res.data.message || res.data.error)) ||
-            'Upload failed',
-        };
+        var data = res.data || {};
+        var msg =
+          data.message ||
+          data.error ||
+          (data.error === 'gcs_not_configured'
+            ? 'File storage is not configured on the server (GCS_BUCKET_NAME).'
+            : '') ||
+          (res.status === 400 ? 'Upload request was invalid.' : '') ||
+          'Upload failed';
+        return { ok: false, message: msg, status: res.status, data: data };
       })
       .catch(function () {
         return { ok: false, message: 'Upload failed' };

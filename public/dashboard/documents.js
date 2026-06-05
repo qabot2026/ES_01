@@ -429,11 +429,41 @@
       });
   }
 
+  function updateStorageMeta(data) {
+    var el = document.getElementById('docs-storage-meta');
+    if (!el || !data || !data.ok) return;
+    var prefix = String(data.scan_prefix || 'uploads').trim() || 'uploads';
+    var bucket = String(data.bucket || '').trim();
+    var fetched = data.fetched_at
+      ? new Date(data.fetched_at).toLocaleString('en-GB', {
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: true,
+        })
+      : '';
+    var extra =
+      data.total_folders_in_bucket > data.total_folders
+        ? ' · showing newest ' + data.total_folders + ' of ' + data.total_folders_in_bucket
+        : '';
+    el.textContent =
+      (bucket ? 'Bucket: ' + bucket + ' · ' : '') +
+      'Path: ' +
+      prefix +
+      '/…' +
+      (fetched ? ' · Refreshed ' + fetched : '') +
+      extra;
+    el.hidden = false;
+  }
+
   function load() {
     showAlert('');
     document.getElementById('docs-tbody').innerHTML =
       '<tr><td colspan="8" class="docs-table__empty">Loading…</td></tr>';
-    fetch(apiBase() + '/api/documents/catalog', { headers: headers() })
+    fetch(apiBase() + '/api/documents/catalog?limit=500', {
+      headers: headers(),
+      cache: 'no-store',
+    })
       .then(function (r) {
         return r.json();
       })
@@ -451,7 +481,13 @@
             '<tr><td colspan="8" class="docs-table__empty">—</td></tr>';
           return;
         }
+        updateStorageMeta(data);
         state.rows = foldersToRows(data.folders || []);
+        if (!state.rows.length) {
+          showAlert(
+            'No files in storage yet. Upload from production chat (not /qa), then click Refresh. Composer uploads show Tag “Composer”.'
+          );
+        }
         applyFilter();
       })
       .catch(function () {

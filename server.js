@@ -493,10 +493,22 @@ app.post(
     }
     files = chatTranscript.filterDuplicateUploadFilesForSession(sessionId, files);
     if (!files.length) {
+      let priorMeta = {};
+      try {
+        const doc = chatTranscript.getSessionDoc(sessionId);
+        priorMeta = (doc && doc.meta) || {};
+      } catch {
+        /* ignore */
+      }
       return res.json({
         ok: true,
         sessionId,
         duplicate_skipped: true,
+        storage_folder: priorMeta.storage_folder || '',
+        document_names:
+          priorMeta.document_names ||
+          priorMeta.document ||
+          '',
         message: 'Files already uploaded for this session.',
       });
     }
@@ -934,6 +946,7 @@ app.get('/api/config', (_req, res) => {
     sheetsRange: sheets.RANGE,
     gcsConfigured: gcsUpload.isConfigured(),
     gcsBucket: gcsUpload.BUCKET_NAME || null,
+    gcsUploadPrefix: gcsUpload.UPLOAD_PREFIX || 'uploads',
     sheetsServiceAccountEmail: require('./lib/google-credentials').getClientEmail(),
     publicBaseUrl: PUBLIC_BASE_URL,
     embedScript: `${PUBLIC_BASE_URL}/embed.js`,
