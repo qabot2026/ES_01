@@ -50,8 +50,20 @@
             <option value="30" selected>Last 30 days</option>
             <option value="90">Last 90 days</option>
             <option value="365">Last year</option>
+            <option value="custom">Custom range…</option>
           </select>
         </label>
+        <div id="qa-custom-range" class="qa-custom-range hidden" aria-label="Custom date range">
+          <label>
+            From
+            <input type="date" id="qa-from" />
+          </label>
+          <label>
+            To
+            <input type="date" id="qa-to" />
+          </label>
+          <button type="button" id="qa-apply-range" class="dash-btn dash-btn--ghost">Apply</button>
+        </div>
         <p id="qa-period-label" class="dash-muted qa-period-label"></p>
       </section>
 
@@ -85,12 +97,18 @@
             <p class="dash-muted qa-hint">Live chats where Dialogflow understood (not fallback)</p>
             <div class="qa-table-wrap">
               <table class="qa-table">
+                <colgroup>
+                  <col class="qa-col-query" />
+                  <col class="qa-col-num" />
+                  <col class="qa-col-num" />
+                  <col class="qa-col-date" />
+                </colgroup>
                 <thead>
                   <tr>
-                    <th>User query</th>
-                    <th>Times</th>
-                    <th>Sessions</th>
-                    <th>Last asked</th>
+                    <th class="qa-col-query">User query</th>
+                    <th class="qa-col-num">Times</th>
+                    <th class="qa-col-num">Sessions</th>
+                    <th class="qa-col-date">Last asked</th>
                   </tr>
                 </thead>
                 <tbody id="qa-answered-body">
@@ -104,12 +122,18 @@
             <p class="dash-muted qa-hint">Fallback only — bot did not understand</p>
             <div class="qa-table-wrap">
               <table class="qa-table">
+                <colgroup>
+                  <col class="qa-col-query" />
+                  <col class="qa-col-num" />
+                  <col class="qa-col-num" />
+                  <col class="qa-col-date" />
+                </colgroup>
                 <thead>
                   <tr>
-                    <th>User query</th>
-                    <th>Times</th>
-                    <th>Sessions</th>
-                    <th>Last asked</th>
+                    <th class="qa-col-query">User query</th>
+                    <th class="qa-col-num">Times</th>
+                    <th class="qa-col-num">Sessions</th>
+                    <th class="qa-col-date">Last asked</th>
                   </tr>
                 </thead>
                 <tbody id="qa-unanswered-body">

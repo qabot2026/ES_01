@@ -31,6 +31,58 @@
     }
   }
 
+  function isoDate(d) {
+    var y = d.getFullYear();
+    var m = String(d.getMonth() + 1).padStart(2, '0');
+    var day = String(d.getDate()).padStart(2, '0');
+    return y + '-' + m + '-' + day;
+  }
+
+  function defaultCustomDates() {
+    var to = new Date();
+    var from = new Date();
+    from.setDate(from.getDate() - 29);
+    return { from: isoDate(from), to: isoDate(to) };
+  }
+
+  function toggleCustomRange() {
+    var period = $('qa-period');
+    var custom = $('qa-custom-range');
+    if (!period || !custom) return;
+    var isCustom = period.value === 'custom';
+    custom.classList.toggle('hidden', !isCustom);
+    if (isCustom) {
+      var fromEl = $('qa-from');
+      var toEl = $('qa-to');
+      var defaults = defaultCustomDates();
+      if (fromEl && !fromEl.value) fromEl.value = defaults.from;
+      if (toEl && !toEl.value) toEl.value = defaults.to;
+    }
+  }
+
+  function buildQueryUrl() {
+    var period = $('qa-period') ? $('qa-period').value : '30';
+    var base = auth.apiBase() + '/api/analytics/queries?';
+    if (period === 'custom') {
+      var from = $('qa-from') ? $('qa-from').value : '';
+      var to = $('qa-to') ? $('qa-to').value : '';
+      if (!from || !to) {
+        return null;
+      }
+      if (from > to) {
+        return { error: 'From date must be on or before To date.' };
+      }
+      return (
+        base +
+        'from=' +
+        encodeURIComponent(from) +
+        '&to=' +
+        encodeURIComponent(to)
+      );
+    }
+    return base + 'days=' + encodeURIComponent(period);
+  }
+
   function formatPeriodLabel(period) {
     if (!period) return '';
     var from = period.from ? new Date(period.from) : null;
@@ -62,7 +114,7 @@
           '<td class="num">' +
           (q.sessions || 0) +
           '</td>' +
-          '<td class="num">' +
+          '<td class="num qa-date-cell">' +
           escapeHtml(formatWhen(q.lastAt)) +
           '</td></tr>'
         );
@@ -131,7 +183,6 @@
       return;
     }
 
-    var days = $('qa-period') ? $('qa-period').value : '30';
     var answeredBody = $('qa-answered-body');
     var unansweredBody = $('qa-unanswered-body');
     if (answeredBody) {
@@ -141,11 +192,17 @@
       unansweredBody.innerHTML = '<tr><td colspan="4" class="qa-loading">Loading…</td></tr>';
     }
 
-    var url =
-      auth.apiBase() +
-      '/api/analytics/queries?days=' +
-      encodeURIComponent(days);
-    url = auth.withAuthQuery(url);
+    var built = buildQueryUrl();
+    if (built && built.error) {
+      $('qa-period-label').textContent = built.error;
+      return;
+    }
+    if (!built) {
+      toggleCustomRange();
+      $('qa-period-label').textContent = 'Choose From and To dates, then Apply.';
+      return;
+    }
+    var url = auth.withAuthQuery(built);
 
     fetch(url, { headers: auth.authHeaders() })
       .then(function (r) {
@@ -195,7 +252,16 @@
   }
 
   $('qa-refresh').addEventListener('click', load);
-  $('qa-period').addEventListener('change', load);
+  $('qa-period').addEventListener('change', function () {
+    toggleCustomRange();
+    if ($('qa-period').value !== 'custom') {
+      load();
+    }
+  });
+  if ($('qa-apply-range')) {
+    $('qa-apply-range').addEventListener('click', load);
+  }
+  toggleCustomRange();
   if ($('qa-unlock-btn')) {
     $('qa-unlock-btn').addEventListener('click', unlockAndLoad);
   }

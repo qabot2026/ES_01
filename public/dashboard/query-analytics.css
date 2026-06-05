@@ -69,12 +69,32 @@
   font-weight: 600;
 }
 
-.qa-toolbar select {
+.qa-toolbar select,
+.qa-toolbar input[type='date'] {
   min-width: 10rem;
   padding: 8px 10px;
   border-radius: 8px;
   border: 1px solid var(--dash-border);
   font: inherit;
+}
+
+.qa-custom-range {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px 14px;
+}
+
+.qa-custom-range.hidden {
+  display: none;
+}
+
+.qa-custom-range label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
 }
 
 .qa-period-label {
@@ -164,16 +184,18 @@
 
 .qa-table {
   width: 100%;
+  table-layout: fixed;
   border-collapse: collapse;
   font-size: 0.85rem;
 }
 
 .qa-table th,
 .qa-table td {
-  text-align: left;
-  padding: 10px 8px;
+  padding: 10px 10px;
   border-bottom: 1px solid var(--dash-border);
   vertical-align: top;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .qa-table th {
@@ -181,16 +203,37 @@
   text-transform: uppercase;
   letter-spacing: 0.03em;
   color: var(--dash-muted);
+  font-weight: 600;
 }
 
+.qa-col-query,
+.qa-table .qa-query-cell {
+  width: 48%;
+  text-align: left;
+}
+
+.qa-col-num,
 .qa-table td.num {
+  width: 12%;
   text-align: right;
   white-space: nowrap;
 }
 
+.qa-col-date,
+.qa-table td.qa-date-cell {
+  width: 28%;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.qa-table thead th.qa-col-num,
+.qa-table thead th.qa-col-date {
+  text-align: right;
+}
+
 .qa-query-cell {
-  max-width: 320px;
   word-break: break-word;
+  white-space: normal;
 }
 
 .qa-loading {
