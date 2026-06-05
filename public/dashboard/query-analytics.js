@@ -82,7 +82,7 @@
       .join('');
   }
 
-  function renderQueryRows(list, countKey, emptyLabel) {
+  function renderQueryRows(list, emptyLabel) {
     if (!list.length) {
       return (
         '<tr><td colspan="4" class="qa-loading">' +
@@ -92,14 +92,13 @@
     }
     return list
       .map(function (q) {
-        var count = q[countKey] || 0;
         return (
           '<tr>' +
           '<td class="qa-query-cell">' +
           escapeHtml(q.query) +
           '</td>' +
           '<td class="num"><strong>' +
-          count +
+          (q.times || 0) +
           '</strong></td>' +
           '<td class="num">' +
           (q.sessions || 0) +
@@ -112,36 +111,21 @@
       .join('');
   }
 
-  function renderTables(queries) {
-    var all = queries || [];
-    var answered = all
-      .filter(function (q) {
-        return (q.bot || 0) > 0;
-      })
-      .sort(function (a, b) {
-        return (b.bot || 0) - (a.bot || 0) || String(b.lastAt).localeCompare(String(a.lastAt));
-      });
-    var unanswered = all
-      .filter(function (q) {
-        return (q.fallback || 0) > 0;
-      })
-      .sort(function (a, b) {
-        return (b.fallback || 0) - (a.fallback || 0) || String(b.lastAt).localeCompare(String(a.lastAt));
-      });
+  function renderTables(data) {
+    var answered = (data && data.answeredQueries) || [];
+    var unanswered = (data && data.unansweredQueries) || [];
 
     var answeredBody = $('qa-answered-body');
     var unansweredBody = $('qa-unanswered-body');
     if (answeredBody) {
       answeredBody.innerHTML = renderQueryRows(
         answered,
-        'bot',
         'No answered queries in this period.'
       );
     }
     if (unansweredBody) {
       unansweredBody.innerHTML = renderQueryRows(
         unanswered,
-        'fallback',
         'No unanswered queries in this period.'
       );
     }
@@ -156,7 +140,7 @@
     $('qa-unique').textContent = s.uniqueQueries != null ? s.uniqueQueries : '—';
     $('qa-period-label').textContent = formatPeriodLabel(data.period);
     renderDaily(data.daily);
-    renderTables(data.queries);
+    renderTables(data);
   }
 
   function showUnlock(message) {
