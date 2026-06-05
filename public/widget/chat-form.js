@@ -311,7 +311,7 @@
     return (widget && widget.apiBase) || '';
   }
 
-  function resolveNextFormId(def, request) {
+  function resolveFormChainQueue(def, request) {
     request = request || {};
     var ids = [];
     function push(id) {
@@ -319,8 +319,12 @@
       if (id && ids.indexOf(id) < 0) ids.push(id);
     }
     push(request.nextFormId);
+    push(request.next_form_id);
     if (Array.isArray(request.nextFormIds)) {
       request.nextFormIds.forEach(push);
+    }
+    if (Array.isArray(request.next_form_ids)) {
+      request.next_form_ids.forEach(push);
     }
     push(request.followingFormId);
     push(request.following_form_id);
@@ -330,7 +334,44 @@
       push(def.nextFormId);
       if (Array.isArray(def.nextFormIds)) def.nextFormIds.forEach(push);
     }
-    return ids[0] || '';
+    return ids;
+  }
+
+  function resolveNextFormId(def, request) {
+    var queue = resolveFormChainQueue(def, request);
+    return queue[0] || '';
+  }
+
+  /** Pass remaining chain when opening the next in-chat form (contact → upload → appointment). */
+  function buildChainedFormRequest(nextFormId, def, request, prefill) {
+    var nextId = String(nextFormId || '').trim();
+    if (!nextId) return null;
+    var queue = resolveFormChainQueue(def, request || {});
+    var idx = queue.indexOf(nextId);
+    var remaining = idx >= 0 ? queue.slice(idx + 1) : queue.slice(1);
+    var out = {
+      formId: nextId,
+      prefill: prefill || {},
+    };
+    if (remaining[0]) {
+      out.nextFormId = remaining[0];
+      out.next_form_id = remaining[0];
+    }
+    if (remaining[1]) {
+      out.followingFormId = remaining[1];
+      out.following_form_id = remaining[1];
+    }
+    if (remaining[2]) {
+      out.thirdFormId = remaining[2];
+      out.third_form_id = remaining[2];
+    }
+    if (remaining.length > 1) {
+      out.nextFormIds = remaining.slice(1);
+      out.next_form_ids = remaining.slice(1);
+    }
+    var tag = String((request && request.tag) || '').trim();
+    if (tag) out.tag = tag;
+    return out;
   }
 
   function formatOtpResend(values, def) {
@@ -2639,6 +2680,8 @@
     formSubmittedTranscriptLabel: formSubmittedTranscriptLabel,
     resolveFormAction: resolveFormAction,
     resolveNextFormId: resolveNextFormId,
+    resolveFormChainQueue: resolveFormChainQueue,
+    buildChainedFormRequest: buildChainedFormRequest,
     getFormDef: getFormDef,
     isFormsEnabled: isFormsEnabled,
   };

@@ -3577,11 +3577,20 @@
         chainPromise = chainPromise.then(function () {
           var chainTag = String(req.tag || self.pendingUploadTag || '').trim();
           if (chainTag) self.pendingUploadTag = chainTag;
-          var nextFormReq = {
-            formId: payload.nextFormId,
-            prefill: self.clientContext,
-          };
-          if (chainTag) nextFormReq.tag = chainTag;
+          var nextFormReq =
+            global.QAChatForm && global.QAChatForm.buildChainedFormRequest
+              ? global.QAChatForm.buildChainedFormRequest(
+                  payload.nextFormId,
+                  payload.def,
+                  req,
+                  self.clientContext
+                )
+              : {
+                  formId: payload.nextFormId,
+                  prefill: self.clientContext,
+                };
+          if (!nextFormReq) return;
+          if (chainTag && !nextFormReq.tag) nextFormReq.tag = chainTag;
           self.appendMessage('bot', '', { forms: [nextFormReq] });
         });
       }
