@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Query analytics</title>
+    <link rel="stylesheet" href="dashboard.css" />
+    <link rel="stylesheet" href="query-analytics.css" />
+  </head>
+  <body>
+    <div class="dash-app qa-app">
+      <header class="dash-header">
+        <div>
+          <h1>Query analytics</h1>
+          <p class="dash-muted">What visitors asked, how often, and whether the bot answered or fell back</p>
+        </div>
+        <nav class="dash-nav">
+          <a href="index.html" class="dash-btn dash-btn--ghost">Dashboard</a>
+          <a href="/conversations-sheet" class="dash-btn dash-btn--ghost">Conversation leads</a>
+          <a href="documents.html" class="dash-btn dash-btn--ghost">Documents</a>
+          <button type="button" id="qa-refresh" class="dash-btn dash-btn--primary">Refresh</button>
+        </nav>
+      </header>
+
+      <section class="qa-toolbar">
+        <label>
+          Time period
+          <select id="qa-period">
+            <option value="1">Today (24h)</option>
+            <option value="7">Last 7 days</option>
+            <option value="30" selected>Last 30 days</option>
+            <option value="90">Last 90 days</option>
+            <option value="365">Last year</option>
+          </select>
+        </label>
+        <p id="qa-period-label" class="dash-muted qa-period-label"></p>
+      </section>
+
+      <section class="dash-grid qa-summary" aria-label="Summary">
+        <div class="dash-card">
+          <div class="dash-card__value" id="qa-total">—</div>
+          <div class="dash-card__label">Total queries</div>
+        </div>
+        <div class="dash-card qa-card--bot">
+          <div class="dash-card__value" id="qa-bot">—</div>
+          <div class="dash-card__label">Bot answered</div>
+        </div>
+        <div class="dash-card qa-card--fallback">
+          <div class="dash-card__value" id="qa-fallback">—</div>
+          <div class="dash-card__label">Fallback</div>
+        </div>
+        <div class="dash-card qa-card--handoff">
+          <div class="dash-card__value" id="qa-handoff">—</div>
+          <div class="dash-card__label">Human agent</div>
+        </div>
+        <div class="dash-card">
+          <div class="dash-card__value" id="qa-unique">—</div>
+          <div class="dash-card__label">Unique questions</div>
+        </div>
+      </section>
+
+      <section class="qa-panel">
+        <h2>Queries by day</h2>
+        <div id="qa-daily" class="qa-daily-wrap"></div>
+      </section>
+
+      <section class="qa-panel">
+        <h2>Top queries</h2>
+        <p class="dash-muted qa-hint">
+          Fallback = Dialogflow did not understand. Human agent = visitor asked for a person.
+          Older chats from transcripts may not split fallback per query.
+        </p>
+        <div class="qa-table-wrap">
+          <table class="qa-table" id="qa-table">
+            <thead>
+              <tr>
+                <th>User query</th>
+                <th>Times</th>
+                <th>Bot</th>
+                <th>Fallback</th>
+                <th>Agent</th>
+                <th>Sessions</th>
+                <th>Last asked</th>
+              </tr>
+            </thead>
+            <tbody id="qa-table-body">
+              <tr><td colspan="7" class="qa-loading">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+    <script src="query-analytics.js"></script>
+  </body>
+</html>

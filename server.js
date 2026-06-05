@@ -14,6 +14,7 @@ const gcsUpload = require('./lib/gcs-upload');
 const documentsCatalog = require('./lib/documents-catalog');
 const conversationTranscriptView = require('./lib/conversation-transcript-view');
 const conversationsSheetView = require('./lib/conversations-sheet-view');
+const queryAnalytics = require('./lib/query-analytics');
 
 const app = express();
 const PORT = process.env.PORT || 4567;
@@ -666,6 +667,22 @@ app.get('/api/analytics/summary', requireDeskAuth, (_req, res) => {
     sheetsConfigured: sheets.isConfigured(),
     ...chatTranscript.getAnalyticsSummary(queue),
   });
+});
+
+app.get('/api/analytics/queries', requireDeskAuth, (req, res) => {
+  try {
+    res.json(
+      queryAnalytics.getQueryAnalytics({
+        days: req.query.days,
+        from: req.query.from,
+        to: req.query.to,
+        limit: req.query.limit,
+      })
+    );
+  } catch (err) {
+    console.error('[analytics/queries]', err.message);
+    res.status(500).json({ ok: false, error: err.message || 'query_analytics_failed' });
+  }
 });
 
 app.get('/api/documents/catalog', requireDeskAuth, async (req, res) => {
