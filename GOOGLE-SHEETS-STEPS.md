@@ -44,6 +44,7 @@ App pehli baar sync par khali row 1 par headers **auto** bhi likh sakta hai — 
 | `GOOGLE_CREDENTIALS_JSON` | Poora service account JSON (Dialogflow wala hi) |
 | `SHEETS_SPREADSHEET_ID` | Sheet URL se ID |
 | `SHEETS_RANGE` | `Sheet1!A:AG` (33 columns) |
+| `SHEETS_DASHBOARD_RANGE` | `Sheet2!A:M` — live agent handoffs + Chatscript (optional; default `Sheet2`) |
 | `PUBLIC_BASE_URL` | Your live app URL (e.g. `https://your-app.up.railway.app`) — **required for column A Chatscript link**. If unset, Railway `RAILWAY_PUBLIC_DOMAIN` or the app default URL is used. |
 
 **Redeploy** karein.
@@ -81,3 +82,25 @@ Agar row nahi aati:
 | Rating, Feedback | Feedback form |
 | Duration, Message Count, Avg Response Time | Transcript turns se calculate |
 | Fall back | Dialogflow fallback (jab set ho) |
+
+---
+
+## Sheet2 — Live Agent chatscript
+
+**Sheet2** par sirf **live agent** handoff wali chats jati hain (Sheet1 = bot/AI leads).
+
+### Row 1 headers (order same rakhein)
+
+| A | B | C | … |
+|---|---|---|
+| **Chatscript** | Conv. Date | Conv. Time | Name | Mobile | Email | Agent | Department | Status | User Queries | Session ID | Message Count | Duration |
+
+### Auto sync
+
+- Jab visitor **live agent** request kare → row Sheet2 par append/update
+- Agent reply / chat end par wahi row update
+- **Conversations leads** page par **Sync dashboard** → date filter ke hisaab se bulk sync
+
+### Chatscript link
+
+Column **A** = `=HYPERLINK(…,"Chatscript")` — same `/conversation-transcript?session=…` page (AI + live agent messages merged).

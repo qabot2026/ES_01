@@ -880,11 +880,27 @@ app.post('/api/conversations-sheet-sync-dashboard', async (req, res) => {
   setConversationsSheetCors(req, res);
   res.setHeader('Cache-Control', 'no-store');
   if (!requireConversationsViewer(req, res)) return;
-  res.status(501).json({
-    ok: false,
-    error:
-      'Dashboard sheet sync (Sheet2) is not enabled on this server yet. Metrics on this page still load from the live API.',
-  });
+  try {
+    const liveAgentSheet = require('./lib/live-agent-sheet');
+    const rawFrom =
+      req.query && typeof req.query.from === 'string' ? req.query.from.trim() : '';
+    const rawTo =
+      req.query && typeof req.query.to === 'string' ? req.query.to.trim() : '';
+    const result = await liveAgentSheet.syncDashboardToSheet2({
+      from: rawFrom || undefined,
+      to: rawTo || undefined,
+    });
+    if (!result.ok) {
+      const status = result.error === 'not_configured' ? 503 : 500;
+      return res.status(status).json(result);
+    }
+    res.json(result);
+  } catch (err) {
+    console.error('[conversations-sheet-sync-dashboard]', err.message);
+    const msg = String(err.message || err);
+    const status = msg.includes('Invalid') ? 400 : 500;
+    res.status(status).json({ ok: false, error: msg.slice(0, 500) });
+  }
 });
 
 app.get('/api/conversation-transcript', async (req, res) => {
