@@ -144,6 +144,27 @@
     return localIsoYmd(new Date());
   }
 
+  function formatIndianDate(isoYmd) {
+    var dd = window.QADateDisplay;
+    if (dd && dd.formatDateDisplay) {
+      return dd.formatDateDisplay(isoYmd);
+    }
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(isoYmd || ''));
+    if (!m) return String(isoYmd || '');
+    return m[3] + '/' + m[2] + '/' + m[1];
+  }
+
+  function parseIndianDateInput(raw) {
+    var dd = window.QADateDisplay;
+    if (dd && dd.parseToIsoYmd) return dd.parseToIsoYmd(raw);
+    return '';
+  }
+
+  function setDateInputDisplay(el, isoYmd) {
+    if (!el) return;
+    el.value = isoYmd ? formatIndianDate(isoYmd) : '';
+  }
+
   function rowDateIso(r) {
     var candidates = [r && r.uploaded_at, r && r.updated_at];
     var i;
@@ -177,39 +198,45 @@
   function getDateRangeFromInputs() {
     var fromEl = document.getElementById('docs-date-from');
     var toEl = document.getElementById('docs-date-to');
-    var fromIso = fromEl ? String(fromEl.value || '').trim() : '';
-    var toIso = toEl ? String(toEl.value || '').trim() : '';
+    var fromIso = fromEl ? parseIndianDateInput(fromEl.value) : '';
+    var toIso = toEl ? parseIndianDateInput(toEl.value) : '';
     if (fromIso && toIso && fromIso > toIso) {
       var swap = fromIso;
       fromIso = toIso;
       toIso = swap;
-      if (fromEl) fromEl.value = fromIso;
-      if (toEl) toEl.value = toIso;
+      setDateInputDisplay(fromEl, fromIso);
+      setDateInputDisplay(toEl, toIso);
     }
     return { fromIso: fromIso, toIso: toIso };
   }
 
   function initDefaultDateRange() {
     var today = todayIsoYmd();
-    var fromEl = document.getElementById('docs-date-from');
-    var toEl = document.getElementById('docs-date-to');
-    if (fromEl) fromEl.value = today;
-    if (toEl) toEl.value = today;
+    setDateInputDisplay(document.getElementById('docs-date-from'), today);
+    setDateInputDisplay(document.getElementById('docs-date-to'), today);
     state.dateFilterActive = true;
   }
 
   function dateRangeLabel(fromIso, toIso) {
-    var dd = window.QADateDisplay;
-    var fmt = dd && dd.formatDateDisplay ? dd.formatDateDisplay.bind(dd) : function (x) {
-      return x;
-    };
     if (fromIso && toIso) {
-      if (fromIso === toIso) return fmt(fromIso);
-      return fmt(fromIso) + ' – ' + fmt(toIso);
+      if (fromIso === toIso) return formatIndianDate(fromIso);
+      return formatIndianDate(fromIso) + ' – ' + formatIndianDate(toIso);
     }
-    if (fromIso) return 'from ' + fmt(fromIso);
-    if (toIso) return 'until ' + fmt(toIso);
+    if (fromIso) return 'from ' + formatIndianDate(fromIso);
+    if (toIso) return 'until ' + formatIndianDate(toIso);
     return '';
+  }
+
+  function onDateInputChange() {
+    state.dateFilterActive = true;
+    var fromEl = document.getElementById('docs-date-from');
+    var toEl = document.getElementById('docs-date-to');
+    [fromEl, toEl].forEach(function (el) {
+      if (!el || !String(el.value || '').trim()) return;
+      var iso = parseIndianDateInput(el.value);
+      if (iso) setDateInputDisplay(el, iso);
+    });
+    applyFilter();
   }
 
   function foldersToRows(folders) {
@@ -662,14 +689,10 @@
 
   document.getElementById('docs-refresh').addEventListener('click', load);
   document.getElementById('docs-search').addEventListener('input', applyFilter);
-  document.getElementById('docs-date-from').addEventListener('change', function () {
-    state.dateFilterActive = true;
-    applyFilter();
-  });
-  document.getElementById('docs-date-to').addEventListener('change', function () {
-    state.dateFilterActive = true;
-    applyFilter();
-  });
+  document.getElementById('docs-date-from').addEventListener('change', onDateInputChange);
+  document.getElementById('docs-date-to').addEventListener('change', onDateInputChange);
+  document.getElementById('docs-date-from').addEventListener('blur', onDateInputChange);
+  document.getElementById('docs-date-to').addEventListener('blur', onDateInputChange);
   document.getElementById('docs-date-all').addEventListener('click', function () {
     var fromEl = document.getElementById('docs-date-from');
     var toEl = document.getElementById('docs-date-to');

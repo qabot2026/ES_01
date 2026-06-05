@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-IN">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -54,11 +54,27 @@
           <div class="docs-date-range" aria-label="Date range">
             <label class="docs-date-range__field">
               <span class="docs-date-range__label">From</span>
-              <input type="date" id="docs-date-from" class="docs-date-input" />
+              <input
+                type="text"
+                id="docs-date-from"
+                class="docs-date-input"
+                placeholder="DD/MM/YYYY"
+                inputmode="numeric"
+                autocomplete="off"
+                title="Indian date format: DD/MM/YYYY"
+              />
             </label>
             <label class="docs-date-range__field">
               <span class="docs-date-range__label">To</span>
-              <input type="date" id="docs-date-to" class="docs-date-input" />
+              <input
+                type="text"
+                id="docs-date-to"
+                class="docs-date-input"
+                placeholder="DD/MM/YYYY"
+                inputmode="numeric"
+                autocomplete="off"
+                title="Indian date format: DD/MM/YYYY"
+              />
             </label>
             <button type="button" id="docs-date-all" class="dash-btn dash-btn--ghost docs-date-all">
               All dates

@@ -82,8 +82,15 @@
   font: inherit;
   font-size: 0.875rem;
   background: var(--dash-surface);
-  min-width: 148px;
+  min-width: 118px;
+  width: 118px;
   color: var(--dash-text);
+  letter-spacing: 0.02em;
+}
+
+.docs-date-input::placeholder {
+  color: #94a3b8;
+  font-size: 0.8125rem;
 }
 
 .docs-date-input:focus {
