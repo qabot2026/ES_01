@@ -394,6 +394,7 @@
       (global.QA_CONFIG && global.QA_CONFIG.apiBase) ||
       deploy.publicBaseUrl ||
       '';
+    this.qaMode = !!(options && options.qaMode);
 
     this.title = header.title || 'QualityAssistant';
     this.subtitle = header.subtitle || 'Your quality & compliance guide';
@@ -439,7 +440,20 @@
   };
 
   QualityAssistantWidget.prototype.newSessionId = function () {
-    return 'qa-' + Date.now() + '-' + Math.random().toString(36).slice(2, 11);
+    var prefix = this.qaMode ? 'qa-test-' : 'qa-';
+    return prefix + Date.now() + '-' + Math.random().toString(36).slice(2, 11);
+  };
+
+  QualityAssistantWidget.prototype.qaApiHeaders = function (extra) {
+    var headers = Object.assign({ 'Content-Type': 'application/json' }, extra || {});
+    if (this.qaMode) headers['X-QA-Mode'] = '1';
+    return headers;
+  };
+
+  QualityAssistantWidget.prototype.withQaBody = function (body) {
+    var payload = Object.assign({}, body || {});
+    if (this.qaMode) payload.qaMode = true;
+    return payload;
   };
 
   QualityAssistantWidget.prototype.init = function () {
@@ -1265,12 +1279,12 @@
   };
 
   QualityAssistantWidget.prototype.pushSessionContext = function () {
-    if (!this.apiBase || !this.sessionId) return;
+    if (!this.apiBase || !this.sessionId || this.qaMode) return;
     var payload = this.buildSessionContextPayload();
     fetch(this.apiBase + '/api/session-context', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
+      headers: this.qaApiHeaders(),
+      body: JSON.stringify(this.withQaBody(payload)),
     }).catch(function () {});
   };
 
@@ -1697,8 +1711,8 @@
 
     return fetch(this.apiBase + '/api/chat', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
+      headers: this.qaApiHeaders(),
+      body: JSON.stringify(this.withQaBody(body)),
     })
       .then(function (res) {
         return res.json().then(function (data) {
@@ -3142,7 +3156,7 @@
   };
 
   QualityAssistantWidget.prototype.appendTranscriptTurn = function (role, text, meta) {
-    if (!this.apiBase || !this.sessionId) return Promise.resolve();
+    if (!this.apiBase || !this.sessionId || this.qaMode) return Promise.resolve();
     var t = text == null ? '' : String(text).trim();
     if (!t) return Promise.resolve();
     var body = {
@@ -3210,8 +3224,11 @@
       fd.append('files', files[i], files[i].name);
     }
     var self = this;
+    var uploadHeaders = {};
+    if (this.qaMode) uploadHeaders['X-QA-Mode'] = '1';
     this._uploadInFlight = fetch(this.apiBase + '/api/upload/documents', {
       method: 'POST',
+      headers: uploadHeaders,
       body: fd,
     })
       .then(function (r) {

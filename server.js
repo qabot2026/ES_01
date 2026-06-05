@@ -17,6 +17,7 @@ const conversationsSheetView = require('./lib/conversations-sheet-view');
 const queryAnalytics = require('./lib/query-analytics');
 const appointmentsView = require('./lib/appointments-view');
 const appointmentStatus = require('./lib/appointment-status-store');
+const qaMode = require('./lib/qa-mode');
 
 const app = express();
 const PORT = process.env.PORT || 4567;
@@ -26,7 +27,7 @@ const PUBLIC_BASE_URL =
   'https://es-based-chatbot-production.up.railway.app';
 
 const CORS_ALLOW_HEADERS =
-  'Content-Type, X-Agent-Token, X-Desk-Token, X-Conversations-Sheet-Secret, Authorization, X-Live-Agent-Email, X-Live-Agent-Name';
+  'Content-Type, X-Agent-Token, X-Desk-Token, X-Conversations-Sheet-Secret, Authorization, X-Live-Agent-Email, X-Live-Agent-Name, X-QA-Mode';
 
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -68,6 +69,10 @@ app.use(express.static(publicDir, {
   etag: true,
 }));
 
+app.get('/qa', (_req, res) => {
+  res.redirect(301, '/qa/');
+});
+
 app.get('/health', async (_req, res) => {
   const base = {
     status: 'ok',
@@ -101,13 +106,14 @@ app.post('/api/chat', async (req, res) => {
     event,
   } = req.body || {};
   const sid = sessionId || randomUUID();
+  const isQa = qaMode.isQaRequest(req, sid);
   const eventName =
     typeof event === 'string' && event.trim() ? event.trim() : null;
   const uiLang = uiLanguageCode || languageCode;
 
   try {
     await liveAgent.refreshStore();
-    if (liveAgent.isDialogflowBlockedForSession(sid)) {
+    if (!isQa && liveAgent.isDialogflowBlockedForSession(sid)) {
       const conv = liveAgent.getConversation(sid);
       const agentName = conv
         ? liveAgent.resolveAgentDisplayName(conv.assignedAgentEmail)
@@ -147,7 +153,19 @@ app.post('/api/chat', async (req, res) => {
     if (phraseTranslations.isEnabled()) {
       result = phraseTranslations.applyToResult(result, uiLang);
     }
-    if (result.liveAgent) {
+    if (result.liveAgent && isQa) {
+      result.liveAgent = false;
+      result.waitingForAgent = false;
+      result.humanActive = false;
+      result.skipBot = false;
+      const qaNote =
+        'QA test mode: live agent handoff is disabled and nothing is saved.';
+      if (!result.reply || !String(result.reply).trim()) {
+        result.reply = qaNote;
+      } else {
+        result.reply = String(result.reply).trim() + '\n\n' + qaNote;
+      }
+    } else if (result.liveAgent) {
       let handoffVisitorName = '';
       try {
         const doc = chatTranscript.getSessionDoc(sid);
@@ -220,11 +238,13 @@ app.post('/api/chat', async (req, res) => {
     }
 
     const userText = eventName ? '' : message && message.trim();
-    chatTranscript.logDialogflowExchange(sid, userText, result, {
-      skipTranscriptUser: req.body && req.body.skipTranscriptUser === true,
-    });
+    if (!isQa) {
+      chatTranscript.logDialogflowExchange(sid, userText, result, {
+        skipTranscriptUser: req.body && req.body.skipTranscriptUser === true,
+      });
+    }
 
-    res.json({ sessionId: sid, ...result });
+    res.json({ sessionId: sid, qaMode: isQa, ...result });
   } catch (err) {
     const detail = dialogflow.formatApiError(err);
     console.error('[dialogflow]', detail);
@@ -331,11 +351,20 @@ app.post('/api/appointment-book', (req, res) => {
     const formId = String(body.formId || body.form_id || 'appointment').trim();
     const date = String(body.date || body.appointmentdate || '').trim();
     const time = String(body.time || body.appointmenttime || '').trim();
-    const result = formApi.bookAppointmentSlot(formId, date, time);
+    const sid = String(body.sessionId || body.session_id || '').trim();
+    const isQa = qaMode.isQaRequest(req, sid);
+    const result = formApi.bookAppointmentSlot(formId, date, time, { dryRun: isQa });
     if (!result.ok) {
       return res.status(409).json(result);
     }
-    const sid = String(body.sessionId || '').trim();
+    if (isQa) {
+      return res.json({
+        ...result,
+        qaMode: true,
+        simulated: true,
+        message: 'QA test mode: appointment validated but not booked.',
+      });
+    }
     if (sid) {
       const meta = conversationSheet.metaFromClientBody({
         form_id: formId,
@@ -422,6 +451,9 @@ app.post('/api/session-context', (req, res) => {
   if (!sid) {
     return res.status(400).json({ error: 'session_required' });
   }
+  if (qaMode.isQaRequest(req, sid)) {
+    return res.json({ ok: true, qaMode: true, sessionId: sid, merged: 0, skipped: true });
+  }
   const meta = conversationSheet.metaFromClientBody(req.body || {});
   const ip = formApi.getClientIp(req);
   if (ip) meta.ip = ip;
@@ -435,6 +467,16 @@ app.post(
   '/api/upload/documents',
   uploadDocumentsMw.array('files', 10),
   async (req, res) => {
+    const sessionId = String(req.body.sessionId || '').trim();
+    if (qaMode.isQaRequest(req, sessionId)) {
+      return res.json({
+        ok: true,
+        qaMode: true,
+        simulated: true,
+        sessionId,
+        message: 'QA test mode: files were not uploaded or saved.',
+      });
+    }
     if (!gcsUpload.isConfigured()) {
       return res.status(503).json({
         error: 'gcs_not_configured',
@@ -442,7 +484,6 @@ app.post(
           'Set GCS_BUCKET_NAME and GOOGLE_CREDENTIALS_JSON on Railway. See GCS-STORAGE-STEPS.md',
       });
     }
-    const sessionId = String(req.body.sessionId || '').trim();
     if (!sessionId) {
       return res.status(400).json({ error: 'session_required' });
     }
@@ -515,6 +556,9 @@ app.post(
 
 app.post('/api/transcript/append', (req, res) => {
   const { sessionId, role, text, meta, turns } = req.body || {};
+  if (qaMode.isQaRequest(req, sessionId)) {
+    return res.json({ ok: true, qaMode: true, skipped: true });
+  }
   if (Array.isArray(turns) && turns.length) {
     return res.json({
       ok: true,
@@ -901,6 +945,7 @@ app.get('/api/config', (_req, res) => {
 app.get('*', (req, res, next) => {
   if (req.path.startsWith('/api/')) return next();
   if (path.extname(req.path)) return next();
+  if (req.path === '/qa' || req.path.startsWith('/qa/')) return next();
   res.sendFile(path.join(publicDir, 'index.html'));
 });
 

@@ -1708,14 +1708,19 @@
     var base = apiBase(widget);
     if (!base) return Promise.resolve({ ok: true, skipped: true });
     var ctx = (widget && widget.clientContext) || {};
+    var qa = !!(widget && widget.qaMode);
     return fetch(base + '/api/appointment-book', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: Object.assign(
+        { 'Content-Type': 'application/json' },
+        qa ? { 'X-QA-Mode': '1' } : {}
+      ),
       body: JSON.stringify({
         formId: formId,
         date: dateIso,
         time: time,
         sessionId: widget && widget.sessionId,
+        qaMode: qa,
         name: values.name || ctx.name || '',
         mobile: values.mobile || ctx.mobile || '',
         email: values.email || ctx.email || '',
