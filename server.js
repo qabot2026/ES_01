@@ -55,8 +55,12 @@ const uploadDocumentsMw = multer({
 });
 
 app.use((req, res, next) => {
+  if (/\.html$/i.test(req.path)) {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+    return next();
+  }
   if (
-    /^\/(embed\.js|company\.config\.js|widget\/)/.test(req.path) &&
+    /^\/(embed\.js|company\.config\.js|widget\/|dashboard\/)/.test(req.path) &&
     /\.(js|css)$/i.test(req.path)
   ) {
     res.setHeader('Cache-Control', 'no-cache, must-revalidate');
