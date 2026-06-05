@@ -1,4 +1,4 @@
-/** Yahi file edit karo. common = Dialogflow/language. desk/mob = har device ki alag UI. showChatbot: false = us device par chatbot hide. */
+/** Yahi file edit karo. common = Dialogflow/language. desk/mob = har device ki alag UI. showChatbot: false = us device par chatbot hide. composerUpload.enabled: false = 📎 upload button hide. */
 
 var QA_LOGO_LAUNCHER =
   'https://storage.googleapis.com/companybucket/Images/cat.png';
@@ -195,10 +195,17 @@ window.QA_CHAT_UI_CONFIG = {
         ],
       },
       speechToText: { enabled: true }, // mic button on/off
-      /** 📎 in composer — upload without Dialogflow upload form */
+      /**
+       * 📎 in composer — upload without Dialogflow upload form
+       * enabled: false = button off (global). desk/mob.features.composerUpload se alag device par off.
+       * display: 'rich' = clear SVG clip | 'emoji' = 📎 emoji
+       * tiltDeg: icon tilt (e.g. -18)
+       */
       composerUpload: {
         enabled: true,
+        display: 'rich',
         emoji: '📎',
+        tiltDeg: -18,
         accept:
           'image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.rtf,.odt,.ods,.odp,.zip,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,text/plain,text/csv,application/zip,application/x-zip-compressed',
         confirmByLanguage: {
@@ -323,6 +330,7 @@ window.QA_CHAT_UI_CONFIG = {
 
     features: {
       speechToText: { enabled: true },
+      composerUpload: { enabled: true },
       restartChat: { enabled: false, label: 'Restart' },
     },
   },
@@ -395,6 +403,7 @@ window.QA_CHAT_UI_CONFIG = {
 
     features: {
       speechToText: { enabled: true },
+      composerUpload: { enabled: true },
       restartChat: { enabled: true, label: 'Restart' },
     },
   },

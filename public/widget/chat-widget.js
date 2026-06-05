@@ -12,6 +12,8 @@
     header: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>',
     agentHuman:
       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><circle cx="12" cy="8" r="3.25"/><path d="M5 20v-.75C5 16.13 8.13 14 12 14s7 2.13 7 5.25V20"/><path d="M16.5 9.5l1.2 1.2 2.3-2.3" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    attach:
+      '<svg class="qa-attach__icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M14.25 8.25v7.5a2.75 2.75 0 1 1-5.5 0V7a4.25 4.25 0 1 1 8.5 0v8.75a6.25 6.25 0 0 1-12.5 0V8.5" stroke="currentColor" stroke-width="2.35" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   };
 
   function getRootCfg() {
@@ -958,6 +960,38 @@
     this.syncLauncherStack();
   };
 
+  QualityAssistantWidget.prototype.isComposerUploadEnabled = function () {
+    var cfg = (getEffectiveCfg().features || {}).composerUpload || {};
+    return cfg.enabled !== false;
+  };
+
+  QualityAssistantWidget.prototype.buildComposerUploadHtml = function () {
+    if (!this.isComposerUploadEnabled()) return '';
+    var uploadCfg = (getEffectiveCfg().features || {}).composerUpload || {};
+    var display = String(uploadCfg.display || 'rich').toLowerCase();
+    var emoji = String(uploadCfg.emoji || '📎').trim() || '📎';
+    var accept = uploadCfg.accept ? String(uploadCfg.accept) : '';
+    var tilt = Number(uploadCfg.tiltDeg);
+    if (!isFinite(tilt)) tilt = -18;
+    var glyph =
+      display === 'emoji'
+        ? '<span class="qa-attach__emoji" aria-hidden="true">' +
+          this.escape(emoji) +
+          '</span>'
+        : '<span class="qa-attach__icon-wrap" aria-hidden="true">' + ICONS.attach + '</span>';
+    return (
+      '<button type="button" class="qa-attach" aria-label="Upload document" title="Upload document" style="--qa-attach-tilt:' +
+      tilt +
+      'deg">' +
+      '<span class="qa-attach__glyph">' +
+      glyph +
+      '</span></button>' +
+      '<input type="file" class="qa-attach-input" hidden multiple' +
+      (accept ? ' accept="' + this.escape(accept) + '"' : '') +
+      ' />'
+    );
+  };
+
   QualityAssistantWidget.prototype.applyFeatureToggles = function () {
     var eff = getEffectiveCfg();
     var feats = eff.features || {};
@@ -966,8 +1000,7 @@
         feats.speechToText && feats.speechToText.enabled === false ? 'none' : '';
     }
     if (this.els.attach) {
-      this.els.attach.style.display =
-        feats.composerUpload && feats.composerUpload.enabled === false ? 'none' : '';
+      this.els.attach.style.display = this.isComposerUploadEnabled() ? '' : 'none';
     }
     this.updateRestartVisibility();
     if (
@@ -1132,21 +1165,7 @@
       '<textarea class="qa-input" rows="1" placeholder="' +
       this.escape(placeholder) +
       '" aria-label="Message"></textarea>' +
-      (function (w) {
-        var uploadCfg = feats.composerUpload || {};
-        if (uploadCfg.enabled === false) return '';
-        var emoji = String(uploadCfg.emoji || '📎').trim() || '📎';
-        var accept = uploadCfg.accept ? String(uploadCfg.accept) : '';
-        return (
-          '<button type="button" class="qa-attach" aria-label="Upload document">' +
-          '<span class="qa-attach__emoji" aria-hidden="true">' +
-          w.escape(emoji) +
-          '</span></button>' +
-          '<input type="file" class="qa-attach-input" hidden multiple' +
-          (accept ? ' accept="' + w.escape(accept) + '"' : '') +
-          ' />'
-        );
-      })(this) +
+      this.buildComposerUploadHtml() +
       '<button type="button" class="qa-mic" aria-label="Speech to text">' +
       ICONS.mic +
       '</button>' +
