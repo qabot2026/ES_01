@@ -41,13 +41,26 @@
     return !!w._liveAgentHumanActive;
   }
 
-  function humanHandoffFromSync_(st) {
+  function agentConnectedFromSync_(st) {
     if (!st) return false;
-    if (st.botMode === true || st.aiCopilot === true) return false;
-    if (typeof st.humanHandoffActive === 'boolean') {
-      return st.humanHandoffActive;
-    }
-    return !!st.humanActive;
+    if (st.agentConnected === true) return true;
+    var conv = st.conversation;
+    return !!(
+      conv &&
+      conv.status === 'active' &&
+      conv.assignedAgentEmail
+    );
+  }
+
+  function waitingForAgentFromSync_(st) {
+    if (!st) return false;
+    if (st.waitingForAgent === true) return true;
+    var conv = st.conversation;
+    return !!(conv && conv.status === 'waiting');
+  }
+
+  function humanHandoffFromSync_(st) {
+    return agentConnectedFromSync_(st);
   }
 
   function isBotHandoffMessageText_(text) {
@@ -118,11 +131,18 @@
         return origApply.call(this, result);
       }
       var data = result.data || {};
-      if (data.humanActive) {
+      if (data.humanActive || data.agentConnected) {
         this._liveAgentHumanActive = true;
+        this._liveAgentWaiting = false;
       }
       if (data.liveAgent && liveEnabled()) {
-        this._liveAgentHumanActive = true;
+        if (data.humanActive || data.agentConnected) {
+          this._liveAgentHumanActive = true;
+          this._liveAgentWaiting = false;
+        } else {
+          this._liveAgentHumanActive = false;
+          this._liveAgentWaiting = true;
+        }
         if (!this.liveAgentMode) {
           this.startLiveAgentMode(data);
         }
@@ -219,6 +239,8 @@
         (messageText && String(messageText).trim()) ||
         t(this, 'connectedPrefix', 'You are now chatting with') + ' ' + name + '.';
       this._hideLiveAgentBanner();
+      this._liveAgentWaiting = false;
+      this._liveAgentHumanActive = true;
       this._liveAgentConnectedAnnounced = true;
       this.appendMessage('bot', text, {
         skipTranscriptLog: true,
@@ -270,6 +292,7 @@
     p._releaseLiveAgentToBot_ = function () {
       this.liveAgentMode = false;
       this._liveAgentHumanActive = false;
+      this._liveAgentWaiting = false;
       this._liveAgentBotCopilotActive = true;
       this._liveAgentLastAgentTyping = '';
       this._liveAgentSetAgentTypingIndicator('');
@@ -326,6 +349,7 @@
       this._hideLiveAgentBanner();
       this.liveAgentMode = false;
       this._liveAgentHumanActive = false;
+      this._liveAgentWaiting = false;
       this._liveAgentHandoffRequested = false;
       this._liveAgentConnectedAnnounced = false;
       this._liveAgentIngestMessages(
@@ -348,7 +372,30 @@
         this._applyLiveAgentQueueTimeout_(st);
         return;
       }
-      var handoff = humanHandoffFromSync_(st);
+      var agentConnected = agentConnectedFromSync_(st);
+      var waitingForAgent = waitingForAgentFromSync_(st) && !agentConnected;
+      if (waitingForAgent) {
+        this._liveAgentBotCopilotActive = false;
+        this._liveAgentHumanActive = false;
+        this._liveAgentWaiting = true;
+        this.liveAgentMode = true;
+        if (!this._liveAgentHandoffRequested) {
+          this._liveAgentHandoffRequested = true;
+        }
+        if (!this._liveAgentPollTimer) {
+          this._liveAgentStartStream();
+        }
+        this._liveAgentApplyVisitorNotice_(st);
+        if (
+          !(st.visitorNotice && st.visitorNotice.type === 'connected')
+        ) {
+          this._showLiveAgentBanner(
+            t(this, 'waiting', 'Waiting for an agent…')
+          );
+        }
+        return;
+      }
+      var handoff = agentConnected;
       if (st.conversation && st.conversation.status === 'closed') {
         if (st.conversation.closedReason === 'queue_timeout') {
           this._applyLiveAgentQueueTimeout_(st);
@@ -378,22 +425,14 @@
       }
       this._liveAgentBotCopilotActive = false;
       this._liveAgentHumanActive = true;
+      this._liveAgentWaiting = false;
       if (!this.liveAgentMode) {
-        this.startLiveAgentMode({ skipHandoffRequest: true });
+        this.startLiveAgentMode({ skipHandoffRequest: true, agentConnected: true });
       } else if (!this._liveAgentPollTimer) {
         this._liveAgentStartStream();
       }
       this._liveAgentApplyVisitorNotice_(st);
-      if (
-        handoff &&
-        st.conversation &&
-        st.conversation.status === 'waiting' &&
-        !(st.visitorNotice && st.visitorNotice.type === 'connected')
-      ) {
-        this._showLiveAgentBanner(
-          t(this, 'waiting', 'Waiting for an agent…')
-        );
-      }
+      this._hideLiveAgentBanner();
       var skipNoticeId =
         st.visitorNotice && st.visitorNotice.messageId
           ? st.visitorNotice.messageId
@@ -418,7 +457,8 @@
       var cfg = liveCfg();
       var starting = !this.liveAgentMode;
       this.liveAgentMode = true;
-      this._liveAgentHumanActive = true;
+      this._liveAgentHumanActive = !!(data.agentConnected || data.humanActive);
+      this._liveAgentWaiting = !this._liveAgentHumanActive;
       if (starting && !data.skipHandoffRequest && !this._liveAgentHandoffRequested) {
         this._liveAgentHandoffRequested = true;
         this.liveAgentSeen = this.liveAgentSeen || {};
@@ -493,6 +533,7 @@
     p.stopLiveAgentMode = function (endedByAgent) {
       this.liveAgentMode = false;
       this._liveAgentHumanActive = false;
+      this._liveAgentWaiting = false;
       this._liveAgentBotCopilotActive = false;
       this._liveAgentHandoffRequested = false;
       this._liveAgentConnectedAnnounced = false;
@@ -698,7 +739,13 @@
         }).catch(function () {});
       };
       this.els.input.addEventListener('input', function () {
-        if (!self.liveAgentMode && !self._liveAgentHumanActive) return;
+        if (
+          !self.liveAgentMode &&
+          !self._liveAgentHumanActive &&
+          !self._liveAgentWaiting
+        ) {
+          return;
+        }
         var val = self.els.input.value || '';
         var now = Date.now();
         if (now - lastTypingSendMs > 35) {
@@ -734,6 +781,7 @@
       if (
         !this.liveAgentMode &&
         !this._liveAgentHumanActive &&
+        !this._liveAgentWaiting &&
         !this._liveAgentHandoffRequested
       ) {
         return;
@@ -812,6 +860,7 @@
       if (
         !this.liveAgentMode &&
         !this._liveAgentHumanActive &&
+        !this._liveAgentWaiting &&
         !this._liveAgentHandoffRequested
       ) {
         return;
@@ -866,6 +915,11 @@
         .then(function (st) {
           if (!st || !st.ok) return;
           if (!humanHandoffFromSync_(st)) {
+            if (waitingForAgentFromSync_(st)) {
+              self._liveAgentHandoffRequested = true;
+              self._applyLiveAgentSyncState(st);
+              return;
+            }
             if (st.sessionOpen) self._releaseLiveAgentToBot_();
             return;
           }

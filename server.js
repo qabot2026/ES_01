@@ -212,8 +212,9 @@ app.post('/api/chat', async (req, res) => {
       result.galleries = [];
       result.cardCarousels = [];
       result.liveAgent = true;
-      result.humanActive = true;
-      result.skipBot = true;
+      result.waitingForAgent = true;
+      result.humanActive = false;
+      result.skipBot = false;
     }
 
     const userText = eventName ? '' : message && message.trim();
