@@ -158,54 +158,6 @@
   font-size: 0.8rem;
 }
 
-.qa-daily-wrap {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.qa-day-row {
-  display: grid;
-  grid-template-columns: 6.5rem 1fr 3rem;
-  gap: 8px;
-  align-items: center;
-  font-size: 0.82rem;
-}
-
-.qa-day-label {
-  color: var(--dash-muted);
-}
-
-.qa-day-bar {
-  height: 10px;
-  background: #e2e8f0;
-  border-radius: 999px;
-  overflow: hidden;
-  display: flex;
-}
-
-.qa-day-bar span {
-  display: block;
-  height: 100%;
-}
-
-.qa-day-bar .seg-bot {
-  background: #0284c7;
-}
-
-.qa-day-bar .seg-fallback {
-  background: #f59e0b;
-}
-
-.qa-day-bar .seg-handoff {
-  background: #8b5cf6;
-}
-
-.qa-day-total {
-  text-align: right;
-  font-weight: 600;
-}
-
 .qa-table-wrap {
   overflow-x: auto;
 }

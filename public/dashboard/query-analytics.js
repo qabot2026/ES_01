@@ -41,47 +41,6 @@
     );
   }
 
-  function renderDaily(daily) {
-    var root = $('qa-daily');
-    if (!root) return;
-    var list = daily || [];
-    if (!list.length) {
-      root.innerHTML = '<p class="dash-muted">No queries in this period.</p>';
-      return;
-    }
-    var max = 1;
-    for (var i = 0; i < list.length; i++) {
-      if (list[i].total > max) max = list[i].total;
-    }
-    root.innerHTML = list
-      .map(function (d) {
-        var botW = Math.round((d.bot / max) * 100);
-        var fbW = Math.round((d.fallback / max) * 100);
-        var hoW = Math.round((d.handoff / max) * 100);
-        return (
-          '<div class="qa-day-row">' +
-          '<span class="qa-day-label">' +
-          escapeHtml(d.date) +
-          '</span>' +
-          '<div class="qa-day-bar" title="Bot ' +
-          d.bot +
-          ', Fallback ' +
-          d.fallback +
-          ', Agent ' +
-          d.handoff +
-          '">' +
-          (botW ? '<span class="seg-bot" style="width:' + botW + '%"></span>' : '') +
-          (fbW ? '<span class="seg-fallback" style="width:' + fbW + '%"></span>' : '') +
-          (hoW ? '<span class="seg-handoff" style="width:' + hoW + '%"></span>' : '') +
-          '</div>' +
-          '<span class="qa-day-total">' +
-          d.total +
-          '</span></div>'
-        );
-      })
-      .join('');
-  }
-
   function renderQueryRows(list, emptyLabel) {
     if (!list.length) {
       return (
@@ -139,7 +98,6 @@
     $('qa-handoff').textContent = s.handoff != null ? s.handoff : '—';
     $('qa-unique').textContent = s.uniqueQueries != null ? s.uniqueQueries : '—';
     $('qa-period-label').textContent = formatPeriodLabel(data.period);
-    renderDaily(data.daily);
     renderTables(data);
   }
 
