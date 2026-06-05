@@ -209,7 +209,7 @@
 .qa-col-query,
 .qa-table .qa-query-cell {
   width: auto;
-  max-width: 380px;
+  max-width: 350px;
   text-align: left;
   padding-right: 10px;
 }
