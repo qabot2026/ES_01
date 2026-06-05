@@ -1,30 +1,8 @@
 (function () {
   'use strict';
 
-  var KEY = 'qa_live_agent_desk';
-
-  function desk() {
-    try {
-      return JSON.parse(localStorage.getItem(KEY) || '{}');
-    } catch (e) {
-      return {};
-    }
-  }
-
-  function headers() {
-    var d = desk();
-    var h = {};
-    if (d.token) h['X-Agent-Token'] = d.token;
-    return h;
-  }
-
-  function apiBase() {
-    var d = desk();
-    return (d.apiBase || window.location.origin).replace(/\/$/, '');
-  }
-
-  if (!desk().token) {
-    window.location.href = '../live-agent/settings.html';
+  var auth = window.DashboardDeskAuth;
+  if (!auth || !auth.requireAuthOrRedirect('dashboard/query-analytics.html')) {
     return;
   }
 
@@ -167,8 +145,8 @@
     if (body) {
       body.innerHTML = '<tr><td colspan="7" class="qa-loading">Loading…</td></tr>';
     }
-    fetch(apiBase() + '/api/analytics/queries?days=' + encodeURIComponent(days), {
-      headers: headers(),
+    fetch(auth.apiBase() + '/api/analytics/queries?days=' + encodeURIComponent(days), {
+      headers: auth.authHeaders(),
     })
       .then(function (r) {
         return r.json();

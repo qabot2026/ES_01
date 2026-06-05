@@ -33,6 +33,23 @@
         return data;
     }
 
+    function getNextPath_() {
+        try {
+            const p = new URLSearchParams(window.location.search).get("next");
+            if (!p || p.includes("://") || p.includes("..")) return "";
+            return p.replace(/^\//, "");
+        } catch (_) {
+            return "";
+        }
+    }
+
+    function redirectNextIfPresent_() {
+        const next = getNextPath_();
+        if (!next) return false;
+        window.location.href = "/" + next;
+        return true;
+    }
+
     function loadSecret() {
         try {
             viewerSecret =
@@ -740,6 +757,7 @@
         }
         try {
             await apiFetch(`${API}/me`);
+            if (redirectNextIfPresent_()) return;
             showApp();
         } catch (e) {
             $("loginMessage").textContent = e.message;
@@ -925,7 +943,9 @@
     loadSecret();
     if (viewerSecret) {
         apiFetch(`${API}/me`)
-            .then(() => showApp())
+            .then(() => {
+                if (!redirectNextIfPresent_()) showApp();
+            })
             .catch(() => showLogin());
     } else {
         showLogin();

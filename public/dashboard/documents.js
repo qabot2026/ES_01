@@ -1,33 +1,19 @@
 (function () {
   'use strict';
 
-  var KEY = 'qa_live_agent_desk';
+  var auth = window.DashboardDeskAuth;
   var state = { rows: [], filtered: [] };
 
-  function desk() {
-    try {
-      return JSON.parse(localStorage.getItem(KEY) || '{}');
-    } catch (e) {
-      return {};
-    }
+  if (!auth || !auth.requireAuthOrRedirect('dashboard/documents.html')) {
+    return;
   }
 
   function headers() {
-    var d = desk();
-    var h = { 'Content-Type': 'application/json' };
-    if (d.token) h['X-Agent-Token'] = d.token;
-    return h;
+    return auth.authHeaders({ 'Content-Type': 'application/json' });
   }
 
   function apiBase() {
-    return (desk().apiBase || window.location.origin).replace(/\/$/, '');
-  }
-
-  if (!desk().token) {
-    window.location.href =
-      '../live-agent/settings.html?next=' +
-      encodeURIComponent('dashboard/documents.html');
-    return;
+    return auth.apiBase();
   }
 
   function formatBytes(n) {
