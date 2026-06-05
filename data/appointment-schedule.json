@@ -3,7 +3,7 @@
   "forms": {
     "appointment": {
       "timezone": "Asia/Kolkata",
-      "allowToday": true,
+      "allowToday": false,
       "hidePastTimesToday": true,
       "maxBookingDays": 7,
       "slotMinutes": 30,
