@@ -237,10 +237,6 @@
   cursor: text;
 }
 
-.qa-query-cell[data-full-query] {
-  /* full text available on hover (title) and copy */
-}
-
 .qa-loading {
   color: var(--dash-muted);
   padding: 20px 8px !important;
