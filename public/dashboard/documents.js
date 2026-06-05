@@ -382,8 +382,7 @@
   function downloadFile(btn) {
     var object = btn.getAttribute('data-object');
     var fileName = btn.getAttribute('data-filename') || 'download';
-    var token = desk().token;
-    if (!object || !token) return;
+    if (!object || !auth.hasAuth()) return;
 
     btn.disabled = true;
     var prev = btn.textContent;
