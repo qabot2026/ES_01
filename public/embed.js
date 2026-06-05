@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var QA_ASSET_VERSION = '20260605-upload-fast';
+  var QA_ASSET_VERSION = '20260605-upload-ack';
 
   var QA_FORM_SCRIPTS = [
     'contact.js',

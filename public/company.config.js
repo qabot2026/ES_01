@@ -208,10 +208,15 @@ window.QA_CHAT_UI_CONFIG = {
         tiltDeg: -18,
         accept:
           'image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.rtf,.odt,.ods,.odp,.zip,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,text/plain,text/csv,application/zip,application/x-zip-compressed',
-        confirmByLanguage: {
-          en: 'Thank you — we received your document(s): {files}',
-          hi: 'धन्यवाद — आपके दस्तावेज़ प्राप्त हुए: {files}',
-          mr: 'धन्यवाद — तुमचे दस्तऐवज मिळाले: {files}',
+        successByLanguage: {
+          en: '✅ Upload successful! We received your document(s): {files}',
+          hi: '✅ अपलोड सफल! हमें आपके दस्तावेज़ मिल गए: {files}',
+          mr: '✅ अपलोड यशस्वी! आम्हाला तुमचे दस्तऐवज मिळाले: {files}',
+        },
+        duplicateByLanguage: {
+          en: '✅ We already received your document(s): {files}',
+          hi: '✅ ये दस्तावेज़ पहले से प्राप्त हैं: {files}',
+          mr: '✅ हे दस्तऐवज आधीच मिळाले आहेत: {files}',
         },
         failedByLanguage: {
           en: 'Could not upload. Please try again or use Contact us first.',

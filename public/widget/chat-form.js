@@ -2537,6 +2537,9 @@
                   .join(', ');
               }
               if (widget) widget.pendingUploadTag = '';
+              if (widget && typeof widget.showUploadAcknowledgement === 'function') {
+                widget.showUploadAcknowledgement(up, result.values.document);
+              }
               submitUploadThenForm();
             })
             .catch(function () {

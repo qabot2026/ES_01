@@ -3265,6 +3265,71 @@
     }
   };
 
+  QualityAssistantWidget.prototype.uploadDocumentNames = function (up, fallbackNames) {
+    up = up || {};
+    return (
+      up.document_names ||
+      (up.uploads || [])
+        .map(function (u) {
+          return u.original_name;
+        })
+        .filter(Boolean)
+        .join(', ') ||
+      String(fallbackNames || '').trim()
+    );
+  };
+
+  QualityAssistantWidget.prototype.buildUploadAckMessage = function (up, fallbackNames) {
+    var cfg = this.getComposerUploadCfg();
+    var names = this.uploadDocumentNames(up, fallbackNames);
+    if (this.qaMode && up && up.simulated) {
+      return this.composerUploadLabel(
+        cfg.qaPreviewByLanguage,
+        'QA test mode: upload preview only — file was not saved.'
+      );
+    }
+    if (up && up.duplicate_skipped) {
+      var dupTpl = this.composerUploadLabel(
+        cfg.duplicateByLanguage,
+        '✅ We already received your document(s): {files}'
+      );
+      return dupTpl.replace('{files}', names);
+    }
+    var tpl = this.composerUploadLabel(
+      cfg.successByLanguage || cfg.confirmByLanguage,
+      '✅ Upload successful! We received your document(s): {files}'
+    );
+    return tpl.replace('{files}', names);
+  };
+
+  QualityAssistantWidget.prototype.updateBotMessageText = function (row, text, kind) {
+    if (!row) return;
+    var bubble = row.querySelector('.qa-msg__bubble');
+    if (!bubble) return;
+    bubble.classList.remove('qa-msg__bubble--multiline');
+    this.fillMessageBubble(bubble, String(text || ''), []);
+    row.classList.remove('qa-msg--upload-success', 'qa-msg--upload-failed', 'qa-msg--upload-pending');
+    if (kind === 'success') row.classList.add('qa-msg--upload-success');
+    else if (kind === 'failed') row.classList.add('qa-msg--upload-failed');
+    else if (kind === 'pending') row.classList.add('qa-msg--upload-pending');
+    if (this.els.messages) {
+      this.els.messages.scrollTop = this.els.messages.scrollHeight;
+    }
+  };
+
+  QualityAssistantWidget.prototype.showUploadAcknowledgement = function (up, fallbackNames, statusRow) {
+    var msg = this.buildUploadAckMessage(up, fallbackNames);
+    if (statusRow) {
+      var kind = up && up.ok ? 'success' : 'failed';
+      if (this.qaMode && up && up.simulated) kind = 'failed';
+      this.updateBotMessageText(statusRow, msg, kind);
+      return;
+    }
+    this.appendMessage('bot', msg, {
+      messageKind: up && up.ok && !(this.qaMode && up.simulated) ? 'upload-success' : '',
+    });
+  };
+
   QualityAssistantWidget.prototype.handleComposerUploadPick = function (fileList) {
     var files = [];
     if (fileList && fileList.length) {
@@ -3295,47 +3360,18 @@
     this.noteUserActivity();
     this.setComposerUploadBusy(true);
     this.appendMessage('user', emoji + (names ? ' ' + names : ''));
-    this.appendMessage(
-      'bot',
-      this.composerUploadLabel(
-        cfg.uploadingByLanguage,
-        'Uploading your document(s)…'
-      )
+    var uploadingMsg = this.composerUploadLabel(
+      cfg.uploadingByLanguage,
+      'Uploading your document(s)…'
     );
+    var statusRow = this.appendMessage('bot', uploadingMsg);
+    this.updateBotMessageText(statusRow, uploadingMsg, 'pending');
 
     this.uploadFormDocuments(files, {}, { tag: 'composer' })
       .then(function (up) {
         if (up && up.ok) {
-          var docNames =
-            up.document_names ||
-            (up.uploads || [])
-              .map(function (u) {
-                return u.original_name;
-              })
-              .filter(Boolean)
-              .join(', ') ||
-            names;
-          var tpl = self.composerUploadLabel(
-            cfg.confirmByLanguage,
-            'Thank you — we received your document(s): {files}'
-          );
-          var botMsg = tpl.replace('{files}', docNames);
-          if (self.qaMode && up.simulated) {
-            botMsg =
-              'QA test mode: upload preview only — file was not saved.';
-          } else if (up.duplicate_skipped) {
-            botMsg =
-              'These file(s) were already received for this chat: ' +
-              (docNames || names) +
-              '. Check Dashboard → Customer documents → Refresh.';
-          } else if (up.storage_folder) {
-            botMsg =
-              botMsg +
-              ' Staff: Dashboard → Customer documents → Refresh (folder ' +
-              up.storage_folder +
-              ').';
-          }
-          self.appendMessage('bot', botMsg);
+          var docNames = self.uploadDocumentNames(up, names);
+          self.showUploadAcknowledgement(up, names, statusRow);
           if (!self.qaMode) {
             self.appendTranscriptTurn('user', emoji + (docNames ? ' ' + docNames : ''));
             self.pushSessionContext();
@@ -3346,15 +3382,17 @@
           cfg.failedByLanguage,
           (up && up.message) || 'Could not upload. Please try again.'
         );
-        self.appendMessage('bot', failMsg);
+        self.updateBotMessageText(statusRow, '❌ ' + failMsg, 'failed');
       })
       .catch(function () {
-        self.appendMessage(
-          'bot',
-          self.composerUploadLabel(
-            cfg.failedByLanguage,
-            'Could not upload. Please try again.'
-          )
+        self.updateBotMessageText(
+          statusRow,
+          '❌ ' +
+            self.composerUploadLabel(
+              cfg.failedByLanguage,
+              'Could not upload. Please try again.'
+            ),
+          'failed'
         );
       })
       .finally(function () {
@@ -3583,6 +3621,9 @@
       options.messageKind === 'agent-disconnected'
     ) {
       row.classList.add('qa-msg--agent-connected');
+    }
+    if (options.messageKind === 'upload-success') {
+      row.classList.add('qa-msg--upload-success');
     }
     var body = document.createElement('div');
     body.className = 'qa-msg__body';

@@ -411,6 +411,23 @@
   line-height: 1.5;
 }
 
+.qa-msg--upload-success .qa-msg__bubble {
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+  border: 1px solid #6ee7b7;
+  color: #065f46;
+}
+
+.qa-msg--upload-failed .qa-msg__bubble {
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+  border: 1px solid #fca5a5;
+  color: #991b1b;
+}
+
+.qa-msg--upload-pending .qa-msg__bubble {
+  color: var(--qa-text-soft, #64748b);
+  font-style: italic;
+}
+
 .qa-msg--bot .qa-msg__bubble {
   background: var(--qa-bot-bg);
   color: var(--qa-bot-text, var(--qa-text));
