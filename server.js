@@ -500,6 +500,13 @@ app.post(
       } catch {
         /* ignore */
       }
+      let dupSheetSync = { skipped: true };
+      try {
+        dupSheetSync = await conversationSheet.syncSessionToSheet(sessionId);
+      } catch (syncErr) {
+        console.warn('[upload/documents] duplicate sheet sync:', syncErr.message);
+        conversationSheet.scheduleSheetSync(sessionId);
+      }
       return res.json({
         ok: true,
         sessionId,
@@ -510,6 +517,7 @@ app.post(
           priorMeta.document ||
           '',
         message: 'Files already uploaded for this session.',
+        sheetSync: dupSheetSync,
       });
     }
     try {
@@ -547,8 +555,23 @@ app.post(
       if (channel) meta.channel = channel;
       meta.userEngaged = true;
       meta.last_upload_at = new Date().toISOString();
-      chatTranscript.mergeSessionMeta(sessionId, meta);
-      if (chatTranscript.shouldScheduleSheetForSession(sessionId)) {
+      const uploadLabel = pack.document_names || 'Document upload';
+      chatTranscript.mergeSessionMeta(sessionId, meta, { scheduleSheet: false });
+      chatTranscript.appendTurn(
+        sessionId,
+        'user',
+        `📎 ${uploadLabel}`,
+        undefined,
+        { scheduleSheet: false }
+      );
+      let sheetSync = { skipped: true };
+      try {
+        sheetSync = await conversationSheet.syncSessionToSheet(sessionId);
+      } catch (syncErr) {
+        console.warn('[upload/documents] sheet sync:', syncErr.message);
+        conversationSheet.scheduleSheetSync(sessionId);
+      }
+      if (sheetSync && sheetSync.skipped) {
         conversationSheet.scheduleSheetSync(sessionId);
       }
       res.json({
@@ -557,7 +580,9 @@ app.post(
         storage_folder: pack.storage_folder,
         document_names: pack.document_names,
         document_link: pack.document_link,
+        document_links: pack.document_links,
         uploads: pack.uploads,
+        sheetSync,
       });
     } catch (err) {
       console.error('[gcs-upload]', err.message);

@@ -497,9 +497,17 @@
         }
         updateStorageMeta(data);
         state.rows = foldersToRows(data.folders || []);
-        if (!state.rows.length) {
+        if (data.gcs_list_error) {
           showAlert(
-            'No documents yet. Uploads from Web, WhatsApp, Instagram, or Facebook appear here after sheet sync or GCS save — click Refresh.'
+            'Could not list cloud storage (' +
+              data.gcs_list_error +
+              '). Give the service account Storage Object Viewer on bucket ' +
+              (data.bucket || '') +
+              '. Showing transcript/sheet entries only.'
+          );
+        } else if (!state.rows.length) {
+          showAlert(
+            'No documents yet. Upload from production chat (not /qa), wait for bot success, then Refresh.'
           );
         }
         applyFilter();

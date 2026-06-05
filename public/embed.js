@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var QA_ASSET_VERSION = '20260605-all-channel-docs';
+  var QA_ASSET_VERSION = '20260605-upload-sheet-fix';
 
   var QA_FORM_SCRIPTS = [
     'contact.js',
