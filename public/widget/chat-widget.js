@@ -1650,6 +1650,8 @@
           galleries: galleries,
           cardCarousels: cardCarousels,
           forms: forms,
+          intentIsFallback: !!payload.intentIsFallback,
+          intent: payload.intent || '',
         });
       }
     });
@@ -3113,10 +3115,16 @@
       return Promise.resolve();
     }
     var line = this.transcriptTextFromMessage(role, text, options);
-    var meta =
-      role === 'bot'
-        ? this.buildRichMetaFromMessageOptions(options)
-        : undefined;
+    var meta;
+    if (role === 'bot') {
+      meta = this.buildRichMetaFromMessageOptions(options) || {};
+      if (options.intentIsFallback) {
+        meta.intentIsFallback = true;
+        meta.fallback = 'yes';
+      }
+      if (options.intent) meta.intent = String(options.intent);
+      if (!Object.keys(meta).length) meta = undefined;
+    }
     if (!line && !meta) return Promise.resolve();
     return this.appendTranscriptTurn(
       role,
