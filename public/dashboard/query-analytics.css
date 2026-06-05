@@ -208,8 +208,8 @@
 
 .qa-col-query,
 .qa-table .qa-query-cell {
-  width: auto;
-  max-width: 350px;
+  width: 320px;
+  max-width: 320px;
   text-align: left;
   padding-right: 10px;
 }
