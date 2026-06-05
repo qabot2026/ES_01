@@ -16,6 +16,7 @@ const conversationTranscriptView = require('./lib/conversation-transcript-view')
 const conversationsSheetView = require('./lib/conversations-sheet-view');
 const queryAnalytics = require('./lib/query-analytics');
 const appointmentsView = require('./lib/appointments-view');
+const appointmentStatus = require('./lib/appointment-status-store');
 
 const app = express();
 const PORT = process.env.PORT || 4567;
@@ -340,7 +341,7 @@ app.post('/api/appointment-book', (req, res) => {
         form_id: formId,
         appointmentdate: date,
         appointmenttime: result.time || time,
-        appointmentDateDisplay: date,
+        appointmentDateDisplay: result.appointmentDate || date,
         appointmentTimeDisplay: result.time || time,
         name: body.name,
         mobile: body.mobile,
@@ -349,6 +350,15 @@ app.post('/api/appointment-book', (req, res) => {
       if (Object.keys(meta).length) {
         chatTranscript.mergeSessionMeta(sid, meta);
       }
+      appointmentStatus.upsertPendingOnBook({
+        sessionId: sid,
+        formId,
+        appointmentDate: result.appointmentDate || date,
+        appointmentTime: result.time || time,
+        name: body.name,
+        mobile: body.mobile,
+        email: body.email,
+      });
     }
     res.json(result);
   } catch (err) {
@@ -657,9 +667,12 @@ app.get('/api/appointments', async (req, res) => {
       req.query && typeof req.query.from === 'string' ? req.query.from.trim() : '';
     const rawTo =
       req.query && typeof req.query.to === 'string' ? req.query.to.trim() : '';
+    const rawStatus =
+      req.query && typeof req.query.status === 'string' ? req.query.status.trim() : '';
     const payload = await appointmentsView.fetchAppointmentsList({
       from: rawFrom,
       to: rawTo,
+      status: rawStatus,
     });
     res.json(payload);
   } catch (err) {
@@ -668,7 +681,48 @@ app.get('/api/appointments', async (req, res) => {
   }
 });
 
+app.post('/api/appointments/action', (req, res) => {
+  setConversationsSheetCors(req, res);
+  res.setHeader('Cache-Control', 'no-store');
+  if (!requireConversationsViewer(req, res, { allowWithoutSheet: true })) return;
+  try {
+    const body = req.body || {};
+    const sessionId = String(body.sessionId || body.session_id || '').trim();
+    const action = String(body.action || '').trim().toLowerCase();
+    if (!sessionId) {
+      return res.status(400).json({ ok: false, error: 'sessionId required' });
+    }
+    const updated = appointmentStatus.applyAction({
+      sessionId,
+      action,
+      formId: body.formId || body.form_id,
+      appointmentDate: body.appointmentDate || body.appointmentdate,
+      appointmentTime: body.appointmentTime || body.appointmenttime,
+      name: body.name,
+      mobile: body.mobile,
+      email: body.email,
+      updatedBy: body.updatedBy || body.agentEmail,
+      note: body.note,
+    });
+    if (action === 'decline') {
+      const formId = String(body.formId || body.form_id || 'appointment').trim();
+      const dateRaw = body.appointmentDate || body.appointmentdate || '';
+      const timeRaw = body.appointmentTime || body.appointmenttime || '';
+      formApi.releaseAppointmentSlot(formId, dateRaw, timeRaw);
+    }
+    res.json({ ok: true, appointment: updated });
+  } catch (err) {
+    console.error('[appointments/action]', err.message);
+    res.status(400).json({ ok: false, error: err.message || 'action_failed' });
+  }
+});
+
 app.options('/api/appointments', (req, res) => {
+  setConversationsSheetCors(req, res);
+  res.status(204).end();
+});
+
+app.options('/api/appointments/action', (req, res) => {
   setConversationsSheetCors(req, res);
   res.status(204).end();
 });

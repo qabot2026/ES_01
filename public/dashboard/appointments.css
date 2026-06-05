@@ -127,3 +127,81 @@
 .appt-table a:hover {
   text-decoration: underline;
 }
+
+.appt-toolbar select {
+  padding: 8px 10px;
+  border: 1px solid var(--dash-border);
+  border-radius: 8px;
+  font: inherit;
+  min-width: 120px;
+}
+
+.appt-status {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.appt-status--pending {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.appt-status--accepted {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.appt-status--declined {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.appt-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.appt-btn {
+  border: 0;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.appt-btn:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+.appt-btn--accept {
+  background: #0d9488;
+  color: #f0fdfa;
+}
+
+.appt-btn--accept:hover:not(:disabled) {
+  filter: brightness(1.05);
+}
+
+.appt-btn--decline {
+  background: #fff;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+
+.appt-btn--decline:hover:not(:disabled) {
+  background: #fef2f2;
+}
+
+.appt-muted {
+  color: var(--dash-muted);
+  font-size: 0.82rem;
+}

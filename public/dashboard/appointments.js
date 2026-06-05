@@ -47,10 +47,25 @@
     if ($('appt-to') && !$('appt-to').value) $('appt-to').value = today;
   }
 
+  function statusLabel(status) {
+    var s = String(status || 'pending').toLowerCase();
+    if (s === 'accepted') return 'Accepted';
+    if (s === 'declined') return 'Declined';
+    return 'Pending';
+  }
+
+  function statusClass(status) {
+    var s = String(status || 'pending').toLowerCase();
+    if (s === 'accepted') return 'appt-status appt-status--accepted';
+    if (s === 'declined') return 'appt-status appt-status--declined';
+    return 'appt-status appt-status--pending';
+  }
+
   function buildUrl() {
     var base = auth.apiBase() + '/api/appointments?';
     var fromRaw = $('appt-from') ? $('appt-from').value : '';
     var toRaw = $('appt-to') ? $('appt-to').value : '';
+    var statusRaw = $('appt-status') ? $('appt-status').value : 'all';
     var qs = [];
     if (fromRaw) {
       var from = parseInputDate(fromRaw);
@@ -60,7 +75,29 @@
       var to = parseInputDate(toRaw);
       if (to) qs.push('to=' + encodeURIComponent(to));
     }
+    if (statusRaw && statusRaw !== 'all') {
+      qs.push('status=' + encodeURIComponent(statusRaw));
+    }
     return base + qs.join('&');
+  }
+
+  function renderActions(row) {
+    var sid = row.sessionId || '';
+    if (!sid) return '<span class="appt-muted">—</span>';
+    var st = String(row.status || 'pending').toLowerCase();
+    if (st === 'accepted' || st === 'declined') {
+      return '<span class="appt-muted">Done</span>';
+    }
+    return (
+      '<div class="appt-actions">' +
+      '<button type="button" class="appt-btn appt-btn--accept" data-action="accept" data-session="' +
+      esc(sid) +
+      '">Accept</button>' +
+      '<button type="button" class="appt-btn appt-btn--decline" data-action="decline" data-session="' +
+      esc(sid) +
+      '">Decline</button>' +
+      '</div>'
+    );
   }
 
   function renderRows(data) {
@@ -71,7 +108,7 @@
     var rows = (data && data.appointments) || [];
     if (!rows.length) {
       body.innerHTML =
-        '<tr><td colspan="8" class="appt-empty">No appointments for the selected date(s).</td></tr>';
+        '<tr><td colspan="10" class="appt-empty">No appointments for the selected filters.</td></tr>';
     } else {
       body.innerHTML = rows
         .map(function (row) {
@@ -81,8 +118,11 @@
               esc(link) +
               '" target="_blank" rel="noopener">Open chat</a>'
             : '—';
+          var st = String(row.status || 'pending').toLowerCase();
           return (
-            '<tr>' +
+            '<tr data-session="' +
+            esc(row.sessionId || '') +
+            '">' +
             '<td>' +
             esc(formatDmy(row.appointmentDate) || '—') +
             '</td>' +
@@ -104,6 +144,14 @@
             '<td>' +
             esc(row.channel || '—') +
             '</td>' +
+            '<td><span class="' +
+            statusClass(st) +
+            '">' +
+            esc(statusLabel(st)) +
+            '</span></td>' +
+            '<td>' +
+            renderActions(row) +
+            '</td>' +
             '<td>' +
             chatCell +
             '</td>' +
@@ -122,6 +170,9 @@
             ? 'App. date: ' + df.from
             : 'App. dates: ' + df.from + ' – ' + df.to
         );
+      }
+      if (data && data.statusFilter && data.statusFilter !== 'all') {
+        parts.push('status: ' + data.statusFilter);
       }
       if (data && data.source) parts.push('source: ' + data.source);
       if (data && data.sheetsConfigured === false) {
@@ -163,7 +214,7 @@
 
     var body = $('appt-body');
     if (body) {
-      body.innerHTML = '<tr><td colspan="8" class="appt-loading">Loading…</td></tr>';
+      body.innerHTML = '<tr><td colspan="10" class="appt-loading">Loading…</td></tr>';
     }
 
     var url = auth.withAuthQuery(buildUrl());
@@ -186,6 +237,75 @@
       })
       .catch(function () {
         showUnlock('Network error — try again.');
+      });
+  }
+
+  function findRowData(sessionId) {
+    var tr = document.querySelector('tr[data-session="' + sessionId + '"]');
+    if (!tr) return null;
+    var cells = tr.querySelectorAll('td');
+    if (!cells || cells.length < 5) return null;
+    return {
+      sessionId: sessionId,
+      appointmentDate: cells[0] ? cells[0].textContent.trim() : '',
+      appointmentTime: cells[1] ? cells[1].textContent.trim() : '',
+      name: cells[2] ? cells[2].textContent.trim() : '',
+      mobile: cells[3] ? cells[3].textContent.trim() : '',
+      email: cells[4] ? cells[4].textContent.trim() : '',
+    };
+  }
+
+  function postAction(sessionId, action, btn) {
+    if (!auth.hasAuth()) {
+      showUnlock('Enter your viewer secret first.');
+      return;
+    }
+    var row = findRowData(sessionId);
+    if (!row) return;
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = action === 'accept' ? 'Accepting…' : 'Declining…';
+    }
+    var url = auth.apiBase() + '/api/appointments/action';
+    fetch(url, {
+      method: 'POST',
+      headers: Object.assign({ 'Content-Type': 'application/json' }, auth.authHeaders()),
+      body: JSON.stringify({
+        sessionId: sessionId,
+        action: action,
+        formId: 'appointment',
+        appointmentDate: row.appointmentDate,
+        appointmentTime: row.appointmentTime,
+        name: row.name === '—' ? '' : row.name,
+        mobile: row.mobile === '—' ? '' : row.mobile,
+        email: row.email === '—' ? '' : row.email,
+      }),
+    })
+      .then(function (r) {
+        return r.json().then(function (data) {
+          return { ok: r.ok, data: data };
+        });
+      })
+      .then(function (res) {
+        if (!res.ok || !res.data.ok) {
+          var err =
+            (res.data && (res.data.error || res.data.message)) ||
+            'Action failed.';
+          alert(err);
+          if (btn) {
+            btn.disabled = false;
+            btn.textContent = action === 'accept' ? 'Accept' : 'Decline';
+          }
+          return;
+        }
+        load();
+      })
+      .catch(function () {
+        alert('Network error — try again.');
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = action === 'accept' ? 'Accept' : 'Decline';
+        }
       });
   }
 
@@ -224,12 +344,28 @@
     });
   }
   $('appt-apply').addEventListener('click', load);
+  if ($('appt-status')) {
+    $('appt-status').addEventListener('change', load);
+  }
   if ($('appt-unlock-btn')) {
     $('appt-unlock-btn').addEventListener('click', unlockAndLoad);
   }
   if ($('appt-secret')) {
     $('appt-secret').addEventListener('keydown', function (ev) {
       if (ev.key === 'Enter') unlockAndLoad();
+    });
+  }
+  if ($('appt-body')) {
+    $('appt-body').addEventListener('click', function (ev) {
+      var btn = ev.target && ev.target.closest ? ev.target.closest('[data-action]') : null;
+      if (!btn || btn.disabled) return;
+      var action = btn.getAttribute('data-action');
+      var sessionId = btn.getAttribute('data-session');
+      if (!action || !sessionId) return;
+      if (action === 'decline') {
+        if (!window.confirm('Decline this appointment? The time slot will be released.')) return;
+      }
+      postAction(sessionId, action, btn);
     });
   }
   initDefaultDates();

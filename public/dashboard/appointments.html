@@ -13,7 +13,7 @@
         <div>
           <h1>Appointments</h1>
           <p class="dash-muted">
-            Shows today’s appointments by default (App. date). Change From/To to see other days.
+            Chatbot appointment requests — review and Accept or Decline. Defaults to today’s app. date.
           </p>
         </div>
         <nav class="dash-nav">
@@ -49,6 +49,15 @@
           To
           <input type="text" id="appt-to" placeholder="DD/MM/YYYY" inputmode="numeric" autocomplete="off" />
         </label>
+        <label>
+          Status
+          <select id="appt-status">
+            <option value="all">All</option>
+            <option value="pending" selected>Pending</option>
+            <option value="accepted">Accepted</option>
+            <option value="declined">Declined</option>
+          </select>
+        </label>
         <button type="button" id="appt-today" class="dash-btn dash-btn--ghost">Today</button>
         <button type="button" id="appt-apply" class="dash-btn dash-btn--ghost">Apply</button>
         <p id="appt-meta" class="dash-muted appt-meta"></p>
@@ -66,11 +75,13 @@
                 <th>Email</th>
                 <th>Conv. date</th>
                 <th>Channel</th>
+                <th>Status</th>
+                <th>Actions</th>
                 <th>Chat</th>
               </tr>
             </thead>
             <tbody id="appt-body">
-              <tr><td colspan="8" class="appt-loading">Loading…</td></tr>
+              <tr><td colspan="10" class="appt-loading">Loading…</td></tr>
             </tbody>
           </table>
         </div>
