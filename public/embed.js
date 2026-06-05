@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var QA_ASSET_VERSION = '20260605-attach-rich';
+  var QA_ASSET_VERSION = '20260605-attach-flat';
 
   var QA_FORM_SCRIPTS = [
     'contact.js',

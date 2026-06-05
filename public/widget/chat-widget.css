@@ -1294,18 +1294,11 @@ body.qa-lightbox-open {
 }
 
 .qa-attach {
-  border-radius: 13px;
-  background: linear-gradient(
-    155deg,
-    #ffffff 0%,
-    color-mix(in srgb, var(--qa-accent-light, #bae6fd) 55%, #fff) 48%,
-    color-mix(in srgb, var(--qa-accent, #0ea5e9) 22%, #fff) 100%
-  );
+  background: transparent;
   color: var(--qa-primary-deep, #075985);
-  border: 1px solid color-mix(in srgb, var(--qa-primary, #0284c7) 32%, transparent);
-  box-shadow:
-    0 2px 8px color-mix(in srgb, var(--qa-primary, #0284c7) 22%, transparent),
-    inset 0 1px 0 rgba(255, 255, 255, 0.92);
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
 }
 
 .qa-attach__glyph {
@@ -1325,43 +1318,38 @@ body.qa-lightbox-open {
 }
 
 .qa-attach__icon {
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
   display: block;
-  color: var(--qa-primary-deep, #075985);
-  filter: drop-shadow(0 1px 1px rgba(15, 23, 42, 0.14));
+  color: var(--qa-primary, #0284c7);
 }
 
 .qa-attach__emoji {
-  font-size: 1.42rem;
+  font-size: 1.5rem;
   line-height: 1;
   display: block;
-  filter: drop-shadow(0 1px 2px rgba(15, 23, 42, 0.18));
 }
 
 .qa-attach:hover:not(:disabled) {
-  background: linear-gradient(
-    155deg,
-    #ffffff 0%,
-    color-mix(in srgb, var(--qa-accent-light, #bae6fd) 70%, #fff) 50%,
-    color-mix(in srgb, var(--qa-accent, #0ea5e9) 30%, #fff) 100%
-  );
-  transform: translateY(-1px);
-  box-shadow:
-    0 4px 14px color-mix(in srgb, var(--qa-primary, #0284c7) 30%, transparent),
-    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  background: transparent;
+  box-shadow: none;
+  transform: none;
 }
 
 .qa-attach:hover:not(:disabled) .qa-attach__glyph {
-  transform: rotate(calc(var(--qa-attach-tilt, -18deg) + 6deg)) scale(1.08);
+  transform: rotate(calc(var(--qa-attach-tilt, -18deg) + 6deg)) scale(1.1);
+}
+
+.qa-attach:hover:not(:disabled) .qa-attach__icon {
+  color: var(--qa-primary-dark, #0369a1);
 }
 
 .qa-attach:active:not(:disabled) {
-  transform: translateY(0) scale(0.96);
+  transform: none;
 }
 
 .qa-attach:active:not(:disabled) .qa-attach__glyph {
-  transform: rotate(calc(var(--qa-attach-tilt, -18deg) - 2deg)) scale(1.02);
+  transform: rotate(calc(var(--qa-attach-tilt, -18deg) - 2deg)) scale(1.04);
 }
 
 .qa-attach:disabled,
