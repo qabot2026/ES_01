@@ -381,7 +381,10 @@ app.post('/api/appointment-book', (req, res) => {
         email: body.email,
       });
       if (Object.keys(meta).length) {
-        chatTranscript.mergeSessionMeta(sid, meta);
+        chatTranscript.mergeSessionMeta(sid, {
+          ...meta,
+          appointmentStatus: 'pending',
+        });
       }
       appointmentStatus.upsertPendingOnBook({
         sessionId: sid,
@@ -391,7 +394,9 @@ app.post('/api/appointment-book', (req, res) => {
         name: body.name,
         mobile: body.mobile,
         email: body.email,
+        slotBooked: true,
       });
+      conversationSheet.scheduleSheetSync(sid);
     }
     res.json(result);
   } catch (err) {
@@ -869,24 +874,69 @@ app.post('/api/appointments/action', (req, res) => {
     if (!sessionId) {
       return res.status(400).json({ ok: false, error: 'sessionId required' });
     }
+    const prev = appointmentStatus.getStatus(sessionId);
+    const formId = String(body.formId || body.form_id || 'appointment').trim();
+    const dateRaw = body.appointmentDate || body.appointmentdate || '';
+    const timeRaw = body.appointmentTime || body.appointmenttime || '';
+
+    if (action === 'accept') {
+      if (!prev || !prev.slotBooked) {
+        const bookResult = formApi.bookAppointmentSlot(formId, dateRaw, timeRaw);
+        if (!bookResult.ok) {
+          return res.status(409).json({
+            ok: false,
+            error: bookResult.error || 'slot_unavailable',
+            message:
+              bookResult.error === 'slot_unavailable'
+                ? 'That time slot is no longer available.'
+                : 'Could not confirm this appointment slot.',
+          });
+        }
+        appointmentStatus.markSlotBooked(sessionId);
+      }
+    }
+
     const updated = appointmentStatus.applyAction({
       sessionId,
       action,
-      formId: body.formId || body.form_id,
-      appointmentDate: body.appointmentDate || body.appointmentdate,
-      appointmentTime: body.appointmentTime || body.appointmenttime,
+      formId,
+      appointmentDate: dateRaw,
+      appointmentTime: timeRaw,
       name: body.name,
       mobile: body.mobile,
       email: body.email,
       updatedBy: body.updatedBy || body.agentEmail,
       note: body.note,
     });
-    if (action === 'decline') {
-      const formId = String(body.formId || body.form_id || 'appointment').trim();
-      const dateRaw = body.appointmentDate || body.appointmentdate || '';
-      const timeRaw = body.appointmentTime || body.appointmenttime || '';
+
+    const dateDisplay = require('./lib/date-display');
+    const apptDmy = dateDisplay.formatDateDisplay(dateRaw);
+    const apptTimeDisplay = String(
+      updated.appointmentTime || timeRaw || ''
+    ).trim();
+
+    if (action === 'accept') {
+      chatTranscript.mergeSessionMeta(sessionId, {
+        appointmentBooked: 'yes',
+        appointmentStatus: 'accepted',
+        appointmentdate: apptDmy,
+        appointmenttime: apptTimeDisplay,
+        appointmentDateDisplay: apptDmy,
+        appointmentTimeDisplay: apptTimeDisplay,
+        name: body.name,
+        mobile: body.mobile,
+        email: body.email,
+      });
+      conversationSheet.scheduleSheetSync(sessionId);
+    } else if (action === 'decline') {
       formApi.releaseAppointmentSlot(formId, dateRaw, timeRaw);
+      chatTranscript.mergeSessionMeta(sessionId, {
+        appointmentBooked: 'no',
+        appointmentStatus: 'declined',
+      });
+      conversationSheet.scheduleSheetSync(sessionId);
     }
+
     res.json({ ok: true, appointment: updated });
   } catch (err) {
     console.error('[appointments/action]', err.message);
