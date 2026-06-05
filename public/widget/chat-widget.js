@@ -1694,6 +1694,7 @@
       var cardCarousels =
         richOn && payload.cardCarousels ? payload.cardCarousels : [];
       var forms = richOn && payload.forms ? payload.forms : [];
+      forms = self.resolveFormRequestsForDisplay(forms);
       var reply = (payload.reply || '').trim();
       var replyParts = payload.replyParts || [];
       var chipHeading = (payload.chipHeading || '').trim();
@@ -3591,7 +3592,9 @@
                 };
           if (!nextFormReq) return;
           if (chainTag && !nextFormReq.tag) nextFormReq.tag = chainTag;
-          self.appendMessage('bot', '', { forms: [nextFormReq] });
+          var displayForms = self.resolveFormRequestsForDisplay([nextFormReq]);
+          if (!displayForms.length) return;
+          self.appendMessage('bot', '', { forms: displayForms });
         });
       }
 
@@ -3605,9 +3608,47 @@
     }
   };
 
+  QualityAssistantWidget.prototype.handleSkippedContactForm = function (request) {
+    this.pushSessionContext();
+    var action =
+      global.QAChatForm && global.QAChatForm.resolveFormAction
+        ? global.QAChatForm.resolveFormAction((request || {}).onSubmit)
+        : null;
+    if (action) {
+      this._userHasInteracted = true;
+      this.runFormDialogflowAction(action);
+    }
+  };
+
+  QualityAssistantWidget.prototype.resolveFormRequestsForDisplay = function (forms) {
+    var self = this;
+    if (!global.QAChatForm || !global.QAChatForm.resolveContactSkip) {
+      return Array.isArray(forms) ? forms : [];
+    }
+    var out = [];
+    (Array.isArray(forms) ? forms : []).forEach(function (req) {
+      var resolved = global.QAChatForm.resolveContactSkip(req, self);
+      if (!resolved) return;
+      if (resolved._skipContactOnly) {
+        self.handleSkippedContactForm(resolved.request);
+        return;
+      }
+      out.push(resolved);
+    });
+    return out;
+  };
+
   QualityAssistantWidget.prototype.buildFormEl = function (formRequest) {
     if (!global.QAChatForm || !global.QAChatForm.isFormsEnabled()) return null;
-    return global.QAChatForm.buildFormEl(formRequest, this);
+    var resolved =
+      global.QAChatForm.resolveContactSkip
+        ? global.QAChatForm.resolveContactSkip(formRequest, this)
+        : formRequest;
+    if (resolved && resolved._skipContactOnly) {
+      this.handleSkippedContactForm(resolved.request);
+      return null;
+    }
+    return global.QAChatForm.buildFormEl(resolved, this);
   };
 
   QualityAssistantWidget.prototype.fillMessageBubble = function (bubble, text, replyParts) {

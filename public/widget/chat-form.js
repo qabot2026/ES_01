@@ -342,6 +342,52 @@
     return queue[0] || '';
   }
 
+  function normalizeFormIdKey(formId) {
+    return String(formId || '')
+      .trim()
+      .toLowerCase()
+      .replace(/[\s_-]+/g, '');
+  }
+
+  function isContactFormId(formId) {
+    return normalizeFormIdKey(formId) === 'contact';
+  }
+
+  function hasCompleteContactDetails(ctx) {
+    ctx = ctx || {};
+    var name = String(ctx.name || '').trim();
+    var mobile = String(ctx.mobile || ctx.phone || '').trim();
+    var email = String(ctx.email || '').trim();
+    return !!(name && mobile && email);
+  }
+
+  /**
+   * Skip contact form when name, mobile, and email are already in clientContext.
+   * Returns next chained form, original request, or { _skipContactOnly, request }.
+   */
+  function resolveContactSkip(formReq, widget) {
+    if (!formReq) return formReq;
+    var guard = 0;
+    var current = formReq;
+    while (current && guard++ < 8) {
+      var formId = String(current.formId || current.form_id || '').trim();
+      if (!isContactFormId(formId)) return current;
+      var ctx = Object.assign(
+        {},
+        (widget && widget.clientContext) || {},
+        current.prefill || {}
+      );
+      if (!hasCompleteContactDetails(ctx)) return current;
+      var queue = resolveFormChainQueue(null, current);
+      var nextId = queue[0];
+      if (!nextId) {
+        return { _skipContactOnly: true, request: current };
+      }
+      current = buildChainedFormRequest(nextId, null, current, ctx);
+    }
+    return current;
+  }
+
   /** Pass remaining chain when opening the next in-chat form (contact → upload → appointment). */
   function buildChainedFormRequest(nextFormId, def, request, prefill) {
     var nextId = String(nextFormId || '').trim();
@@ -2682,6 +2728,9 @@
     resolveNextFormId: resolveNextFormId,
     resolveFormChainQueue: resolveFormChainQueue,
     buildChainedFormRequest: buildChainedFormRequest,
+    isContactFormId: isContactFormId,
+    hasCompleteContactDetails: hasCompleteContactDetails,
+    resolveContactSkip: resolveContactSkip,
     getFormDef: getFormDef,
     isFormsEnabled: isFormsEnabled,
   };
