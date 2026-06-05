@@ -1656,6 +1656,9 @@
     if (result.data.sessionId) this.sessionId = result.data.sessionId;
 
     var data = result.data || {};
+    if (data.sessionParameters) {
+      this.mergeSessionParameters(data.sessionParameters);
+    }
     if (data.humanActive || data.agentConnected) {
       this._liveAgentHumanActive = true;
       this._liveAgentWaiting = false;
@@ -3608,7 +3611,26 @@
     }
   };
 
-  QualityAssistantWidget.prototype.handleSkippedContactForm = function (request) {
+  QualityAssistantWidget.prototype.mergeSessionParameters = function (sessionParameters) {
+    var params =
+      sessionParameters && typeof sessionParameters === 'object'
+        ? sessionParameters
+        : {};
+    if (!Object.keys(params).length) return;
+    var patch = Object.assign({}, params);
+    if (!patch.mobile && patch.phone) patch.mobile = patch.phone;
+    if (!patch.appointmentdate && patch.appointment_date) {
+      patch.appointmentdate = patch.appointment_date;
+    }
+    if (!patch.appointmenttime && patch.appointment_time) {
+      patch.appointmenttime = patch.appointment_time;
+    }
+    this.clientContext = Object.assign({}, this.clientContext || {}, patch);
+  };
+
+  QualityAssistantWidget.prototype.handleSkippedForm = function (request) {
+    var prefill = (request && request.prefill) || {};
+    this.clientContext = Object.assign({}, this.clientContext || {}, prefill);
     this.pushSessionContext();
     var action =
       global.QAChatForm && global.QAChatForm.resolveFormAction
@@ -3620,17 +3642,22 @@
     }
   };
 
+  QualityAssistantWidget.prototype.handleSkippedContactForm = function (request) {
+    this.handleSkippedForm(request);
+  };
+
   QualityAssistantWidget.prototype.resolveFormRequestsForDisplay = function (forms) {
     var self = this;
-    if (!global.QAChatForm || !global.QAChatForm.resolveContactSkip) {
-      return Array.isArray(forms) ? forms : [];
-    }
+    var skipFn =
+      global.QAChatForm &&
+      (global.QAChatForm.resolveFormSkips || global.QAChatForm.resolveContactSkip);
+    if (!skipFn) return Array.isArray(forms) ? forms : [];
     var out = [];
     (Array.isArray(forms) ? forms : []).forEach(function (req) {
-      var resolved = global.QAChatForm.resolveContactSkip(req, self);
+      var resolved = skipFn(req, self);
       if (!resolved) return;
-      if (resolved._skipContactOnly) {
-        self.handleSkippedContactForm(resolved.request);
+      if (resolved._skipContactOnly || resolved._skipAppointmentOnly) {
+        self.handleSkippedForm(resolved.request);
         return;
       }
       out.push(resolved);
@@ -3640,12 +3667,11 @@
 
   QualityAssistantWidget.prototype.buildFormEl = function (formRequest) {
     if (!global.QAChatForm || !global.QAChatForm.isFormsEnabled()) return null;
-    var resolved =
-      global.QAChatForm.resolveContactSkip
-        ? global.QAChatForm.resolveContactSkip(formRequest, this)
-        : formRequest;
-    if (resolved && resolved._skipContactOnly) {
-      this.handleSkippedContactForm(resolved.request);
+    var skipFn =
+      global.QAChatForm.resolveFormSkips || global.QAChatForm.resolveContactSkip;
+    var resolved = skipFn ? skipFn(formRequest, this) : formRequest;
+    if (resolved && (resolved._skipContactOnly || resolved._skipAppointmentOnly)) {
+      this.handleSkippedForm(resolved.request);
       return null;
     }
     return global.QAChatForm.buildFormEl(resolved, this);

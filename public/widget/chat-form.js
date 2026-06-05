@@ -361,31 +361,61 @@
     return !!(name && mobile && email);
   }
 
+  function isAppointmentFormId(formId) {
+    return isAppointmentFormDef(null, formId);
+  }
+
+  function hasCompleteAppointmentDetails(ctx) {
+    ctx = ctx || {};
+    var time = String(
+      ctx.appointmenttime || ctx.appointment_time || ''
+    ).trim();
+    return !!time;
+  }
+
+  function mergeFormContext(widget, formReq) {
+    return Object.assign(
+      {},
+      (widget && widget.clientContext) || {},
+      (formReq && formReq.prefill) || {}
+    );
+  }
+
   /**
-   * Skip contact form when name, mobile, and email are already in clientContext.
-   * Returns next chained form, original request, or { _skipContactOnly, request }.
+   * Skip contact / appointment when details already exist (clientContext or DF prefill).
+   * Returns next chained form, original request, or { _skipContactOnly|_skipAppointmentOnly, request }.
    */
-  function resolveContactSkip(formReq, widget) {
+  function resolveFormSkips(formReq, widget) {
     if (!formReq) return formReq;
     var guard = 0;
     var current = formReq;
     while (current && guard++ < 8) {
+      if (current._skipContactOnly || current._skipAppointmentOnly) return current;
       var formId = String(current.formId || current.form_id || '').trim();
-      if (!isContactFormId(formId)) return current;
-      var ctx = Object.assign(
-        {},
-        (widget && widget.clientContext) || {},
-        current.prefill || {}
-      );
-      if (!hasCompleteContactDetails(ctx)) return current;
+      var ctx = mergeFormContext(widget, current);
+      var skipKey = '';
+      if (isContactFormId(formId) && hasCompleteContactDetails(ctx)) {
+        skipKey = '_skipContactOnly';
+      } else if (isAppointmentFormId(formId) && hasCompleteAppointmentDetails(ctx)) {
+        skipKey = '_skipAppointmentOnly';
+      } else {
+        return current;
+      }
       var queue = resolveFormChainQueue(null, current);
       var nextId = queue[0];
       if (!nextId) {
-        return { _skipContactOnly: true, request: current };
+        var skipped = { request: current };
+        skipped[skipKey] = true;
+        return skipped;
       }
       current = buildChainedFormRequest(nextId, null, current, ctx);
     }
     return current;
+  }
+
+  /** @deprecated Use resolveFormSkips */
+  function resolveContactSkip(formReq, widget) {
+    return resolveFormSkips(formReq, widget);
   }
 
   /** Pass remaining chain when opening the next in-chat form (contact → upload → appointment). */
@@ -2730,6 +2760,9 @@
     buildChainedFormRequest: buildChainedFormRequest,
     isContactFormId: isContactFormId,
     hasCompleteContactDetails: hasCompleteContactDetails,
+    isAppointmentFormId: isAppointmentFormId,
+    hasCompleteAppointmentDetails: hasCompleteAppointmentDetails,
+    resolveFormSkips: resolveFormSkips,
     resolveContactSkip: resolveContactSkip,
     getFormDef: getFormDef,
     isFormsEnabled: isFormsEnabled,

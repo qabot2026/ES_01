@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var QA_ASSET_VERSION = '20260605-skip-contact';
+  var QA_ASSET_VERSION = '20260605-skip-appt';
 
   var QA_FORM_SCRIPTS = [
     'contact.js',
