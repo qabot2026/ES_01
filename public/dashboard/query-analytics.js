@@ -2,9 +2,7 @@
   'use strict';
 
   var auth = window.DashboardDeskAuth;
-  if (!auth || !auth.requireAuthOrRedirect('dashboard/query-analytics.html')) {
-    return;
-  }
+  if (!auth) return;
 
   function $(id) {
     return document.getElementById(id);
@@ -139,31 +137,104 @@
     renderTable(data.queries);
   }
 
+  function showUnlock(message) {
+    var panel = $('qa-unlock');
+    var msg = $('qa-unlock-msg');
+    if (panel) panel.classList.remove('hidden');
+    if (msg) {
+      msg.textContent = message || '';
+      msg.classList.toggle('ok', !message);
+    }
+    var saved = auth.viewerSecret();
+    if (saved && $('qa-secret') && !$('qa-secret').value) {
+      $('qa-secret').value = saved;
+    }
+  }
+
+  function hideUnlock() {
+    var panel = $('qa-unlock');
+    var msg = $('qa-unlock-msg');
+    if (panel) panel.classList.add('hidden');
+    if (msg) {
+      msg.textContent = '';
+      msg.classList.remove('ok');
+    }
+  }
+
   function load() {
+    if (!auth.hasAuth()) {
+      showUnlock('Enter your viewer secret to load query analytics.');
+      return;
+    }
+
     var days = $('qa-period') ? $('qa-period').value : '30';
     var body = $('qa-table-body');
     if (body) {
       body.innerHTML = '<tr><td colspan="7" class="qa-loading">Loading…</td></tr>';
     }
-    fetch(auth.apiBase() + '/api/analytics/queries?days=' + encodeURIComponent(days), {
-      headers: auth.authHeaders(),
-    })
+
+    var url =
+      auth.apiBase() +
+      '/api/analytics/queries?days=' +
+      encodeURIComponent(days);
+    url = auth.withAuthQuery(url);
+
+    fetch(url, { headers: auth.authHeaders() })
       .then(function (r) {
-        return r.json();
+        return r.json().then(function (data) {
+          return { status: r.status, data: data };
+        });
       })
-      .then(function (data) {
-        if (!data.ok) {
-          alert('Could not load query analytics. Check desk token.');
+      .then(function (res) {
+        if (res.status === 401 || !res.data.ok) {
+          var detail =
+            (res.data && (res.data.message || res.data.error)) ||
+            'Secret not accepted.';
+          showUnlock(detail + ' Check CONVERSATIONS_SHEET_VIEW_SECRET on Railway.');
           return;
         }
-        render(data);
+        hideUnlock();
+        render(res.data);
       })
       .catch(function () {
-        alert('Network error');
+        showUnlock('Network error — try again.');
       });
+  }
+
+  function unlockAndLoad() {
+    var input = $('qa-secret');
+    var msg = $('qa-unlock-msg');
+    var btn = $('qa-unlock-btn');
+    var secret = input ? input.value.trim() : '';
+    if (!secret) {
+      if (msg) msg.textContent = 'Enter viewer secret.';
+      return;
+    }
+    if (btn) btn.disabled = true;
+    if (msg) msg.textContent = 'Checking secret…';
+    auth.validateSecret(secret).then(function (result) {
+      if (btn) btn.disabled = false;
+      if (!result.ok) {
+        if (msg) msg.textContent = result.message || 'Secret not accepted.';
+        return;
+      }
+      if (msg) {
+        msg.textContent = 'Unlocked.';
+        msg.classList.add('ok');
+      }
+      load();
+    });
   }
 
   $('qa-refresh').addEventListener('click', load);
   $('qa-period').addEventListener('change', load);
+  if ($('qa-unlock-btn')) {
+    $('qa-unlock-btn').addEventListener('click', unlockAndLoad);
+  }
+  if ($('qa-secret')) {
+    $('qa-secret').addEventListener('keydown', function (ev) {
+      if (ev.key === 'Enter') unlockAndLoad();
+    });
+  }
   load();
 })();

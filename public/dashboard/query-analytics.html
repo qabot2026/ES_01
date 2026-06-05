@@ -22,6 +22,25 @@
         </nav>
       </header>
 
+      <section id="qa-unlock" class="qa-unlock hidden" aria-label="Unlock query analytics">
+        <h2>Viewer secret required</h2>
+        <p class="dash-muted">
+          Use the same secret as
+          <a href="/conversations-sheet">Conversation leads</a>
+          or
+          <a href="/live-agent/settings">Live Agent Settings</a>
+          (<code>CONVERSATIONS_SHEET_VIEW_SECRET</code> on Railway).
+        </p>
+        <div class="qa-unlock-row">
+          <label>
+            Viewer secret
+            <input id="qa-secret" type="password" autocomplete="current-password" />
+          </label>
+          <button type="button" id="qa-unlock-btn" class="dash-btn dash-btn--primary">Unlock</button>
+        </div>
+        <p id="qa-unlock-msg" class="qa-unlock-msg" role="status"></p>
+      </section>
+
       <section class="qa-toolbar">
         <label>
           Time period

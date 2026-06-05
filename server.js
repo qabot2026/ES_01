@@ -23,10 +23,13 @@ const PUBLIC_BASE_URL =
   process.env.PUBLIC_BASE_URL ||
   'https://es-based-chatbot-production.up.railway.app';
 
+const CORS_ALLOW_HEADERS =
+  'Content-Type, X-Agent-Token, X-Desk-Token, X-Conversations-Sheet-Secret, Authorization, X-Live-Agent-Email, X-Live-Agent-Name';
+
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', CORS_ALLOW_HEADERS);
   if (req.method === 'OPTIONS') return res.sendStatus(204);
   next();
 });
@@ -321,7 +324,7 @@ app.get('/api/appointment-schedule', (_req, res) => {
 
 function requireDeskAuth(req, res, next) {
   if (liveAgent.verifyDeskToken(req).ok) return next();
-  res.status(401).json(liveAgent.deskAuthFailed());
+  res.status(401).json({ ok: false, ...liveAgent.deskAuthFailed() });
 }
 
 /** --- Live agent service desk (Only Refer–compatible) --- */
