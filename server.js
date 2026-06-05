@@ -33,6 +33,16 @@ app.use((req, res, next) => {
 
 app.use(express.json({ limit: '32kb' }));
 
+// `public/` is the static root on disk — not part of the URL path.
+app.use((req, res, next) => {
+  if (req.path === '/public' || req.path.startsWith('/public/')) {
+    const rest = req.path.slice('/public'.length) || '/';
+    const qs = req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '';
+    return res.redirect(301, rest + qs);
+  }
+  next();
+});
+
 const uploadDocumentsMw = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 25 * 1024 * 1024, files: 10 },
