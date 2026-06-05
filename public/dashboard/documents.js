@@ -75,9 +75,18 @@
     return m ? m[1] : '';
   }
 
-  var COPY_LINK_ICON =
-    '<svg class="docs-icon" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" focusable="false">' +
-    '<path fill="currentColor" d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v16h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 18H8V7h11v16z"/></svg>';
+  var ICON_EYE =
+    '<svg class="docs-action-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">' +
+    '<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/>' +
+    '<circle cx="12" cy="12" r="3"/></svg>';
+  var ICON_DOWNLOAD =
+    '<svg class="docs-action-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">' +
+    '<path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>';
+  var ICON_DELETE =
+    '<svg class="docs-action-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">' +
+    '<path d="M3 6h18"/><path d="M8 6V4h8v2"/>' +
+    '<path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/>' +
+    '<path d="M10 11v6"/><path d="M14 11v6"/></svg>';
 
   function escapeHtml(s) {
     return String(s)
@@ -85,6 +94,30 @@
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;');
+  }
+
+  function actionIconBtn(className, iconSvg, label, dataAttrs) {
+    return (
+      '<button type="button" class="docs-icon-btn ' +
+      className +
+      '" ' +
+      (dataAttrs || '') +
+      ' title="' +
+      escapeHtml(label) +
+      '" aria-label="' +
+      escapeHtml(label) +
+      '">' +
+      iconSvg +
+      '<span class="visually-hidden">' +
+      escapeHtml(label) +
+      '</span></button>'
+    );
+  }
+
+  function setActionBusy(btn, busy) {
+    if (!btn) return;
+    btn.classList.toggle('docs-icon-btn--busy', !!busy);
+    btn.disabled = !!busy;
   }
 
   function showAlert(msg) {
@@ -346,34 +379,41 @@
           formatBytes(r.size_bytes) +
           '</td>' +
           '<td><div class="docs-actions">' +
-          '<button type="button" class="docs-view" data-object="' +
-          escapeHtml(r.gcs_object) +
-          '" data-external-url="' +
-          escapeHtml(r.external ? r.storage_link || '' : '') +
-          '">View</button>' +
-          '<span class="docs-sep">|</span>' +
-          '<button type="button" class="docs-download" data-object="' +
-          escapeHtml(r.gcs_object) +
-          '" data-filename="' +
-          escapeHtml(r.file_name) +
-          '">Download</button>' +
-          (r.external
-            ? ''
-            : '<span class="docs-sep">|</span>' +
-              '<button type="button" class="docs-delete" data-object="' +
+          '<div class="docs-action-icons">' +
+          actionIconBtn(
+            'docs-icon-btn--view docs-view',
+            ICON_EYE,
+            'View',
+            'data-object="' +
+              escapeHtml(r.gcs_object) +
+              '" data-external-url="' +
+              escapeHtml(r.external ? r.storage_link || '' : '') +
+              '"'
+          ) +
+          actionIconBtn(
+            'docs-icon-btn--download docs-download',
+            ICON_DOWNLOAD,
+            'Download',
+            'data-object="' +
               escapeHtml(r.gcs_object) +
               '" data-filename="' +
               escapeHtml(r.file_name) +
-              '">Delete</button>') +
-          '<span class="docs-sep">|</span>' +
-          '<button type="button" class="docs-copy-link" data-object="' +
-          escapeHtml(r.gcs_object) +
-          '" data-storage-link="' +
-          escapeHtml(r.storage_link || '') +
-          '" aria-label="Copy link" title="Copy link">' +
-          COPY_LINK_ICON +
-          '</button>' +
-          '<span class="docs-sep">|</span><a class="docs-link-transcript" href="../conversation-transcript?session=' +
+              '"'
+          ) +
+          (r.external
+            ? ''
+            : actionIconBtn(
+                'docs-icon-btn--delete docs-delete',
+                ICON_DELETE,
+                'Delete',
+                'data-object="' +
+                  escapeHtml(r.gcs_object) +
+                  '" data-filename="' +
+                  escapeHtml(r.file_name) +
+                  '"'
+              )) +
+          '</div>' +
+          '<a class="docs-link-transcript" href="../conversation-transcript?session=' +
           encodeURIComponent(chatSid) +
           '" target="_blank" rel="noopener noreferrer">Chatscript</a>' +
           '</div></td></tr>'
@@ -396,84 +436,6 @@
         deleteDocument(btn);
       });
     });
-    tbody.querySelectorAll('.docs-copy-link').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        copyFileLink(btn);
-      });
-    });
-  }
-
-  function copyToClipboard(text) {
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      return navigator.clipboard.writeText(text);
-    }
-    return new Promise(function (resolve, reject) {
-      try {
-        var ta = document.createElement('textarea');
-        ta.value = text;
-        ta.setAttribute('readonly', '');
-        ta.style.position = 'fixed';
-        ta.style.left = '-9999px';
-        document.body.appendChild(ta);
-        ta.select();
-        document.execCommand('copy');
-        ta.remove();
-        resolve();
-      } catch (e) {
-        reject(e);
-      }
-    });
-  }
-
-  function copyFileLink(btn) {
-    var object = btn.getAttribute('data-object');
-    var storageLink = btn.getAttribute('data-storage-link') || '';
-    if (!object) return;
-
-    function done(url) {
-      if (!url) {
-        alert('No link available.');
-        return;
-      }
-      copyToClipboard(url)
-        .then(function () {
-          btn.classList.add('docs-copy-link--done');
-          var prevTitle = btn.getAttribute('title');
-          btn.setAttribute('title', 'Copied');
-          setTimeout(function () {
-            btn.classList.remove('docs-copy-link--done');
-            btn.setAttribute('title', prevTitle || 'Copy link');
-          }, 1600);
-        })
-        .catch(function () {
-          alert('Could not copy link.');
-        });
-    }
-
-    if (storageLink) {
-      done(storageLink);
-      return;
-    }
-
-    btn.disabled = true;
-    fetch(
-      apiBase() +
-        '/api/documents/download-url?object=' +
-        encodeURIComponent(object),
-      { headers: headers() }
-    )
-      .then(function (r) {
-        return r.json();
-      })
-      .then(function (data) {
-        done(data.ok && data.url ? data.url : '');
-      })
-      .catch(function () {
-        alert('Could not get link.');
-      })
-      .finally(function () {
-        btn.disabled = false;
-      });
   }
 
   function openView(btn) {
@@ -484,9 +446,7 @@
       window.open(externalUrl, '_blank', 'noopener,noreferrer');
       return;
     }
-    btn.disabled = true;
-    var prev = btn.textContent;
-    btn.textContent = '…';
+    setActionBusy(btn, true);
     fetch(
       apiBase() +
         '/api/documents/download-url?object=' +
@@ -507,8 +467,7 @@
         alert('Request failed.');
       })
       .finally(function () {
-        btn.disabled = false;
-        btn.textContent = prev || 'View';
+        setActionBusy(btn, false);
       });
   }
 
@@ -536,9 +495,7 @@
       return;
     }
 
-    btn.disabled = true;
-    var prev = btn.textContent;
-    btn.textContent = '…';
+    setActionBusy(btn, true);
 
     fetch(apiBase() + '/api/documents/delete', {
       method: 'POST',
@@ -563,8 +520,7 @@
         alert(err.message || 'Delete failed.');
       })
       .finally(function () {
-        btn.disabled = false;
-        btn.textContent = prev || 'Delete';
+        setActionBusy(btn, false);
       });
   }
 
@@ -573,9 +529,7 @@
     var fileName = btn.getAttribute('data-filename') || 'download';
     if (!object || !auth.hasAuth()) return;
 
-    btn.disabled = true;
-    var prev = btn.textContent;
-    btn.textContent = '…';
+    setActionBusy(btn, true);
 
     fetch(
       apiBase() +
@@ -610,8 +564,7 @@
         alert(err.message || 'Download failed.');
       })
       .finally(function () {
-        btn.disabled = false;
-        btn.textContent = prev || 'Download';
+        setActionBusy(btn, false);
       });
   }
 
