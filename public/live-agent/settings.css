@@ -4,13 +4,101 @@
   min-height: 100vh;
 }
 
-.settings-main {
+.settings-layout {
+  display: flex;
   flex: 1;
-  overflow: auto;
-  padding: 1.25rem;
-  max-width: 960px;
+  min-height: 0;
+  gap: 1.25rem;
+  max-width: 1180px;
   margin: 0 auto;
   width: 100%;
+  padding: 1rem 1.25rem 1.5rem;
+  align-items: flex-start;
+}
+
+.settings-nav {
+  flex: 0 0 12.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  position: sticky;
+  top: 0.75rem;
+  max-height: calc(100vh - 5rem);
+  overflow-y: auto;
+  padding: 0.65rem;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.settings-nav-label {
+  margin: 0 0 0.35rem 0.35rem;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.settings-nav-btn {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.88rem;
+  cursor: pointer;
+  line-height: 1.35;
+}
+
+.settings-nav-btn:hover {
+  background: rgba(59, 130, 246, 0.08);
+}
+
+.settings-nav-btn.active {
+  background: rgba(59, 130, 246, 0.16);
+  border-color: rgba(59, 130, 246, 0.35);
+  font-weight: 600;
+}
+
+.settings-nav-footer {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.settings-nav-footer p {
+  margin: 0;
+  font-size: 0.78rem;
+}
+
+.settings-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.settings-panel-title {
+  margin: 0 0 1rem;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.settings-panel {
+  display: none;
+}
+
+.settings-panel.active {
+  display: block;
+}
+
+.settings-panel .settings-card h3.settings-subhead:first-child,
+.settings-panel .settings-card > .settings-subhead:first-child {
+  margin-top: 0;
 }
 
 .settings-card {
@@ -403,4 +491,41 @@
 .agents-activity-when {
   display: inline-block;
   min-width: 9rem;
+}
+
+@media (max-width: 800px) {
+  .settings-layout {
+    flex-direction: column;
+    padding: 0.75rem 1rem 1.25rem;
+  }
+
+  .settings-nav {
+    position: static;
+    flex: none;
+    width: 100%;
+    max-height: none;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    padding: 0.65rem;
+  }
+
+  .settings-nav-label {
+    width: 100%;
+  }
+
+  .settings-nav-btn {
+    width: auto;
+    flex: 1 1 auto;
+    min-width: calc(50% - 0.35rem);
+    font-size: 0.82rem;
+    padding: 0.45rem 0.5rem;
+  }
+
+  .settings-nav-footer {
+    width: 100%;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+  }
 }

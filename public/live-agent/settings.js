@@ -3,6 +3,7 @@
 
     const API = "/api/live-agent";
     const LS_SECRET = "conversations_sheet_secret_v1";
+    const LS_SETTINGS_PANEL = "live_agent_settings_panel_v1";
 
     const $ = (id) => document.getElementById(id);
 
@@ -47,11 +48,60 @@
         $("appView").classList.add("hidden");
     }
 
+    function showSettingsPanel_(panelId) {
+        const id = panelId || "general";
+        const buttons = document.querySelectorAll(".settings-nav-btn");
+        const panels = document.querySelectorAll(".settings-panel");
+        let title = "Settings";
+        for (const btn of buttons) {
+            const on = btn.getAttribute("data-settings-panel") === id;
+            btn.classList.toggle("active", on);
+            if (on) title = btn.textContent.trim() || title;
+        }
+        for (const panel of panels) {
+            const on = panel.id === "settingsPanel-" + id;
+            panel.classList.toggle("active", on);
+            if (on && panel.dataset.panelTitle) {
+                title = panel.dataset.panelTitle;
+            }
+        }
+        const titleEl = $("settingsPanelTitle");
+        if (titleEl) titleEl.textContent = title;
+        try {
+            sessionStorage.setItem(LS_SETTINGS_PANEL, id);
+        } catch (_) {
+            /* ignore */
+        }
+        if (id === "activity") {
+            loadAgentsOverview_();
+        }
+    }
+
+    function initSettingsNav_() {
+        document.querySelectorAll(".settings-nav-btn").forEach((btn) => {
+            btn.addEventListener("click", () => {
+                const panelId = btn.getAttribute("data-settings-panel");
+                if (panelId) showSettingsPanel_(panelId);
+            });
+        });
+        let saved = "general";
+        try {
+            saved = sessionStorage.getItem(LS_SETTINGS_PANEL) || "general";
+        } catch (_) {
+            /* ignore */
+        }
+        if (!document.getElementById("settingsPanel-" + saved)) {
+            saved = "general";
+        }
+        showSettingsPanel_(saved);
+    }
+
     function showApp() {
         $("loginView").classList.add("hidden");
         $("appView").classList.remove("hidden");
         loadAll();
         updateNotifyPermissionStatus_();
+        initSettingsNav_();
     }
 
     function setChecked_(id, on) {
@@ -249,6 +299,7 @@
             banner.textContent = msg;
             banner.classList.remove("hidden");
         }
+        showSettingsPanel_("knowledge");
         const kbSection = $("knowledgeBaseSection");
         if (kbSection && typeof kbSection.scrollIntoView === "function") {
             kbSection.scrollIntoView({ behavior: "smooth", block: "nearest" });
