@@ -171,6 +171,12 @@
     return base + qs.join('&');
   }
 
+  function transcriptHref(sessionId) {
+    var sid = String(sessionId || '').trim();
+    if (!sid) return '';
+    return '/conversation-transcript?session=' + encodeURIComponent(sid);
+  }
+
   function renderActions(row) {
     var sid = row.sessionId || '';
     if (!sid) return '<span class="appt-muted">—</span>';
@@ -202,11 +208,11 @@
     } else {
       body.innerHTML = rows
         .map(function (row) {
-          var link = row.transcriptUrl || '';
+          var link = row.transcriptUrl || transcriptHref(row.sessionId || '');
           var chatCell = link
-            ? '<a href="' +
+            ? '<a class="appt-link-transcript" href="' +
               esc(link) +
-              '" target="_blank" rel="noopener">Open chat</a>'
+              '" target="_blank" rel="noopener noreferrer">Chatscript</a>'
             : '—';
           var st = String(row.status || 'pending').toLowerCase();
           return (
