@@ -101,6 +101,8 @@
       calOutsideWindow: 'You can only book within the allowed number of days.',
       calLoading: 'Loading…',
       calSlotTaken: 'That time was just booked. Pick another slot.',
+      calSlotInvalid: 'This time is not available anymore. Pick another slot.',
+      calNetworkError: 'Network error. Please try again.',
       calBookFailed: 'Could not book this slot. Try again.',
       formSubmitThanks: 'Thank you for sharing.',
       formSubmitThanksAppointment: 'Your appointment request has been submitted.',
@@ -156,6 +158,8 @@
       calOutsideWindow: 'केवल निर्धारित दिनों के भीतर ही बुक कर सकते हैं।',
       calLoading: 'लोड हो रहा है…',
       calSlotTaken: 'यह समय अभी बुक हो गया। दूसरा स्लॉट चुनें।',
+      calSlotInvalid: 'यह समय अब उपलब्ध नहीं है। दूसरा स्लॉट चुनें।',
+      calNetworkError: 'नेटवर्क एरर। कृपया फिर कोशिश करें।',
       calBookFailed: 'बुकिंग नहीं हो सकी। फिर कोशिश करें।',
       formSubmitThanks: 'साझा करने के लिए धन्यवाद।',
       formSubmitThanksAppointment: 'आपका अपॉइंटमेंट अनुरोध जमा हो गया है।',
@@ -211,6 +215,8 @@
       calOutsideWindow: 'फक्त ठरवलेल्या दिवसांमध्येच बुकिंग करता येईल.',
       calLoading: 'लोड होत आहे…',
       calSlotTaken: 'हा वेळ आत्ताच बुक झाला. दुसरा स्लॉट निवडा.',
+      calSlotInvalid: 'हा वेळ आता उपलब्ध नाही. दुसरा स्लॉट निवडा.',
+      calNetworkError: 'नेटवर्क एरर. पुन्हा प्रयत्न करा.',
       calBookFailed: 'बुकिंग होऊ शकली नाही. पुन्हा प्रयत्न करा.',
       formSubmitThanks: 'माहिती शेअर केल्याबद्दल धन्यवाद.',
       formSubmitThanksAppointment: 'तुमची अपॉइंटमेंट विनंती जमा झाली आहे.',
@@ -1968,8 +1974,6 @@
           var slot24 = s.time24 || to24hClient(s.time);
           var slot12 = s.time || to12hClient(slot24);
           var isFull = s.status === 'full';
-          var cap = s.capacity || 1;
-          var bookedN = s.booked || 0;
           var b = document.createElement('button');
           b.type = 'button';
           b.className = 'qa-form-cal__slot';
@@ -1980,8 +1984,8 @@
             b.classList.add('qa-form-cal__slot--available');
             b.setAttribute('data-slot-status', 'available');
           }
-          b.textContent =
-            cap > 1 ? slot12 + ' (' + bookedN + '/' + cap + ')' : slot12;
+          /* Hide capacity/booked counts from visitors (show only time). */
+          b.textContent = slot12;
           b.setAttribute('data-slot-24', slot24);
           if (to24hClient(timeHidden.value) === slot24 && getSelectedIso() === iso) {
             b.classList.add('qa-form-cal__slot--active');
@@ -2523,10 +2527,15 @@
         bookAppointmentBeforeSubmit(widget, formId, result.values).then(function (booked) {
           if (!booked.ok) {
             var calWrap = form.querySelector('.qa-form__field--calendar');
+            var errCode = booked && booked.data ? booked.data.error : '';
             var errText =
-              (booked.data && booked.data.error) === 'slot_unavailable'
+              errCode === 'slot_unavailable'
                 ? t(lang, 'calSlotTaken')
-                : t(lang, 'calBookFailed');
+                : errCode === 'past_date' || errCode === 'invalid_date_or_time'
+                  ? t(lang, 'calSlotInvalid')
+                  : errCode === 'network_error'
+                    ? t(lang, 'calNetworkError')
+                    : t(lang, 'calBookFailed');
             if (calWrap) {
               var calErr = calWrap.querySelector('.qa-form__error');
               if (calErr) {
