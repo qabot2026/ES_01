@@ -489,7 +489,30 @@ app.get('/api/upload/status', (_req, res) => {
 
 app.post(
   '/api/upload/documents',
-  uploadDocumentsMw.array('files', 10),
+  (req, res, next) => {
+    uploadDocumentsMw.array('files', 10)(req, res, (err) => {
+      if (!err) return next();
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(400).json({
+          ok: false,
+          error: 'file_too_large',
+          message: 'File is too large (max 25 MB per file).',
+        });
+      }
+      if (err.code === 'LIMIT_FILE_COUNT') {
+        return res.status(400).json({
+          ok: false,
+          error: 'too_many_files',
+          message: 'Too many files (max 10 per upload).',
+        });
+      }
+      return res.status(400).json({
+        ok: false,
+        error: 'upload_parse_failed',
+        message: err.message || 'Could not read uploaded file(s).',
+      });
+    });
+  },
   async (req, res) => {
     const sessionId = String(req.body.sessionId || '').trim();
     if (qaMode.isQaRequest(req, sessionId)) {

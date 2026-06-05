@@ -3364,14 +3364,23 @@
       cfg.uploadingByLanguage,
       'Uploading your document(s)…'
     );
-    var statusRow = this.appendMessage('bot', uploadingMsg);
+    var statusRow = this.appendMessage('bot', uploadingMsg, {
+      skipTranscriptLog: true,
+    });
     this.updateBotMessageText(statusRow, uploadingMsg, 'pending');
 
     this.uploadFormDocuments(files, {}, { tag: 'composer' })
       .then(function (up) {
+        if (statusRow && statusRow.parentNode) {
+          statusRow.parentNode.removeChild(statusRow);
+          statusRow = null;
+        }
         if (up && up.ok) {
           var docNames = self.uploadDocumentNames(up, names);
-          self.showUploadAcknowledgement(up, names, statusRow);
+          self.appendMessage('bot', self.buildUploadAckMessage(up, names), {
+            messageKind: 'upload-success',
+            skipTranscriptLog: true,
+          });
           if (!self.qaMode) {
             self.appendTranscriptTurn('user', emoji + (docNames ? ' ' + docNames : ''));
             self.pushSessionContext();
@@ -3382,17 +3391,22 @@
           cfg.failedByLanguage,
           (up && up.message) || 'Could not upload. Please try again.'
         );
-        self.updateBotMessageText(statusRow, '❌ ' + failMsg, 'failed');
+        self.appendMessage('bot', 'Could not upload: ' + failMsg, {
+          skipTranscriptLog: true,
+        });
       })
-      .catch(function () {
-        self.updateBotMessageText(
-          statusRow,
-          '❌ ' +
-            self.composerUploadLabel(
-              cfg.failedByLanguage,
-              'Could not upload. Please try again.'
-            ),
-          'failed'
+      .catch(function (err) {
+        if (statusRow && statusRow.parentNode) {
+          statusRow.parentNode.removeChild(statusRow);
+          statusRow = null;
+        }
+        self.appendMessage(
+          'bot',
+          self.composerUploadLabel(
+            cfg.failedByLanguage,
+            'Could not upload. Please try again.'
+          ),
+          { skipTranscriptLog: true }
         );
       })
       .finally(function () {

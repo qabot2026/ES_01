@@ -499,11 +499,11 @@
         state.rows = foldersToRows(data.folders || []);
         if (data.gcs_list_error) {
           showAlert(
-            'Could not list cloud storage (' +
+            'Cloud storage list failed (' +
               data.gcs_list_error +
-              '). Give the service account Storage Object Viewer on bucket ' +
+              '). Showing files verified one-by-one. For faster refresh, give Storage Object Viewer on bucket ' +
               (data.bucket || '') +
-              '. Showing transcript/sheet entries only.'
+              '.'
           );
         } else if (!state.rows.length) {
           showAlert(
