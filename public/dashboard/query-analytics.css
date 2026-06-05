@@ -234,6 +234,11 @@
 .qa-query-cell {
   word-break: break-word;
   white-space: normal;
+  cursor: text;
+}
+
+.qa-query-cell[data-full-query] {
+  /* full text available on hover (title) and copy */
 }
 
 .qa-loading {

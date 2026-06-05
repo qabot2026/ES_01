@@ -8,11 +8,65 @@
     return document.getElementById(id);
   }
 
+  var QUERY_DISPLAY_MAX = 100;
+
   function escapeHtml(s) {
     return String(s || '')
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;');
+  }
+
+  function escapeAttr(s) {
+    return String(s || '')
+      .replace(/&/g, '&amp;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;')
+      .replace(/</g, '&lt;');
+  }
+
+  function formatQueryForDisplay(text) {
+    var full = String(text || '');
+    if (full.length <= QUERY_DISPLAY_MAX) {
+      return { full: full, display: full };
+    }
+    return { full: full, display: full.slice(0, QUERY_DISPLAY_MAX) + '...' };
+  }
+
+  function queryCellHtml(text) {
+    var q = formatQueryForDisplay(text);
+    var title =
+      q.full.length > QUERY_DISPLAY_MAX
+        ? ' title="' + escapeAttr(q.full) + '"'
+        : '';
+    return (
+      '<td class="qa-query-cell" data-full-query="' +
+      escapeAttr(q.full) +
+      '"' +
+      title +
+      '>' +
+      escapeHtml(q.display) +
+      '</td>'
+    );
+  }
+
+  function bindQueryCopyHandler() {
+    if (bindQueryCopyHandler._bound) return;
+    bindQueryCopyHandler._bound = true;
+    document.addEventListener('copy', function (e) {
+      var sel = window.getSelection();
+      if (!sel || sel.isCollapsed || !sel.rangeCount) return;
+      var node = sel.anchorNode;
+      if (!node) return;
+      var el = node.nodeType === 1 ? node : node.parentElement;
+      if (!el || !el.closest) return;
+      var cell = el.closest('.qa-query-cell');
+      if (!cell) return;
+      var full = cell.getAttribute('data-full-query');
+      if (!full) return;
+      e.clipboardData.setData('text/plain', full);
+      e.preventDefault();
+    });
   }
 
   function formatWhen(iso) {
@@ -105,9 +159,7 @@
       .map(function (q) {
         return (
           '<tr>' +
-          '<td class="qa-query-cell">' +
-          escapeHtml(q.query) +
-          '</td>' +
+          queryCellHtml(q.query) +
           '<td class="num"><strong>' +
           (q.times || 0) +
           '</strong></td>' +
