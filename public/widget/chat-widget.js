@@ -3272,7 +3272,14 @@
         if (fileList[i]) files.push(fileList[i]);
       }
     }
-    if (!files.length || !this.apiBase) return;
+    if (!files.length) return;
+    if (!this.apiBase) {
+      this.appendMessage(
+        'bot',
+        'Chat server URL missing — reload the page and try again.'
+      );
+      return;
+    }
 
     var self = this;
     var cfg = this.getComposerUploadCfg();
@@ -3288,6 +3295,13 @@
     this.noteUserActivity();
     this.setComposerUploadBusy(true);
     this.appendMessage('user', emoji + (names ? ' ' + names : ''));
+    this.appendMessage(
+      'bot',
+      this.composerUploadLabel(
+        cfg.uploadingByLanguage,
+        'Uploading your document(s)…'
+      )
+    );
 
     this.uploadFormDocuments(files, {}, { tag: 'composer' })
       .then(function (up) {
@@ -3349,7 +3363,13 @@
   };
 
   QualityAssistantWidget.prototype.uploadFormDocuments = function (files, values, request) {
-    if (!this.apiBase || !files || !files.length) {
+    if (!this.apiBase) {
+      return Promise.resolve({
+        ok: false,
+        message: 'Chat server URL missing — reload the page.',
+      });
+    }
+    if (!files || !files.length) {
       return Promise.resolve({ ok: false, message: 'No files selected' });
     }
     if (this._uploadInFlight) {
@@ -3389,7 +3409,16 @@
       body: fd,
     })
       .then(function (r) {
-        return r.json().then(function (data) {
+        return r.text().then(function (text) {
+          var data = {};
+          try {
+            data = text ? JSON.parse(text) : {};
+          } catch (parseErr) {
+            data = {
+              error: 'invalid_response',
+              message: String(text || '').slice(0, 240) || 'Server returned non-JSON.',
+            };
+          }
           return { status: r.status, data: data };
         });
       })
@@ -3404,8 +3433,10 @@
           (data.error === 'gcs_not_configured'
             ? 'File storage is not configured on the server (GCS_BUCKET_NAME).'
             : '') ||
-          (res.status === 400 ? 'Upload request was invalid.' : '') ||
+          (res.status === 400 ? 'Upload request was invalid (missing session or files).' : '') ||
+          (res.status === 503 ? 'Upload storage is not ready on the server.' : '') ||
           'Upload failed';
+        if (res.status) msg = 'HTTP ' + res.status + ': ' + msg;
         return { ok: false, message: msg, status: res.status, data: data };
       })
       .catch(function () {

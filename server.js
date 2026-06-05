@@ -463,6 +463,30 @@ app.post('/api/session-context', (req, res) => {
   res.json({ ok: true, sessionId: sid, merged: Object.keys(meta).length });
 });
 
+function queueUploadSheetSync(sessionId) {
+  const sid = String(sessionId || '').trim();
+  if (!sid) return;
+  conversationSheet
+    .syncSessionToSheet(sid)
+    .then((result) => {
+      if (result && result.skipped) conversationSheet.scheduleSheetSync(sid);
+    })
+    .catch((err) => {
+      console.warn('[upload/documents] sheet sync:', err.message);
+      conversationSheet.scheduleSheetSync(sid);
+    });
+}
+
+app.get('/api/upload/status', (_req, res) => {
+  res.json({
+    ok: true,
+    gcsConfigured: gcsUpload.isConfigured(),
+    gcsBucket: gcsUpload.BUCKET_NAME || null,
+    gcsUploadPrefix: gcsUpload.UPLOAD_PREFIX || 'uploads',
+    sheetsConfigured: sheets.isConfigured(),
+  });
+});
+
 app.post(
   '/api/upload/documents',
   uploadDocumentsMw.array('files', 10),
@@ -500,13 +524,7 @@ app.post(
       } catch {
         /* ignore */
       }
-      let dupSheetSync = { skipped: true };
-      try {
-        dupSheetSync = await conversationSheet.syncSessionToSheet(sessionId);
-      } catch (syncErr) {
-        console.warn('[upload/documents] duplicate sheet sync:', syncErr.message);
-        conversationSheet.scheduleSheetSync(sessionId);
-      }
+      queueUploadSheetSync(sessionId);
       return res.json({
         ok: true,
         sessionId,
@@ -517,7 +535,7 @@ app.post(
           priorMeta.document ||
           '',
         message: 'Files already uploaded for this session.',
-        sheetSync: dupSheetSync,
+        sheetSync: { queued: true },
       });
     }
     try {
@@ -564,16 +582,7 @@ app.post(
         undefined,
         { scheduleSheet: false }
       );
-      let sheetSync = { skipped: true };
-      try {
-        sheetSync = await conversationSheet.syncSessionToSheet(sessionId);
-      } catch (syncErr) {
-        console.warn('[upload/documents] sheet sync:', syncErr.message);
-        conversationSheet.scheduleSheetSync(sessionId);
-      }
-      if (sheetSync && sheetSync.skipped) {
-        conversationSheet.scheduleSheetSync(sessionId);
-      }
+      queueUploadSheetSync(sessionId);
       res.json({
         ok: true,
         sessionId,
@@ -582,7 +591,7 @@ app.post(
         document_link: pack.document_link,
         document_links: pack.document_links,
         uploads: pack.uploads,
-        sheetSync,
+        sheetSync: { queued: true },
       });
     } catch (err) {
       console.error('[gcs-upload]', err.message);

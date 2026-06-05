@@ -218,6 +218,11 @@ window.QA_CHAT_UI_CONFIG = {
           hi: 'अपलोड नहीं हो सका। दोबारा कोशिश करें या पहले संपर्क फॉर्म भरें।',
           mr: 'अपलोड झाले नाही. पुन्हा प्रयत्न करा किंवा आधी संपर्क फॉर्म भरा.',
         },
+        uploadingByLanguage: {
+          en: 'Uploading your document(s)…',
+          hi: 'आपके दस्तावेज़ अपलोड हो रहे हैं…',
+          mr: 'तुमचे दस्तऐवज अपलोड होत आहेत…',
+        },
       },
       inputPlaceholderByLanguage: {
         en: 'Type your message here…',
