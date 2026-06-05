@@ -83,29 +83,46 @@
         <div id="qa-daily" class="qa-daily-wrap"></div>
       </section>
 
-      <section class="qa-panel">
-        <h2>Top queries</h2>
-        <p class="dash-muted qa-hint">
-          Fallback = Dialogflow did not understand. Human agent = visitor asked for a person.
-          Older chats from transcripts may not split fallback per query.
-        </p>
-        <div class="qa-table-wrap">
-          <table class="qa-table" id="qa-table">
-            <thead>
-              <tr>
-                <th>User query</th>
-                <th>Times</th>
-                <th>Bot</th>
-                <th>Fallback</th>
-                <th>Agent</th>
-                <th>Sessions</th>
-                <th>Last asked</th>
-              </tr>
-            </thead>
-            <tbody id="qa-table-body">
-              <tr><td colspan="7" class="qa-loading">Loading…</td></tr>
-            </tbody>
-          </table>
+      <section class="qa-panel qa-queries-panel">
+        <div class="qa-tables-row">
+          <div class="qa-table-panel qa-table-panel--answered">
+            <h2>Answered queries</h2>
+            <p class="dash-muted qa-hint">Bot understood and replied</p>
+            <div class="qa-table-wrap">
+              <table class="qa-table">
+                <thead>
+                  <tr>
+                    <th>User query</th>
+                    <th>Times</th>
+                    <th>Sessions</th>
+                    <th>Last asked</th>
+                  </tr>
+                </thead>
+                <tbody id="qa-answered-body">
+                  <tr><td colspan="4" class="qa-loading">Loading…</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="qa-table-panel qa-table-panel--unanswered">
+            <h2>Unanswered queries</h2>
+            <p class="dash-muted qa-hint">Bot did not understand (fallback)</p>
+            <div class="qa-table-wrap">
+              <table class="qa-table">
+                <thead>
+                  <tr>
+                    <th>User query</th>
+                    <th>Times</th>
+                    <th>Sessions</th>
+                    <th>Last asked</th>
+                  </tr>
+                </thead>
+                <tbody id="qa-unanswered-body">
+                  <tr><td colspan="4" class="qa-loading">Loading…</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       </section>
     </div>

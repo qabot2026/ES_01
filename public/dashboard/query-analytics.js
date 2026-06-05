@@ -82,38 +82,25 @@
       .join('');
   }
 
-  function renderTable(queries) {
-    var body = $('qa-table-body');
-    if (!body) return;
-    var list = queries || [];
+  function renderQueryRows(list, countKey, emptyLabel) {
     if (!list.length) {
-      body.innerHTML =
-        '<tr><td colspan="7" class="qa-loading">No queries in this period.</td></tr>';
-      return;
+      return (
+        '<tr><td colspan="4" class="qa-loading">' +
+        escapeHtml(emptyLabel) +
+        '</td></tr>'
+      );
     }
-    body.innerHTML = list
+    return list
       .map(function (q) {
+        var count = q[countKey] || 0;
         return (
           '<tr>' +
           '<td class="qa-query-cell">' +
           escapeHtml(q.query) +
           '</td>' +
           '<td class="num"><strong>' +
-          q.total +
+          count +
           '</strong></td>' +
-          '<td class="num">' +
-          q.bot +
-          '</td>' +
-          '<td class="num">' +
-          (q.fallback
-            ? '<span class="qa-pill qa-pill--fallback">' + q.fallback + '</span>'
-            : '0') +
-          '</td>' +
-          '<td class="num">' +
-          (q.handoff
-            ? '<span class="qa-pill qa-pill--handoff">' + q.handoff + '</span>'
-            : '0') +
-          '</td>' +
           '<td class="num">' +
           (q.sessions || 0) +
           '</td>' +
@@ -125,6 +112,41 @@
       .join('');
   }
 
+  function renderTables(queries) {
+    var all = queries || [];
+    var answered = all
+      .filter(function (q) {
+        return (q.bot || 0) > 0;
+      })
+      .sort(function (a, b) {
+        return (b.bot || 0) - (a.bot || 0) || String(b.lastAt).localeCompare(String(a.lastAt));
+      });
+    var unanswered = all
+      .filter(function (q) {
+        return (q.fallback || 0) > 0;
+      })
+      .sort(function (a, b) {
+        return (b.fallback || 0) - (a.fallback || 0) || String(b.lastAt).localeCompare(String(a.lastAt));
+      });
+
+    var answeredBody = $('qa-answered-body');
+    var unansweredBody = $('qa-unanswered-body');
+    if (answeredBody) {
+      answeredBody.innerHTML = renderQueryRows(
+        answered,
+        'bot',
+        'No answered queries in this period.'
+      );
+    }
+    if (unansweredBody) {
+      unansweredBody.innerHTML = renderQueryRows(
+        unanswered,
+        'fallback',
+        'No unanswered queries in this period.'
+      );
+    }
+  }
+
   function render(data) {
     var s = data.summary || {};
     $('qa-total').textContent = s.totalQueries != null ? s.totalQueries : '—';
@@ -134,7 +156,7 @@
     $('qa-unique').textContent = s.uniqueQueries != null ? s.uniqueQueries : '—';
     $('qa-period-label').textContent = formatPeriodLabel(data.period);
     renderDaily(data.daily);
-    renderTable(data.queries);
+    renderTables(data.queries);
   }
 
   function showUnlock(message) {
@@ -168,9 +190,13 @@
     }
 
     var days = $('qa-period') ? $('qa-period').value : '30';
-    var body = $('qa-table-body');
-    if (body) {
-      body.innerHTML = '<tr><td colspan="7" class="qa-loading">Loading…</td></tr>';
+    var answeredBody = $('qa-answered-body');
+    var unansweredBody = $('qa-unanswered-body');
+    if (answeredBody) {
+      answeredBody.innerHTML = '<tr><td colspan="4" class="qa-loading">Loading…</td></tr>';
+    }
+    if (unansweredBody) {
+      unansweredBody.innerHTML = '<tr><td colspan="4" class="qa-loading">Loading…</td></tr>';
     }
 
     var url =
