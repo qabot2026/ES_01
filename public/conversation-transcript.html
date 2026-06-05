@@ -38,7 +38,7 @@
     .top {
       flex-shrink: 0;
       padding: 16px clamp(16px, 4vw, 28px) 12px;
-      max-width: 560px;
+      max-width: 1180px;
       width: 100%;
       margin: 0 auto;
     }
@@ -47,6 +47,17 @@
       font-size: 1.35rem;
       font-weight: 700;
       letter-spacing: -0.03em;
+    }
+    .session-meta {
+      margin: 0 0 10px;
+      font-size: 0.8125rem;
+      color: var(--muted);
+      line-height: 1.5;
+      word-break: break-word;
+    }
+    .session-meta strong {
+      color: var(--text);
+      font-weight: 600;
     }
     .panel {
       background: var(--surface);
@@ -380,6 +391,7 @@
 <body>
   <header class="top">
     <h1>Chat script</h1>
+    <p id="sessionMeta" class="session-meta" hidden></p>
     <p style="margin:0 0 10px;font-size:0.8125rem;color:var(--muted)">
       <a href="dashboard/documents.html" style="color:#0d9488;font-weight:600;text-decoration:none">← Customer documents</a>
     </p>
@@ -1015,6 +1027,7 @@
         if (k === "name") return "name";
         if (k === "email") return "email";
         if (k === "mobile" || k === "phone") return "mobile";
+        if (k === "session id" || kn === "sessionid") return "session_id";
         if (k === "user queries" || k === "userqueries") return "user_queries";
         if (k === "device" || k === "device type" || kn === "devicetype") return "device";
         if (k === "channel") return "channel";
@@ -1087,12 +1100,45 @@
         return null;
       }
 
+      function updateSessionMeta(json) {
+        var metaEl = document.getElementById("sessionMeta");
+        if (!metaEl) return;
+        var sessionVal = String(json.session || sessionFromUrl() || "").trim();
+        var meta = json.meta && typeof json.meta === "object" ? json.meta : {};
+        var sheet = json.sheet && typeof json.sheet === "object" ? json.sheet : null;
+        var cols = sheet && sheet.columns && typeof sheet.columns === "object" ? sheet.columns : null;
+        var mobileVal = String(meta.mobile || meta.phone || "").trim();
+        if (!mobileVal && cols) {
+          mobileVal = String(cols.Mobile || cols.mobile || "").trim();
+        }
+        if (!sessionVal && !mobileVal) {
+          metaEl.hidden = true;
+          metaEl.textContent = "";
+          return;
+        }
+        var chunks = [];
+        if (mobileVal) {
+          chunks.push("<strong>Mobile:</strong> " + escapeHtml(mobileVal));
+        }
+        if (sessionVal) {
+          chunks.push("<strong>Dialog code:</strong> " + escapeHtml(sessionVal));
+        }
+        metaEl.innerHTML = chunks.join(" · ");
+        metaEl.hidden = false;
+        document.title = mobileVal
+          ? "Chat script — " + mobileVal
+          : sessionVal
+            ? "Chat script — " + sessionVal
+            : "Chat script";
+      }
+
       function buildDetails(json) {
         /** @type {Array<[string, string]>} */
         var pairs = [];
         var meta = json.meta && typeof json.meta === "object" ? json.meta : {};
         var sheet = json.sheet && typeof json.sheet === "object" ? json.sheet : null;
         var cols = sheet && sheet.columns && typeof sheet.columns === "object" ? sheet.columns : null;
+        var sessionVal = String(json.session || sessionFromUrl() || "").trim();
 
         /** @type {Record<string, true>} */
         var consumedCol = {};
@@ -1135,6 +1181,7 @@
         if (nameVal) pairs.push(["Name", String(nameVal)]);
         if (emailVal) pairs.push(["Email", String(emailVal)]);
         if (mobileVal) pairs.push(["Phone", String(mobileVal)]);
+        if (sessionVal) pairs.push(["Dialog code", sessionVal]);
 
         var deviceVal = takeSemanticCol("device");
         var channelVal = takeSemanticCol("channel");
@@ -1161,6 +1208,7 @@
               sem === "name"
               || sem === "email"
               || sem === "mobile"
+              || sem === "session_id"
               || sem === "user_queries"
               || sem === "device"
               || sem === "channel"
@@ -1202,6 +1250,11 @@
       async function loadTranscript() {
         showErr("");
         scrollTranscriptPageToTop_();
+        var sessionMetaEl = document.getElementById("sessionMeta");
+        if (sessionMetaEl) {
+          sessionMetaEl.hidden = true;
+          sessionMetaEl.textContent = "";
+        }
         thread.innerHTML = "";
         detailsDl.innerHTML = "";
         detailsWrap.hidden = true;
@@ -1245,6 +1298,7 @@
           authPanel.style.display = "none";
           toggleAuth.hidden = false;
 
+          updateSessionMeta(json);
           buildDetails(json);
 
           var transcriptTz =

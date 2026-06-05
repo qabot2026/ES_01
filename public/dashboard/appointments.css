@@ -1,3 +1,7 @@
+.appt-app {
+  max-width: 1400px;
+}
+
 .appt-unlock {
   margin: 0 0 20px;
   padding: 16px;
@@ -150,8 +154,10 @@
 
 .appt-table {
   width: 100%;
+  min-width: 1180px;
   border-collapse: collapse;
   font-size: 0.88rem;
+  table-layout: auto;
 }
 
 .appt-table th,
@@ -182,14 +188,35 @@
   padding: 24px !important;
 }
 
-.appt-table a {
-  color: #0369a1;
-  font-weight: 600;
-  text-decoration: none;
+.appt-table th:last-child,
+.appt-table td:last-child {
+  min-width: 108px;
+  white-space: nowrap;
 }
 
-.appt-table a:hover {
-  text-decoration: underline;
+.appt-table th:nth-child(9),
+.appt-table td:nth-child(9) {
+  min-width: 148px;
+}
+
+.appt-link-transcript {
+  display: inline-block;
+  white-space: nowrap;
+  color: var(--dash-primary);
+  font-weight: 600;
+  text-decoration: none;
+  font-size: 0.8125rem;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.appt-link-transcript:hover {
+  background: #f0f9ff;
+  border-color: #bae6fd;
+  text-decoration: none;
 }
 
 .appt-toolbar select {
