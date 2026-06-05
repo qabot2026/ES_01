@@ -20,6 +20,98 @@
     return String(raw || '').trim();
   }
 
+  function getApptDateYmd(el) {
+    if (!el) return '';
+    var stored = String(el.dataset.ymd || '').trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(stored)) return stored;
+    var parsed = parseInputDate(el.value);
+    if (parsed) {
+      el.dataset.ymd = parsed;
+      return parsed;
+    }
+    var raw = String(el.value || '').trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+      el.dataset.ymd = raw;
+      return raw;
+    }
+    return '';
+  }
+
+  function setApptDateYmd(el, ymd) {
+    if (!el) return;
+    var dd = window.QADateDisplay;
+    var iso = String(ymd || '').trim();
+    var wrap = el.closest('.appt-date-field');
+    var native = wrap && wrap.querySelector('.appt-date-native');
+    if (iso && /^\d{4}-\d{2}-\d{2}$/.test(iso)) {
+      el.dataset.ymd = iso;
+      el.value =
+        dd && dd.isoYmdToDdMmYyyy ? dd.isoYmdToDdMmYyyy(iso) : formatDmy(iso);
+      if (native) native.value = iso;
+    } else {
+      el.dataset.ymd = '';
+      el.value = '';
+      if (native) native.value = '';
+    }
+  }
+
+  function normalizeApptDateInput(el) {
+    if (!el) return;
+    var raw = String(el.value || '').trim();
+    if (!raw) {
+      setApptDateYmd(el, '');
+      return;
+    }
+    var ymd = parseInputDate(raw);
+    if (!ymd && /^\d{4}-\d{2}-\d{2}$/.test(raw)) ymd = raw;
+    if (ymd) setApptDateYmd(el, ymd);
+  }
+
+  function bindApptDatePicker(textEl) {
+    if (!textEl || textEl._apptDatePickerBound) return;
+    textEl._apptDatePickerBound = true;
+    var wrap = textEl.closest('.appt-date-field');
+    if (!wrap) return;
+    var native = wrap.querySelector('.appt-date-native');
+    var icon = wrap.querySelector('.appt-date-cal-ic');
+    if (!native) return;
+
+    function openPicker() {
+      var ymd = getApptDateYmd(textEl);
+      native.value = ymd || '';
+      if (typeof native.showPicker === 'function') native.showPicker();
+      else native.click();
+    }
+
+    if (icon) {
+      icon.setAttribute('role', 'button');
+      icon.setAttribute('tabindex', '0');
+      icon.setAttribute('aria-label', 'Open calendar');
+      icon.addEventListener('click', openPicker);
+      icon.addEventListener('keydown', function (ev) {
+        if (ev.key === 'Enter' || ev.key === ' ') {
+          ev.preventDefault();
+          openPicker();
+        }
+      });
+    }
+
+    textEl.addEventListener('blur', function () {
+      normalizeApptDateInput(textEl);
+    });
+    textEl.addEventListener('keydown', function (ev) {
+      if (ev.key === 'Enter') {
+        normalizeApptDateInput(textEl);
+        load();
+      }
+    });
+
+    native.addEventListener('change', function () {
+      setApptDateYmd(textEl, native.value || '');
+      load();
+    });
+  }
+
   function formatDmy(raw) {
     var dd = window.QADateDisplay;
     if (dd && dd.formatDateDisplay) return dd.formatDateDisplay(raw);
@@ -42,9 +134,13 @@
   }
 
   function initDefaultDates() {
-    var today = todayDmy();
-    if ($('appt-from') && !$('appt-from').value) $('appt-from').value = today;
-    if ($('appt-to') && !$('appt-to').value) $('appt-to').value = today;
+    var today = localTodayIso();
+    if ($('appt-from') && !getApptDateYmd($('appt-from'))) {
+      setApptDateYmd($('appt-from'), today);
+    }
+    if ($('appt-to') && !getApptDateYmd($('appt-to'))) {
+      setApptDateYmd($('appt-to'), today);
+    }
   }
 
   function statusLabel(status) {
@@ -63,18 +159,12 @@
 
   function buildUrl() {
     var base = auth.apiBase() + '/api/appointments?';
-    var fromRaw = $('appt-from') ? $('appt-from').value : '';
-    var toRaw = $('appt-to') ? $('appt-to').value : '';
+    var fromRaw = $('appt-from') ? getApptDateYmd($('appt-from')) : '';
+    var toRaw = $('appt-to') ? getApptDateYmd($('appt-to')) : '';
     var statusRaw = $('appt-status') ? $('appt-status').value : 'all';
     var qs = [];
-    if (fromRaw) {
-      var from = parseInputDate(fromRaw);
-      if (from) qs.push('from=' + encodeURIComponent(from));
-    }
-    if (toRaw) {
-      var to = parseInputDate(toRaw);
-      if (to) qs.push('to=' + encodeURIComponent(to));
-    }
+    if (fromRaw) qs.push('from=' + encodeURIComponent(fromRaw));
+    if (toRaw) qs.push('to=' + encodeURIComponent(toRaw));
     if (statusRaw && statusRaw !== 'all') {
       qs.push('status=' + encodeURIComponent(statusRaw));
     }
@@ -337,9 +427,9 @@
   $('appt-refresh').addEventListener('click', load);
   if ($('appt-today')) {
     $('appt-today').addEventListener('click', function () {
-      var today = todayDmy();
-      if ($('appt-from')) $('appt-from').value = today;
-      if ($('appt-to')) $('appt-to').value = today;
+      var today = localTodayIso();
+      if ($('appt-from')) setApptDateYmd($('appt-from'), today);
+      if ($('appt-to')) setApptDateYmd($('appt-to'), today);
       load();
     });
   }
@@ -368,6 +458,8 @@
       postAction(sessionId, action, btn);
     });
   }
+  bindApptDatePicker($('appt-from'));
+  bindApptDatePicker($('appt-to'));
   initDefaultDates();
   load();
 })();
