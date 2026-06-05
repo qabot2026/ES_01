@@ -64,6 +64,15 @@
           </label>
           <button type="button" id="qa-apply-range" class="dash-btn dash-btn--ghost">Apply</button>
         </div>
+        <label>
+          Rows per table
+          <select id="qa-page-size" title="Entries shown per table page">
+            <option value="50" selected>50</option>
+            <option value="100">100</option>
+            <option value="200">200</option>
+            <option value="300">300</option>
+          </select>
+        </label>
         <p id="qa-period-label" class="dash-muted qa-period-label"></p>
       </section>
 
@@ -116,6 +125,16 @@
                 </tbody>
               </table>
             </div>
+            <footer class="qa-pager" id="qa-answered-pager" hidden aria-label="Answered queries pagination">
+              <div class="qa-pager-controls">
+                <button type="button" class="qa-pager-btn qa-pager-btn--jump" id="qa-answered-first" title="First page" aria-label="First page">1</button>
+                <button type="button" class="qa-pager-btn" id="qa-answered-prev" title="Previous page" aria-label="Previous page">&lt;</button>
+                <span class="qa-pager-num is-current" id="qa-answered-page" aria-live="polite">1</span>
+                <button type="button" class="qa-pager-btn" id="qa-answered-next" title="Next page" aria-label="Next page">&gt;</button>
+                <button type="button" class="qa-pager-btn qa-pager-btn--jump" id="qa-answered-last" title="Last page" aria-label="Last page">1</button>
+              </div>
+              <span class="qa-pager-hint" id="qa-answered-hint"></span>
+            </footer>
           </div>
           <div class="qa-table-panel qa-table-panel--unanswered">
             <h2>Unanswered queries</h2>
@@ -141,6 +160,16 @@
                 </tbody>
               </table>
             </div>
+            <footer class="qa-pager" id="qa-unanswered-pager" hidden aria-label="Unanswered queries pagination">
+              <div class="qa-pager-controls">
+                <button type="button" class="qa-pager-btn qa-pager-btn--jump" id="qa-unanswered-first" title="First page" aria-label="First page">1</button>
+                <button type="button" class="qa-pager-btn" id="qa-unanswered-prev" title="Previous page" aria-label="Previous page">&lt;</button>
+                <span class="qa-pager-num is-current" id="qa-unanswered-page" aria-live="polite">1</span>
+                <button type="button" class="qa-pager-btn" id="qa-unanswered-next" title="Next page" aria-label="Next page">&gt;</button>
+                <button type="button" class="qa-pager-btn qa-pager-btn--jump" id="qa-unanswered-last" title="Last page" aria-label="Last page">1</button>
+              </div>
+              <span class="qa-pager-hint" id="qa-unanswered-hint"></span>
+            </footer>
           </div>
         </div>
       </section>

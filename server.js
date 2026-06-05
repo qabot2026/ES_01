@@ -691,6 +691,8 @@ app.get('/api/analytics/queries', requireDeskAuth, (req, res) => {
         from: req.query.from,
         to: req.query.to,
         limit: req.query.limit,
+        answeredPage: req.query.answeredPage,
+        unansweredPage: req.query.unansweredPage,
       })
     );
   } catch (err) {

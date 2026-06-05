@@ -4,6 +4,12 @@
   var auth = window.DashboardDeskAuth;
   if (!auth) return;
 
+  var pageState = {
+    answeredPage: 1,
+    unansweredPage: 1,
+    pageSize: 50,
+  };
+
   function $(id) {
     return document.getElementById(id);
   }
@@ -114,9 +120,24 @@
     }
   }
 
+  function getPageSize() {
+    var el = $('qa-page-size');
+    var n = el ? parseInt(el.value, 10) : 50;
+    if ([50, 100, 200, 300].indexOf(n) < 0) n = 50;
+    pageState.pageSize = n;
+    return n;
+  }
+
   function buildQueryUrl() {
     var period = $('qa-period') ? $('qa-period').value : '30';
     var base = auth.apiBase() + '/api/analytics/queries?';
+    var pageQs =
+      '&limit=' +
+      encodeURIComponent(getPageSize()) +
+      '&answeredPage=' +
+      encodeURIComponent(pageState.answeredPage) +
+      '&unansweredPage=' +
+      encodeURIComponent(pageState.unansweredPage);
     if (period === 'custom') {
       var from = $('qa-from') ? $('qa-from').value : '';
       var to = $('qa-to') ? $('qa-to').value : '';
@@ -131,10 +152,81 @@
         'from=' +
         encodeURIComponent(from) +
         '&to=' +
-        encodeURIComponent(to)
+        encodeURIComponent(to) +
+        pageQs
       );
     }
-    return base + 'days=' + encodeURIComponent(period);
+    return base + 'days=' + encodeURIComponent(period) + pageQs;
+  }
+
+  function syncPager(prefix, meta, rowLabel) {
+    var pager = $(prefix + '-pager');
+    var hint = $(prefix + '-hint');
+    var pageEl = $(prefix + '-page');
+    var first = $(prefix + '-first');
+    var prev = $(prefix + '-prev');
+    var next = $(prefix + '-next');
+    var last = $(prefix + '-last');
+    if (!pager || !meta) {
+      if (pager) pager.hidden = true;
+      return;
+    }
+    if (!meta.total) {
+      pager.hidden = true;
+      return;
+    }
+    pager.hidden = false;
+    if (pageEl) pageEl.textContent = String(meta.page || 1);
+    if (last) last.textContent = String(meta.totalPages || 1);
+    if (first) first.disabled = !meta.hasPrev;
+    if (prev) prev.disabled = !meta.hasPrev;
+    if (next) next.disabled = !meta.hasNext;
+    if (last) last.disabled = !meta.hasNext;
+    if (hint) {
+      hint.textContent =
+        meta.total +
+        ' ' +
+        rowLabel +
+        ', ' +
+        meta.limit +
+        ' per page';
+    }
+  }
+
+  function wirePager(prefix, onPageChange) {
+    function go(page) {
+      onPageChange(page);
+      load();
+    }
+    var first = $(prefix + '-first');
+    var prev = $(prefix + '-prev');
+    var next = $(prefix + '-next');
+    var last = $(prefix + '-last');
+    if (first) {
+      first.addEventListener('click', function () {
+        if (first.disabled) return;
+        go(1);
+      });
+    }
+    if (prev) {
+      prev.addEventListener('click', function () {
+        if (prev.disabled) return;
+        go(Math.max(1, pageState[prefix === 'qa-answered' ? 'answeredPage' : 'unansweredPage'] - 1));
+      });
+    }
+    if (next) {
+      next.addEventListener('click', function () {
+        if (next.disabled) return;
+        go(pageState[prefix === 'qa-answered' ? 'answeredPage' : 'unansweredPage'] + 1);
+      });
+    }
+    if (last) {
+      last.addEventListener('click', function () {
+        if (last.disabled) return;
+        var key = prefix === 'qa-answered' ? 'lastAnsweredPages' : 'lastUnansweredPages';
+        go(pageState[key] || 1);
+      });
+    }
   }
 
   function formatPeriodLabel(period) {
@@ -192,6 +284,18 @@
         'No unanswered queries in this period.'
       );
     }
+    var answeredMeta = data && data.answeredPagination;
+    var unansweredMeta = data && data.unansweredPagination;
+    if (answeredMeta) {
+      pageState.answeredPage = answeredMeta.page || 1;
+      pageState.lastAnsweredPages = answeredMeta.totalPages || 1;
+    }
+    if (unansweredMeta) {
+      pageState.unansweredPage = unansweredMeta.page || 1;
+      pageState.lastUnansweredPages = unansweredMeta.totalPages || 1;
+    }
+    syncPager('qa-answered', answeredMeta, 'answered queries');
+    syncPager('qa-unanswered', unansweredMeta, 'unanswered queries');
   }
 
   function render(data) {
@@ -303,16 +407,37 @@
     });
   }
 
-  $('qa-refresh').addEventListener('click', load);
+  $('qa-refresh').addEventListener('click', function () {
+    load();
+  });
   $('qa-period').addEventListener('change', function () {
     toggleCustomRange();
+    pageState.answeredPage = 1;
+    pageState.unansweredPage = 1;
     if ($('qa-period').value !== 'custom') {
       load();
     }
   });
-  if ($('qa-apply-range')) {
-    $('qa-apply-range').addEventListener('click', load);
+  if ($('qa-page-size')) {
+    $('qa-page-size').addEventListener('change', function () {
+      pageState.answeredPage = 1;
+      pageState.unansweredPage = 1;
+      load();
+    });
   }
+  if ($('qa-apply-range')) {
+    $('qa-apply-range').addEventListener('click', function () {
+      pageState.answeredPage = 1;
+      pageState.unansweredPage = 1;
+      load();
+    });
+  }
+  wirePager('qa-answered', function (page) {
+    pageState.answeredPage = page;
+  });
+  wirePager('qa-unanswered', function (page) {
+    pageState.unansweredPage = page;
+  });
   toggleCustomRange();
   bindQueryCopyHandler();
   if ($('qa-unlock-btn')) {
