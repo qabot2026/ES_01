@@ -718,6 +718,11 @@ app.options('/api/conversations-sheet-sync-dashboard', (req, res) => {
   res.sendStatus(204);
 });
 
+app.options('/api/live-agent-sheet', (req, res) => {
+  setConversationsSheetCors(req, res);
+  res.sendStatus(204);
+});
+
 app.get('/api/conversations-sheet', async (req, res) => {
   setConversationsSheetCors(req, res);
   res.setHeader('Cache-Control', 'no-store');
@@ -751,6 +756,42 @@ app.get('/api/conversations-sheet', async (req, res) => {
     res.json({ ok: true, ...payload });
   } catch (err) {
     console.error('[conversations-sheet]', err.message);
+    const msg = String(err.message || err);
+    const status = msg.includes('Invalid date parameter') ? 400 : 500;
+    res.status(status).json({ ok: false, error: msg.slice(0, 500) });
+  }
+});
+
+app.get('/api/live-agent-sheet', async (req, res) => {
+  setConversationsSheetCors(req, res);
+  res.setHeader('Cache-Control', 'no-store');
+  if (!requireConversationsViewer(req, res)) return;
+  try {
+    let maxRows = 200;
+    if (req.query && req.query.limit != null) {
+      const n = Number.parseInt(String(req.query.limit), 10);
+      if (Number.isFinite(n) && n >= 5 && n <= 500) maxRows = n;
+    }
+    let offset = 0;
+    if (req.query && req.query.offset != null) {
+      const o = Number.parseInt(String(req.query.offset), 10);
+      if (Number.isFinite(o) && o >= 0 && o <= 500000) offset = o;
+    }
+    const rawFrom =
+      req.query && typeof req.query.from === 'string' ? req.query.from.trim() : '';
+    const rawTo =
+      req.query && typeof req.query.to === 'string' ? req.query.to.trim() : '';
+    const allInRange = req.query.all !== '0' && req.query.all !== 'false';
+    const payload = await conversationsSheetView.fetchLiveAgentSheetPreview({
+      maxRows,
+      offset,
+      allInRange,
+      from: rawFrom,
+      to: rawTo,
+    });
+    res.json({ ok: true, ...payload });
+  } catch (err) {
+    console.error('[live-agent-sheet-view]', err.message);
     const msg = String(err.message || err);
     const status = msg.includes('Invalid date parameter') ? 400 : 500;
     res.status(status).json({ ok: false, error: msg.slice(0, 500) });

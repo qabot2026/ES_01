@@ -735,6 +735,51 @@
       font-size: 10.5px;
       line-height: 1.2;
     }
+    .sheet-source-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      margin: 12px 0 4px;
+      padding: 0 2px;
+    }
+    .sheet-source-tabs__label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-right: 4px;
+    }
+    .sheet-source-tab {
+      appearance: none;
+      border: 1px solid rgba(148, 163, 184, 0.55);
+      background: #fff;
+      color: #334155;
+      border-radius: 999px;
+      padding: 7px 14px;
+      font-size: 12.5px;
+      font-weight: 600;
+      line-height: 1.2;
+      cursor: pointer;
+      transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+    }
+    .sheet-source-tab:hover {
+      border-color: #94a3b8;
+      background: #f8fafc;
+    }
+    .sheet-source-tab.is-active {
+      border-color: #2563eb;
+      background: linear-gradient(180deg, #3b82f6 0%, #2563eb 100%);
+      color: #fff;
+      box-shadow: 0 1px 2px rgba(37, 99, 235, 0.25);
+    }
+    .lead-stats.lead-stats--live-tab #leadStatsList {
+      display: none !important;
+    }
+    .lead-stats.lead-stats--live-tab #leadStatsErr {
+      display: none !important;
+    }
     .sheet-table-toolbar {
       display: flex;
       flex-wrap: wrap;
@@ -2410,6 +2455,16 @@
       <div id="leadStatsErr" class="err" style="display: none; margin-top: 8px;"></div>
     </section>
 
+    <nav class="sheet-source-tabs" id="sheetSourceTabs" aria-label="Conversation table source">
+      <span class="sheet-source-tabs__label">Table view</span>
+      <button type="button" class="sheet-source-tab is-active" data-sheet-tab="bot" id="sheetTabBot">
+        Bot leads (Sheet1)
+      </button>
+      <button type="button" class="sheet-source-tab" data-sheet-tab="live-agent" id="sheetTabLiveAgent">
+        Live agent (Sheet2)
+      </button>
+    </nav>
+
     <div class="sheet-table-toolbar" id="sheetTableToolbar">
       <div id="limitToolWrap" class="tool" title="Rows per page within the selected date range">
         <label class="mini" for="limit">Rows per page</label>
@@ -2524,6 +2579,67 @@
       var lastLeadStatsPayload = null;
       var LEAD_STATS_VIEW_KEY = "lead_stats_view";
       var dashboardSheetSyncBusy = false;
+      var activeSheetTab = "bot";
+      var SHEET_TAB_KEY = "conversations_sheet_tab_v1";
+      var sheetSourceTabs = document.getElementById("sheetSourceTabs");
+      var sheetTabBot = document.getElementById("sheetTabBot");
+      var sheetTabLiveAgent = document.getElementById("sheetTabLiveAgent");
+      var leadStatsWrap = document.getElementById("leadStatsWrap");
+
+      function isLiveAgentSheetTab() {
+        return activeSheetTab === "live-agent";
+      }
+
+      function applySheetTabUi() {
+        var isLive = isLiveAgentSheetTab();
+        if (sheetTabBot) {
+          sheetTabBot.classList.toggle("is-active", !isLive);
+          sheetTabBot.setAttribute("aria-pressed", isLive ? "false" : "true");
+        }
+        if (sheetTabLiveAgent) {
+          sheetTabLiveAgent.classList.toggle("is-active", isLive);
+          sheetTabLiveAgent.setAttribute("aria-pressed", isLive ? "true" : "false");
+        }
+        if (leadStatsWrap) {
+          leadStatsWrap.classList.toggle("lead-stats--live-tab", isLive);
+        }
+        if (syncSheet2Btn) {
+          syncSheet2Btn.title = isLive
+            ? "Push live-agent rows to Google Sheet2 (also runs after Reload)."
+            : "Push live-agent rows to Sheet2 for the selected date range.";
+        }
+      }
+
+      function setActiveSheetTab(tab, opts) {
+        opts = opts || {};
+        var next = tab === "live-agent" ? "live-agent" : "bot";
+        if (next === activeSheetTab && !opts.force) return;
+        activeSheetTab = next;
+        try {
+          sessionStorage.setItem(SHEET_TAB_KEY, next);
+        } catch (ignoreTab) {}
+        applySheetTabUi();
+        if (!opts.skipReload) {
+          sheetOffset = 0;
+          void load();
+        }
+      }
+
+      (function restoreSheetTab() {
+        try {
+          var saved = sessionStorage.getItem(SHEET_TAB_KEY);
+          if (saved === "live-agent" || saved === "bot") activeSheetTab = saved;
+        } catch (ignoreRestore) {}
+        applySheetTabUi();
+      })();
+
+      if (sheetSourceTabs) {
+        sheetSourceTabs.addEventListener("click", function (ev) {
+          var btn = ev.target && ev.target.closest ? ev.target.closest("[data-sheet-tab]") : null;
+          if (!btn || !sheetSourceTabs.contains(btn)) return;
+          setActiveSheetTab(btn.getAttribute("data-sheet-tab") || "bot");
+        });
+      }
 
       function destroyLeadCharts() {
         leadChartInstances.forEach(function (ch) {
@@ -5357,8 +5473,9 @@
         refreshBtn.disabled = true;
         var reloadLbl = refreshBtn.textContent;
         refreshBtn.textContent = "Loading…";
-        setStatus("Loading conversations…");
-        showLeadStatsLoading(true);
+        var loadingLive = isLiveAgentSheetTab();
+        setStatus(loadingLive ? "Loading live agent table…" : "Loading conversations…");
+        if (!loadingLive) showLeadStatsLoading(true);
         var timedId = 0;
         var ctrl = null;
         try {
@@ -5368,14 +5485,15 @@
           if (!Number.isFinite(lim) || lim < 5) lim = 100;
           if (lim > 500) lim = 500;
           var dq = [
-            "includeStats=1",
             "all=0",
             "limit=" + encodeURIComponent(String(lim)),
             "offset=" + encodeURIComponent(String(sheetOffset))
           ];
+          if (!loadingLive) dq.unshift("includeStats=1");
           if (fromV) dq.push("from=" + encodeURIComponent(fromV));
           if (toV) dq.push("to=" + encodeURIComponent(toV));
-          var url = apiBase() + "/api/conversations-sheet?" + dq.join("&");
+          var apiPath = loadingLive ? "/api/live-agent-sheet" : "/api/conversations-sheet";
+          var url = apiBase() + apiPath + "?" + dq.join("&");
           if (sheetLoadAbortCtrl) {
             try {
               sheetLoadAbortCtrl.abort();
@@ -5450,7 +5568,9 @@
           syncPagerUi(json);
           render(json);
           refreshAllValueFilterOptions_(true);
-          if (json.leadStats) {
+          if (loadingLive) {
+            showLeadStatsErr("");
+          } else if (json.leadStats) {
             try {
               renderLeadStats({ ok: true, ...json.leadStats });
               showLeadStatsErr("");
