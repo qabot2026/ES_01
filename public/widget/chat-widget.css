@@ -1270,6 +1270,7 @@ body.qa-lightbox-open {
   box-shadow: none;
 }
 
+.qa-attach,
 .qa-mic,
 .qa-send {
   width: 40px;
@@ -1290,6 +1291,35 @@ body.qa-lightbox-open {
     transform 0.2s ease,
     box-shadow 0.2s ease,
     opacity 0.2s ease;
+}
+
+.qa-attach__emoji {
+  font-size: 1.25rem;
+  line-height: 1;
+  display: block;
+}
+
+.qa-attach {
+  background: color-mix(in srgb, var(--qa-surface, #fff) 80%, var(--qa-bg));
+  color: var(--qa-primary-dark, #0369a1);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+}
+
+.qa-attach:hover:not(:disabled) {
+  background: var(--qa-surface, #fff);
+  transform: translateY(-1px);
+  box-shadow: 0 3px 10px rgba(2, 132, 199, 0.15);
+}
+
+.qa-attach:active:not(:disabled) {
+  transform: translateY(0) scale(0.96);
+}
+
+.qa-attach:disabled,
+.qa-attach--busy {
+  opacity: 0.45;
+  cursor: wait;
+  transform: none;
 }
 
 .qa-mic .qa-icon,

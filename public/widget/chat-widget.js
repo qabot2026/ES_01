@@ -965,6 +965,10 @@
       this.els.mic.style.display =
         feats.speechToText && feats.speechToText.enabled === false ? 'none' : '';
     }
+    if (this.els.attach) {
+      this.els.attach.style.display =
+        feats.composerUpload && feats.composerUpload.enabled === false ? 'none' : '';
+    }
     this.updateRestartVisibility();
     if (
       feats.multiLanguage &&
@@ -1128,6 +1132,21 @@
       '<textarea class="qa-input" rows="1" placeholder="' +
       this.escape(placeholder) +
       '" aria-label="Message"></textarea>' +
+      (function (w) {
+        var uploadCfg = feats.composerUpload || {};
+        if (uploadCfg.enabled === false) return '';
+        var emoji = String(uploadCfg.emoji || '📎').trim() || '📎';
+        var accept = uploadCfg.accept ? String(uploadCfg.accept) : '';
+        return (
+          '<button type="button" class="qa-attach" aria-label="Upload document">' +
+          '<span class="qa-attach__emoji" aria-hidden="true">' +
+          w.escape(emoji) +
+          '</span></button>' +
+          '<input type="file" class="qa-attach-input" hidden multiple' +
+          (accept ? ' accept="' + w.escape(accept) + '"' : '') +
+          ' />'
+        );
+      })(this) +
       '<button type="button" class="qa-mic" aria-label="Speech to text">' +
       ICONS.mic +
       '</button>' +
@@ -1162,6 +1181,8 @@
       input: this.root.querySelector('.qa-input'),
       send: this.root.querySelector('.qa-send'),
       mic: this.root.querySelector('.qa-mic'),
+      attach: this.root.querySelector('.qa-attach'),
+      attachInput: this.root.querySelector('.qa-attach-input'),
       lang: this.root.querySelector('.qa-lang'),
       restart: this.root.querySelector('.qa-restart'),
       error: this.root.querySelector('.qa-error'),
@@ -1234,6 +1255,17 @@
     if (this.els.mic) {
       this.els.mic.addEventListener('click', function () {
         self.toggleSpeech();
+      });
+    }
+    if (this.els.attach && this.els.attachInput) {
+      this.els.attach.addEventListener('click', function () {
+        if (self._uploadInFlight) return;
+        self.els.attachInput.click();
+      });
+      this.els.attachInput.addEventListener('change', function () {
+        var files = self.els.attachInput.files;
+        self.els.attachInput.value = '';
+        self.handleComposerUploadPick(files);
       });
     }
   };
@@ -3190,6 +3222,100 @@
       this._userHasInteracted = true;
       this.runFormDialogflowAction(action);
     }
+  };
+
+  QualityAssistantWidget.prototype.getComposerUploadCfg = function () {
+    return (getEffectiveCfg().features || {}).composerUpload || {};
+  };
+
+  QualityAssistantWidget.prototype.composerUploadLabel = function (map, fallback) {
+    var cfg = this.getComposerUploadCfg();
+    var m = (cfg && map) || {};
+    return (
+      m[this.language] ||
+      m.en ||
+      fallback ||
+      ''
+    );
+  };
+
+  QualityAssistantWidget.prototype.setComposerUploadBusy = function (busy) {
+    if (this.els.attach) {
+      this.els.attach.disabled = !!busy;
+      this.els.attach.classList.toggle('qa-attach--busy', !!busy);
+    }
+  };
+
+  QualityAssistantWidget.prototype.handleComposerUploadPick = function (fileList) {
+    var files = [];
+    if (fileList && fileList.length) {
+      for (var i = 0; i < fileList.length; i += 1) {
+        if (fileList[i]) files.push(fileList[i]);
+      }
+    }
+    if (!files.length || !this.apiBase) return;
+
+    var self = this;
+    var cfg = this.getComposerUploadCfg();
+    var emoji = String(cfg.emoji || '📎').trim() || '📎';
+    var names = files
+      .map(function (f) {
+        return f.name;
+      })
+      .filter(Boolean)
+      .join(', ');
+
+    this._userHasInteracted = true;
+    this.noteUserActivity();
+    this.setComposerUploadBusy(true);
+    this.appendMessage('user', emoji + (names ? ' ' + names : ''));
+
+    this.uploadFormDocuments(files, {}, { tag: 'composer' })
+      .then(function (up) {
+        if (up && up.ok) {
+          var docNames =
+            up.document_names ||
+            (up.uploads || [])
+              .map(function (u) {
+                return u.original_name;
+              })
+              .filter(Boolean)
+              .join(', ') ||
+            names;
+          var tpl = self.composerUploadLabel(
+            cfg.confirmByLanguage,
+            'Thank you — we received your document(s): {files}'
+          );
+          var botMsg = tpl.replace('{files}', docNames);
+          if (self.qaMode && up.simulated) {
+            botMsg =
+              'QA test mode: upload preview only — file was not saved.';
+          }
+          self.appendMessage('bot', botMsg);
+          if (!self.qaMode) {
+            self.appendTranscriptTurn('user', emoji + (docNames ? ' ' + docNames : ''));
+            self.pushSessionContext();
+          }
+          return;
+        }
+        var failMsg = self.composerUploadLabel(
+          cfg.failedByLanguage,
+          (up && up.message) || 'Could not upload. Please try again.'
+        );
+        self.appendMessage('bot', failMsg);
+      })
+      .catch(function () {
+        self.appendMessage(
+          'bot',
+          self.composerUploadLabel(
+            cfg.failedByLanguage,
+            'Could not upload. Please try again.'
+          )
+        );
+      })
+      .finally(function () {
+        self.setComposerUploadBusy(false);
+      });
   };
 
   QualityAssistantWidget.prototype.uploadFormDocuments = function (files, values, request) {

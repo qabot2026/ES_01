@@ -195,6 +195,23 @@ window.QA_CHAT_UI_CONFIG = {
         ],
       },
       speechToText: { enabled: true }, // mic button on/off
+      /** 📎 in composer — upload without Dialogflow upload form */
+      composerUpload: {
+        enabled: true,
+        emoji: '📎',
+        accept:
+          'image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.rtf,.odt,.ods,.odp,.zip,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,text/plain,text/csv,application/zip,application/x-zip-compressed',
+        confirmByLanguage: {
+          en: 'Thank you — we received your document(s): {files}',
+          hi: 'धन्यवाद — आपके दस्तावेज़ प्राप्त हुए: {files}',
+          mr: 'धन्यवाद — तुमचे दस्तऐवज मिळाले: {files}',
+        },
+        failedByLanguage: {
+          en: 'Could not upload. Please try again or use Contact us first.',
+          hi: 'अपलोड नहीं हो सका। दोबारा कोशिश करें या पहले संपर्क फॉर्म भरें।',
+          mr: 'अपलोड झाले नाही. पुन्हा प्रयत्न करा किंवा आधी संपर्क फॉर्म भरा.',
+        },
+      },
       inputPlaceholderByLanguage: {
         en: 'Type your message here…',
         hi: 'अपना संदेश लिखें…',
