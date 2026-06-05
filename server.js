@@ -984,6 +984,32 @@ app.get('/api/documents/download', requireDeskAuth, async (req, res) => {
   }
 });
 
+app.post('/api/documents/delete', requireDeskAuth, async (req, res) => {
+  try {
+    const gcsObject = String(
+      (req.body && req.body.object) || req.query.object || ''
+    ).trim();
+    const result = await documentsCatalog.deleteDocumentObject(gcsObject);
+    if (!result.ok) {
+      const status =
+        result.error === 'gcs_not_configured'
+          ? 503
+          : result.error === 'external_object' || result.error === 'invalid_object'
+            ? 400
+            : 400;
+      return res.status(status).json(result);
+    }
+    res.json(result);
+  } catch (err) {
+    console.error('[documents/delete]', err.message);
+    res.status(500).json({
+      ok: false,
+      error: 'delete_failed',
+      message: err.message,
+    });
+  }
+});
+
 app.get('/api/phrase-translations', (req, res) => {
   const lang = String(req.query.lang || 'en').trim();
   if (lang === 'en') {

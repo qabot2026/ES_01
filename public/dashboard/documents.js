@@ -357,6 +357,14 @@
           '" data-filename="' +
           escapeHtml(r.file_name) +
           '">Download</button>' +
+          (r.external
+            ? ''
+            : '<span class="docs-sep">|</span>' +
+              '<button type="button" class="docs-delete" data-object="' +
+              escapeHtml(r.gcs_object) +
+              '" data-filename="' +
+              escapeHtml(r.file_name) +
+              '">Delete</button>') +
           '<span class="docs-sep">|</span>' +
           '<button type="button" class="docs-copy-link" data-object="' +
           escapeHtml(r.gcs_object) +
@@ -381,6 +389,11 @@
     tbody.querySelectorAll('.docs-download').forEach(function (btn) {
       btn.addEventListener('click', function () {
         downloadFile(btn);
+      });
+    });
+    tbody.querySelectorAll('.docs-delete').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        deleteDocument(btn);
       });
     });
     tbody.querySelectorAll('.docs-copy-link').forEach(function (btn) {
@@ -496,6 +509,62 @@
       .finally(function () {
         btn.disabled = false;
         btn.textContent = prev || 'View';
+      });
+  }
+
+  function removeRowFromState(gcsObject) {
+    var obj = String(gcsObject || '').trim();
+    if (!obj) return;
+    state.rows = state.rows.filter(function (r) {
+      return String(r.gcs_object || '').trim() !== obj;
+    });
+    state.filtered = state.filtered.filter(function (r) {
+      return String(r.gcs_object || '').trim() !== obj;
+    });
+    applyFilter();
+  }
+
+  function deleteDocument(btn) {
+    var object = btn.getAttribute('data-object');
+    var fileName = btn.getAttribute('data-filename') || 'this file';
+    if (!object || !auth.hasAuth()) return;
+    if (
+      !window.confirm(
+        'Delete "' + fileName + '" from cloud storage? This cannot be undone.'
+      )
+    ) {
+      return;
+    }
+
+    btn.disabled = true;
+    var prev = btn.textContent;
+    btn.textContent = '…';
+
+    fetch(apiBase() + '/api/documents/delete', {
+      method: 'POST',
+      headers: headers(),
+      body: JSON.stringify({ object: object }),
+    })
+      .then(function (r) {
+        return r.json();
+      })
+      .then(function (data) {
+        if (!data.ok) {
+          throw new Error(
+            (data && data.message) ||
+              (data && data.error) ||
+              'Delete failed.'
+          );
+        }
+        removeRowFromState(object);
+        showAlert('');
+      })
+      .catch(function (err) {
+        alert(err.message || 'Delete failed.');
+      })
+      .finally(function () {
+        btn.disabled = false;
+        btn.textContent = prev || 'Delete';
       });
   }
 

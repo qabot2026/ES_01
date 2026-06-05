@@ -207,6 +207,14 @@
   text-decoration: underline;
 }
 
+.docs-actions .docs-delete {
+  color: #b91c1c;
+}
+
+.docs-actions .docs-delete:hover {
+  color: #991b1b;
+}
+
 .docs-actions button:disabled {
   opacity: 0.5;
   cursor: wait;
