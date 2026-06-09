@@ -11,12 +11,14 @@ window.QA_CHAT_UI_CONFIG = {
       projectId: 'recebot-ptav',
       agentId: '5ea01258-d01b-44eb-9b2a-9f6338d43d63',
       /**
-       * Home page = receptionist + child project bots (full flow in one chat).
-       * Project pages = standalone (see AGENT-ORCHESTRATION.md).
-       * Dialogflow ES: har bot = alag GCP projectId.
+       * SINGLE AGENT setup (recommended) — see SINGLE-AGENT-SETUP.md
+       * Sab flows ek hi agent (recebot-ptav) mein contexts se.
+       * Landing pages: QA_CONFIG.welcomeEventName se alag start event.
+       *
+       * Multi-agent (purana): agentOrchestration.enabled = true — AGENT-ORCHESTRATION.md
        */
       agentOrchestration: {
-        enabled: true,
+        enabled: false,
         role: 'receptionist',
         childWelcomeEvent: 'FRESH',
         returnWelcomeEvent: 'FRESH',
@@ -30,22 +32,12 @@ window.QA_CHAT_UI_CONFIG = {
           'Receptionist',
           'receptionist',
         ],
-        children: [
-          {
-            id: 'green-valley',
-            label: 'Green Valley',
-            projectId: 'greenvalley-aryq',
-            openTriggers: ['Green Valley', 'green valley', 'Project A', 'project a'],
-            welcomeEvent: 'FRESH',
-          },
-          {
-            id: 'lake-view',
-            label: 'Lake View',
-            projectId: 'lakeview-pgsd',
-            openTriggers: ['Lake View', 'lake view', 'Project B', 'project b'],
-            welcomeEvent: 'FRESH',
-          },
-        ],
+        children: [],
+      },
+      /** Landing page embed overrides (copy into QA_CONFIG on that page). */
+      landingPages: {
+        greenValley: { welcomeEventName: 'START_GREEN_VALLEY' },
+        lakeView: { welcomeEventName: 'START_LAKE_VIEW' },
       },
       /** Dialogflow events — not the ↻ button (see desk/mob restartButton). */
       welcomeEvent: {

@@ -287,6 +287,17 @@
     return df.welcomeEvent || {};
   }
 
+  /** Home = FRESH; landing pages override via window.QA_CONFIG.welcomeEventName */
+  function resolveWelcomeEventName_() {
+    var cfg = getWelcomeEventCfg();
+    var override =
+      global.QA_CONFIG && global.QA_CONFIG.welcomeEventName
+        ? String(global.QA_CONFIG.welcomeEventName).trim()
+        : '';
+    if (override) return override;
+    return String(cfg.eventName || 'FRESH').trim();
+  }
+
   function getEndChatEventCfg() {
     var df = getRootCfg().dialogflow || {};
     return df.endChatEvent || {};
@@ -1942,7 +1953,7 @@
     if (this._welcomeEventSent || this._welcomeEventInFlight || this.isSending) {
       return;
     }
-    var name = (cfg.eventName || 'FRESH').trim();
+    var name = resolveWelcomeEventName_();
     if (!name) return;
     var self = this;
     this._welcomeEventInFlight = true;
