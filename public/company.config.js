@@ -8,15 +8,15 @@ var QA_LOGO_HEADER =
 window.QA_CHAT_UI_CONFIG = {
   common: {
     dialogflow: {
-      projectId: 'qualityassistant-ygdm',
-      agentId: '07ccbfd0-4cad-4898-8323-e6baeec80fc1',
+      projectId: 'recebot-ptav',
+      agentId: '5ea01258-d01b-44eb-9b2a-9f6338d43d63',
       /**
        * Home page = receptionist + child project bots (full flow in one chat).
        * Project pages = standalone (see AGENT-ORCHESTRATION.md).
        * Dialogflow ES: har bot = alag GCP projectId.
        */
       agentOrchestration: {
-        enabled: false,
+        enabled: true,
         role: 'receptionist',
         childWelcomeEvent: 'FRESH',
         returnWelcomeEvent: 'FRESH',
@@ -34,14 +34,14 @@ window.QA_CHAT_UI_CONFIG = {
           {
             id: 'green-valley',
             label: 'Green Valley',
-            projectId: 'REPLACE-GREEN-VALLEY-GCP-PROJECT',
+            projectId: 'greenvalley-aryq',
             openTriggers: ['Green Valley', 'green valley', 'Project A', 'project a'],
             welcomeEvent: 'FRESH',
           },
           {
             id: 'lake-view',
             label: 'Lake View',
-            projectId: 'REPLACE-LAKE-VIEW-GCP-PROJECT',
+            projectId: 'lakeview-pgsd',
             openTriggers: ['Lake View', 'lake view', 'Project B', 'project b'],
             welcomeEvent: 'FRESH',
           },
