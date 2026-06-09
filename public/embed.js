@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var QA_ASSET_VERSION = '20260605-skip-appt';
+  var QA_ASSET_VERSION = '20260609-message-syntax';
 
   var QA_FORM_SCRIPTS = [
     'contact.js',
@@ -71,21 +71,23 @@
       loadFormScripts(0, function () {
         loadCss(base + '/widget/chat-widget.css');
         loadJs(assetUrl(base + '/widget/date-display.js'), function () {
-        loadJs(assetUrl(base + '/widget/chat-form.js'), function () {
-          loadJs(assetUrl(base + '/widget/chat-widget.js'), function () {
-            loadJs(assetUrl(base + '/widget/live-agent-client.js'), function () {
-              loadJs(assetUrl(base + '/widget/transcript-client.js'), function () {
-              if (window.QualityAssistantWidget) {
-                window.__qaWidgetLoaded = true;
-                new window.QualityAssistantWidget({
-                  apiBase:
-                    (window.QA_CONFIG && window.QA_CONFIG.apiBase) || base,
+          loadJs(assetUrl(base + '/widget/message-syntax.js'), function () {
+            loadJs(assetUrl(base + '/widget/chat-form.js'), function () {
+              loadJs(assetUrl(base + '/widget/chat-widget.js'), function () {
+                loadJs(assetUrl(base + '/widget/live-agent-client.js'), function () {
+                  loadJs(assetUrl(base + '/widget/transcript-client.js'), function () {
+                    if (window.QualityAssistantWidget) {
+                      window.__qaWidgetLoaded = true;
+                      new window.QualityAssistantWidget({
+                        apiBase:
+                          (window.QA_CONFIG && window.QA_CONFIG.apiBase) || base,
+                      });
+                    }
+                  });
                 });
-              }
               });
             });
           });
-        });
         });
       });
     });

@@ -5,6 +5,7 @@ const { randomUUID } = require('crypto');
 const dialogflow = require('./lib/dialogflow');
 const translate = require('./lib/translate');
 const phraseTranslations = require('./lib/phrase-translations');
+const messageSyntax = require('./lib/message-syntax');
 const formApi = require('./lib/form-api');
 const liveAgent = require('./lib/live-agent');
 const chatTranscript = require('./lib/chat-transcript');
@@ -111,6 +112,7 @@ app.post('/api/chat', async (req, res) => {
     dialogflowProjectId,
     orchestrationMode,
     orchestrationChildId,
+    channel,
   } = req.body || {};
   const sid = sessionId || randomUUID();
   const isQa = qaMode.isQaRequest(req, sid);
@@ -254,6 +256,11 @@ app.post('/api/chat', async (req, res) => {
         skipTranscriptUser: req.body && req.body.skipTranscriptUser === true,
       });
     }
+
+    messageSyntax.applyFormattedReplyFields(
+      result,
+      channel || req.body.source || 'web'
+    );
 
     res.json({
       sessionId: sid,

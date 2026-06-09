@@ -453,6 +453,79 @@
   color: var(--qa-primary-dark, #0369a1);
 }
 
+.qa-msg__bubble--formatted {
+  white-space: normal;
+}
+
+.qa-msg__bubble--formatted .qa-md-p {
+  margin: 0 0 0.45em;
+}
+
+.qa-msg__bubble--formatted .qa-md-p:last-child {
+  margin-bottom: 0;
+}
+
+.qa-msg__bubble--formatted .qa-md-h {
+  margin: 0 0 0.35em;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.qa-msg__bubble--formatted .qa-md-h1 {
+  font-size: 1.35rem;
+}
+
+.qa-msg__bubble--formatted .qa-md-h2 {
+  font-size: 1.2rem;
+}
+
+.qa-msg__bubble--formatted .qa-md-h3 {
+  font-size: 1.08rem;
+}
+
+.qa-msg__bubble--formatted .qa-md-h4 {
+  font-size: 1rem;
+}
+
+.qa-msg__bubble--formatted .qa-md-h5 {
+  font-size: 0.92rem;
+}
+
+.qa-msg__bubble--formatted .qa-md-h6 {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--qa-text-soft, #64748b);
+}
+
+.qa-msg__bubble--formatted .qa-md-list {
+  margin: 0.35em 0 0.5em;
+  padding-left: 1.25em;
+}
+
+.qa-msg__bubble--formatted .qa-md-list li {
+  margin: 0.15em 0;
+}
+
+.qa-msg__bubble--formatted .qa-md-code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.92em;
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+  background: rgba(15, 23, 42, 0.06);
+}
+
+.qa-msg--user .qa-msg__bubble--formatted .qa-md-code {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.qa-msg__bubble--formatted del {
+  opacity: 0.82;
+}
+
+.qa-msg__bubble--formatted .qa-md-spacer {
+  height: 0.65em;
+}
+
 .qa-msg--user .qa-msg__bubble .qa-msg__link {
   color: var(--qa-user-text, #f0f9ff);
   text-decoration-thickness: 2px;

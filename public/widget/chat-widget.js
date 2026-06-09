@@ -3823,12 +3823,29 @@
     return global.QAChatForm.buildFormEl(resolved, this);
   };
 
+  QualityAssistantWidget.prototype.appendFormattedBubbleContent = function (
+    bubble,
+    text
+  ) {
+    var ms = global.QAMessageSyntax;
+    var textStr = text == null ? '' : String(text);
+    if (!textStr.trim()) return false;
+    if (!ms || typeof ms.renderHtml !== 'function' || !ms.hasMessageSyntax(textStr)) {
+      return false;
+    }
+    bubble.classList.add('qa-msg__bubble--formatted');
+    bubble.innerHTML = ms.renderHtml(textStr);
+    return true;
+  };
+
   QualityAssistantWidget.prototype.fillMessageBubble = function (bubble, text, replyParts) {
     bubble.textContent = '';
+    bubble.classList.remove('qa-msg__bubble--formatted', 'qa-msg__bubble--multiline');
     var parts = replyParts && replyParts.length ? replyParts : null;
     if (!parts) {
       var textStr = text == null ? '' : String(text).trim();
       if (!textStr) return;
+      if (this.appendFormattedBubbleContent(bubble, textStr)) return;
       if (textStr.indexOf('\n') >= 0) {
         bubble.classList.add('qa-msg__bubble--multiline');
         textStr.split('\n').forEach(function (line, i) {
@@ -3841,6 +3858,8 @@
       return;
     }
     var self = this;
+    var ms = global.QAMessageSyntax;
+    var usedFormatted = false;
     parts.forEach(function (part) {
       if (part.type === 'link' && part.href && /^https?:\/\//i.test(part.href)) {
         var a = document.createElement('a');
@@ -3848,15 +3867,38 @@
         a.href = part.href;
         a.target = '_blank';
         a.rel = 'noopener noreferrer';
-        a.textContent = part.text || part.href;
+        if (
+          ms &&
+          typeof ms.renderHtml === 'function' &&
+          ms.hasMessageSyntax(part.text || '')
+        ) {
+          a.innerHTML = ms.renderHtml(part.text || '');
+        } else {
+          a.textContent = part.text || part.href;
+        }
         bubble.appendChild(a);
         return;
       }
       var chunk = part.text != null ? String(part.text) : '';
-      if (chunk) bubble.appendChild(document.createTextNode(chunk));
+      if (!chunk) return;
+      if (
+        ms &&
+        typeof ms.renderHtml === 'function' &&
+        ms.hasMessageSyntax(chunk)
+      ) {
+        usedFormatted = true;
+        var wrap = document.createElement('span');
+        wrap.innerHTML = ms.renderHtml(chunk);
+        while (wrap.firstChild) bubble.appendChild(wrap.firstChild);
+        return;
+      }
+      bubble.appendChild(document.createTextNode(chunk));
     });
+    if (usedFormatted) bubble.classList.add('qa-msg__bubble--formatted');
     if (!bubble.childNodes.length && text) {
-      bubble.textContent = String(text).trim();
+      if (!this.appendFormattedBubbleContent(bubble, String(text).trim())) {
+        bubble.textContent = String(text).trim();
+      }
     }
   };
 
