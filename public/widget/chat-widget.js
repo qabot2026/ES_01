@@ -292,6 +292,52 @@
     return df.endChatEvent || {};
   }
 
+  function getAgentOrchestrationCfg() {
+    var df = getRootCfg().dialogflow || {};
+    var orch = Object.assign({}, df.agentOrchestration || {});
+    var qaGlobal = global.QA_CONFIG && global.QA_CONFIG.agentOrchestration;
+    if (qaGlobal && typeof qaGlobal === 'object') {
+      Object.assign(orch, qaGlobal);
+    }
+    return orch;
+  }
+
+  function normalizeOrchText_(text) {
+    return String(text || '').trim().toLowerCase();
+  }
+
+  function matchOrchTrigger_(text, triggers) {
+    var needle = normalizeOrchText_(text);
+    if (!needle || !Array.isArray(triggers)) return false;
+    for (var i = 0; i < triggers.length; i++) {
+      if (normalizeOrchText_(triggers[i]) === needle) return true;
+    }
+    return false;
+  }
+
+  function findChildByOpenTrigger_(text, orch) {
+    if (!orch || orch.enabled === false || orch.role !== 'receptionist') return null;
+    var children = orch.children || [];
+    for (var i = 0; i < children.length; i++) {
+      var child = children[i];
+      if (matchOrchTrigger_(text, child.openTriggers || [])) return child;
+    }
+    return null;
+  }
+
+  function isReturnToReceptionistTrigger_(text, orch) {
+    if (!orch || orch.enabled === false) return false;
+    var triggers = orch.returnTriggers || [
+      'main menu',
+      'back',
+      'menu',
+      'receptionist',
+      'back to menu',
+      '← main menu',
+    ];
+    return matchOrchTrigger_(text, triggers);
+  }
+
   function isRichContentEnabled() {
     var df = getRootCfg().dialogflow || {};
     var rc = df.richContentChips || {};
@@ -433,8 +479,87 @@
     this._liveAgentHumanActive = false;
     this._liveAgentWaiting = false;
     this._liveAgentBotCopilotActive = false;
+    this.resetOrchestrationState();
     this.init();
   }
+
+  QualityAssistantWidget.prototype.resetOrchestrationState = function () {
+    var orch = getAgentOrchestrationCfg();
+    var df = getRootCfg().dialogflow || {};
+    var overridePid =
+      global.QA_CONFIG && global.QA_CONFIG.dialogflowProjectId
+        ? String(global.QA_CONFIG.dialogflowProjectId).trim()
+        : '';
+    this._orchMode =
+      orch.enabled !== false && orch.role === 'receptionist' ? 'receptionist' : 'standalone';
+    this._orchChildId = '';
+    this._orchChildLabel = '';
+    this._activeDialogflowProjectId = overridePid || String(df.projectId || '').trim();
+  };
+
+  QualityAssistantWidget.prototype.getDialogflowProjectId = function () {
+    return this._activeDialogflowProjectId || '';
+  };
+
+  QualityAssistantWidget.prototype.isOrchestrationReceptionistHost = function () {
+    var orch = getAgentOrchestrationCfg();
+    return !!(
+      orch.enabled !== false &&
+      orch.role === 'receptionist' &&
+      Array.isArray(orch.children) &&
+      orch.children.length
+    );
+  };
+
+  QualityAssistantWidget.prototype.withDialogflowRouting_ = function (body) {
+    var payload = Object.assign({}, body || {});
+    var pid = this.getDialogflowProjectId();
+    if (pid) payload.dialogflowProjectId = pid;
+    if (this._orchMode) payload.orchestrationMode = this._orchMode;
+    if (this._orchChildId) payload.orchestrationChildId = this._orchChildId;
+    return payload;
+  };
+
+  QualityAssistantWidget.prototype.switchToChildAgent = function (child) {
+    var orch = getAgentOrchestrationCfg();
+    var welcome = String(
+      child.welcomeEvent || orch.childWelcomeEvent || 'FRESH'
+    ).trim();
+    this._orchMode = 'child';
+    this._orchChildId = child.id || '';
+    this._orchChildLabel = child.label || child.id || '';
+    this._activeDialogflowProjectId = String(child.projectId || '').trim();
+    this.sessionId = this.newSessionId();
+    this._welcomeEventSent = false;
+    this._welcomeEventInFlight = false;
+    return this.postToDialogflow(
+      this.withDialogflowRouting_({
+        event: welcome,
+        sessionId: this.sessionId,
+        languageCode: this.getDialogflowLang(),
+      })
+    );
+  };
+
+  QualityAssistantWidget.prototype.switchToReceptionist = function () {
+    var orch = getAgentOrchestrationCfg();
+    var df = getRootCfg().dialogflow || {};
+    var welcome = String(orch.returnWelcomeEvent || 'FRESH').trim();
+    this._orchMode = 'receptionist';
+    this._orchChildId = '';
+    this._orchChildLabel = '';
+    this._activeDialogflowProjectId = String(df.projectId || '').trim();
+    this.sessionId = this.newSessionId();
+    this._welcomeEventSent = false;
+    this._welcomeEventInFlight = false;
+    return this.postToDialogflow(
+      this.withDialogflowRouting_({
+        event: welcome,
+        sessionId: this.sessionId,
+        languageCode: this.getDialogflowLang(),
+      })
+    );
+  };
 
   QualityAssistantWidget.prototype.isHumanChatActive = function () {
     if (this._liveAgentBotCopilotActive) return false;
@@ -1656,6 +1781,13 @@
     if (result.data.sessionId) this.sessionId = result.data.sessionId;
 
     var data = result.data || {};
+    if (data.dialogflowProjectId) {
+      this._activeDialogflowProjectId = String(data.dialogflowProjectId).trim();
+    }
+    if (data.orchestrationMode) this._orchMode = data.orchestrationMode;
+    if (data.orchestrationChildId != null) {
+      this._orchChildId = String(data.orchestrationChildId || '');
+    }
     if (data.sessionParameters) {
       this.mergeSessionParameters(data.sessionParameters);
     }
@@ -1767,7 +1899,7 @@
     return fetch(this.apiBase + '/api/chat', {
       method: 'POST',
       headers: this.qaApiHeaders(),
-      body: JSON.stringify(this.withQaBody(body)),
+      body: JSON.stringify(this.withQaBody(this.withDialogflowRouting_(body))),
     })
       .then(function (res) {
         return res.json().then(function (data) {
@@ -1814,11 +1946,13 @@
     if (!name) return;
     var self = this;
     this._welcomeEventInFlight = true;
-    this.postToDialogflow({
-      event: name,
-      sessionId: this.sessionId,
-      languageCode: this.getDialogflowLang(),
-    }).finally(function () {
+    this.postToDialogflow(
+      this.withDialogflowRouting_({
+        event: name,
+        sessionId: this.sessionId,
+        languageCode: this.getDialogflowLang(),
+      })
+    ).finally(function () {
       self._welcomeEventInFlight = false;
       self._welcomeEventSent = true;
     });
@@ -2068,6 +2202,7 @@
     var endCfg = getEndChatEventCfg();
     var runRestart = function () {
       self.sessionId = self.newSessionId();
+      self.resetOrchestrationState();
       self._welcomeEventSent = false;
       self._welcomeEventInFlight = false;
       self._endChatEventSent = false;
@@ -3894,14 +4029,40 @@
         return;
       }
     }
+
+    var orch = getAgentOrchestrationCfg();
+    if (this.isOrchestrationReceptionistHost()) {
+      if (this._orchMode === 'receptionist') {
+        var child = findChildByOpenTrigger_(text, orch);
+        if (child) {
+          this.markUserInteracted();
+          this.noteUserActivity();
+          this.appendMessage('user', text);
+          this.switchToChildAgent(child);
+          return;
+        }
+      } else if (
+        this._orchMode === 'child' &&
+        isReturnToReceptionistTrigger_(text, orch)
+      ) {
+        this.markUserInteracted();
+        this.noteUserActivity();
+        this.appendMessage('user', text);
+        this.switchToReceptionist();
+        return;
+      }
+    }
+
     this.markUserInteracted();
     this.noteUserActivity();
     this.appendMessage('user', text);
-    this.postToDialogflow({
-      message: text,
-      sessionId: this.sessionId,
-      languageCode: this.getDialogflowLang(),
-    });
+    this.postToDialogflow(
+      this.withDialogflowRouting_({
+        message: text,
+        sessionId: this.sessionId,
+        languageCode: this.getDialogflowLang(),
+      })
+    );
   };
 
   QualityAssistantWidget.prototype.toggleSpeech = function () {

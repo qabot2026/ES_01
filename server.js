@@ -108,6 +108,9 @@ app.post('/api/chat', async (req, res) => {
     languageCode = 'en',
     uiLanguageCode,
     event,
+    dialogflowProjectId,
+    orchestrationMode,
+    orchestrationChildId,
   } = req.body || {};
   const sid = sessionId || randomUUID();
   const isQa = qaMode.isQaRequest(req, sid);
@@ -151,9 +154,13 @@ app.post('/api/chat', async (req, res) => {
         return res.status(400).json({ error: 'message or event is required' });
       }
     }
+    const dfProjectId =
+      typeof dialogflowProjectId === 'string' && dialogflowProjectId.trim()
+        ? dialogflowProjectId.trim()
+        : undefined;
     let result = eventName
-      ? await dialogflow.detectEvent(sid, eventName, languageCode)
-      : await dialogflow.detectIntent(sid, message.trim(), languageCode);
+      ? await dialogflow.detectEvent(sid, eventName, languageCode, dfProjectId)
+      : await dialogflow.detectIntent(sid, message.trim(), languageCode, dfProjectId);
     if (phraseTranslations.isEnabled()) {
       result = phraseTranslations.applyToResult(result, uiLang);
     }
@@ -248,7 +255,15 @@ app.post('/api/chat', async (req, res) => {
       });
     }
 
-    res.json({ sessionId: sid, qaMode: isQa, ...result });
+    res.json({
+      sessionId: sid,
+      qaMode: isQa,
+      orchestrationMode:
+        typeof orchestrationMode === 'string' ? orchestrationMode : '',
+      orchestrationChildId:
+        typeof orchestrationChildId === 'string' ? orchestrationChildId : '',
+      ...result,
+    });
   } catch (err) {
     const detail = dialogflow.formatApiError(err);
     console.error('[dialogflow]', detail);

@@ -10,6 +10,43 @@ window.QA_CHAT_UI_CONFIG = {
     dialogflow: {
       projectId: 'qualityassistant-ygdm',
       agentId: '07ccbfd0-4cad-4898-8323-e6baeec80fc1',
+      /**
+       * Home page = receptionist + child project bots (full flow in one chat).
+       * Project pages = standalone (see AGENT-ORCHESTRATION.md).
+       * Dialogflow ES: har bot = alag GCP projectId.
+       */
+      agentOrchestration: {
+        enabled: false,
+        role: 'receptionist',
+        childWelcomeEvent: 'FRESH',
+        returnWelcomeEvent: 'FRESH',
+        returnTriggers: [
+          'Main menu',
+          'main menu',
+          'Back',
+          'back',
+          'Menu',
+          'menu',
+          'Receptionist',
+          'receptionist',
+        ],
+        children: [
+          {
+            id: 'green-valley',
+            label: 'Green Valley',
+            projectId: 'REPLACE-GREEN-VALLEY-GCP-PROJECT',
+            openTriggers: ['Green Valley', 'green valley', 'Project A', 'project a'],
+            welcomeEvent: 'FRESH',
+          },
+          {
+            id: 'lake-view',
+            label: 'Lake View',
+            projectId: 'REPLACE-LAKE-VIEW-GCP-PROJECT',
+            openTriggers: ['Lake View', 'lake view', 'Project B', 'project b'],
+            welcomeEvent: 'FRESH',
+          },
+        ],
+      },
       /** Dialogflow events — not the ↻ button (see desk/mob restartButton). */
       welcomeEvent: {
         enabled: true,
