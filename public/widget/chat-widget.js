@@ -287,13 +287,25 @@
     return df.welcomeEvent || {};
   }
 
-  /** Home = FRESH; landing pages override via window.QA_CONFIG.welcomeEventName */
+  /** Home = FRESH; landing pages: QA_CONFIG.welcomeEventName or URL + landingPages config */
   function resolveWelcomeEventName_() {
     var cfg = getWelcomeEventCfg();
     var override =
       global.QA_CONFIG && global.QA_CONFIG.welcomeEventName
         ? String(global.QA_CONFIG.welcomeEventName).trim()
         : '';
+    if (!override) {
+      var df = getRootCfg().dialogflow || {};
+      var lp = df.landingPages || {};
+      var path = String(
+        (global.location && global.location.pathname) || ''
+      ).toLowerCase();
+      if (path.indexOf('green-valley') >= 0 && lp.greenValley) {
+        override = String(lp.greenValley.welcomeEventName || '').trim();
+      } else if (path.indexOf('lake-view') >= 0 && lp.lakeView) {
+        override = String(lp.lakeView.welcomeEventName || '').trim();
+      }
+    }
     if (override) return override;
     return String(cfg.eventName || 'FRESH').trim();
   }

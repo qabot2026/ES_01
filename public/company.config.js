@@ -18,7 +18,7 @@ window.QA_CHAT_UI_CONFIG = {
        * Multi-agent (purana): agentOrchestration.enabled = true — AGENT-ORCHESTRATION.md
        */
       agentOrchestration: {
-        enabled: true,
+        enabled: false,
         role: 'receptionist',
         childWelcomeEvent: 'FRESH',
         returnWelcomeEvent: 'FRESH',
