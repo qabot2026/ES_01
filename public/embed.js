@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var QA_ASSET_VERSION = '20260609-message-syntax';
+  var QA_ASSET_VERSION = '20260609-df-es-syntax';
 
   var QA_FORM_SCRIPTS = [
     'contact.js',

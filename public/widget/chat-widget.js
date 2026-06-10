@@ -1874,6 +1874,7 @@
       if (hasContent) {
         self.appendMessage('bot', reply, {
           replyParts: replyParts,
+          replyHtml: payload.replyHtml || '',
           chips: chips,
           chipHeading: chipHeading,
           infoCards: infoCards,
@@ -3837,8 +3838,14 @@
 
   QualityAssistantWidget.prototype.appendFormattedBubbleContent = function (
     bubble,
-    text
+    text,
+    replyHtml
   ) {
+    if (replyHtml && String(replyHtml).trim()) {
+      bubble.classList.add('qa-msg__bubble--formatted');
+      bubble.innerHTML = String(replyHtml);
+      return true;
+    }
     var ms = global.QAMessageSyntax;
     var textStr = text == null ? '' : String(text);
     if (!textStr.trim()) return false;
@@ -3850,14 +3857,18 @@
     return true;
   };
 
-  QualityAssistantWidget.prototype.fillMessageBubble = function (bubble, text, replyParts) {
+  QualityAssistantWidget.prototype.fillMessageBubble = function (bubble, text, replyParts, replyHtml) {
     bubble.textContent = '';
     bubble.classList.remove('qa-msg__bubble--formatted', 'qa-msg__bubble--multiline');
+    if (replyHtml && String(replyHtml).trim()) {
+      this.appendFormattedBubbleContent(bubble, text, replyHtml);
+      return;
+    }
     var parts = replyParts && replyParts.length ? replyParts : null;
     if (!parts) {
       var textStr = text == null ? '' : String(text).trim();
       if (!textStr) return;
-      if (this.appendFormattedBubbleContent(bubble, textStr)) return;
+      if (this.appendFormattedBubbleContent(bubble, textStr, replyHtml)) return;
       if (textStr.indexOf('\n') >= 0) {
         bubble.classList.add('qa-msg__bubble--multiline');
         textStr.split('\n').forEach(function (line, i) {
@@ -3908,7 +3919,7 @@
     });
     if (usedFormatted) bubble.classList.add('qa-msg__bubble--formatted');
     if (!bubble.childNodes.length && text) {
-      if (!this.appendFormattedBubbleContent(bubble, String(text).trim())) {
+      if (!this.appendFormattedBubbleContent(bubble, String(text).trim(), replyHtml)) {
         bubble.textContent = String(text).trim();
       }
     }
@@ -3937,6 +3948,7 @@
     body.appendChild(this.buildPersonaRow(role, options));
     var textStr = text == null ? '' : String(text).trim();
     var replyParts = options.replyParts || [];
+    var replyHtml = options.replyHtml || '';
     var dropdowns = options.dropdowns || [];
     var galleries = options.galleries || [];
     var cardCarousels = options.cardCarousels || [];
@@ -3959,7 +3971,7 @@
     if ((textStr || replyParts.length) && !skipBubbleForDropdown) {
       var bubble = document.createElement('div');
       bubble.className = 'qa-msg__bubble';
-      this.fillMessageBubble(bubble, textStr, replyParts);
+      this.fillMessageBubble(bubble, textStr, replyParts, replyHtml);
       body.appendChild(bubble);
     }
     var chips = options.chips || [];
