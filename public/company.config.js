@@ -135,13 +135,13 @@ window.QA_CHAT_UI_CONFIG = {
     },
 
     welcome: {
-      enabled: true,
+      enabled: false,
       title: 'Welcome',
       body: 'Select an option',
       restartTitle: 'Restarted',
       restartBody: 'Select an option.',
       suggestionChips: {
-        enabled: true,
+        enabled: false,
         items: [
           { label: 'Main Menu', message: 'Main Menu' },
           { label: 'DisplayName', message: 'TriggerName' },
