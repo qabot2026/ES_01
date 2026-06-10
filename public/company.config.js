@@ -455,8 +455,9 @@ window.QA_CHAT_UI_CONFIG = {
 (function () {
   var c = window.QA_CHAT_UI_CONFIG;
   if (!c || !c.common) return;
-  window.QA_CONFIG = {
+  /* Merge — landing pages set welcomeEventName before embed.js loads this file */
+  window.QA_CONFIG = Object.assign(window.QA_CONFIG || {}, {
     apiBase: c.common.deploy.publicBaseUrl,
     embedScript: c.common.deploy.embedScript,
-  };
+  });
 })();
