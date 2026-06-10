@@ -52,7 +52,7 @@ window.QA_CHAT_UI_CONFIG = {
         enabled: true,
         eventName: 'ENDCHAT',
         triggerOnIdle: true,
-        idleTimeoutMs: 20000,
+        idleTimeoutMs: 10000,
         triggerOnChatClose: false,
         /** User clicks ↻ Restart: send ENDCHAT before new session? */
         triggerOnRestart: false,
