@@ -34,11 +34,6 @@ window.QA_CHAT_UI_CONFIG = {
         ],
         children: [],
       },
-      /** Landing page embed overrides (copy into QA_CONFIG on that page). */
-      landingPages: {
-        greenValley: { welcomeEventName: 'START_GREEN_VALLEY' },
-        lakeView: { welcomeEventName: 'START_LAKE_VIEW' },
-      },
       /** Dialogflow events — not the ↻ button (see desk/mob restartButton). */
       welcomeEvent: {
         enabled: true,
