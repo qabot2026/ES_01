@@ -1,6 +1,7 @@
 (function (global) {
   'use strict';
 
+  var NAV_ASSET_V = '20260610b';
   var DEFAULT_BOT_ID = '10001';
   var BOTS = [
     { id: '10001', name: 'Receptionist' },
@@ -174,7 +175,6 @@
 
   function renderNav(activeKey, botId) {
     botId = normalizeBotId(botId);
-    var bot = resolveBot(botId) || BOTS[0];
 
     function navRow(key, label, iconName) {
       var href = navHref(key, botId);
@@ -208,12 +208,6 @@
     return (
       '<aside class="dash-sidebar" aria-label="Dashboard navigation">' +
       '<div class="dash-sidebar__inner">' +
-      '<div class="dash-sidebar__brand">' +
-      '<h1>QualityAssistant</h1>' +
-      '<p>' +
-      bot.name +
-      '</p>' +
-      '</div>' +
       '<nav class="dash-nav-list" aria-label="Main navigation">' +
       navRow('home', 'Dashboard home', 'home') +
       '<div class="dash-nav-sep" aria-hidden="true"></div>' +
@@ -249,7 +243,7 @@
     if (!document.querySelector('link[data-dash-nav-css]')) {
       var link = document.createElement('link');
       link.rel = 'stylesheet';
-      link.href = '/dashboard/dashboard-nav.css';
+      link.href = '/dashboard/dashboard-nav.css?v=' + NAV_ASSET_V;
       link.setAttribute('data-dash-nav-css', '1');
       document.head.appendChild(link);
     }
