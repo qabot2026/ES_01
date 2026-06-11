@@ -304,9 +304,6 @@
       toggleRow(p + '.launcher.closeBubbleWhenOpen.enabled', 'Hide bubble when chat open') +
       toggleRow(p + '.autoOpenChat.enabled', 'Auto-open chat') +
       toggleRow(p + '.restartButton.enabled', 'Restart button (↻)') +
-      toggleRow(p + '.poweredBy.enabled', 'Powered by footer') +
-      toggleRow(p + '.features.speechToText.enabled', 'Mic') +
-      toggleRow(p + '.features.composerUpload.enabled', 'Upload (📎)') +
       toggleRow(p + '.features.restartChat.enabled', 'Restart chat menu item') +
       '</div>' +
       '<div class="field-grid" style="margin-top:0.75rem">' +
@@ -318,8 +315,6 @@
       ) +
       textField(p + '.launcherStrip.text', 'Launcher strip text') +
       textField(p + '.autoOpenChat.delayMs', 'Auto-open delay (ms)', 'number') +
-      textField(p + '.poweredBy.brandName', 'Powered by brand name') +
-      textField(p + '.poweredBy.linkUrl', 'Powered by link URL') +
       '</div></section>'
     );
   }
@@ -360,20 +355,15 @@
       toggleRow('common.userPersona.showTime', 'Show time on user messages') +
       '</div></section>' +
       '<section class="settings-section">' +
-      '<h3>Features (all devices)</h3>' +
+      '<h3>Bot behaviour</h3>' +
+      '<p class="hint">Language, mic, upload, ENDCHAT, FRESH — edit in company.config.js only</p>' +
       '<div class="toggle-grid">' +
-      toggleRow('common.features.multiLanguage.enabled', 'Language dropdown') +
-      toggleRow('common.features.speechToText.enabled', 'Speech to text (mic)') +
-      toggleRow('common.features.composerUpload.enabled', 'Composer upload (📎)') +
       toggleRow('common.dialogflow.liveAgent.enabled', 'Live agent handoff') +
       toggleRow('common.dialogflow.forms.enabled', 'In-chat forms') +
-      toggleRow('common.dialogflow.endChatEvent.enabled', 'ENDCHAT on idle') +
-      toggleRow('common.dialogflow.welcomeEvent.enabled', 'FRESH welcome on chat open') +
       toggleRow('desk.showChatbot', 'Show chatbot on desktop') +
       toggleRow('mob.showChatbot', 'Show chatbot on mobile') +
       '</div>' +
       '<div class="field-grid" style="margin-top:0.75rem">' +
-      textField('common.dialogflow.endChatEvent.idleTimeoutMs', 'Idle timeout (ms)', 'number') +
       textField('common.header.botWritingText', 'Typing indicator text') +
       '</div></section>' +
       deviceSection('desk', 'Desktop — layout &amp; launcher') +
