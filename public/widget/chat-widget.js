@@ -16,25 +16,59 @@
       '<svg class="qa-attach__icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M14.25 8.25v7.5a2.75 2.75 0 1 1-5.5 0V7a4.25 4.25 0 1 1 8.5 0v8.75a6.25 6.25 0 0 1-12.5 0V8.5" stroke="currentColor" stroke-width="2.35" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   };
 
-  function getRootCfg() {
-    var common =
-      (global.QA_CHAT_UI_CONFIG && global.QA_CHAT_UI_CONFIG.common) || {};
+  function getSitePresetKey_() {
     var qa = global.QA_CONFIG || {};
-    var presetKey = qa.themePreset ? String(qa.themePreset).trim() : '';
-    var hasThemeOverride =
-      presetKey || (qa.theme && typeof qa.theme === 'object');
-    if (!hasThemeOverride) return common;
+    return qa.sitePreset ? String(qa.sitePreset).trim() : '';
+  }
 
-    var merged = deepMerge(common, {});
-    var theme = Object.assign({}, common.theme || {});
+  function getSitePresetBlock_() {
+    var key = getSitePresetKey_();
+    if (!key) return null;
+    var presets =
+      (global.QA_CHAT_UI_CONFIG &&
+        global.QA_CHAT_UI_CONFIG.common &&
+        global.QA_CHAT_UI_CONFIG.common.sitePresets) ||
+      {};
+    return presets[key] || null;
+  }
+
+  function applyThemeOverrides_(merged, common, qa) {
+    var theme = Object.assign({}, merged.theme || common.theme || {});
+    var themeKey =
+      (qa.themePreset && String(qa.themePreset).trim()) || getSitePresetKey_();
     var presets = common.themePresets || {};
-    if (presetKey && presets[presetKey]) {
-      theme = Object.assign(theme, presets[presetKey]);
+    if (themeKey && presets[themeKey]) {
+      theme = Object.assign(theme, presets[themeKey]);
     }
     if (qa.theme && typeof qa.theme === 'object') {
       theme = Object.assign(theme, qa.theme);
     }
     merged.theme = theme;
+    return merged;
+  }
+
+  function getRootCfg() {
+    var common =
+      (global.QA_CHAT_UI_CONFIG && global.QA_CHAT_UI_CONFIG.common) || {};
+    var qa = global.QA_CONFIG || {};
+    var siteBlock = getSitePresetBlock_();
+    var hasOverride =
+      siteBlock ||
+      (qa.ui && qa.ui.common) ||
+      qa.themePreset ||
+      qa.theme;
+    if (!hasOverride) return common;
+
+    var merged = deepMerge(common, {});
+    if (siteBlock && siteBlock.common) {
+      merged = deepMerge(merged, siteBlock.common);
+    }
+    if (qa.ui && qa.ui.common) {
+      merged = deepMerge(merged, qa.ui.common);
+    }
+    if (qa.themePreset || qa.sitePreset || qa.theme) {
+      merged = applyThemeOverrides_(merged, common, qa);
+    }
     return merged;
   }
 
@@ -44,7 +78,21 @@
 
   function getViewportCfg() {
     var root = global.QA_CHAT_UI_CONFIG || {};
-    return isMobileViewport() ? root.mob || {} : root.desk || {};
+    var branch = isMobileViewport() ? 'mob' : 'desk';
+    var base = root[branch] || {};
+    var siteBlock = getSitePresetBlock_();
+    var qa = global.QA_CONFIG || {};
+    var hasOverride = siteBlock || (qa.ui && qa.ui[branch]);
+    if (!hasOverride) return base;
+
+    var merged = deepMerge(base, {});
+    if (siteBlock && siteBlock[branch]) {
+      merged = deepMerge(merged, siteBlock[branch]);
+    }
+    if (qa.ui && qa.ui[branch]) {
+      merged = deepMerge(merged, qa.ui[branch]);
+    }
+    return merged;
   }
 
   function isPlainObject(v) {

@@ -16,10 +16,10 @@
   <script src="/company.config.js"></script>
   <script>
     document.getElementById('snippet').textContent =
-      '<script>\n  window.QA_CONFIG = { themePreset: \'receptionist\' };\n<\/script>\n' +
+      '<script>\n  window.QA_CONFIG = { sitePreset: \'receptionist\' };\n<\/script>\n' +
       '<script src="' + window.QA_CONFIG.embedScript + '" async><\/script>';
     window.QA_CONFIG = Object.assign(window.QA_CONFIG || {}, {
-      themePreset: 'receptionist',
+      sitePreset: 'receptionist',
     });
   </script>
   <script src="https://es-based-chatbot-production.up.railway.app/embed.js" async></script>

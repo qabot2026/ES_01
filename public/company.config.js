@@ -13,7 +13,7 @@ window.QA_CHAT_UI_CONFIG = {
       /**
        * SINGLE AGENT setup (recommended) — see SINGLE-AGENT-SETUP.md
        * Sab flows ek hi agent (recebot-ptav) mein contexts se.
-       * Landing pages: QA_CONFIG.welcomeEventName se alag start event.
+       * Landing pages: QA_CONFIG.welcomeEventName + sitePreset per site.
        *
        * Multi-agent (purana): agentOrchestration.enabled = true — AGENT-ORCHESTRATION.md
        */
@@ -295,7 +295,7 @@ window.QA_CHAT_UI_CONFIG = {
     },
 
     /**
-     * Per-site colors — page par QA_CONFIG.themePreset set karo.
+     * Per-site colors — auto-applied when QA_CONFIG.sitePreset or themePreset matches key.
      * receptionist = blue | greenValley = yellow | lakeView = green
      */
     themePresets: {
@@ -361,6 +361,147 @@ window.QA_CHAT_UI_CONFIG = {
         '--qa-launcher-shadow': '0 3px 10px -2px rgba(22, 163, 74, 0.2)',
         '--qa-launcher-shadow-hover': '0 5px 14px -2px rgba(22, 163, 74, 0.28)',
         '--qa-ring-color': '#22c55e',
+      },
+    },
+
+    /**
+     * Per-site full UI — page par QA_CONFIG.sitePreset set karo.
+     * Keys: receptionist | greenValley | lakeView
+     * Edit yahan: header, features on/off, desk/mob launcher, auto-open, upload, mic, etc.
+     * Extra page override: QA_CONFIG.ui = { common: {...}, desk: {...}, mob: {...} }
+     */
+    sitePresets: {
+      receptionist: {
+        common: {
+          header: {
+            title: 'Receptionist',
+            subtitle: 'We are online to assist you',
+          },
+          botPersona: { label: 'Reception' },
+          welcome: { enabled: false },
+          features: {
+            multiLanguage: { enabled: true },
+            speechToText: { enabled: true },
+            composerUpload: { enabled: true },
+          },
+          dialogflow: {
+            liveAgent: { enabled: true },
+            forms: { enabled: true },
+            endChatEvent: { enabled: true, idleTimeoutMs: 10000 },
+          },
+        },
+        desk: {
+          launcherStrip: { enabled: true, text: '👋 Welcome! How can we help?' },
+          autoOpenChat: { enabled: true, delayMs: 10000 },
+          restartButton: { enabled: true },
+          poweredBy: { enabled: true },
+          features: {
+            speechToText: { enabled: true },
+            composerUpload: { enabled: true },
+            restartChat: { enabled: false },
+          },
+        },
+        mob: {
+          launcherStrip: { enabled: true, text: '👋 Welcome! How can we help?' },
+          autoOpenChat: { enabled: true, delayMs: 7000 },
+          restartButton: { enabled: true },
+          poweredBy: { enabled: true },
+          features: {
+            speechToText: { enabled: true },
+            composerUpload: { enabled: true },
+            restartChat: { enabled: true },
+          },
+        },
+      },
+      greenValley: {
+        common: {
+          header: {
+            title: 'Green Valley',
+            subtitle: 'Explore your dream home',
+          },
+          botPersona: { label: 'Green Valley' },
+          welcome: { enabled: false },
+          features: {
+            multiLanguage: { enabled: false },
+            speechToText: { enabled: true },
+            composerUpload: { enabled: false },
+          },
+          dialogflow: {
+            liveAgent: { enabled: false },
+            forms: { enabled: true },
+            endChatEvent: { enabled: true, idleTimeoutMs: 15000 },
+          },
+        },
+        desk: {
+          launcherStrip: { enabled: false },
+          autoOpenChat: { enabled: true, delayMs: 5000 },
+          restartButton: { enabled: true },
+          poweredBy: { enabled: false },
+          features: {
+            speechToText: { enabled: true },
+            composerUpload: { enabled: false },
+            restartChat: { enabled: false },
+          },
+        },
+        mob: {
+          launcherStrip: { enabled: false },
+          autoOpenChat: { enabled: true, delayMs: 4000 },
+          restartButton: { enabled: true },
+          poweredBy: { enabled: false },
+          features: {
+            speechToText: { enabled: false },
+            composerUpload: { enabled: false },
+            restartChat: { enabled: true },
+          },
+        },
+      },
+      lakeView: {
+        common: {
+          header: {
+            title: 'Lake View',
+            subtitle: 'Luxury lakeside living',
+          },
+          botPersona: { label: 'Lake View' },
+          welcome: { enabled: false },
+          features: {
+            multiLanguage: { enabled: true },
+            speechToText: { enabled: true },
+            composerUpload: { enabled: true },
+          },
+          dialogflow: {
+            liveAgent: { enabled: true },
+            forms: { enabled: true },
+            endChatEvent: { enabled: true, idleTimeoutMs: 12000 },
+          },
+        },
+        desk: {
+          launcherStrip: {
+            enabled: true,
+            text: '🌿 Discover Lake View homes',
+          },
+          autoOpenChat: { enabled: false },
+          restartButton: { enabled: true },
+          poweredBy: { enabled: true },
+          features: {
+            speechToText: { enabled: true },
+            composerUpload: { enabled: true },
+            restartChat: { enabled: false },
+          },
+        },
+        mob: {
+          launcherStrip: {
+            enabled: true,
+            text: '🌿 Discover Lake View homes',
+          },
+          autoOpenChat: { enabled: false },
+          restartButton: { enabled: true },
+          poweredBy: { enabled: true },
+          features: {
+            speechToText: { enabled: true },
+            composerUpload: { enabled: true },
+            restartChat: { enabled: true },
+          },
+        },
       },
     },
 
