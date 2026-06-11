@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Dashboard</title>
     <link rel="stylesheet" href="dashboard.css" />
-    <link rel="stylesheet" href="dashboard-nav.css?v=20260610e" />
+    <link rel="stylesheet" href="dashboard-nav.css?v=20260610f" />
   </head>
   <body>
     <div class="dash-page-content" style="display:none">
@@ -13,7 +13,7 @@
       <div class="dash-home-grid" id="dash-home-grid"></div>
     </div>
     <script src="desk-auth.js"></script>
-    <script src="dashboard-nav.js?v=20260610e"></script>
+    <script src="dashboard-nav.js?v=20260610f"></script>
     <script>
       (function () {
         var bid = DashboardNav.getBid();
@@ -29,15 +29,15 @@
         if (!grid) return;
 
         var homeCards = [
-          { key: 'live-agent', label: 'Live chat inbox', desc: 'Reply to visitors in real time', kind: 'common' },
           { key: 'uc-conversations', label: 'Chatbot conversations', desc: 'Leads, transcripts & chat stats', kind: 'bot' },
-          { key: 'ua-conversations', label: 'Agent conversations', desc: 'Chats handled by your team', kind: 'common' },
           { key: 'queryanalytics', label: 'Customer questions', desc: 'Answered vs unanswered queries', kind: 'bot' },
           { key: 'appointments', label: 'Appointments', desc: 'Review and approve bookings', kind: 'common' },
           { key: 'documents', label: 'Customer uploads', desc: 'Files sent via chat or forms', kind: 'common' },
           { key: 'uiux-setting', label: 'Chatbot appearance', desc: 'Colors, text, launcher & welcome screen', kind: 'bot' },
-          { key: 'live-agent/settings', label: 'Live chat setup', desc: 'Agents, departments & viewer secret', kind: 'common' },
           { key: 'supersetting', label: 'Advanced configuration', desc: 'Power-user bot options', kind: 'bot' },
+          { key: 'live-agent', label: 'Live chat inbox', desc: 'Reply to visitors in real time', kind: 'common' },
+          { key: 'ua-conversations', label: 'Agent conversations', desc: 'Chats handled by your team', kind: 'common' },
+          { key: 'live-agent/settings', label: 'Live chat setup', desc: 'Agents, departments & viewer secret', kind: 'common' },
           { key: 'manage-access', label: 'Access permissions', desc: 'Who can open which pages', kind: 'common' },
         ];
 

@@ -1,7 +1,7 @@
 (function (global) {
   'use strict';
 
-  var NAV_ASSET_V = '20260610e';
+  var NAV_ASSET_V = '20260610f';
   var DEFAULT_BOT_ID = '10001';
   var BOTS = [
     { id: '10001', name: 'Receptionist' },
@@ -16,26 +16,26 @@
     'supersetting',
   ];
 
-  /** Sidebar order: home → daily work → setup → admin */
+  /** Sidebar order: home → AI chatbot → live agent → admin */
   var NAV_SECTIONS = [
     {
       items: [{ key: 'home', label: 'Home', icon: 'home' }],
     },
     {
       items: [
-        { key: 'live-agent', label: 'Live chat inbox', icon: 'headset' },
         { key: 'uc-conversations', label: 'Chatbot conversations', icon: 'chart' },
-        { key: 'ua-conversations', label: 'Agent conversations', icon: 'users' },
         { key: 'queryanalytics', label: 'Customer questions', icon: 'search' },
         { key: 'appointments', label: 'Appointments', icon: 'calendar' },
         { key: 'documents', label: 'Customer uploads', icon: 'file' },
+        { key: 'uiux-setting', label: 'Chatbot appearance', icon: 'palette' },
+        { key: 'supersetting', label: 'Advanced configuration', icon: 'shield' },
       ],
     },
     {
       items: [
-        { key: 'uiux-setting', label: 'Chatbot appearance', icon: 'palette' },
+        { key: 'live-agent', label: 'Live chat inbox', icon: 'headset' },
+        { key: 'ua-conversations', label: 'Agent conversations', icon: 'users' },
         { key: 'live-agent/settings', label: 'Live chat setup', icon: 'cog' },
-        { key: 'supersetting', label: 'Advanced configuration', icon: 'shield' },
       ],
     },
     {
