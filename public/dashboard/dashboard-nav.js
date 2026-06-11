@@ -176,9 +176,9 @@
     botId = normalizeBotId(botId);
     var bot = resolveBot(botId) || BOTS[0];
 
-    function railLink(key, label, iconName) {
+    function navRow(key, label, iconName) {
       var href = navHref(key, botId);
-      var cls = 'dash-rail-link' + (activeKey === key ? ' is-active' : '');
+      var cls = 'dash-nav-row' + (activeKey === key ? ' is-active' : '');
       return (
         '<a class="' +
         cls +
@@ -189,66 +189,38 @@
         '" aria-label="' +
         label +
         '">' +
+        '<span class="dash-nav-row__icon">' +
         navIcon(iconName) +
-        '</a>'
+        '</span>' +
+        '<span class="dash-nav-row__label">' +
+        label +
+        '</span></a>'
       );
     }
 
-    function panelLink(key, label) {
-      var href = navHref(key, botId);
-      var cls = 'dash-nav-link' + (activeKey === key ? ' is-active' : '');
-      return '<a class="' + cls + '" href="' + href + '">' + label + '</a>';
-    }
-
-    var railHome = railLink('home', 'Dashboard home', 'home');
-    var railBot = BOT_PAGES.map(function (p) {
-      return railLink(p.key, p.label, p.icon);
+    var botRows = BOT_PAGES.map(function (p) {
+      return navRow(p.key, p.label, p.icon);
     }).join('');
-    var railCommon = COMMON_PAGES.map(function (p) {
-      return railLink(p.key, p.label, p.icon);
-    }).join('');
-
-    var panelBot = BOT_PAGES.map(function (p) {
-      return panelLink(p.key, p.label);
-    }).join('');
-    var panelCommon = COMMON_PAGES.map(function (p) {
-      return panelLink(p.key, p.label);
+    var commonRows = COMMON_PAGES.map(function (p) {
+      return navRow(p.key, p.label, p.icon);
     }).join('');
 
     return (
       '<aside class="dash-sidebar" aria-label="Dashboard navigation">' +
-      '<nav class="dash-rail" aria-label="Quick navigation">' +
-      '<div class="dash-rail__group">' +
-      railHome +
-      '</div>' +
-      '<div class="dash-rail__sep" aria-hidden="true"></div>' +
-      '<div class="dash-rail__group" aria-label="Bot pages">' +
-      railBot +
-      '</div>' +
-      '<div class="dash-rail__sep" aria-hidden="true"></div>' +
-      '<div class="dash-rail__group" aria-label="Common pages">' +
-      railCommon +
-      '</div>' +
-      '</nav>' +
-      '<div class="dash-sidebar__flyout" aria-hidden="true">' +
-      '<div class="dash-sidebar__flyout-inner">' +
+      '<div class="dash-sidebar__inner">' +
       '<div class="dash-sidebar__brand">' +
       '<h1>QualityAssistant</h1>' +
-      '</div>' +
-      '<nav class="dash-nav-group">' +
-      panelLink('home', 'Dashboard home') +
-      '</nav>' +
-      '<nav class="dash-nav-group" aria-label="Bot-specific pages">' +
-      '<h2>For ' +
+      '<p>' +
       bot.name +
-      '</h2>' +
-      panelBot +
-      '</nav>' +
-      '<nav class="dash-nav-group dash-nav-group--plain" aria-label="Shared pages">' +
-      '<div class="dash-nav-sep" aria-hidden="true"></div>' +
-      panelCommon +
-      '</nav>' +
+      '</p>' +
       '</div>' +
+      '<nav class="dash-nav-list" aria-label="Main navigation">' +
+      navRow('home', 'Dashboard home', 'home') +
+      '<div class="dash-nav-sep" aria-hidden="true"></div>' +
+      botRows +
+      '<div class="dash-nav-sep" aria-hidden="true"></div>' +
+      commonRows +
+      '</nav>' +
       '</div>' +
       '</aside>'
     );
@@ -326,15 +298,13 @@
     });
   }
 
-  function bindSidebarFlyout(shell) {
+  function bindSidebarExpand(shell) {
     var sidebar = shell ? shell.querySelector('.dash-sidebar') : document.querySelector('.dash-sidebar');
-    var flyout = sidebar && sidebar.querySelector('.dash-sidebar__flyout');
-    if (!sidebar || !flyout || sidebar.getAttribute('data-flyout-bound') === '1') return;
-    sidebar.setAttribute('data-flyout-bound', '1');
+    if (!sidebar || sidebar.getAttribute('data-expand-bound') === '1') return;
+    sidebar.setAttribute('data-expand-bound', '1');
 
     function setOpen(open) {
       sidebar.classList.toggle('is-expanded', open);
-      flyout.setAttribute('aria-hidden', open ? 'false' : 'true');
     }
 
     sidebar.addEventListener('mouseenter', function () {
@@ -355,7 +325,7 @@
     opts = opts || {};
     if (document.querySelector('.dash-shell')) {
       bindBotSelect(document.querySelector('.dash-shell'));
-      bindSidebarFlyout(document.querySelector('.dash-shell'));
+      bindSidebarExpand(document.querySelector('.dash-shell'));
       return true;
     }
 
@@ -383,7 +353,7 @@
     document.body.classList.add('dash-has-shell');
     document.body.insertBefore(shell, document.body.firstChild);
     bindBotSelect(shell);
-    bindSidebarFlyout(shell);
+    bindSidebarExpand(shell);
     return true;
   }
 
