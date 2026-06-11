@@ -4,16 +4,24 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
     <link rel="stylesheet" href="dashboard.css" />
-    <link rel="stylesheet" href="dashboard-nav.css?v=20260610f" />
+    <link rel="stylesheet" href="dashboard-nav.css?v=20260611a" />
   </head>
   <body>
     <div class="dash-page-content" style="display:none">
-      <p class="dash-muted" id="dash-home-intro">Select a section below or use the sidebar. Bot-specific pages follow the active bot.</p>
+      <p class="dash-home-intro" id="dash-home-intro">
+        Welcome back. Pick a section below or open the sidebar — bot-specific pages follow the project you select.
+      </p>
       <div class="dash-home-grid" id="dash-home-grid"></div>
     </div>
     <script src="desk-auth.js"></script>
-    <script src="dashboard-nav.js?v=20260610f"></script>
+    <script src="dashboard-nav.js?v=20260611a"></script>
     <script>
       (function () {
         var bid = DashboardNav.getBid();
@@ -22,31 +30,37 @@
         DashboardNav.mount({
           active: 'home',
           title: 'Home',
-          subtitle: 'Bot: ' + bot.name + ' (ID ' + bot.id + ') — change bot in the sidebar dropdown',
+          subtitle: bot.name + ' · Bot ID ' + bot.id,
         });
 
         var grid = document.getElementById('dash-home-grid');
         if (!grid) return;
 
         var homeCards = [
-          { key: 'uc-conversations', label: 'Chatbot conversations', desc: 'Leads, transcripts & chat stats', kind: 'bot' },
-          { key: 'queryanalytics', label: 'Customer questions', desc: 'Answered vs unanswered queries', kind: 'bot' },
-          { key: 'appointments', label: 'Appointments', desc: 'Review and approve bookings', kind: 'common' },
-          { key: 'documents', label: 'Customer uploads', desc: 'Files sent via chat or forms', kind: 'common' },
-          { key: 'uiux-setting', label: 'Chatbot appearance', desc: 'Colors, text, launcher & welcome screen', kind: 'bot' },
-          { key: 'supersetting', label: 'Advanced configuration', desc: 'Power-user bot options', kind: 'bot' },
-          { key: 'live-agent', label: 'Live chat inbox', desc: 'Reply to visitors in real time', kind: 'common' },
-          { key: 'ua-conversations', label: 'Agent conversations', desc: 'Chats handled by your team', kind: 'common' },
-          { key: 'live-agent/settings', label: 'Live chat setup', desc: 'Agents, departments & viewer secret', kind: 'common' },
-          { key: 'manage-access', label: 'Access permissions', desc: 'Who can open which pages', kind: 'common' },
+          { key: 'uc-conversations', label: 'Chatbot conversations', desc: 'Leads, transcripts & chat stats' },
+          { key: 'queryanalytics', label: 'Customer questions', desc: 'Answered vs unanswered queries' },
+          { key: 'appointments', label: 'Appointments', desc: 'Review and approve bookings' },
+          { key: 'documents', label: 'Customer uploads', desc: 'Files sent via chat or forms' },
+          { key: 'uiux-setting', label: 'Chatbot appearance', desc: 'Colors, text, launcher & welcome screen' },
+          { key: 'supersetting', label: 'Advanced configuration', desc: 'Power-user bot options' },
+          { key: 'live-agent', label: 'Live chat inbox', desc: 'Reply to visitors in real time' },
+          { key: 'ua-conversations', label: 'Agent conversations', desc: 'Chats handled by your team' },
+          { key: 'live-agent/settings', label: 'Live chat setup', desc: 'Agents, departments & viewer secret' },
+          { key: 'manage-access', label: 'Access permissions', desc: 'Who can open which pages' },
         ];
 
         function card(item) {
           var href = DashboardNav.navHref(item.key, bid);
+          var icon = DashboardNav.getIconForKey(item.key);
           return (
-            '<a class="dash-home-card dash-home-card--' + item.kind + '" href="' + href + '">' +
+            '<a class="dash-home-card" href="' + href + '">' +
+            DashboardNav.iconBadge(icon, 'dash-icon-badge--lg') +
+            '<div class="dash-home-card__body">' +
             '<strong>' + item.label + '</strong>' +
-            '<span>' + item.desc + '</span></a>'
+            '<span>' + item.desc + '</span>' +
+            '</div>' +
+            '<span class="dash-home-card__arrow" aria-hidden="true">→</span>' +
+            '</a>'
           );
         }
 
