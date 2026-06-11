@@ -1,7 +1,7 @@
 (function (global) {
   'use strict';
 
-  var NAV_ASSET_V = '20260611c';
+  var NAV_ASSET_V = '20260611f';
 
   function ensureBoot() {
     var root = document.documentElement;
@@ -92,6 +92,9 @@
     'uiux-setting',
     'supersetting',
   ];
+
+  /** Org-wide pages — no bot ID in URL */
+  var ORG_PAGE_KEYS = ['live-agent', 'ua-conversations', 'live-agent/settings'];
 
   /** Sidebar order: home → AI chatbot → live agent → admin */
   var NAV_SECTIONS = [
@@ -208,8 +211,8 @@
       return bidPath(botId, key);
     }
     var path = commonPath(key);
-    if (key === 'ua-conversations' || key === 'live-agent' || key === 'live-agent/settings') {
-      return path + '?bid=' + botId;
+    if (ORG_PAGE_KEYS.indexOf(key) >= 0) {
+      return path;
     }
     if (key === 'appointments' || key === 'documents' || key === 'manage-access') {
       return path + '?bid=' + botId;
@@ -239,6 +242,10 @@
     return BOT_PAGE_KEYS.indexOf(active) >= 0;
   }
 
+  function isOrgLevelPage(active) {
+    return ORG_PAGE_KEYS.indexOf(active) >= 0;
+  }
+
   function onBotChange(botId) {
     botId = normalizeBotId(botId);
     var active = detectActiveKey();
@@ -248,6 +255,14 @@
     }
     if (isBotSpecificPage(active)) {
       global.location.href = navHref(active, botId);
+      return;
+    }
+    if (isOrgLevelPage(active)) {
+      var orgUrl = new URL(global.location.href);
+      if (orgUrl.searchParams.has('bid')) {
+        orgUrl.searchParams.delete('bid');
+        global.location.href = orgUrl.pathname + orgUrl.search + orgUrl.hash;
+      }
       return;
     }
     var url = new URL(global.location.href);

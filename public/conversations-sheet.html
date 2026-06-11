@@ -6106,15 +6106,15 @@
       }
     })();
   </script>
-  <link rel="stylesheet" href="/dashboard/dashboard-nav.css?v=20260611c" />
-  <script src="/dashboard/dashboard-nav.js?v=20260611c"></script>
+  <link rel="stylesheet" href="/dashboard/dashboard-nav.css?v=20260611f" />
+  <script src="/dashboard/dashboard-nav.js?v=20260611f"></script>
   <script>
     (function () {
       var isUa = location.pathname.indexOf('/ua-conversations') >= 0;
       DashboardNav.mountPage({
         active: isUa ? 'ua-conversations' : 'uc-conversations',
         title: isUa ? 'Agent conversations' : 'Insights',
-        subtitle: 'Bot ID ' + DashboardNav.getBid(),
+        subtitle: isUa ? 'Organization-wide · all agents' : 'Bot ID ' + DashboardNav.getBid(),
       });
     })();
   </script>
