@@ -11,12 +11,16 @@
 </head>
 <body>
   <h1>Client website (production embed)</h1>
-  <p>Give your client this one line (before <code>&lt;/body&gt;</code>):</p>
+  <p>Give your client this block (before <code>&lt;/body&gt;</code>):</p>
   <code id="snippet"></code>
   <script src="/company.config.js"></script>
   <script>
     document.getElementById('snippet').textContent =
+      '<script>\n  window.QA_CONFIG = { themePreset: \'receptionist\' };\n<\/script>\n' +
       '<script src="' + window.QA_CONFIG.embedScript + '" async><\/script>';
+    window.QA_CONFIG = Object.assign(window.QA_CONFIG || {}, {
+      themePreset: 'receptionist',
+    });
   </script>
   <script src="https://es-based-chatbot-production.up.railway.app/embed.js" async></script>
 </body>

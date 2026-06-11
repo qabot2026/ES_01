@@ -17,7 +17,25 @@
   };
 
   function getRootCfg() {
-    return (global.QA_CHAT_UI_CONFIG && global.QA_CHAT_UI_CONFIG.common) || {};
+    var common =
+      (global.QA_CHAT_UI_CONFIG && global.QA_CHAT_UI_CONFIG.common) || {};
+    var qa = global.QA_CONFIG || {};
+    var presetKey = qa.themePreset ? String(qa.themePreset).trim() : '';
+    var hasThemeOverride =
+      presetKey || (qa.theme && typeof qa.theme === 'object');
+    if (!hasThemeOverride) return common;
+
+    var merged = deepMerge(common, {});
+    var theme = Object.assign({}, common.theme || {});
+    var presets = common.themePresets || {};
+    if (presetKey && presets[presetKey]) {
+      theme = Object.assign(theme, presets[presetKey]);
+    }
+    if (qa.theme && typeof qa.theme === 'object') {
+      theme = Object.assign(theme, qa.theme);
+    }
+    merged.theme = theme;
+    return merged;
   }
 
   function isMobileViewport() {
