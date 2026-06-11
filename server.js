@@ -19,6 +19,7 @@ const queryAnalytics = require('./lib/query-analytics');
 const appointmentsView = require('./lib/appointments-view');
 const appointmentStatus = require('./lib/appointment-status-store');
 const qaMode = require('./lib/qa-mode');
+const sitePresetsStore = require('./lib/site-presets-store');
 
 const app = express();
 const PORT = process.env.PORT || 4567;
@@ -1165,6 +1166,34 @@ app.get('/api/phrase-translations', (req, res) => {
     map: phraseTranslations.getFlatMapForLang(lang),
     enabled: phraseTranslations.isEnabled(),
   });
+});
+
+/** Bot project settings (001 Receptionist, 002 GV, 003 LV) */
+app.get('/api/site-presets/public', (_req, res) => {
+  res.json({ sitePresets: sitePresetsStore.getMergedSitePresets() });
+});
+
+app.get('/api/bot-settings', (_req, res) => {
+  res.json({ projects: sitePresetsStore.listProjects() });
+});
+
+app.get('/api/bot-settings/:projectId', (req, res) => {
+  const data = sitePresetsStore.getProjectPreset(req.params.projectId);
+  if (!data) {
+    return res.status(404).json({ ok: false, error: 'Unknown project ID' });
+  }
+  res.json({ ok: true, project: data.project, preset: data.preset });
+});
+
+app.post('/api/bot-settings/:projectId', requireDeskAuth, (req, res) => {
+  const result = sitePresetsStore.saveProjectPreset(
+    req.params.projectId,
+    req.body && req.body.preset
+  );
+  if (!result.ok) {
+    return res.status(result.error === 'Unknown project ID' ? 404 : 400).json(result);
+  }
+  res.json(result);
 });
 
 app.get('/api/config', (_req, res) => {

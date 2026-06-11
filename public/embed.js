@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var QA_ASSET_VERSION = '20260609-df-es-syntax';
+  var QA_ASSET_VERSION = '20260610-site-presets';
 
   var QA_FORM_SCRIPTS = [
     'contact.js',
@@ -65,9 +65,58 @@
     });
   }
 
+  function deepMerge_(base, over) {
+    var out = {};
+    var b = base || {};
+    var o = over || {};
+    Object.keys(b).forEach(function (k) {
+      out[k] = b[k];
+    });
+    Object.keys(o).forEach(function (k) {
+      if (
+        o[k] &&
+        typeof o[k] === 'object' &&
+        !Array.isArray(o[k]) &&
+        b[k] &&
+        typeof b[k] === 'object' &&
+        !Array.isArray(b[k])
+      ) {
+        out[k] = deepMerge_(b[k], o[k]);
+      } else {
+        out[k] = o[k];
+      }
+    });
+    return out;
+  }
+
+  function loadSitePresetOverrides_(cb) {
+    var url = assetUrl(base + '/api/site-presets/public');
+    fetch(url)
+      .then(function (r) {
+        return r.ok ? r.json() : null;
+      })
+      .then(function (data) {
+        if (
+          data &&
+          data.sitePresets &&
+          window.QA_CHAT_UI_CONFIG &&
+          window.QA_CHAT_UI_CONFIG.common
+        ) {
+          var current = window.QA_CHAT_UI_CONFIG.common.sitePresets || {};
+          window.QA_CHAT_UI_CONFIG.common.sitePresets = deepMerge_(
+            current,
+            data.sitePresets
+          );
+        }
+      })
+      .catch(function () {})
+      .finally(cb);
+  }
+
   function boot() {
     if (window.__qaWidgetLoaded) return;
     loadJs(assetUrl(base + '/company.config.js'), function () {
+      loadSitePresetOverrides_(function () {
       loadFormScripts(0, function () {
         loadCss(base + '/widget/chat-widget.css');
         loadJs(assetUrl(base + '/widget/date-display.js'), function () {
@@ -89,6 +138,7 @@
             });
           });
         });
+      });
       });
     });
   }
