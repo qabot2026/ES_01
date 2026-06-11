@@ -81,7 +81,7 @@ app.get('/bot-settings/:botId.html', (req, res) => {
   if (!project) {
     return res.status(404).type('text/plain').send('Unknown bot ID');
   }
-  const navV = '20260611c';
+  const navV = '20260611e';
   res.type('html').send(
     '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8" />' +
       '<meta name="viewport" content="width=device-width, initial-scale=1.0" />' +

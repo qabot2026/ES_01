@@ -57,6 +57,9 @@
             '<a href="' +
             nav.bidPath(b.id, 'uiux-setting') +
             '">Appearance</a>' +
+            (b.demoPath
+              ? ' · <a href="' + esc(b.demoPath) + '" target="_blank" rel="noopener">Demo</a>'
+              : '') +
             '</td>' +
             '<td class="super-bot-actions">' +
             deleteCell +
@@ -158,8 +161,15 @@
           if (!result.ok || !result.body.ok) {
             throw new Error((result.body && result.body.error) || 'Could not add bot');
           }
+          var files = (result.body.filesCreated || []).join(', ');
+          var extra = files ? ' Files: ' + files + '.' : '';
           setStatus(
-            'Bot ' + result.body.bot.name + ' (' + result.body.bot.id + ') created. Dashboard pages are ready.',
+            'Bot ' +
+              result.body.bot.name +
+              ' (' +
+              result.body.bot.id +
+              ') created. Dashboard pages, appearance preset, and demo HTML are ready.' +
+              extra,
             false
           );
           form.reset();
