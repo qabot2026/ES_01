@@ -397,12 +397,17 @@
       '<p>Project ID <strong>' +
       PROJECT_ID +
       '</strong> · <span id="pageSubtitle"></span></p></div>' +
-      '<div class="nav-links">' +
-      '<a class="btn ghost" href="index.html">All projects</a>' +
-      '<button type="button" class="btn primary" id="saveBtn">Save settings</button>' +
-      '</div></div></header>' +
+      '</div></header>' +
       '<main class="wrap settings-split">' +
       '<div class="settings-col-left">' +
+      '<div class="settings-toolbar">' +
+      '<div class="settings-toolbar__actions">' +
+      '<a class="btn ghost" href="index.html">All projects</a>' +
+      '<button type="button" class="btn primary" id="saveBtn">Save settings</button>' +
+      '</div>' +
+      '<span class="status" id="saveStatus" role="status"></span>' +
+      '</div>' +
+      '<div class="settings-col-scroll">' +
       '<form class="settings-form" id="settingsForm" onsubmit="return false">' +
       '<section class="settings-section">' +
       '<h3>General &amp; header</h3>' +
@@ -442,19 +447,14 @@
       '<p class="hint">Copy this block to the client website for this project.</p>' +
       '<pre class="embed-preview" id="embedSnippet"></pre>' +
       '</section>' +
-      '<div class="save-bar">' +
-      '<button type="button" class="btn primary" id="saveBtn2">Save settings</button>' +
-      '<span class="status" id="saveStatus" role="status"></span>' +
-      '</div></form></div>' +
+      '</form></div></div>' +
       '<aside class="settings-col-right" aria-label="Live preview">' +
-      '<div class="preview-head">' +
+      '<iframe id="previewFrame" title="Chatbot preview"></iframe>' +
+      '<div class="preview-foot">' +
       '<h3>Live preview</h3>' +
       '<p>Changes show here instantly (before Save)</p>' +
       '</div>' +
-      '<iframe id="previewFrame" title="Chatbot preview"></iframe>' +
       '</aside></main>';
-    var save2 = $('saveBtn2');
-    if (save2) save2.addEventListener('click', saveProject);
     initPreviewFrame();
     bindPreviewListeners();
   }
