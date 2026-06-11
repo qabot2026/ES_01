@@ -156,6 +156,11 @@ body.bot-settings-project #app {
   overflow: hidden;
 }
 
+body.dash-has-shell.bot-settings-project #app {
+  height: 100%;
+  max-height: none;
+}
+
 body.bot-settings-project .top-bar {
   flex-shrink: 0;
   position: static;

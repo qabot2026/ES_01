@@ -1,7 +1,7 @@
 (function (global) {
   'use strict';
 
-  var NAV_ASSET_V = '20260610b';
+  var NAV_ASSET_V = '20260610c';
   var DEFAULT_BOT_ID = '10001';
   var BOTS = [
     { id: '10001', name: 'Receptionist' },

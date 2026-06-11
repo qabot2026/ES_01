@@ -200,6 +200,11 @@ body.live-agent-locked {
   overflow: hidden;
 }
 
+body.dash-has-shell .app-view {
+  height: 100%;
+  max-height: none;
+}
+
 .top-bar {
   flex-shrink: 0;
   border-bottom: 1px solid var(--border);

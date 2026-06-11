@@ -842,16 +842,19 @@
         }
     });
 
-    $("logoutBtn").addEventListener("click", () => {
-        viewerSecret = "";
-        try {
-            sessionStorage.removeItem(LS_SECRET);
-            localStorage.removeItem(LS_SECRET);
-        } catch (_) {
-            /* ignore */
-        }
-        showLogin();
-    });
+    var logoutBtn = $("logoutBtn");
+    if (logoutBtn) {
+        logoutBtn.addEventListener("click", () => {
+            viewerSecret = "";
+            try {
+                sessionStorage.removeItem(LS_SECRET);
+                localStorage.removeItem(LS_SECRET);
+            } catch (_) {
+                /* ignore */
+            }
+            showLogin();
+        });
+    }
 
     if ($("toggleSecretBtn") && $("loginSecret")) {
         $("toggleSecretBtn").addEventListener("click", () => {

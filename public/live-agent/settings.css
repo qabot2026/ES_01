@@ -13,6 +13,11 @@ body:has(#appView:not(.hidden)) {
   overflow: hidden;
 }
 
+body.dash-has-shell .settings-app {
+  height: 100%;
+  max-height: none;
+}
+
 .settings-app > .top-bar {
   flex-shrink: 0;
   z-index: 30;
