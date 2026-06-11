@@ -194,20 +194,10 @@
       );
     }
 
-    function rowLink(key, label, iconName) {
+    function panelLink(key, label) {
       var href = navHref(key, botId);
       var cls = 'dash-nav-link' + (activeKey === key ? ' is-active' : '');
-      return (
-        '<a class="' +
-        cls +
-        '" href="' +
-        href +
-        '">' +
-        navIcon(iconName) +
-        '<span class="dash-nav-label">' +
-        label +
-        '</span></a>'
-      );
+      return '<a class="' + cls + '" href="' + href + '">' + label + '</a>';
     }
 
     var railHome = railLink('home', 'Dashboard home', 'home');
@@ -219,10 +209,10 @@
     }).join('');
 
     var panelBot = BOT_PAGES.map(function (p) {
-      return rowLink(p.key, p.label, p.icon);
+      return panelLink(p.key, p.label);
     }).join('');
     var panelCommon = COMMON_PAGES.map(function (p) {
-      return rowLink(p.key, p.label, p.icon);
+      return panelLink(p.key, p.label);
     }).join('');
 
     return (
@@ -246,7 +236,7 @@
       '<h1>QualityAssistant</h1>' +
       '</div>' +
       '<nav class="dash-nav-group">' +
-      rowLink('home', 'Dashboard home', 'home') +
+      panelLink('home', 'Dashboard home') +
       '</nav>' +
       '<nav class="dash-nav-group" aria-label="Bot-specific pages">' +
       '<h2>For ' +

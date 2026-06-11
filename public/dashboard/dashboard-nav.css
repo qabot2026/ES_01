@@ -133,9 +133,7 @@
 }
 
 .dash-nav-link {
-  display: flex;
-  align-items: center;
-  gap: 0.55rem;
+  display: block;
   padding: 0.45rem 0.65rem;
   margin: 0.1rem 0;
   border-radius: 8px;
@@ -143,14 +141,9 @@
   text-decoration: none;
   font-size: 0.86rem;
   line-height: 1.35;
-}
-
-.dash-nav-link .dash-nav-ic {
-  flex-shrink: 0;
-}
-
-.dash-nav-label {
-  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .dash-nav-sep {
