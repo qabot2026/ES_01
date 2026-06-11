@@ -6,6 +6,8 @@
   var previewFrame = null;
   var previewReady = false;
   var previewPushTimer = null;
+  var previewPending = false;
+  var previewStarted = false;
   var $ = function (id) {
     return document.getElementById(id);
   };
@@ -193,6 +195,7 @@
       var data = await res.json();
       currentProject = data.project || null;
       fillForm(data.preset || {}, data.project || {});
+      startPreviewFrame();
       pushPreviewSoon();
       var title = $('pageTitle');
       var sub = $('pageSubtitle');
@@ -336,7 +339,12 @@
   }
 
   function pushPreview() {
-    if (!previewFrame || !previewReady || !currentProject) return;
+    if (!previewFrame || !currentProject) return;
+    if (!previewReady) {
+      previewPending = true;
+      return;
+    }
+    previewPending = false;
     try {
       previewFrame.contentWindow.postMessage(
         {
@@ -347,8 +355,16 @@
         '*'
       );
     } catch (e) {
-      /* iframe not ready */
+      previewPending = true;
     }
+  }
+
+  function startPreviewFrame() {
+    if (!previewFrame || previewStarted) return;
+    previewStarted = true;
+    previewReady = false;
+    previewPending = true;
+    previewFrame.src = 'preview.html';
   }
 
   function bindPreviewListeners() {
@@ -364,14 +380,10 @@
     window.addEventListener('message', function (ev) {
       if (ev.data && ev.data.type === 'qa-bot-preview-ready') {
         previewReady = true;
-        pushPreview();
+        if (previewPending || currentProject) {
+          pushPreview();
+        }
       }
-    });
-    previewFrame.addEventListener('load', function () {
-      previewReady = false;
-      setTimeout(function () {
-        pushPreview();
-      }, 400);
     });
   }
 
@@ -439,7 +451,7 @@
       '<h3>Live preview</h3>' +
       '<p>Changes show here instantly (before Save)</p>' +
       '</div>' +
-      '<iframe id="previewFrame" title="Chatbot preview" src="preview.html"></iframe>' +
+      '<iframe id="previewFrame" title="Chatbot preview"></iframe>' +
       '</aside></main>';
     var save2 = $('saveBtn2');
     if (save2) save2.addEventListener('click', saveProject);

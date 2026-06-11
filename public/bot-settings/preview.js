@@ -63,19 +63,34 @@
     return project;
   }
 
-  function updateHint(project) {
+  function updateHint(text, isError) {
     var hint = document.getElementById('previewHint');
-    if (hint) hint.textContent = project.name + ' — live preview';
+    if (!hint) return;
+    hint.textContent = text;
+    hint.style.color = isError ? '#dc2626' : '#94a3b8';
+    hint.style.display = '';
+  }
+
+  function hideHint() {
+    var hint = document.getElementById('previewHint');
+    if (hint) hint.style.display = 'none';
   }
 
   function bootWidget(project) {
-    if (!window.QualityAssistantWidget) return;
+    if (!window.QualityAssistantWidget) {
+      updateHint('Preview failed: chat widget did not load.', true);
+      return;
+    }
 
     widgetInstance = new window.QualityAssistantWidget({
       apiBase: window.QA_CONFIG.apiBase,
     });
     currentSitePreset = project.sitePreset;
-    updateHint(project);
+    if (!widgetInstance.root) {
+      updateHint('Chatbot hidden — enable “Show chatbot on desktop/mobile”.', true);
+      return;
+    }
+    hideHint();
 
     setTimeout(function () {
       if (!widgetInstance) return;
@@ -93,7 +108,7 @@
 
   function refreshWidget(project) {
     if (!widgetInstance) return;
-    updateHint(project);
+    if (widgetInstance.root) hideHint();
 
     if (typeof widgetInstance.refreshUiFromConfig === 'function') {
       widgetInstance.refreshUiFromConfig();
@@ -145,7 +160,12 @@
     schedulePreview(data);
   });
 
-  if (window.parent !== window) {
-    window.parent.postMessage({ type: 'qa-bot-preview-ready' }, '*');
+  function signalReady() {
+    if (window.parent !== window) {
+      window.parent.postMessage({ type: 'qa-bot-preview-ready' }, '*');
+    }
   }
+
+  signalReady();
+  window.addEventListener('load', signalReady);
 })();
