@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Dashboard</title>
     <link rel="stylesheet" href="dashboard.css" />
-    <link rel="stylesheet" href="dashboard-nav.css?v=20260610c" />
+    <link rel="stylesheet" href="dashboard-nav.css?v=20260610d" />
   </head>
   <body>
     <div class="dash-page-content" style="display:none">
@@ -13,7 +13,7 @@
       <div class="dash-home-grid" id="dash-home-grid"></div>
     </div>
     <script src="desk-auth.js"></script>
-    <script src="dashboard-nav.js?v=20260610c"></script>
+    <script src="dashboard-nav.js?v=20260610d"></script>
     <script>
       (function () {
         var bid = DashboardNav.getBid();
@@ -21,7 +21,7 @@
 
         DashboardNav.mount({
           active: 'home',
-          title: 'Dashboard home',
+          title: 'Home',
           subtitle: 'Bot: ' + bot.name + ' (ID ' + bot.id + ') — change bot in the sidebar dropdown',
         });
 
@@ -29,18 +29,18 @@
         if (!grid) return;
 
         var botCards = [
-          { key: 'uc-conversations', label: 'User chatbot analytics', desc: 'Visual chat stats & leads' },
-          { key: 'queryanalytics', label: 'Query analytics', desc: 'Answered vs unanswered queries' },
-          { key: 'uiux-setting', label: 'UI / UX settings', desc: 'Chatbot look & behaviour' },
-          { key: 'supersetting', label: 'Super settings', desc: 'Advanced bot configuration' },
+          { key: 'uc-conversations', label: 'Chatbot conversations', desc: 'Leads, transcripts & chat stats' },
+          { key: 'queryanalytics', label: 'Customer questions', desc: 'Answered vs unanswered queries' },
+          { key: 'uiux-setting', label: 'Chatbot appearance', desc: 'Colors, text, launcher & welcome screen' },
+          { key: 'supersetting', label: 'Advanced configuration', desc: 'Power-user bot options' },
         ];
         var commonCards = [
-          { key: 'ua-conversations', label: 'User agent analytics', desc: 'Human agent conversations' },
-          { key: 'live-agent', label: 'Service desk', desc: 'Live agent chat panel' },
-          { key: 'appointments', label: 'Appointments', desc: 'Booked appointments desk' },
-          { key: 'live-agent/settings', label: 'Service desk settings', desc: 'Live chat configuration' },
-          { key: 'documents', label: 'Documents', desc: 'Files saved on bucket' },
-          { key: 'manage-access', label: 'Manage access', desc: 'Who can open which pages' },
+          { key: 'ua-conversations', label: 'Agent conversations', desc: 'Chats handled by your team' },
+          { key: 'live-agent', label: 'Live chat inbox', desc: 'Reply to visitors in real time' },
+          { key: 'appointments', label: 'Appointments', desc: 'Review and approve bookings' },
+          { key: 'live-agent/settings', label: 'Live chat setup', desc: 'Agents, departments & viewer secret' },
+          { key: 'documents', label: 'Customer uploads', desc: 'Files sent via chat or forms' },
+          { key: 'manage-access', label: 'Access permissions', desc: 'Who can open which pages' },
         ];
 
         function card(item, kind) {

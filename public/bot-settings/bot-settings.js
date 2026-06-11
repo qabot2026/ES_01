@@ -199,7 +199,7 @@
       pushPreviewSoon();
       if (window.DashboardNav && data.project) {
         DashboardNav.updateTopbar(
-          'UI / UX settings',
+          'Chatbot appearance',
           data.project.name + ' · Bot ID ' + BOT_ID
         );
       }
@@ -493,7 +493,7 @@
             '</h2>' +
             '<p style="margin-top:0.75rem"><a class="btn primary" href="' +
             p.settingsPath +
-            '">Open UI / UX settings</a></p>';
+            '">Open chatbot appearance</a></p>';
           root.appendChild(card);
         });
       })

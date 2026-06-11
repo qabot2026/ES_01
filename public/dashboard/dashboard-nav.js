@@ -1,7 +1,7 @@
 (function (global) {
   'use strict';
 
-  var NAV_ASSET_V = '20260610c';
+  var NAV_ASSET_V = '20260610d';
   var DEFAULT_BOT_ID = '10001';
   var BOTS = [
     { id: '10001', name: 'Receptionist' },
@@ -17,19 +17,19 @@
   ];
 
   var BOT_PAGES = [
-    { key: 'uc-conversations', label: 'User chatbot analytics', icon: 'chart' },
-    { key: 'queryanalytics', label: 'Query analytics', icon: 'search' },
-    { key: 'uiux-setting', label: 'UI / UX settings', icon: 'palette' },
-    { key: 'supersetting', label: 'Super settings', icon: 'shield' },
+    { key: 'uc-conversations', label: 'Chatbot conversations', icon: 'chart' },
+    { key: 'queryanalytics', label: 'Customer questions', icon: 'search' },
+    { key: 'uiux-setting', label: 'Chatbot appearance', icon: 'palette' },
+    { key: 'supersetting', label: 'Advanced configuration', icon: 'shield' },
   ];
 
   var COMMON_PAGES = [
-    { key: 'ua-conversations', label: 'User agent analytics', icon: 'users' },
-    { key: 'live-agent', label: 'Service desk', icon: 'headset' },
+    { key: 'ua-conversations', label: 'Agent conversations', icon: 'users' },
+    { key: 'live-agent', label: 'Live chat inbox', icon: 'headset' },
     { key: 'appointments', label: 'Appointments', icon: 'calendar' },
-    { key: 'live-agent/settings', label: 'Service desk settings', icon: 'cog' },
-    { key: 'documents', label: 'Documents', icon: 'file' },
-    { key: 'manage-access', label: 'Manage access', icon: 'lock' },
+    { key: 'live-agent/settings', label: 'Live chat setup', icon: 'cog' },
+    { key: 'documents', label: 'Customer uploads', icon: 'file' },
+    { key: 'manage-access', label: 'Access permissions', icon: 'lock' },
   ];
 
   var ICONS = {
@@ -209,7 +209,7 @@
       '<aside class="dash-sidebar" aria-label="Dashboard navigation">' +
       '<div class="dash-sidebar__inner">' +
       '<nav class="dash-nav-list" aria-label="Main navigation">' +
-      navRow('home', 'Dashboard home', 'home') +
+      navRow('home', 'Home', 'home') +
       '<div class="dash-nav-sep" aria-hidden="true"></div>' +
       botRows +
       '<div class="dash-nav-sep" aria-hidden="true"></div>' +

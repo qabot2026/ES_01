@@ -6106,14 +6106,14 @@
       }
     })();
   </script>
-  <link rel="stylesheet" href="/dashboard/dashboard-nav.css?v=20260610c" />
-  <script src="/dashboard/dashboard-nav.js?v=20260610c"></script>
+  <link rel="stylesheet" href="/dashboard/dashboard-nav.css?v=20260610d" />
+  <script src="/dashboard/dashboard-nav.js?v=20260610d"></script>
   <script>
     (function () {
       var isUa = location.pathname.indexOf('/ua-conversations') >= 0;
       DashboardNav.mountPage({
         active: isUa ? 'ua-conversations' : 'uc-conversations',
-        title: isUa ? 'User agent analytics' : 'User chatbot analytics',
+        title: isUa ? 'Agent conversations' : 'Chatbot conversations',
         subtitle: 'Bot ID ' + DashboardNav.getBid(),
       });
     })();

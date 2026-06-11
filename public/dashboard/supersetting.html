@@ -3,9 +3,9 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Super settings</title>
+    <title>Advanced configuration</title>
     <link rel="stylesheet" href="dashboard.css" />
-    <link rel="stylesheet" href="dashboard-nav.css?v=20260610c" />
+    <link rel="stylesheet" href="dashboard-nav.css?v=20260610d" />
   </head>
   <body>
     <div class="dash-page-content" style="display:none">
@@ -18,24 +18,24 @@
           <li>Phrase translations — server data files</li>
         </ul>
         <p>
-          <a class="dash-btn dash-btn--primary" id="superUiLink" href="#">Open UI / UX settings</a>
+          <a class="dash-btn dash-btn--primary" id="superUiLink" href="#">Open chatbot appearance</a>
           <a class="dash-btn dash-btn--ghost" href="../company.config.js" target="_blank" rel="noopener">Open company.config.js</a>
         </p>
       </section>
     </div>
     <script src="desk-auth.js"></script>
-    <script src="dashboard-nav.js?v=20260610c"></script>
+    <script src="dashboard-nav.js?v=20260610d"></script>
     <script>
       (function () {
         var bid = DashboardNav.getBid();
-        var bot = DashboardNav.BOTS.find(function (b) { return b.bid === bid; }) || DashboardNav.BOTS[0];
+        var bot = DashboardNav.BOTS.find(function (b) { return b.id === bid; }) || DashboardNav.BOTS[0];
         DashboardNav.mount({
           active: 'supersetting',
-          title: 'Super settings',
-          subtitle: bot.name + ' (Bot ID ' + bot.bid + ')',
+          title: 'Advanced configuration',
+          subtitle: bot.name + ' (Bot ID ' + bot.id + ')',
         });
         document.getElementById('superBotLine').textContent =
-          'Developer / advanced settings for ' + bot.name + ' (Bot ID ' + bot.bid + ').';
+          'Developer / advanced settings for ' + bot.name + ' (Bot ID ' + bot.id + ').';
         document.getElementById('superUiLink').href = DashboardNav.bidPath(bid, 'uiux-setting');
       })();
     </script>
