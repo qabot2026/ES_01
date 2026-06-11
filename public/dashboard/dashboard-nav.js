@@ -16,20 +16,42 @@
   ];
 
   var BOT_PAGES = [
-    { key: 'uc-conversations', label: 'User chatbot analytics' },
-    { key: 'queryanalytics', label: 'Query analytics' },
-    { key: 'uiux-setting', label: 'UI / UX settings' },
-    { key: 'supersetting', label: 'Super settings' },
+    { key: 'uc-conversations', label: 'User chatbot analytics', icon: 'chart' },
+    { key: 'queryanalytics', label: 'Query analytics', icon: 'search' },
+    { key: 'uiux-setting', label: 'UI / UX settings', icon: 'palette' },
+    { key: 'supersetting', label: 'Super settings', icon: 'shield' },
   ];
 
   var COMMON_PAGES = [
-    { key: 'ua-conversations', label: 'User agent analytics' },
-    { key: 'live-agent', label: 'Service desk' },
-    { key: 'appointments', label: 'Appointments' },
-    { key: 'live-agent/settings', label: 'Service desk settings' },
-    { key: 'documents', label: 'Documents' },
-    { key: 'manage-access', label: 'Manage access' },
+    { key: 'ua-conversations', label: 'User agent analytics', icon: 'users' },
+    { key: 'live-agent', label: 'Service desk', icon: 'headset' },
+    { key: 'appointments', label: 'Appointments', icon: 'calendar' },
+    { key: 'live-agent/settings', label: 'Service desk settings', icon: 'cog' },
+    { key: 'documents', label: 'Documents', icon: 'file' },
+    { key: 'manage-access', label: 'Manage access', icon: 'lock' },
   ];
+
+  var ICONS = {
+    home:
+      '<path d="M3 10.5 12 3l9 7.5"/><path d="M5 10v10h5v-6h4v6h5V10"/>',
+    chart:
+      '<path d="M4 19V5"/><path d="M4 19h16"/><path d="M8 17V9"/><path d="M12 17V7"/><path d="M16 17v-4"/>',
+    search: '<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>',
+    palette:
+      '<circle cx="12" cy="12" r="9"/><circle cx="8.5" cy="10.5" r="1.2" fill="currentColor" stroke="none"/><circle cx="15" cy="9" r="1.2" fill="currentColor" stroke="none"/><circle cx="16" cy="14.5" r="1.2" fill="currentColor" stroke="none"/>',
+    shield: '<path d="M12 3 20 7v6c0 5-3.5 8-8 8s-8-3-8-8V7l8-4z"/>',
+    users:
+      '<circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3.5 19c0-3 2.5-5 5.5-5s5.5 2 5.5 5"/><path d="M14.5 14c2.8 0 5 1.8 5 5"/>',
+    headset:
+      '<path d="M4 14v-2a8 8 0 0 1 16 0v2"/><rect x="3" y="14" width="4" height="6" rx="2"/><rect x="17" y="14" width="4" height="6" rx="2"/>',
+    calendar:
+      '<rect x="4" y="5" width="16" height="16" rx="2"/><path d="M8 3v4M16 3v4M4 11h16"/>',
+    cog:
+      '<circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+    file: '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/>',
+    lock:
+      '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
+  };
 
   function normalizeBotId(id) {
     var s = String(id || '').trim();
@@ -124,10 +146,18 @@
     global.location.href = url.pathname + url.search + url.hash;
   }
 
-  function renderNav(activeKey, botId) {
+  function navIcon(name) {
+    var paths = ICONS[name] || ICONS.home;
+    return (
+      '<svg class="dash-nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+      paths +
+      '</svg>'
+    );
+  }
+
+  function botSelectHtml(botId) {
     botId = normalizeBotId(botId);
-    var bot = resolveBot(botId) || BOTS[0];
-    var botOptions = BOTS.map(function (b) {
+    return BOTS.map(function (b) {
       return (
         '<option value="' +
         b.id +
@@ -140,44 +170,106 @@
         ')</option>'
       );
     }).join('');
+  }
 
-    function link(key, label) {
+  function renderNav(activeKey, botId) {
+    botId = normalizeBotId(botId);
+    var bot = resolveBot(botId) || BOTS[0];
+
+    function railLink(key, label, iconName) {
+      var href = navHref(key, botId);
+      var cls = 'dash-rail-link' + (activeKey === key ? ' is-active' : '');
+      return (
+        '<a class="' +
+        cls +
+        '" href="' +
+        href +
+        '" title="' +
+        label +
+        '" aria-label="' +
+        label +
+        '">' +
+        navIcon(iconName) +
+        '</a>'
+      );
+    }
+
+    function textLink(key, label) {
       var href = navHref(key, botId);
       var cls = 'dash-nav-link' + (activeKey === key ? ' is-active' : '');
       return '<a class="' + cls + '" href="' + href + '">' + label + '</a>';
     }
 
-    var botLinks = BOT_PAGES.map(function (p) {
-      return link(p.key, p.label);
+    var railHome = railLink('home', 'Dashboard home', 'home');
+    var railBot = BOT_PAGES.map(function (p) {
+      return railLink(p.key, p.label, p.icon);
+    }).join('');
+    var railCommon = COMMON_PAGES.map(function (p) {
+      return railLink(p.key, p.label, p.icon);
     }).join('');
 
-    var commonLinks = COMMON_PAGES.map(function (p) {
-      return link(p.key, p.label);
+    var panelBot = BOT_PAGES.map(function (p) {
+      return textLink(p.key, p.label);
+    }).join('');
+    var panelCommon = COMMON_PAGES.map(function (p) {
+      return textLink(p.key, p.label);
     }).join('');
 
     return (
       '<aside class="dash-sidebar" aria-label="Dashboard navigation">' +
+      '<nav class="dash-rail" aria-label="Quick navigation">' +
+      '<div class="dash-rail__group">' +
+      railHome +
+      '</div>' +
+      '<div class="dash-rail__sep" aria-hidden="true"></div>' +
+      '<div class="dash-rail__group" aria-label="Bot pages">' +
+      railBot +
+      '</div>' +
+      '<div class="dash-rail__sep" aria-hidden="true"></div>' +
+      '<div class="dash-rail__group" aria-label="Common pages">' +
+      railCommon +
+      '</div>' +
+      '</nav>' +
+      '<div class="dash-sidebar__flyout" aria-hidden="true">' +
+      '<div class="dash-sidebar__flyout-inner">' +
       '<div class="dash-sidebar__brand">' +
       '<h1>QualityAssistant</h1>' +
-      '<label class="dash-muted" style="display:block;font-size:0.72rem;margin-bottom:0.25rem">Switch project</label>' +
-      '<select class="dash-bot-select" id="dash-bot-select" aria-label="Select bot project">' +
-      botOptions +
-      '</select>' +
       '</div>' +
       '<nav class="dash-nav-group">' +
-      link('home', 'Dashboard home') +
+      textLink('home', 'Dashboard home') +
       '</nav>' +
       '<nav class="dash-nav-group" aria-label="Bot-specific pages">' +
       '<h2>For ' +
       bot.name +
       '</h2>' +
-      botLinks +
+      panelBot +
       '</nav>' +
       '<nav class="dash-nav-group" aria-label="Common pages">' +
       '<h2>Common</h2>' +
-      commonLinks +
+      panelCommon +
       '</nav>' +
+      '</div>' +
+      '</div>' +
       '</aside>'
+    );
+  }
+
+  function renderTopbar(title, subtitle, botId) {
+    return (
+      '<header class="dash-topbar">' +
+      '<div class="dash-topbar__lead">' +
+      '<h2>' +
+      title +
+      '</h2>' +
+      (subtitle ? '<p>' + subtitle + '</p>' : '') +
+      '</div>' +
+      '<div class="dash-topbar__tools">' +
+      '<label class="dash-topbar__bot-label" for="dash-bot-select">Project</label>' +
+      '<select class="dash-bot-select" id="dash-bot-select" aria-label="Select bot project">' +
+      botSelectHtml(botId) +
+      '</select>' +
+      '</div>' +
+      '</header>'
     );
   }
 
@@ -234,10 +326,36 @@
     });
   }
 
+  function bindSidebarFlyout(shell) {
+    var sidebar = shell ? shell.querySelector('.dash-sidebar') : document.querySelector('.dash-sidebar');
+    var flyout = sidebar && sidebar.querySelector('.dash-sidebar__flyout');
+    if (!sidebar || !flyout || sidebar.getAttribute('data-flyout-bound') === '1') return;
+    sidebar.setAttribute('data-flyout-bound', '1');
+
+    function setOpen(open) {
+      sidebar.classList.toggle('is-expanded', open);
+      flyout.setAttribute('aria-hidden', open ? 'false' : 'true');
+    }
+
+    sidebar.addEventListener('mouseenter', function () {
+      setOpen(true);
+    });
+    sidebar.addEventListener('mouseleave', function () {
+      setOpen(false);
+    });
+    sidebar.addEventListener('focusin', function () {
+      setOpen(true);
+    });
+    sidebar.addEventListener('focusout', function (ev) {
+      if (!sidebar.contains(ev.relatedTarget)) setOpen(false);
+    });
+  }
+
   function mount(opts) {
     opts = opts || {};
     if (document.querySelector('.dash-shell')) {
       bindBotSelect(document.querySelector('.dash-shell'));
+      bindSidebarFlyout(document.querySelector('.dash-shell'));
       return true;
     }
 
@@ -254,12 +372,7 @@
     shell.innerHTML =
       renderNav(activeKey, botId) +
       '<div class="dash-main-wrap">' +
-      '<header class="dash-topbar">' +
-      '<h2>' +
-      title +
-      '</h2>' +
-      (subtitle ? '<p>' + subtitle + '</p>' : '') +
-      '</header>' +
+      renderTopbar(title, subtitle, botId) +
       '<div class="dash-main" id="dash-main-slot"></div>' +
       '</div>';
 
@@ -270,6 +383,7 @@
     document.body.classList.add('dash-has-shell');
     document.body.insertBefore(shell, document.body.firstChild);
     bindBotSelect(shell);
+    bindSidebarFlyout(shell);
     return true;
   }
 
