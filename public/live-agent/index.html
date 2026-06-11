@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="live-agent-mobile.css?v=20260604-footer-btn-size" />
 </head>
 <body>
+  <div id="la-dash-shell-root" class="dash-page-content" style="display:none">
 
   <section id="loginView" class="login-view hidden" aria-label="Unlock inbox">
     <div class="login-card">
@@ -318,6 +319,16 @@
     <div id="mobileSheetBackdrop" class="mobile-sheet-backdrop hidden" aria-hidden="true"></div>
   </section>
 
+  </div>
+
+  <script src="/dashboard/dashboard-nav.js"></script>
+  <script>
+    DashboardNav.mountPage({
+      active: 'live-agent',
+      title: 'Service desk',
+      subtitle: 'Live agent chat panel',
+    });
+  </script>
   <script src="live-agent.js?v=20260604-alert-copy" defer></script>
 </body>
 </html>

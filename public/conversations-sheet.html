@@ -2257,7 +2257,7 @@
   </style>
 </head>
 <body>
-  <div class="app">
+  <div class="app dash-page-content" style="display:none">
     <header class="topbar">
       <div class="brand-block">
         <h1 id="pageTitle">Conversation leads</h1>
@@ -6104,6 +6104,18 @@
         });
         if (secretEl.value.trim()) load();
       }
+    })();
+  </script>
+  <link rel="stylesheet" href="/dashboard/dashboard-nav.css" />
+  <script src="/dashboard/dashboard-nav.js"></script>
+  <script>
+    (function () {
+      var isUa = location.pathname.indexOf('/ua-conversations') >= 0;
+      DashboardNav.mountPage({
+        active: isUa ? 'ua-conversations' : 'uc-conversations',
+        title: isUa ? 'User agent analytics' : 'User chatbot analytics',
+        subtitle: 'Bot ID ' + DashboardNav.getBid(),
+      });
     })();
   </script>
 </body>

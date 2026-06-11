@@ -8,6 +8,13 @@
     { id: '10003', name: 'Lake View' },
   ];
 
+  var BOT_PAGE_KEYS = [
+    'uc-conversations',
+    'queryanalytics',
+    'uiux-setting',
+    'supersetting',
+  ];
+
   var BOT_PAGES = [
     { key: 'uc-conversations', label: 'User chatbot analytics' },
     { key: 'queryanalytics', label: 'Query analytics' },
@@ -66,15 +73,17 @@
   function navHref(key, botId) {
     botId = normalizeBotId(botId);
     if (key === 'home') return '/dashboard/?bid=' + botId;
-    if (
-      key === 'uc-conversations' ||
-      key === 'queryanalytics' ||
-      key === 'uiux-setting' ||
-      key === 'supersetting'
-    ) {
+    if (BOT_PAGE_KEYS.indexOf(key) >= 0) {
       return bidPath(botId, key);
     }
-    return commonPath(key);
+    var path = commonPath(key);
+    if (key === 'ua-conversations' || key === 'live-agent' || key === 'live-agent/settings') {
+      return path + '?bid=' + botId;
+    }
+    if (key === 'appointments' || key === 'documents' || key === 'manage-access') {
+      return path + '?bid=' + botId;
+    }
+    return path;
   }
 
   function detectActiveKey() {
@@ -95,6 +104,10 @@
     return '';
   }
 
+  function isBotSpecificPage(active) {
+    return BOT_PAGE_KEYS.indexOf(active) >= 0;
+  }
+
   function onBotChange(botId) {
     botId = normalizeBotId(botId);
     var active = detectActiveKey();
@@ -102,16 +115,13 @@
       global.location.href = '/dashboard/?bid=' + encodeURIComponent(botId);
       return;
     }
-    if (
-      active === 'uc-conversations' ||
-      active === 'queryanalytics' ||
-      active === 'uiux-setting' ||
-      active === 'supersetting'
-    ) {
+    if (isBotSpecificPage(active)) {
       global.location.href = navHref(active, botId);
       return;
     }
-    global.location.href = '/dashboard/?bid=' + encodeURIComponent(botId);
+    var url = new URL(global.location.href);
+    url.searchParams.set('bid', botId);
+    global.location.href = url.pathname + url.search + url.hash;
   }
 
   function renderNav(activeKey, botId) {
@@ -149,8 +159,8 @@
       '<aside class="dash-sidebar" aria-label="Dashboard navigation">' +
       '<div class="dash-sidebar__brand">' +
       '<h1>QualityAssistant</h1>' +
-      '<label class="dash-muted" style="display:block;font-size:0.72rem;margin-bottom:0.25rem">Active bot</label>' +
-      '<select class="dash-bot-select" id="dash-bot-select" aria-label="Select bot">' +
+      '<label class="dash-muted" style="display:block;font-size:0.72rem;margin-bottom:0.25rem">Switch project</label>' +
+      '<select class="dash-bot-select" id="dash-bot-select" aria-label="Select bot project">' +
       botOptions +
       '</select>' +
       '</div>' +
@@ -171,15 +181,73 @@
     );
   }
 
+  function linkAssets() {
+    if (!document.querySelector('link[data-dash-nav-css]')) {
+      var link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = '/dashboard/dashboard-nav.css';
+      link.setAttribute('data-dash-nav-css', '1');
+      document.head.appendChild(link);
+    }
+  }
+
+  function findPageContent(selector) {
+    if (selector) {
+      var picked = document.querySelector(selector);
+      if (picked) return picked;
+    }
+    var el = document.querySelector('.dash-page-content');
+    if (el) return el;
+    var selectors = [
+      '.bot-settings-dash-content',
+      '.dash-app',
+      '.docs-app',
+      '.appt-app',
+      '.qa-app',
+      '#la-dash-shell-root',
+      '#la-settings-shell-root',
+      'div.app',
+    ];
+    for (var i = 0; i < selectors.length; i++) {
+      var node = document.querySelector(selectors[i]);
+      if (node && !node.closest('.dash-shell')) return node;
+    }
+    return null;
+  }
+
+  function preparePageContent(selector) {
+    var content = findPageContent(selector);
+    if (!content) return null;
+    content.classList.add('dash-page-content');
+    if (!content.style.display) content.style.display = 'none';
+    return content;
+  }
+
+  function bindBotSelect(shell) {
+    var select = shell
+      ? shell.querySelector('#dash-bot-select')
+      : document.getElementById('dash-bot-select');
+    if (!select || select.getAttribute('data-bound') === '1') return;
+    select.setAttribute('data-bound', '1');
+    select.addEventListener('change', function () {
+      onBotChange(select.value);
+    });
+  }
+
   function mount(opts) {
     opts = opts || {};
-    var botId = getBid();
+    if (document.querySelector('.dash-shell')) {
+      bindBotSelect(document.querySelector('.dash-shell'));
+      return true;
+    }
+
+    var botId = opts.bid || getBid();
     var activeKey = opts.active || detectActiveKey();
     var title = opts.title || 'Dashboard';
     var subtitle = opts.subtitle || '';
 
-    var content = document.querySelector('.dash-page-content');
-    if (!content) return;
+    var content = preparePageContent(opts.contentSelector);
+    if (!content) return false;
 
     var shell = document.createElement('div');
     shell.className = 'dash-shell';
@@ -199,15 +267,22 @@
     slot.appendChild(content);
     content.style.display = '';
 
-    var parent = document.body;
-    parent.insertBefore(shell, parent.firstChild);
+    document.body.classList.add('dash-has-shell');
+    document.body.insertBefore(shell, document.body.firstChild);
+    bindBotSelect(shell);
+    return true;
+  }
 
-    var select = document.getElementById('dash-bot-select');
-    if (select) {
-      select.addEventListener('change', function () {
-        onBotChange(select.value);
-      });
-    }
+  function mountPage(opts) {
+    linkAssets();
+    return mount(opts || {});
+  }
+
+  function updateTopbar(title, subtitle) {
+    var h2 = document.querySelector('.dash-topbar h2');
+    var p = document.querySelector('.dash-topbar p');
+    if (h2 && title) h2.textContent = title;
+    if (p && subtitle !== undefined) p.textContent = subtitle;
   }
 
   global.DashboardNav = {
@@ -215,6 +290,10 @@
     bidPath: bidPath,
     navHref: navHref,
     mount: mount,
+    mountPage: mountPage,
+    updateTopbar: updateTopbar,
+    onBotChange: onBotChange,
+    detectActiveKey: detectActiveKey,
     BOTS: BOTS,
     normalizeBotId: normalizeBotId,
   };

@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="settings.css" />
 </head>
 <body>
+  <div id="la-settings-shell-root" class="dash-page-content" style="display:none">
 
   <section id="loginView" class="login-view hidden" aria-label="Unlock settings">
     <div class="login-card">
@@ -404,6 +405,16 @@
     </main>
   </section>
 
+  </div>
+
+  <script src="/dashboard/dashboard-nav.js"></script>
+  <script>
+    DashboardNav.mountPage({
+      active: 'live-agent/settings',
+      title: 'Service desk settings',
+      subtitle: 'Live agent configuration and agent overview',
+    });
+  </script>
   <script src="settings.js" defer></script>
 </body>
 </html>

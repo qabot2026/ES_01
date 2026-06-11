@@ -145,6 +145,41 @@
   border-left: 3px solid #64748b;
 }
 
+body.dash-has-shell {
+  margin: 0;
+  overflow-x: hidden;
+}
+
+body.dash-has-shell .dash-main {
+  min-height: 0;
+}
+
+body.dash-has-shell .dash-page-content .dash-app,
+body.dash-has-shell .dash-page-content .docs-app,
+body.dash-has-shell .dash-page-content .appt-app,
+body.dash-has-shell .dash-page-content .qa-app {
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
+
+body.dash-has-shell .dash-page-content div.app {
+  max-width: none;
+  margin: 0;
+  padding: clamp(10px, 1.5vw, 16px);
+}
+
+body.dash-has-shell .dash-page-content .bot-settings-dash-content .wrap {
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
+
+body.dash-has-shell .dash-page-content #loginView,
+body.dash-has-shell .dash-page-content #appView {
+  min-height: calc(100vh - 4.5rem);
+}
+
 @media (max-width: 900px) {
   .dash-shell {
     flex-direction: column;

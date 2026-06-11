@@ -197,13 +197,11 @@
       fillForm(data.preset || {}, data.project || {});
       startPreviewFrame();
       pushPreviewSoon();
-      var title = $('pageTitle');
-      var sub = $('pageSubtitle');
-      if (title && data.project) {
-        title.textContent = data.project.name + ' — Bot settings';
-      }
-      if (sub && data.project) {
-        sub.textContent = data.project.name;
+      if (window.DashboardNav && data.project) {
+        DashboardNav.updateTopbar(
+          'UI / UX settings',
+          data.project.name + ' · Bot ID ' + BOT_ID
+        );
       }
       setStatus('Loaded.');
       return data;
@@ -387,17 +385,27 @@
     });
   }
 
+  function integrateDashboardNav() {
+    var app = $('app');
+    if (!app || document.querySelector('.dash-shell')) return;
+    var container = document.createElement('div');
+    container.className = 'bot-settings-dash-content dash-page-content';
+    container.style.display = 'none';
+    while (app.firstChild) container.appendChild(app.firstChild);
+    app.appendChild(container);
+    if (window.DashboardNav) {
+      DashboardNav.mountPage({
+        active: 'uiux-setting',
+        title: 'UI / UX settings',
+        subtitle: 'Bot ID ' + BOT_ID,
+      });
+    }
+  }
+
   function renderProjectShell() {
     var app = $('app');
     if (!app) return;
     app.innerHTML =
-      '<header class="top-bar">' +
-      '<div class="top-bar-inner">' +
-      '<div><h1 id="pageTitle">Bot settings</h1>' +
-      '<p>Bot ID <strong>' +
-      BOT_ID +
-      '</strong> · <span id="pageSubtitle"></span></p></div>' +
-      '</div></header>' +
       '<main class="wrap settings-split">' +
       '<div class="settings-col-left">' +
       '<div class="settings-toolbar">' +
@@ -499,6 +507,7 @@
     document.body.classList.add('bot-settings-project');
     document.documentElement.classList.add('bot-settings-project');
     renderProjectShell();
+    integrateDashboardNav();
     var da = deskAuth();
     if (da && !da.requireAuthOrRedirect('bot-settings/' + BOT_ID + '.html')) {
       return;

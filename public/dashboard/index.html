@@ -17,12 +17,12 @@
     <script>
       (function () {
         var bid = DashboardNav.getBid();
-        var bot = DashboardNav.BOTS.find(function (b) { return b.bid === bid; }) || DashboardNav.BOTS[0];
+        var bot = DashboardNav.BOTS.find(function (b) { return b.id === bid; }) || DashboardNav.BOTS[0];
 
         DashboardNav.mount({
           active: 'home',
           title: 'Dashboard home',
-          subtitle: 'Bot: ' + bot.name + ' (ID ' + bot.bid + ') — change bot in the sidebar dropdown',
+          subtitle: 'Bot: ' + bot.name + ' (ID ' + bot.id + ') — change bot in the sidebar dropdown',
         });
 
         var grid = document.getElementById('dash-home-grid');
