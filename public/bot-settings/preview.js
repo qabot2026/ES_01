@@ -103,6 +103,12 @@
       if (typeof widgetInstance.open === 'function') {
         widgetInstance.open();
       }
+      if (typeof widgetInstance.applyPreviewPanelLayout_ === 'function') {
+        widgetInstance.applyPreviewPanelLayout_();
+      }
+      if (typeof widgetInstance.syncPreviewStageLayout_ === 'function') {
+        widgetInstance.syncPreviewStageLayout_();
+      }
     }, 50);
   }
 

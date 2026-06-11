@@ -9,7 +9,7 @@
     html, body {
       margin: 0;
       width: 520px;
-      min-height: 720px;
+      min-height: 100%;
       overflow-x: hidden;
       overflow-y: auto;
       background: linear-gradient(160deg, #f0f4f8 0%, #e8eef5 100%);
@@ -17,34 +17,37 @@
     .preview-stage {
       position: relative;
       width: 520px;
-      min-height: 680px;
       box-sizing: border-box;
+      padding: 8px 0 40px;
     }
     .preview-hint {
-      position: absolute;
-      top: 8px;
-      left: 0;
-      right: 0;
-      z-index: 0;
       font: 12px/1.4 system-ui, sans-serif;
       color: #94a3b8;
       text-align: center;
       pointer-events: none;
+      margin: 0 0 8px;
     }
-    /* Desktop width in narrow iframe; height comes from widget applyLayout */
+    /*
+     * Preview uses document flow (not fixed to viewport) so nothing is clipped.
+     * Override 100vh rules — inside an iframe those use the browser window, not this frame.
+     */
     body.qa-bot-preview .qa-widget {
-      position: absolute !important;
+      position: relative !important;
+      bottom: auto !important;
+      right: auto !important;
       left: auto !important;
-      right: 16px !important;
+      margin: 8px auto 0 !important;
       z-index: 2;
     }
     body.qa-bot-preview .qa-panel {
       width: 400px !important;
       max-width: 400px !important;
     }
+    body.qa-bot-preview .qa-panel,
     body.qa-bot-preview .qa-widget--chat-open .qa-panel {
       height: var(--qa-panel-height, 520px) !important;
       max-height: var(--qa-panel-height, 520px) !important;
+      min-height: var(--qa-panel-height, 520px) !important;
     }
   </style>
 </head>

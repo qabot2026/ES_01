@@ -1168,24 +1168,32 @@
     }
 
     if (global.QA_CONFIG && global.QA_CONFIG.previewViewport) {
-      var previewW = win.widthPx || 400;
-      var previewH = win.heightPx || 520;
-      panel.style.width = previewW + 'px';
-      panel.style.maxWidth = previewW + 'px';
-      panel.style.height = previewH + 'px';
-      panel.style.maxHeight = previewH + 'px';
-      panel.style.minHeight = (win.minHeightPx != null ? win.minHeightPx : 360) + 'px';
-      this.root.style.setProperty('--qa-panel-height', previewH + 'px');
       this.root.classList.add('qa-widget--preview');
-      var previewBottom = pos.bottomPx != null ? pos.bottomPx : 24;
-      this.root.style.position = 'absolute';
-      this.root.style.bottom = previewBottom + 'px';
+      this.applyPreviewPanelLayout_();
     }
 
     this.syncLauncherStack();
 
     if (global.QA_CONFIG && global.QA_CONFIG.previewViewport) {
+      this.applyPreviewPanelLayout_();
       this.syncPreviewStageLayout_();
+    }
+  };
+
+  QualityAssistantWidget.prototype.applyPreviewPanelLayout_ = function () {
+    if (!global.QA_CONFIG || !global.QA_CONFIG.previewViewport || !this.root) return;
+    var win = getEffectiveCfg().chatWindow || {};
+    var previewW = win.widthPx || 400;
+    var previewH = win.heightPx || 520;
+    var panel = this.els.panel || this.root.querySelector('.qa-panel');
+    this.root.style.setProperty('--qa-panel-height', previewH + 'px');
+    if (!panel) return;
+    panel.style.width = previewW + 'px';
+    panel.style.maxWidth = previewW + 'px';
+    if (this.isOpen) {
+      panel.style.height = previewH + 'px';
+      panel.style.maxHeight = previewH + 'px';
+      panel.style.minHeight = previewH + 'px';
     }
   };
 
@@ -1195,22 +1203,36 @@
 
     var eff = getEffectiveCfg();
     var win = eff.chatWindow || {};
-    var pos = win.position || {};
+    var launch = eff.launcher || {};
+    var previewW = win.widthPx || 400;
     var panelH = win.heightPx || 520;
+    var launchSize = launch.sizePx != null ? launch.sizePx : 64;
     var stackPx = getLauncherStackPx(!!this.isOpen);
-    var bottomPad = pos.bottomPx != null ? pos.bottomPx : 24;
-    var stripExtra = 0;
-    if (!this.isOpen && hasLauncherStripTextAnywhere()) {
-      stripExtra = 56;
-    }
-    var stageMin = panelH + stackPx + bottomPad + stripExtra + 24;
+    var stripExtra = !this.isOpen && hasLauncherStripTextAnywhere() ? 64 : 0;
+    var ringExtra =
+      launch.storyRing && launch.storyRing.enabled ? 10 : 0;
+    var totalH = this.isOpen
+      ? stackPx + panelH + ringExtra
+      : launchSize + stripExtra + ringExtra + 16;
 
+    this.root.style.position = 'relative';
+    this.root.style.bottom = '';
+    this.root.style.right = '';
+    this.root.style.left = '';
+    this.root.style.width = previewW + 'px';
+    this.root.style.minHeight = totalH + 'px';
+    this.root.style.margin = '8px auto 0';
+
+    var stageMin = totalH + 56;
     var stage = document.getElementById('previewStage');
     if (stage) {
       stage.style.minHeight = stageMin + 'px';
     }
     if (document.body) {
       document.body.style.minHeight = stageMin + 'px';
+    }
+    if (document.documentElement) {
+      document.documentElement.style.minHeight = stageMin + 'px';
     }
   };
 
@@ -2244,6 +2266,7 @@
     this.updateLauncherCloseBubble();
     this.updateLauncherStripVisibility();
     if (global.QA_CONFIG && global.QA_CONFIG.previewViewport) {
+      this.applyPreviewPanelLayout_();
       this.syncPreviewStageLayout_();
     }
     this.stopSpeech();
@@ -2290,9 +2313,13 @@
       var openH = computeOpenPanelHeightPx();
       panel.style.height = openH + 'px';
       panel.style.maxHeight = openH + 'px';
-    } else {
+    } else if (!(global.QA_CONFIG && global.QA_CONFIG.previewViewport)) {
       panel.style.height = '';
       panel.style.maxHeight = '';
+    }
+    if (global.QA_CONFIG && global.QA_CONFIG.previewViewport) {
+      this.applyPreviewPanelLayout_();
+      this.syncPreviewStageLayout_();
     }
   };
 
@@ -2326,6 +2353,7 @@
     this.updateLauncherCloseBubble();
     this.updateLauncherStripVisibility();
     if (global.QA_CONFIG && global.QA_CONFIG.previewViewport) {
+      this.applyPreviewPanelLayout_();
       this.syncPreviewStageLayout_();
     }
     this.els.input.focus();
