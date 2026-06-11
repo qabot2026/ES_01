@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var QA_ASSET_VERSION = '20260610-site-presets';
+  var QA_ASSET_VERSION = '20260611-site-presets-v2';
 
   var QA_FORM_SCRIPTS = [
     'contact.js',
@@ -90,7 +90,8 @@
   }
 
   function loadSitePresetOverrides_(cb) {
-    var url = assetUrl(base + '/api/site-presets/public');
+    var url =
+      assetUrl(base + '/api/site-presets/public') + '&t=' + Date.now();
     fetch(url)
       .then(function (r) {
         return r.ok ? r.json() : null;

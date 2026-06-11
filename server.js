@@ -1170,7 +1170,8 @@ app.get('/api/phrase-translations', (req, res) => {
 
 /** Bot project settings (001 Receptionist, 002 GV, 003 LV) */
 app.get('/api/site-presets/public', (_req, res) => {
-  res.json({ sitePresets: sitePresetsStore.getMergedSitePresets() });
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+  res.json({ sitePresets: sitePresetsStore.getPublicOverrides() });
 });
 
 app.get('/api/bot-settings', (_req, res) => {

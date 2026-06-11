@@ -2,6 +2,10 @@
   'use strict';
 
   var PROJECT_ID = String(window.BOT_PROJECT_ID || '').trim();
+  var currentProject = null;
+  var previewFrame = null;
+  var previewReady = false;
+  var previewPushTimer = null;
   var $ = function (id) {
     return document.getElementById(id);
   };
@@ -187,7 +191,9 @@
       var res = await fetch(apiBase() + '/api/bot-settings/' + PROJECT_ID);
       if (!res.ok) throw new Error('Could not load settings');
       var data = await res.json();
+      currentProject = data.project || null;
       fillForm(data.preset || {}, data.project || {});
+      pushPreviewSoon();
       var title = $('pageTitle');
       var sub = $('pageSubtitle');
       if (title && data.project) {
@@ -219,8 +225,13 @@
       if (!res.ok || !data.ok) {
         throw new Error(data.error || 'Save failed — check viewer secret');
       }
+      currentProject = data.project || currentProject;
       fillForm(data.preset || collectPreset(), data.project);
-      setStatus('Saved. Live embed will use these settings.', true);
+      pushPreviewSoon();
+      setStatus(
+        'Saved. Live sites: hard-refresh (Ctrl+F5). Preview on the right updates instantly.',
+        true
+      );
     } catch (err) {
       setStatus(err.message || 'Save failed', false);
     }
@@ -319,6 +330,51 @@
     );
   }
 
+  function pushPreviewSoon() {
+    if (previewPushTimer) clearTimeout(previewPushTimer);
+    previewPushTimer = setTimeout(pushPreview, 300);
+  }
+
+  function pushPreview() {
+    if (!previewFrame || !previewReady || !currentProject) return;
+    try {
+      previewFrame.contentWindow.postMessage(
+        {
+          type: 'qa-bot-preview',
+          project: currentProject,
+          preset: collectPreset(),
+        },
+        '*'
+      );
+    } catch (e) {
+      /* iframe not ready */
+    }
+  }
+
+  function bindPreviewListeners() {
+    var form = $('settingsForm');
+    if (!form) return;
+    form.addEventListener('input', pushPreviewSoon);
+    form.addEventListener('change', pushPreviewSoon);
+  }
+
+  function initPreviewFrame() {
+    previewFrame = $('previewFrame');
+    if (!previewFrame) return;
+    window.addEventListener('message', function (ev) {
+      if (ev.data && ev.data.type === 'qa-bot-preview-ready') {
+        previewReady = true;
+        pushPreview();
+      }
+    });
+    previewFrame.addEventListener('load', function () {
+      previewReady = false;
+      setTimeout(function () {
+        pushPreview();
+      }, 400);
+    });
+  }
+
   function renderProjectShell() {
     var app = $('app');
     if (!app) return;
@@ -333,7 +389,8 @@
       '<a class="btn ghost" href="index.html">All projects</a>' +
       '<button type="button" class="btn primary" id="saveBtn">Save settings</button>' +
       '</div></div></header>' +
-      '<main class="wrap">' +
+      '<main class="wrap settings-split">' +
+      '<div class="settings-col-left">' +
       '<form class="settings-form" id="settingsForm" onsubmit="return false">' +
       '<section class="settings-section">' +
       '<h3>General &amp; header</h3>' +
@@ -376,9 +433,18 @@
       '<div class="save-bar">' +
       '<button type="button" class="btn primary" id="saveBtn2">Save settings</button>' +
       '<span class="status" id="saveStatus" role="status"></span>' +
-      '</div></form></main>';
+      '</div></form></div>' +
+      '<aside class="settings-col-right" aria-label="Live preview">' +
+      '<div class="preview-head">' +
+      '<h3>Live preview</h3>' +
+      '<p>Changes show here instantly (before Save)</p>' +
+      '</div>' +
+      '<iframe id="previewFrame" title="Chatbot preview" src="preview.html"></iframe>' +
+      '</aside></main>';
     var save2 = $('saveBtn2');
     if (save2) save2.addEventListener('click', saveProject);
+    initPreviewFrame();
+    bindPreviewListeners();
   }
 
   function initHub() {

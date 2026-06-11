@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chatbot preview</title>
+  <link rel="stylesheet" href="/widget/chat-widget.css" />
+  <style>
+    html, body {
+      margin: 0;
+      height: 100%;
+      overflow: hidden;
+      background: linear-gradient(160deg, #f0f4f8 0%, #e8eef5 100%);
+    }
+    body {
+      position: relative;
+    }
+    .preview-hint {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      right: 12px;
+      z-index: 0;
+      font: 13px/1.4 system-ui, sans-serif;
+      color: #64748b;
+      text-align: center;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <p class="preview-hint" id="previewHint">Loading preview…</p>
+  <script src="/company.config.js"></script>
+  <script src="/widget/date-display.js"></script>
+  <script src="/widget/message-syntax.js"></script>
+  <script src="/widget/chat-form.js"></script>
+  <script src="/widget/chat-widget.js"></script>
+  <script src="preview.js"></script>
+</body>
+</html>
