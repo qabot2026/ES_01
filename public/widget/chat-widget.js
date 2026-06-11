@@ -669,7 +669,11 @@
     this.root = document.createElement('div');
     this.root.className = 'qa-widget';
     this.root.innerHTML = this.template();
-    document.body.appendChild(this.root);
+    var previewMount =
+      global.QA_CONFIG &&
+      global.QA_CONFIG.previewViewport &&
+      document.getElementById('previewStage');
+    (previewMount || document.body).appendChild(this.root);
     this.updateChatbotVisibility();
     this.applyTheme();
     this.applyLayout();
@@ -1170,11 +1174,44 @@
       panel.style.maxWidth = previewW + 'px';
       panel.style.height = previewH + 'px';
       panel.style.maxHeight = previewH + 'px';
+      panel.style.minHeight = (win.minHeightPx != null ? win.minHeightPx : 360) + 'px';
       this.root.style.setProperty('--qa-panel-height', previewH + 'px');
       this.root.classList.add('qa-widget--preview');
+      var previewBottom = pos.bottomPx != null ? pos.bottomPx : 24;
+      this.root.style.position = 'absolute';
+      this.root.style.bottom = previewBottom + 'px';
     }
 
     this.syncLauncherStack();
+
+    if (global.QA_CONFIG && global.QA_CONFIG.previewViewport) {
+      this.syncPreviewStageLayout_();
+    }
+  };
+
+  QualityAssistantWidget.prototype.syncPreviewStageLayout_ = function () {
+    var qa = global.QA_CONFIG || {};
+    if (!qa.previewViewport || !this.root) return;
+
+    var eff = getEffectiveCfg();
+    var win = eff.chatWindow || {};
+    var pos = win.position || {};
+    var panelH = win.heightPx || 520;
+    var stackPx = getLauncherStackPx(!!this.isOpen);
+    var bottomPad = pos.bottomPx != null ? pos.bottomPx : 24;
+    var stripExtra = 0;
+    if (!this.isOpen && hasLauncherStripTextAnywhere()) {
+      stripExtra = 56;
+    }
+    var stageMin = panelH + stackPx + bottomPad + stripExtra + 24;
+
+    var stage = document.getElementById('previewStage');
+    if (stage) {
+      stage.style.minHeight = stageMin + 'px';
+    }
+    if (document.body) {
+      document.body.style.minHeight = stageMin + 'px';
+    }
   };
 
   QualityAssistantWidget.prototype.isComposerUploadEnabled = function () {
@@ -2206,6 +2243,9 @@
     this.els.panel.classList.remove('qa-panel--open');
     this.updateLauncherCloseBubble();
     this.updateLauncherStripVisibility();
+    if (global.QA_CONFIG && global.QA_CONFIG.previewViewport) {
+      this.syncPreviewStageLayout_();
+    }
     this.stopSpeech();
   };
 
@@ -2285,6 +2325,9 @@
     this.els.panel.classList.add('qa-panel--open');
     this.updateLauncherCloseBubble();
     this.updateLauncherStripVisibility();
+    if (global.QA_CONFIG && global.QA_CONFIG.previewViewport) {
+      this.syncPreviewStageLayout_();
+    }
     this.els.input.focus();
     this.maybeTriggerWelcomeEvent();
   };

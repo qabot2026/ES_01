@@ -9,12 +9,16 @@
     html, body {
       margin: 0;
       width: 520px;
-      height: 660px;
-      overflow: hidden;
+      min-height: 720px;
+      overflow-x: hidden;
+      overflow-y: auto;
       background: linear-gradient(160deg, #f0f4f8 0%, #e8eef5 100%);
     }
-    body.qa-bot-preview {
+    .preview-stage {
       position: relative;
+      width: 520px;
+      min-height: 680px;
+      box-sizing: border-box;
     }
     .preview-hint {
       position: absolute;
@@ -27,24 +31,27 @@
       text-align: center;
       pointer-events: none;
     }
-    /* Force desktop layout — iframe is narrow so mobile @media would squash the panel */
+    /* Desktop width in narrow iframe; height comes from widget applyLayout */
     body.qa-bot-preview .qa-widget {
+      position: absolute !important;
       left: auto !important;
       right: 16px !important;
-      bottom: 16px !important;
+      z-index: 2;
     }
-    body.qa-bot-preview .qa-panel,
-    body.qa-bot-preview .qa-widget--chat-open .qa-panel {
+    body.qa-bot-preview .qa-panel {
       width: 400px !important;
       max-width: 400px !important;
+    }
+    body.qa-bot-preview .qa-widget--chat-open .qa-panel {
       height: var(--qa-panel-height, 520px) !important;
       max-height: var(--qa-panel-height, 520px) !important;
-      min-height: min(var(--qa-panel-min-height, 360px), var(--qa-panel-height, 520px)) !important;
     }
   </style>
 </head>
 <body class="qa-bot-preview">
-  <p class="preview-hint" id="previewHint">Loading preview…</p>
+  <div id="previewStage" class="preview-stage">
+    <p class="preview-hint" id="previewHint">Loading preview…</p>
+  </div>
   <script src="/company.config.js"></script>
   <script src="/widget/date-display.js"></script>
   <script src="/widget/message-syntax.js"></script>
