@@ -162,11 +162,13 @@ label.field {
 }
 
 label.field input[type="text"],
-label.field input[type="number"] {
+label.field input[type="number"],
+label.field select {
   padding: 0.45rem 0.55rem;
   border: 1px solid var(--border);
   border-radius: 8px;
   font: inherit;
+  background: #fff;
 }
 
 .toggle-grid {

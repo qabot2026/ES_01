@@ -98,14 +98,46 @@
     return cur;
   }
 
+  function effectivePreset(project, saved) {
+    var cfg = window.QA_CHAT_UI_CONFIG || {};
+    var sp =
+      (cfg.common &&
+        cfg.common.sitePresets &&
+        cfg.common.sitePresets[project.sitePreset]) ||
+      {};
+    saved = saved || {};
+    return {
+      common: deepMerge(
+        deepMerge({}, cfg.common || {}),
+        deepMerge(sp.common || {}, saved.common || {})
+      ),
+      desk: deepMerge(
+        deepMerge({}, cfg.desk || {}),
+        deepMerge(sp.desk || {}, saved.desk || {})
+      ),
+      mob: deepMerge(
+        deepMerge({}, cfg.mob || {}),
+        deepMerge(sp.mob || {}, saved.mob || {})
+      ),
+    };
+  }
+
   function fillForm(preset, project) {
+    var view =
+      project && project.sitePreset
+        ? effectivePreset(project, preset)
+        : preset || {};
     document.querySelectorAll('[data-path]').forEach(function (el) {
       var path = el.getAttribute('data-path');
-      var val = getByPath(preset, path);
+      var val = getByPath(view, path);
       if (el.type === 'checkbox') {
         el.checked = !!val;
-      } else if (val != null) {
+      } else if (el.tagName === 'SELECT') {
+        el.value = val != null ? String(val) : el.options[0].value;
+      } else if (val != null && val !== '') {
         el.value = val;
+      } else {
+        el.value = '';
       }
     });
 
@@ -128,17 +160,22 @@
   }
 
   function collectPreset() {
-    var preset = {};
+    var preset = { common: {}, desk: {}, mob: {} };
     document.querySelectorAll('[data-path]').forEach(function (el) {
       var path = el.getAttribute('data-path');
+      var value;
       if (el.type === 'checkbox') {
-        preset = mergePath(preset, path, !!el.checked);
+        value = !!el.checked;
       } else if (el.type === 'number') {
+        if (String(el.value || '').trim() === '') return;
         var n = parseInt(el.value, 10);
-        preset = mergePath(preset, path, isNaN(n) ? 0 : n);
+        value = isNaN(n) ? 0 : n;
+      } else if (el.tagName === 'SELECT') {
+        value = String(el.value || '').trim();
       } else {
-        preset = mergePath(preset, path, String(el.value || '').trim());
+        value = String(el.value || '').trim();
       }
+      preset = mergePath(preset, path, value);
     });
     return preset;
   }
@@ -215,6 +252,78 @@
     );
   }
 
+  function selectField(path, label, options) {
+    var html =
+      '<label class="field">' +
+      label +
+      '<select data-path="' +
+      path +
+      '">';
+    options.forEach(function (opt) {
+      html +=
+        '<option value="' +
+        opt.value +
+        '">' +
+        opt.label +
+        '</option>';
+    });
+    html += '</select></label>';
+    return html;
+  }
+
+  function deviceSection(prefix, title) {
+    var p = prefix;
+    return (
+      '<section class="settings-section">' +
+      '<h3>' +
+      title +
+      '</h3>' +
+      '<p class="hint">Layout, launcher bubble, story ring, chat window size</p>' +
+      '<div class="field-grid">' +
+      selectField(p + '.chatLayout.side', 'Chat panel side', [
+        { value: 'right', label: 'Right' },
+        { value: 'left', label: 'Left' },
+      ]) +
+      textField(p + '.launcher.sizePx', 'Launcher bubble size (px)', 'number') +
+      textField(p + '.launcher.iconUrl', 'Bubble launcher icon URL') +
+      textField(p + '.chatWindow.widthPx', 'Chat width (px, desktop only)', 'number') +
+      textField(p + '.chatWindow.heightPx', 'Chat height (px)', 'number') +
+      textField(p + '.chatWindow.minHeightPx', 'Chat min height (px)', 'number') +
+      textField(p + '.header.titleFontSizePx', 'Header title size (px)', 'number') +
+      textField(p + '.header.iconSizePx', 'Header icon size (px)', 'number') +
+      '</div>' +
+      '<div class="toggle-grid" style="margin-top:0.75rem">' +
+      toggleRow(p + '.launcher.storyRing.enabled', 'Story ring around launcher') +
+      toggleRow(p + '.launcher.storyRing.instagramStyle', 'Instagram-style story ring') +
+      toggleRow(
+        p + '.launcher.storyRing.colorRingMotionEnabled',
+        'Animated color ring'
+      ) +
+      toggleRow(p + '.launcherStrip.enabled', 'Launcher strip bubble') +
+      toggleRow(p + '.launcherStrip.wavePopup.enabled', 'Wave emoji popup on strip') +
+      toggleRow(p + '.launcher.closeBubbleWhenOpen.enabled', 'Hide bubble when chat open') +
+      toggleRow(p + '.autoOpenChat.enabled', 'Auto-open chat') +
+      toggleRow(p + '.restartButton.enabled', 'Restart button (↻)') +
+      toggleRow(p + '.poweredBy.enabled', 'Powered by footer') +
+      toggleRow(p + '.features.speechToText.enabled', 'Mic') +
+      toggleRow(p + '.features.composerUpload.enabled', 'Upload (📎)') +
+      toggleRow(p + '.features.restartChat.enabled', 'Restart chat menu item') +
+      '</div>' +
+      '<div class="field-grid" style="margin-top:0.75rem">' +
+      textField(p + '.launcher.storyRing.widthPx', 'Story ring width (px)', 'number') +
+      textField(
+        p + '.launcher.storyRing.rotateSeconds',
+        'Story ring rotate (seconds)',
+        'number'
+      ) +
+      textField(p + '.launcherStrip.text', 'Launcher strip text') +
+      textField(p + '.autoOpenChat.delayMs', 'Auto-open delay (ms)', 'number') +
+      textField(p + '.poweredBy.brandName', 'Powered by brand name') +
+      textField(p + '.poweredBy.linkUrl', 'Powered by link URL') +
+      '</div></section>'
+    );
+  }
+
   function renderProjectShell() {
     var app = $('app');
     if (!app) return;
@@ -232,15 +341,23 @@
       '<main class="wrap">' +
       '<form class="settings-form" id="settingsForm" onsubmit="return false">' +
       '<section class="settings-section">' +
-      '<h3>General</h3>' +
-      '<p class="hint">Chat header and welcome panel</p>' +
+      '<h3>General &amp; header</h3>' +
+      '<p class="hint">Titles, logos, welcome panel</p>' +
       '<div class="field-grid">' +
       textField('common.header.title', 'Chat title') +
       textField('common.header.subtitle', 'Chat subtitle') +
       textField('common.botPersona.label', 'Bot display name') +
+      textField('common.header.chatIconUrl', 'Bubble launcher icon URL (default)') +
+      textField('common.header.headerIconUrl', 'Header logo icon URL') +
+      textField('common.header.chatTitleIconUrl', 'Title bar icon URL') +
+      textField('common.botPersona.imageUrl', 'Bot avatar image URL') +
       '</div>' +
       '<div class="toggle-grid" style="margin-top:0.75rem">' +
+      toggleRow('common.header.showHeaderIcon', 'Show header icon') +
       toggleRow('common.welcome.enabled', 'Welcome panel (before first message)') +
+      toggleRow('common.welcome.suggestionChips.enabled', 'Welcome suggestion chips') +
+      toggleRow('common.botPersona.showTime', 'Show time on bot messages') +
+      toggleRow('common.userPersona.showTime', 'Show time on user messages') +
       '</div></section>' +
       '<section class="settings-section">' +
       '<h3>Features (all devices)</h3>' +
@@ -251,40 +368,16 @@
       toggleRow('common.dialogflow.liveAgent.enabled', 'Live agent handoff') +
       toggleRow('common.dialogflow.forms.enabled', 'In-chat forms') +
       toggleRow('common.dialogflow.endChatEvent.enabled', 'ENDCHAT on idle') +
+      toggleRow('common.dialogflow.welcomeEvent.enabled', 'FRESH welcome on chat open') +
+      toggleRow('desk.showChatbot', 'Show chatbot on desktop') +
+      toggleRow('mob.showChatbot', 'Show chatbot on mobile') +
       '</div>' +
       '<div class="field-grid" style="margin-top:0.75rem">' +
       textField('common.dialogflow.endChatEvent.idleTimeoutMs', 'Idle timeout (ms)', 'number') +
+      textField('common.header.botWritingText', 'Typing indicator text') +
       '</div></section>' +
-      '<section class="settings-section">' +
-      '<h3>Desktop</h3>' +
-      '<div class="toggle-grid">' +
-      toggleRow('desk.launcherStrip.enabled', 'Launcher strip bubble') +
-      toggleRow('desk.autoOpenChat.enabled', 'Auto-open chat') +
-      toggleRow('desk.restartButton.enabled', 'Restart button (↻)') +
-      toggleRow('desk.poweredBy.enabled', 'Powered by footer') +
-      toggleRow('desk.features.speechToText.enabled', 'Mic on desktop') +
-      toggleRow('desk.features.composerUpload.enabled', 'Upload on desktop') +
-      toggleRow('desk.features.restartChat.enabled', 'Restart chat menu item') +
-      '</div>' +
-      '<div class="field-grid" style="margin-top:0.75rem">' +
-      textField('desk.launcherStrip.text', 'Launcher strip text') +
-      textField('desk.autoOpenChat.delayMs', 'Auto-open delay (ms)', 'number') +
-      '</div></section>' +
-      '<section class="settings-section">' +
-      '<h3>Mobile</h3>' +
-      '<div class="toggle-grid">' +
-      toggleRow('mob.launcherStrip.enabled', 'Launcher strip bubble') +
-      toggleRow('mob.autoOpenChat.enabled', 'Auto-open chat') +
-      toggleRow('mob.restartButton.enabled', 'Restart button (↻)') +
-      toggleRow('mob.poweredBy.enabled', 'Powered by footer') +
-      toggleRow('mob.features.speechToText.enabled', 'Mic on mobile') +
-      toggleRow('mob.features.composerUpload.enabled', 'Upload on mobile') +
-      toggleRow('mob.features.restartChat.enabled', 'Restart chat menu item') +
-      '</div>' +
-      '<div class="field-grid" style="margin-top:0.75rem">' +
-      textField('mob.launcherStrip.text', 'Launcher strip text') +
-      textField('mob.autoOpenChat.delayMs', 'Auto-open delay (ms)', 'number') +
-      '</div></section>' +
+      deviceSection('desk', 'Desktop — layout &amp; launcher') +
+      deviceSection('mob', 'Mobile — layout &amp; launcher') +
       '<section class="settings-section">' +
       '<h3>Client embed code</h3>' +
       '<p class="hint">Copy this block to the client website for this project.</p>' +
