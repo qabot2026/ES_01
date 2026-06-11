@@ -499,6 +499,8 @@
   }
 
   function initProjectPage() {
+    document.body.classList.add('bot-settings-project');
+    document.documentElement.classList.add('bot-settings-project');
     renderProjectShell();
     var da = deskAuth();
     if (da && !da.requireAuthOrRedirect('bot-settings/' + PROJECT_ID + '.html')) {

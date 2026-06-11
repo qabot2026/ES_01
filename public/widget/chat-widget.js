@@ -669,11 +669,7 @@
     this.root = document.createElement('div');
     this.root.className = 'qa-widget';
     this.root.innerHTML = this.template();
-    var previewMount =
-      global.QA_CONFIG &&
-      global.QA_CONFIG.previewViewport &&
-      document.getElementById('previewStage');
-    (previewMount || document.body).appendChild(this.root);
+    document.body.appendChild(this.root);
     this.updateChatbotVisibility();
     this.applyTheme();
     this.applyLayout();
@@ -1201,38 +1197,42 @@
     var qa = global.QA_CONFIG || {};
     if (!qa.previewViewport || !this.root) return;
 
-    var eff = getEffectiveCfg();
-    var win = eff.chatWindow || {};
-    var launch = eff.launcher || {};
-    var previewW = win.widthPx || 400;
-    var panelH = win.heightPx || 520;
-    var launchSize = launch.sizePx != null ? launch.sizePx : 64;
-    var stackPx = getLauncherStackPx(!!this.isOpen);
-    var stripExtra = !this.isOpen && hasLauncherStripTextAnywhere() ? 64 : 0;
-    var ringExtra =
-      launch.storyRing && launch.storyRing.enabled ? 10 : 0;
-    var totalH = this.isOpen
-      ? stackPx + panelH + ringExtra
-      : launchSize + stripExtra + ringExtra + 16;
+    var win = getEffectiveCfg().chatWindow || {};
+    var pos = win.position || {};
+    var side = getChatLayoutSide();
+    var bottomPad = pos.bottomPx != null ? pos.bottomPx : 24;
+    var inset = win.horizontalInsetPx != null ? win.horizontalInsetPx : 12;
+    var anchorPx =
+      side === 'left'
+        ? pos.leftPx != null
+          ? pos.leftPx
+          : inset
+        : pos.rightPx != null
+          ? pos.rightPx
+          : inset;
 
-    this.root.style.position = 'relative';
-    this.root.style.bottom = '';
-    this.root.style.right = '';
+    this.root.style.position = 'fixed';
+    this.root.style.bottom = bottomPad + 'px';
+    this.root.style.width = '';
+    this.root.style.minHeight = '';
+    this.root.style.margin = '';
     this.root.style.left = '';
-    this.root.style.width = previewW + 'px';
-    this.root.style.minHeight = totalH + 'px';
-    this.root.style.margin = '8px auto 0';
+    this.root.style.right = '';
+    if (side === 'left') {
+      this.root.style.left = anchorPx + 'px';
+      this.root.style.right = 'auto';
+    } else {
+      this.root.style.right = anchorPx + 'px';
+      this.root.style.left = 'auto';
+    }
 
-    var stageMin = totalH + 56;
-    var stage = document.getElementById('previewStage');
-    if (stage) {
-      stage.style.minHeight = stageMin + 'px';
+    if (document.documentElement) {
+      document.documentElement.style.height = '100%';
+      document.documentElement.style.overflow = 'hidden';
     }
     if (document.body) {
-      document.body.style.minHeight = stageMin + 'px';
-    }
-    if (document.documentElement) {
-      document.documentElement.style.minHeight = stageMin + 'px';
+      document.body.style.height = '100%';
+      document.body.style.overflow = 'hidden';
     }
   };
 
