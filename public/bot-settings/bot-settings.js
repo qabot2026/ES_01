@@ -504,6 +504,11 @@
   }
 
   function initProjectPage() {
+    if (window.DashboardNav && DashboardNav.ensureBoot) {
+      DashboardNav.ensureBoot();
+    }
+    var appRoot = $('app');
+    if (appRoot) appRoot.setAttribute('data-dash-pre-mount', '1');
     document.body.classList.add('bot-settings-project');
     document.documentElement.classList.add('bot-settings-project');
     renderProjectShell();

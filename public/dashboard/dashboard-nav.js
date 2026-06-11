@@ -1,7 +1,45 @@
 (function (global) {
   'use strict';
 
-  var NAV_ASSET_V = '20260611a';
+  var NAV_ASSET_V = '20260611b';
+
+  function ensureBoot() {
+    var root = document.documentElement;
+    if (root.getAttribute('data-dash-boot') === '1') return;
+    root.setAttribute('data-dash-boot', '1');
+    root.classList.add('dash-mount-pending');
+
+    if (!document.getElementById('dash-critical-css')) {
+      var crit = document.createElement('style');
+      crit.id = 'dash-critical-css';
+      crit.textContent =
+        'html.dash-mount-pending,html.dash-mount-pending body{overflow:hidden!important}' +
+        'html.dash-mount-pending .dash-page-content,html.dash-mount-pending #app[data-dash-pre-mount]{visibility:hidden!important;opacity:0!important}' +
+        '.dash-nav-ic,svg.dash-nav-ic{width:18px!important;height:18px!important;max-width:18px!important;max-height:18px!important}' +
+        '.dash-icon-badge svg{width:18px!important;height:18px!important;max-width:18px!important;max-height:18px!important}' +
+        '#dash-shell-loader{position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;background:#f1f5f9}' +
+        'html.dash-ready #dash-shell-loader{display:none!important}';
+      document.head.appendChild(crit);
+    }
+
+    function insertLoader() {
+      if (document.getElementById('dash-shell-loader')) return;
+      var loader = document.createElement('div');
+      loader.id = 'dash-shell-loader';
+      loader.className = 'dash-shell-loader';
+      loader.setAttribute('role', 'status');
+      loader.setAttribute('aria-live', 'polite');
+      loader.setAttribute('aria-label', 'Loading');
+      loader.innerHTML =
+        '<div class="dash-loader"><div class="dash-loader__spinner" aria-hidden="true"></div><span>Loading</span></div>';
+      (document.body || document.documentElement).appendChild(loader);
+    }
+
+    if (document.body) insertLoader();
+    else document.addEventListener('DOMContentLoaded', insertLoader);
+  }
+
+  ensureBoot();
   var DEFAULT_BOT_ID = '10001';
   var BOTS = [
     { id: '10001', name: 'Receptionist' },
@@ -177,7 +215,7 @@
   function navIcon(name) {
     var paths = ICONS[name] || ICONS.home;
     return (
-      '<svg class="dash-nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+      '<svg class="dash-nav-ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
       paths +
       '</svg>'
     );
@@ -360,11 +398,21 @@
     });
   }
 
+  function finishMount() {
+    var root = document.documentElement;
+    root.classList.remove('dash-mount-pending');
+    root.classList.add('dash-ready');
+    var app = document.getElementById('app');
+    if (app) app.removeAttribute('data-dash-pre-mount');
+  }
+
   function mount(opts) {
     opts = opts || {};
+    ensureBoot();
     if (document.querySelector('.dash-shell')) {
       bindBotSelect(document.querySelector('.dash-shell'));
       bindSidebarExpand(document.querySelector('.dash-shell'));
+      finishMount();
       return true;
     }
 
@@ -387,16 +435,21 @@
 
     var slot = shell.querySelector('#dash-main-slot');
     slot.appendChild(content);
+    content.classList.add('dash-mounted');
     content.style.display = '';
+    content.style.visibility = 'visible';
+    content.style.opacity = '1';
 
     document.body.classList.add('dash-has-shell');
     document.body.insertBefore(shell, document.body.firstChild);
     bindBotSelect(shell);
     bindSidebarExpand(shell);
+    finishMount();
     return true;
   }
 
   function mountPage(opts) {
+    ensureBoot();
     linkAssets();
     return mount(opts || {});
   }
@@ -409,6 +462,7 @@
   }
 
   global.DashboardNav = {
+    ensureBoot: ensureBoot,
     getBid: getBid,
     bidPath: bidPath,
     navHref: navHref,
