@@ -1211,10 +1211,26 @@
           ? pos.rightPx
           : inset;
 
+    var previewW = win.widthPx || 400;
+    var panelH = win.heightPx || 520;
+    var launch = getEffectiveCfg().launcher || {};
+    var launchSize = launch.sizePx != null ? launch.sizePx : 64;
+    var stackPx = getLauncherStackPx(!!this.isOpen);
+    var stripCfg = getLauncherStripCfg();
+    var stripBottom =
+      stripCfg.position && stripCfg.position.bottomPx != null
+        ? stripCfg.position.bottomPx
+        : 48;
+    var boxH = this.isOpen
+      ? stackPx + panelH
+      : launchSize + (stripCfg.enabled !== false && stripCfg.text ? stripBottom + 24 : 12);
+
     this.root.style.position = 'fixed';
     this.root.style.bottom = bottomPad + 'px';
-    this.root.style.width = '';
-    this.root.style.minHeight = '';
+    this.root.style.top = 'auto';
+    this.root.style.width = previewW + 'px';
+    this.root.style.height = boxH + 'px';
+    this.root.style.minHeight = boxH + 'px';
     this.root.style.margin = '';
     this.root.style.left = '';
     this.root.style.right = '';
@@ -1224,6 +1240,11 @@
     } else {
       this.root.style.right = anchorPx + 'px';
       this.root.style.left = 'auto';
+    }
+
+    var stripWrap = this.root.querySelector('.qa-launcher-strip-wrap');
+    if (stripWrap && !this.isOpen) {
+      stripWrap.style.bottom = stripBottom + 'px';
     }
 
     if (document.documentElement) {
