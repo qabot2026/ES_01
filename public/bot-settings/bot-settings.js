@@ -1,8 +1,7 @@
 (function () {
   'use strict';
 
-  var PROJECT_ID = String(window.BOT_PROJECT_ID || '').trim();
-  var BID_BY_PROJECT = { '001': '10001', '002': '10002', '003': '10003' };
+  var BOT_ID = String(window.BOT_ID || window.BOT_PROJECT_ID || '').trim();
   var currentProject = null;
   var previewFrame = null;
   var previewReady = false;
@@ -188,10 +187,10 @@
   }
 
   async function loadProject() {
-    if (!PROJECT_ID) return;
+    if (!BOT_ID) return;
     setStatus('Loading…');
     try {
-      var res = await fetch(apiBase() + '/api/bot-settings/' + PROJECT_ID);
+      var res = await fetch(apiBase() + '/api/bot-settings/' + BOT_ID);
       if (!res.ok) throw new Error('Could not load settings');
       var data = await res.json();
       currentProject = data.project || null;
@@ -204,7 +203,7 @@
         title.textContent = data.project.name + ' — Bot settings';
       }
       if (sub && data.project) {
-        sub.textContent = 'sitePreset: ' + data.project.sitePreset;
+        sub.textContent = data.project.name;
       }
       setStatus('Loaded.');
       return data;
@@ -215,10 +214,10 @@
   }
 
   async function saveProject() {
-    if (!PROJECT_ID) return;
+    if (!BOT_ID) return;
     setStatus('Saving…');
     try {
-      var res = await fetch(apiBase() + '/api/bot-settings/' + PROJECT_ID, {
+      var res = await fetch(apiBase() + '/api/bot-settings/' + BOT_ID, {
         method: 'POST',
         headers: authHeaders(),
         body: JSON.stringify({ preset: collectPreset() }),
@@ -395,8 +394,8 @@
       '<header class="top-bar">' +
       '<div class="top-bar-inner">' +
       '<div><h1 id="pageTitle">Bot settings</h1>' +
-      '<p>Project ID <strong>' +
-      PROJECT_ID +
+      '<p>Bot ID <strong>' +
+      BOT_ID +
       '</strong> · <span id="pageSubtitle"></span></p></div>' +
       '</div></header>' +
       '<main class="wrap settings-split">' +
@@ -473,23 +472,17 @@
           var card = document.createElement('article');
           card.className = 'project-card';
           var badgeClass = 'id-badge';
-          if (p.id === '002') badgeClass += ' gv';
-          if (p.id === '003') badgeClass += ' lv';
+          if (p.id === '10002') badgeClass += ' gv';
+          if (p.id === '10003') badgeClass += ' lv';
           card.innerHTML =
             '<span class="' +
             badgeClass +
-            '">ID ' +
+            '">Bot ID ' +
             p.id +
             '</span>' +
             '<h2>' +
             p.name +
             '</h2>' +
-            '<p class="hint">sitePreset: <code>' +
-            p.sitePreset +
-            '</code></p>' +
-            (p.bid
-              ? '<p class="hint">Bot ID <code>' + p.bid + '</code></p>'
-              : '') +
             '<p style="margin-top:0.75rem"><a class="btn primary" href="' +
             p.settingsPath +
             '">Open UI / UX settings</a></p>';
@@ -507,7 +500,7 @@
     document.documentElement.classList.add('bot-settings-project');
     renderProjectShell();
     var da = deskAuth();
-    if (da && !da.requireAuthOrRedirect('bot-settings/' + PROJECT_ID + '.html')) {
+    if (da && !da.requireAuthOrRedirect('bot-settings/' + BOT_ID + '.html')) {
       return;
     }
     var saveBtn = $('saveBtn');
@@ -517,7 +510,7 @@
 
   if (document.body && document.body.dataset.page === 'hub') {
     initHub();
-  } else if (PROJECT_ID) {
+  } else if (BOT_ID) {
     initProjectPage();
   }
 })();

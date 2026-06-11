@@ -1190,7 +1190,7 @@ app.get('/api/phrase-translations', (req, res) => {
   });
 });
 
-/** Bot project settings (001 Receptionist, 002 GV, 003 LV) */
+/** Bot settings — Bot ID 10001 / 10002 / 10003 */
 app.get('/api/site-presets/public', (_req, res) => {
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
   res.json({ sitePresets: sitePresetsStore.getPublicOverrides() });
@@ -1209,33 +1209,32 @@ app.get('/api/dashboard/nav', (req, res) => {
 });
 
 app.get('/api/bot-settings', (_req, res) => {
-  const projects = sitePresetsStore.listProjects().map((p) => {
-    const bot = Object.values(dashboardBots.BY_BID).find((b) => b.projectId === p.id);
-    return Object.assign({}, p, {
-      bid: bot ? bot.bid : null,
-      settingsPath: bot ? dashboardBots.bidPath(bot.bid, 'uiux-setting') : p.settingsPath,
-    });
-  });
-  res.json({ projects });
+  res.json({ projects: sitePresetsStore.listProjects() });
 });
 
-app.get('/api/bot-settings/:projectId', (req, res) => {
-  const data = sitePresetsStore.getProjectPreset(req.params.projectId);
+app.get('/api/bot-settings/:botId', (req, res) => {
+  const data = sitePresetsStore.getProjectPreset(req.params.botId);
   if (!data) {
-    return res.status(404).json({ ok: false, error: 'Unknown project ID' });
+    return res.status(404).json({ ok: false, error: 'Unknown bot ID' });
   }
   res.json({ ok: true, project: data.project, preset: data.preset });
 });
 
-app.post('/api/bot-settings/:projectId', requireDeskAuth, (req, res) => {
+app.post('/api/bot-settings/:botId', requireDeskAuth, (req, res) => {
   const result = sitePresetsStore.saveProjectPreset(
-    req.params.projectId,
+    req.params.botId,
     req.body && req.body.preset
   );
   if (!result.ok) {
-    return res.status(result.error === 'Unknown project ID' ? 404 : 400).json(result);
+    return res.status(result.error === 'Unknown bot ID' ? 404 : 400).json(result);
   }
   res.json(result);
+});
+
+Object.entries(sitePresetsStore.LEGACY_BOT_IDS).forEach(([legacyId, botId]) => {
+  app.get(`/bot-settings/${legacyId}.html`, (_req, res) => {
+    res.redirect(301, `/bot-settings/${botId}.html`);
+  });
 });
 
 app.get('/api/config', (_req, res) => {

@@ -1,11 +1,11 @@
 (function (global) {
   'use strict';
 
-  var DEFAULT_BID = '10001';
+  var DEFAULT_BOT_ID = '10001';
   var BOTS = [
-    { bid: '10001', name: 'Receptionist', projectId: '001' },
-    { bid: '10002', name: 'Green Valley', projectId: '002' },
-    { bid: '10003', name: 'Lake View', projectId: '003' },
+    { id: '10001', name: 'Receptionist' },
+    { id: '10002', name: 'Green Valley' },
+    { id: '10003', name: 'Lake View' },
   ];
 
   var BOT_PAGES = [
@@ -24,22 +24,33 @@
     { key: 'manage-access', label: 'Manage access' },
   ];
 
-  function getBid() {
-    var pathMatch = location.pathname.match(/\/bid[=/](\d{5})\//);
-    if (pathMatch) return pathMatch[1];
-    var q = new URLSearchParams(location.search).get('bid');
-    if (q && resolveBot(q)) return q;
-    return DEFAULT_BID;
+  function normalizeBotId(id) {
+    var s = String(id || '').trim();
+    if (s === '001') return '10001';
+    if (s === '002') return '10002';
+    if (s === '003') return '10003';
+    return s;
   }
 
-  function resolveBot(bid) {
+  function getBid() {
+    var pathMatch = location.pathname.match(/\/bot-settings\/(\d{5})\.html/);
+    if (pathMatch) return pathMatch[1];
+    pathMatch = location.pathname.match(/\/bid[=/](\d{5})\//);
+    if (pathMatch) return pathMatch[1];
+    var q = new URLSearchParams(location.search).get('bid');
+    if (q && resolveBot(q)) return normalizeBotId(q);
+    return DEFAULT_BOT_ID;
+  }
+
+  function resolveBot(botId) {
+    var id = normalizeBotId(botId);
     return BOTS.find(function (b) {
-      return b.bid === String(bid);
+      return b.id === id;
     });
   }
 
-  function bidPath(bid, slug) {
-    return '/bid=' + encodeURIComponent(bid) + '/' + slug;
+  function bidPath(botId, slug) {
+    return '/bid=' + encodeURIComponent(normalizeBotId(botId)) + '/' + slug;
   }
 
   function commonPath(slug) {
@@ -52,15 +63,16 @@
     return '/dashboard/';
   }
 
-  function navHref(key, bid) {
-    if (key === 'home') return '/dashboard/?bid=' + bid;
+  function navHref(key, botId) {
+    botId = normalizeBotId(botId);
+    if (key === 'home') return '/dashboard/?bid=' + botId;
     if (
       key === 'uc-conversations' ||
       key === 'queryanalytics' ||
       key === 'uiux-setting' ||
       key === 'supersetting'
     ) {
-      return bidPath(bid, key);
+      return bidPath(botId, key);
     }
     return commonPath(key);
   }
@@ -83,10 +95,11 @@
     return '';
   }
 
-  function onBotChange(bid) {
+  function onBotChange(botId) {
+    botId = normalizeBotId(botId);
     var active = detectActiveKey();
     if (!active || active === 'home') {
-      global.location.href = '/dashboard/?bid=' + encodeURIComponent(bid);
+      global.location.href = '/dashboard/?bid=' + encodeURIComponent(botId);
       return;
     }
     if (
@@ -95,30 +108,31 @@
       active === 'uiux-setting' ||
       active === 'supersetting'
     ) {
-      global.location.href = navHref(active, bid);
+      global.location.href = navHref(active, botId);
       return;
     }
-    global.location.href = '/dashboard/?bid=' + encodeURIComponent(bid);
+    global.location.href = '/dashboard/?bid=' + encodeURIComponent(botId);
   }
 
-  function renderNav(activeKey, bid) {
-    var bot = resolveBot(bid) || BOTS[0];
+  function renderNav(activeKey, botId) {
+    botId = normalizeBotId(botId);
+    var bot = resolveBot(botId) || BOTS[0];
     var botOptions = BOTS.map(function (b) {
       return (
         '<option value="' +
-        b.bid +
+        b.id +
         '"' +
-        (b.bid === bid ? ' selected' : '') +
+        (b.id === botId ? ' selected' : '') +
         '>' +
         b.name +
         ' (Bot ID ' +
-        b.bid +
+        b.id +
         ')</option>'
       );
     }).join('');
 
     function link(key, label) {
-      var href = navHref(key, bid);
+      var href = navHref(key, botId);
       var cls = 'dash-nav-link' + (activeKey === key ? ' is-active' : '');
       return '<a class="' + cls + '" href="' + href + '">' + label + '</a>';
     }
@@ -159,7 +173,7 @@
 
   function mount(opts) {
     opts = opts || {};
-    var bid = getBid();
+    var botId = getBid();
     var activeKey = opts.active || detectActiveKey();
     var title = opts.title || 'Dashboard';
     var subtitle = opts.subtitle || '';
@@ -170,7 +184,7 @@
     var shell = document.createElement('div');
     shell.className = 'dash-shell';
     shell.innerHTML =
-      renderNav(activeKey, bid) +
+      renderNav(activeKey, botId) +
       '<div class="dash-main-wrap">' +
       '<header class="dash-topbar">' +
       '<h2>' +
@@ -202,5 +216,6 @@
     navHref: navHref,
     mount: mount,
     BOTS: BOTS,
+    normalizeBotId: normalizeBotId,
   };
 })(typeof window !== 'undefined' ? window : this);

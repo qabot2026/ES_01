@@ -366,7 +366,7 @@ window.QA_CHAT_UI_CONFIG = {
 
     /**
      * Per-site full UI — page par QA_CONFIG.sitePreset set karo.
-     * Keys: receptionist (001) | greenValley (002) | lakeView (003)
+     * Keys: receptionist (10001) | greenValley (10002) | lakeView (10003)
      * Admin UI: /bot-settings/ — save overrides to data/site-presets.json
      * Extra page override: QA_CONFIG.ui = { common: {...}, desk: {...}, mob: {...} }
      */
