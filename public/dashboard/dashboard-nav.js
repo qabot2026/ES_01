@@ -1,7 +1,7 @@
 (function (global) {
   'use strict';
 
-  var NAV_ASSET_V = '20260611b';
+  var NAV_ASSET_V = '20260611c';
 
   function ensureBoot() {
     var root = document.documentElement;
@@ -46,6 +46,45 @@
     { id: '10002', name: 'Green Valley' },
     { id: '10003', name: 'Lake View' },
   ];
+  var botsLoaded = false;
+  var botsLoadPromise = null;
+
+  function loadBots() {
+    if (botsLoaded) return Promise.resolve(BOTS);
+    if (botsLoadPromise) return botsLoadPromise;
+    botsLoadPromise = fetch('/api/dashboard/bots', { credentials: 'same-origin' })
+      .then(function (res) {
+        return res.json();
+      })
+      .then(function (data) {
+        if (data && data.bots && data.bots.length) {
+          BOTS.length = 0;
+          data.bots.forEach(function (b) {
+            BOTS.push({ id: b.id, name: b.name });
+          });
+          if (data.defaultBid) DEFAULT_BOT_ID = data.defaultBid;
+        }
+        botsLoaded = true;
+        return BOTS;
+      })
+      .catch(function () {
+        botsLoaded = true;
+        return BOTS;
+      });
+    return botsLoadPromise;
+  }
+
+  function refreshBots() {
+    botsLoaded = false;
+    botsLoadPromise = null;
+    return loadBots();
+  }
+
+  function whenReady(fn) {
+    return loadBots().then(function () {
+      if (typeof fn === 'function') return fn();
+    });
+  }
 
   var BOT_PAGE_KEYS = [
     'uc-conversations',
@@ -61,11 +100,11 @@
     },
     {
       items: [
-        { key: 'uc-conversations', label: 'Chatbot conversations', icon: 'chart' },
+        { key: 'uc-conversations', label: 'Insights', icon: 'insights' },
         { key: 'queryanalytics', label: 'Customer questions', icon: 'search' },
         { key: 'appointments', label: 'Appointments', icon: 'calendar' },
         { key: 'documents', label: 'Customer uploads', icon: 'file' },
-        { key: 'uiux-setting', label: 'Chatbot appearance', icon: 'palette' },
+        { key: 'uiux-setting', label: 'Chatbot appearance', icon: 'brush' },
         { key: 'supersetting', label: 'Advanced configuration', icon: 'shield' },
       ],
     },
@@ -86,6 +125,10 @@
       '<path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
     chart:
       '<path d="M7.9 20A9 9 0 1 0 4 16.1L2 22z"/><path d="M8 12h.01M12 12h.01M16 12h.01"/>',
+    insights:
+      '<polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/>',
+    brush:
+      '<path d="m15 20-4-4 6.5-6.5a4.2 4.2 0 1 1 6 6L11 20"/><path d="M18.375 2.625a1 1 0 0 1 3 3l-9.013 9.014a2 2 0 0 1-.853.505l-2.873.84a.5.5 0 0 1-.62-.62l.84-2.873a2 2 0 0 1 .506-.852z"/>',
     search:
       '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/>',
     palette:
@@ -409,6 +452,12 @@
   function mount(opts) {
     opts = opts || {};
     ensureBoot();
+    if (!botsLoaded) {
+      loadBots().then(function () {
+        mount(opts);
+      });
+      return false;
+    }
     if (document.querySelector('.dash-shell')) {
       bindBotSelect(document.querySelector('.dash-shell'));
       bindSidebarExpand(document.querySelector('.dash-shell'));
@@ -451,7 +500,9 @@
   function mountPage(opts) {
     ensureBoot();
     linkAssets();
-    return mount(opts || {});
+    return whenReady(function () {
+      return mount(opts || {});
+    });
   }
 
   function updateTopbar(title, subtitle) {
@@ -475,6 +526,9 @@
     iconBadge: iconBadge,
     navIcon: navIcon,
     BOTS: BOTS,
+    loadBots: loadBots,
+    refreshBots: refreshBots,
+    whenReady: whenReady,
     normalizeBotId: normalizeBotId,
   };
 })(typeof window !== 'undefined' ? window : this);

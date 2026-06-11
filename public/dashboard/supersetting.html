@@ -5,39 +5,153 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Advanced configuration</title>
     <link rel="stylesheet" href="dashboard.css" />
-    <link rel="stylesheet" href="dashboard-nav.css?v=20260611b" />
+    <link rel="stylesheet" href="dashboard-nav.css?v=20260611c" />
+    <style>
+      .super-grid {
+        display: grid;
+        gap: 1.25rem;
+        max-width: 920px;
+      }
+      .super-card {
+        background: var(--dash-surface);
+        border: 1px solid var(--dash-border);
+        border-radius: var(--dash-radius);
+        padding: 1.25rem 1.35rem;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+      }
+      .super-card h3 {
+        margin: 0 0 0.35rem;
+        font-size: 1rem;
+        font-weight: 700;
+      }
+      .super-form {
+        display: grid;
+        gap: 0.85rem;
+        margin-top: 1rem;
+        max-width: 420px;
+      }
+      .super-form label {
+        display: grid;
+        gap: 0.35rem;
+        font-size: 0.8125rem;
+        font-weight: 600;
+        color: var(--dash-text);
+      }
+      .super-form input {
+        font: inherit;
+        padding: 0.55rem 0.65rem;
+        border: 1px solid var(--dash-border);
+        border-radius: 10px;
+      }
+      .super-form small {
+        font-weight: 400;
+        color: var(--dash-muted);
+      }
+      .super-form-status {
+        margin: 0.5rem 0 0;
+        font-size: 0.875rem;
+      }
+      .super-form-status--error {
+        color: #dc2626;
+      }
+      .super-form-status--ok {
+        color: #059669;
+      }
+      .super-bot-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.875rem;
+        margin-top: 0.75rem;
+      }
+      .super-bot-table th,
+      .super-bot-table td {
+        text-align: left;
+        padding: 0.55rem 0.35rem;
+        border-bottom: 1px solid var(--dash-border);
+        vertical-align: top;
+      }
+      .super-bot-table th {
+        color: var(--dash-muted);
+        font-weight: 600;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+      .super-bot-links a {
+        color: var(--dash-primary);
+        text-decoration: none;
+        font-weight: 600;
+      }
+      .super-bot-links a:hover {
+        text-decoration: underline;
+      }
+      .super-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.65rem;
+        margin-top: 1rem;
+      }
+      .super-dev-list {
+        margin: 0.75rem 0 0;
+        padding-left: 1.1rem;
+        color: var(--dash-muted);
+        font-size: 0.875rem;
+        line-height: 1.55;
+      }
+    </style>
   </head>
   <body>
     <div class="dash-page-content" style="display:none">
-      <section class="dash-recent" style="margin-top:0">
-        <p class="dash-muted" id="superBotLine">Advanced bot settings for the selected bot.</p>
-        <ul class="dash-muted" style="line-height:1.6;margin:1rem 0">
-          <li>Dialogflow events (FRESH, ENDCHAT) — edit in <code>company.config.js</code></li>
-          <li>Language list, speech-to-text, upload — <code>company.config.js</code></li>
-          <li>Agent orchestration — <code>SINGLE-AGENT-SETUP.md</code></li>
-          <li>Phrase translations — server data files</li>
-        </ul>
-        <p>
-          <a class="dash-btn dash-btn--primary" id="superUiLink" href="#">Open chatbot appearance</a>
-          <a class="dash-btn dash-btn--ghost" href="../company.config.js" target="_blank" rel="noopener">Open company.config.js</a>
-        </p>
-      </section>
+      <div class="super-grid">
+        <section class="super-card">
+          <h3>Add chatbot project</h3>
+          <p class="dash-muted" id="superBotLine">Loading…</p>
+          <form class="super-form" id="superAddBotForm">
+            <label>
+              Bot ID
+              <input id="superBotId" name="id" inputmode="numeric" pattern="[0-9]{5}" maxlength="5" placeholder="10004" required />
+              <small>Exactly 5 digits. Used in dashboard URLs and embed.</small>
+            </label>
+            <label>
+              Display name
+              <input id="superBotName" name="name" placeholder="Sunset Villas" required />
+              <small>Shown in the project switcher and chat header.</small>
+            </label>
+            <label>
+              Welcome event name
+              <input id="superWelcomeEvent" name="welcomeEventName" placeholder="START_SUNSET_VILLAS" />
+              <small>Dialogflow event for this site’s landing page. Leave empty for the main/home bot.</small>
+            </label>
+            <div>
+              <button type="submit" class="dash-btn dash-btn--primary">Create bot &amp; pages</button>
+              <p class="super-form-status" id="superFormStatus" hidden></p>
+            </div>
+          </form>
+        </section>
+
+        <section class="super-card">
+          <h3>Registered bots</h3>
+          <p class="dash-muted">Each bot automatically gets Insights, Customer questions, Chatbot appearance, and this page under <code>/bid=…/</code>.</p>
+          <div id="superBotList"></div>
+          <div class="super-actions">
+            <a class="dash-btn dash-btn--primary" id="superUiLink" href="#">Open chatbot appearance</a>
+            <a class="dash-btn dash-btn--ghost" href="../company.config.js" target="_blank" rel="noopener">Open company.config.js</a>
+          </div>
+        </section>
+
+        <section class="super-card">
+          <h3>Developer reference</h3>
+          <ul class="super-dev-list">
+            <li>Dialogflow events (FRESH, ENDCHAT) — <code>company.config.js</code></li>
+            <li>Languages, speech-to-text, uploads — <code>company.config.js</code> or Chatbot appearance</li>
+            <li>Agent orchestration — <code>SINGLE-AGENT-SETUP.md</code></li>
+            <li>On landing pages set <code>window.QA_CONFIG = { welcomeEventName: '…' }</code> before embed loads</li>
+          </ul>
+        </section>
+      </div>
     </div>
     <script src="desk-auth.js"></script>
-    <script src="dashboard-nav.js?v=20260611b"></script>
-    <script>
-      (function () {
-        var bid = DashboardNav.getBid();
-        var bot = DashboardNav.BOTS.find(function (b) { return b.id === bid; }) || DashboardNav.BOTS[0];
-        DashboardNav.mount({
-          active: 'supersetting',
-          title: 'Advanced configuration',
-          subtitle: bot.name + ' (Bot ID ' + bot.id + ')',
-        });
-        document.getElementById('superBotLine').textContent =
-          'Developer / advanced settings for ' + bot.name + ' (Bot ID ' + bot.id + ').';
-        document.getElementById('superUiLink').href = DashboardNav.bidPath(bid, 'uiux-setting');
-      })();
-    </script>
+    <script src="dashboard-nav.js?v=20260611c"></script>
+    <script src="supersetting.js?v=20260611c"></script>
   </body>
 </html>

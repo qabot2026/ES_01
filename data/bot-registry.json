@@ -1,0 +1,26 @@
+{
+  "bots": [
+    {
+      "id": "10001",
+      "name": "Receptionist",
+      "sitePreset": "receptionist",
+      "welcomeEventName": "",
+      "themeKey": "receptionist"
+    },
+    {
+      "id": "10002",
+      "name": "Green Valley",
+      "sitePreset": "greenValley",
+      "welcomeEventName": "START_GREEN_VALLEY",
+      "themeKey": "greenValley"
+    },
+    {
+      "id": "10003",
+      "name": "Lake View",
+      "sitePreset": "lakeView",
+      "welcomeEventName": "START_LAKE_VIEW",
+      "themeKey": "lakeView"
+    }
+  ],
+  "updatedAt": "2026-06-11T14:24:30.035Z"
+}

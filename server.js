@@ -71,6 +71,42 @@ app.use((req, res, next) => {
   next();
 });
 
+/** Dynamic bot settings page — works for any registered 5-digit bot ID */
+app.get('/bot-settings/:botId.html', (req, res) => {
+  const botId = String(req.params.botId || '').trim();
+  if (!/^\d{5}$/.test(botId)) {
+    return res.status(404).type('text/plain').send('Not found');
+  }
+  const project = sitePresetsStore.resolveProject(botId);
+  if (!project) {
+    return res.status(404).type('text/plain').send('Unknown bot ID');
+  }
+  const navV = '20260611c';
+  res.type('html').send(
+    '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8" />' +
+      '<meta name="viewport" content="width=device-width, initial-scale=1.0" />' +
+      '<meta name="robots" content="noindex, nofollow" />' +
+      '<title>Bot settings — ' +
+      botId +
+      ' ' +
+      project.name +
+      '</title>' +
+      '<link rel="stylesheet" href="/bot-settings/bot-settings.css" />' +
+      '</head><body data-page="project">' +
+      '<div id="app"></div>' +
+      '<script>window.BOT_ID = "' +
+      botId +
+      '";</script>' +
+      '<script src="/company.config.js"></script>' +
+      '<script src="/dashboard/desk-auth.js"></script>' +
+      '<script src="/dashboard/dashboard-nav.js?v=' +
+      navV +
+      '"></script>' +
+      '<script src="/bot-settings/bot-settings.js"></script>' +
+      '</body></html>'
+  );
+});
+
 app.use(express.static(publicDir, {
   maxAge: process.env.NODE_ENV === 'production' ? '1d' : 0,
   etag: true,
@@ -1229,6 +1265,23 @@ app.post('/api/bot-settings/:botId', requireDeskAuth, (req, res) => {
     return res.status(result.error === 'Unknown bot ID' ? 404 : 400).json(result);
   }
   res.json(result);
+});
+
+app.get('/api/bot-registry', (_req, res) => {
+  res.json({ ok: true, bots: sitePresetsStore.listProjects() });
+});
+
+app.post('/api/bot-registry', requireDeskAuth, (req, res) => {
+  const body = req.body || {};
+  const result = sitePresetsStore.addProject({
+    id: body.id,
+    name: body.name,
+    welcomeEventName: body.welcomeEventName,
+  });
+  if (!result.ok) {
+    return res.status(400).json(result);
+  }
+  res.status(201).json(result);
 });
 
 Object.entries(sitePresetsStore.LEGACY_BOT_IDS).forEach(([legacyId, botId]) => {
