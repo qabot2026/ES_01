@@ -53,6 +53,7 @@
     window.QA_CONFIG = {
       apiBase: window.location.origin.replace(/\/$/, ''),
       sitePreset: project.sitePreset,
+      previewViewport: 'desk',
     };
     if (project.welcomeEventName) {
       window.QA_CONFIG.welcomeEventName = project.welcomeEventName;
@@ -70,10 +71,17 @@
     if (hint) hint.textContent = project.name + ' — live preview';
 
     setTimeout(function () {
-      if (widgetInstance && typeof widgetInstance.open === 'function') {
+      if (!widgetInstance) return;
+      if (typeof widgetInstance.applyLayout === 'function') {
+        widgetInstance.applyLayout();
+      }
+      if (typeof widgetInstance.applyTheme === 'function') {
+        widgetInstance.applyTheme();
+      }
+      if (typeof widgetInstance.open === 'function') {
         widgetInstance.open();
       }
-    }, 120);
+    }, 150);
   }
 
   function schedulePreview(payload) {

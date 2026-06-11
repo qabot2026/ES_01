@@ -73,6 +73,9 @@
   }
 
   function isMobileViewport() {
+    var qa = global.QA_CONFIG || {};
+    if (qa.previewViewport === 'desk') return false;
+    if (qa.previewViewport === 'mob') return true;
     return !!(global.matchMedia && global.matchMedia('(max-width: 768px)').matches);
   }
 

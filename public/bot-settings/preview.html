@@ -2,29 +2,40 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=440, initial-scale=1" />
   <title>Chatbot preview</title>
   <link rel="stylesheet" href="/widget/chat-widget.css" />
   <style>
     html, body {
       margin: 0;
+      width: 100%;
+      min-width: 440px;
       height: 100%;
       overflow: hidden;
       background: linear-gradient(160deg, #f0f4f8 0%, #e8eef5 100%);
     }
     body {
       position: relative;
+      min-height: 640px;
     }
     .preview-hint {
       position: absolute;
-      top: 12px;
-      left: 12px;
-      right: 12px;
+      top: 8px;
+      left: 0;
+      right: 0;
       z-index: 0;
-      font: 13px/1.4 system-ui, sans-serif;
-      color: #64748b;
+      font: 12px/1.4 system-ui, sans-serif;
+      color: #94a3b8;
       text-align: center;
       pointer-events: none;
+    }
+    /* Desktop-sized preview — match live embed (400px panel + launcher) */
+    .qa-widget {
+      right: 16px !important;
+      bottom: 16px !important;
+    }
+    .qa-panel {
+      width: min(400px, calc(100% - 32px)) !important;
     }
   </style>
 </head>
