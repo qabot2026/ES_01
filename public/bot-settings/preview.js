@@ -3,6 +3,7 @@
 
   var widgetInstance = null;
   var bootTimer = null;
+  var currentSitePreset = null;
 
   function deepMerge(base, over) {
     var out = {};
@@ -34,15 +35,15 @@
       n.parentNode.removeChild(n);
     });
     widgetInstance = null;
+    currentSitePreset = null;
     window.__qaWidgetLoaded = false;
   }
 
-  function applyPreview(payload) {
-    if (!payload || !payload.project) return;
+  function mergePreviewConfig(payload) {
     var project = payload.project;
     var preset = payload.preset || {};
     var cfg = window.QA_CHAT_UI_CONFIG;
-    if (!cfg || !cfg.common) return;
+    if (!cfg || !cfg.common) return null;
 
     if (!cfg.common.sitePresets) cfg.common.sitePresets = {};
     cfg.common.sitePresets[project.sitePreset] = deepMerge(
@@ -59,16 +60,22 @@
       window.QA_CONFIG.welcomeEventName = project.welcomeEventName;
     }
 
-    destroyWidget();
+    return project;
+  }
 
+  function updateHint(project) {
+    var hint = document.getElementById('previewHint');
+    if (hint) hint.textContent = project.name + ' — live preview';
+  }
+
+  function bootWidget(project) {
     if (!window.QualityAssistantWidget) return;
 
     widgetInstance = new window.QualityAssistantWidget({
       apiBase: window.QA_CONFIG.apiBase,
     });
-
-    var hint = document.getElementById('previewHint');
-    if (hint) hint.textContent = project.name + ' — live preview';
+    currentSitePreset = project.sitePreset;
+    updateHint(project);
 
     setTimeout(function () {
       if (!widgetInstance) return;
@@ -81,7 +88,47 @@
       if (typeof widgetInstance.open === 'function') {
         widgetInstance.open();
       }
-    }, 150);
+    }, 50);
+  }
+
+  function refreshWidget(project) {
+    if (!widgetInstance) return;
+    updateHint(project);
+
+    if (typeof widgetInstance.refreshUiFromConfig === 'function') {
+      widgetInstance.refreshUiFromConfig();
+    } else {
+      if (typeof widgetInstance.applyTheme === 'function') {
+        widgetInstance.applyTheme();
+      }
+      if (typeof widgetInstance.applyLayout === 'function') {
+        widgetInstance.applyLayout();
+      }
+      if (typeof widgetInstance.updateLauncherStripVisibility === 'function') {
+        widgetInstance.updateLauncherStripVisibility();
+      }
+      if (typeof widgetInstance.applyFeatureToggles === 'function') {
+        widgetInstance.applyFeatureToggles();
+      }
+    }
+
+    if (!widgetInstance.isOpen && typeof widgetInstance.open === 'function') {
+      widgetInstance.open();
+    }
+  }
+
+  function applyPreview(payload) {
+    if (!payload || !payload.project) return;
+    var project = mergePreviewConfig(payload);
+    if (!project) return;
+
+    if (widgetInstance && currentSitePreset === project.sitePreset) {
+      refreshWidget(project);
+      return;
+    }
+
+    destroyWidget();
+    bootWidget(project);
   }
 
   function schedulePreview(payload) {
@@ -89,7 +136,7 @@
     bootTimer = setTimeout(function () {
       bootTimer = null;
       applyPreview(payload);
-    }, 280);
+    }, 60);
   }
 
   window.addEventListener('message', function (ev) {

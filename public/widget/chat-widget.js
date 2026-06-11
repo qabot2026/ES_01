@@ -1162,6 +1162,18 @@
       }
       if (st.maxWidthPx) strip.style.maxWidth = st.maxWidthPx + 'px';
     }
+
+    if (global.QA_CONFIG && global.QA_CONFIG.previewViewport) {
+      var previewW = win.widthPx || 400;
+      var previewH = win.heightPx || 520;
+      panel.style.width = previewW + 'px';
+      panel.style.maxWidth = previewW + 'px';
+      panel.style.height = previewH + 'px';
+      panel.style.maxHeight = previewH + 'px';
+      this.root.style.setProperty('--qa-panel-height', previewH + 'px');
+      this.root.classList.add('qa-widget--preview');
+    }
+
     this.syncLauncherStack();
   };
 
@@ -1220,6 +1232,47 @@
     if (powered) {
       powered.style.display = pb && pb.enabled === false ? 'none' : '';
     }
+  };
+
+  QualityAssistantWidget.prototype.refreshUiFromConfig = function () {
+    if (!this.root) return;
+    var root = getRootCfg();
+    var hdr = root.header || {};
+    var welcome = root.welcome || {};
+
+    this.title = hdr.title || this.title;
+    this.subtitle = hdr.subtitle || this.subtitle;
+    if (welcome.title != null) this.welcomeTitle = welcome.title;
+    if (welcome.body != null) this.welcomeBody = welcome.body;
+
+    var titleEl = this.root.querySelector('.qa-header__title');
+    var subEl = this.root.querySelector('.qa-header__subtitle');
+    var panelEl = this.root.querySelector('.qa-panel');
+    if (titleEl) titleEl.textContent = this.title;
+    if (subEl) subEl.textContent = this.subtitle;
+    if (panelEl) panelEl.setAttribute('aria-label', this.title + ' chat');
+
+    var titleIconUrl = hdr.chatTitleIconUrl || hdr.headerIconUrl || '';
+    var iconWrap = this.root.querySelector('.qa-header__icon');
+    if (iconWrap) {
+      if (hdr.showHeaderIcon === false) {
+        iconWrap.style.display = 'none';
+      } else {
+        iconWrap.style.display = '';
+        if (titleIconUrl) {
+          iconWrap.innerHTML =
+            '<img src="' +
+            this.escape(titleIconUrl) +
+            '" alt="" style="width:100%;height:100%;border-radius:12px;object-fit:cover"/>';
+        }
+      }
+    }
+
+    this.updateChatbotVisibility();
+    this.applyTheme();
+    this.applyLayout();
+    this.updateLauncherStripVisibility();
+    this.applyFeatureToggles();
   };
 
   QualityAssistantWidget.prototype.maybeAutoOpen = function () {

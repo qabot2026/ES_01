@@ -332,7 +332,7 @@
 
   function pushPreviewSoon() {
     if (previewPushTimer) clearTimeout(previewPushTimer);
-    previewPushTimer = setTimeout(pushPreview, 300);
+    previewPushTimer = setTimeout(pushPreview, 80);
   }
 
   function pushPreview() {

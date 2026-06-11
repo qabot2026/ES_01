@@ -90,7 +90,7 @@ a { color: var(--primary); }
 
 .settings-split {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 460px;
+  grid-template-columns: minmax(0, 1fr) 520px;
   gap: 1rem;
   align-items: start;
 }
@@ -102,7 +102,7 @@ a { color: var(--primary); }
 .settings-col-right {
   position: sticky;
   top: 4.75rem;
-  height: calc(100vh - 5.75rem);
+  height: 720px;
   max-height: calc(100vh - 5.75rem);
   background: var(--surface);
   border: 1px solid var(--border);
@@ -133,8 +133,9 @@ a { color: var(--primary); }
 #previewFrame {
   flex: 1;
   width: 100%;
-  min-height: 0;
-  height: 100%;
+  min-height: 660px;
+  height: 660px;
+  max-height: 660px;
   border: 0;
   background: #eef2f7;
 }
