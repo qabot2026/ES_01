@@ -1,7 +1,7 @@
 (function (global) {
   'use strict';
 
-  var NAV_ASSET_V = '20260610d';
+  var NAV_ASSET_V = '20260610e';
   var DEFAULT_BOT_ID = '10001';
   var BOTS = [
     { id: '10001', name: 'Receptionist' },
@@ -16,20 +16,31 @@
     'supersetting',
   ];
 
-  var BOT_PAGES = [
-    { key: 'uc-conversations', label: 'Chatbot conversations', icon: 'chart' },
-    { key: 'queryanalytics', label: 'Customer questions', icon: 'search' },
-    { key: 'uiux-setting', label: 'Chatbot appearance', icon: 'palette' },
-    { key: 'supersetting', label: 'Advanced configuration', icon: 'shield' },
-  ];
-
-  var COMMON_PAGES = [
-    { key: 'ua-conversations', label: 'Agent conversations', icon: 'users' },
-    { key: 'live-agent', label: 'Live chat inbox', icon: 'headset' },
-    { key: 'appointments', label: 'Appointments', icon: 'calendar' },
-    { key: 'live-agent/settings', label: 'Live chat setup', icon: 'cog' },
-    { key: 'documents', label: 'Customer uploads', icon: 'file' },
-    { key: 'manage-access', label: 'Access permissions', icon: 'lock' },
+  /** Sidebar order: home → daily work → setup → admin */
+  var NAV_SECTIONS = [
+    {
+      items: [{ key: 'home', label: 'Home', icon: 'home' }],
+    },
+    {
+      items: [
+        { key: 'live-agent', label: 'Live chat inbox', icon: 'headset' },
+        { key: 'uc-conversations', label: 'Chatbot conversations', icon: 'chart' },
+        { key: 'ua-conversations', label: 'Agent conversations', icon: 'users' },
+        { key: 'queryanalytics', label: 'Customer questions', icon: 'search' },
+        { key: 'appointments', label: 'Appointments', icon: 'calendar' },
+        { key: 'documents', label: 'Customer uploads', icon: 'file' },
+      ],
+    },
+    {
+      items: [
+        { key: 'uiux-setting', label: 'Chatbot appearance', icon: 'palette' },
+        { key: 'live-agent/settings', label: 'Live chat setup', icon: 'cog' },
+        { key: 'supersetting', label: 'Advanced configuration', icon: 'shield' },
+      ],
+    },
+    {
+      items: [{ key: 'manage-access', label: 'Access permissions', icon: 'lock' }],
+    },
   ];
 
   var ICONS = {
@@ -198,22 +209,21 @@
       );
     }
 
-    var botRows = BOT_PAGES.map(function (p) {
-      return navRow(p.key, p.label, p.icon);
-    }).join('');
-    var commonRows = COMMON_PAGES.map(function (p) {
-      return navRow(p.key, p.label, p.icon);
-    }).join('');
+    var navHtml = '';
+    NAV_SECTIONS.forEach(function (section, index) {
+      if (index > 0) {
+        navHtml += '<div class="dash-nav-sep" aria-hidden="true"></div>';
+      }
+      section.items.forEach(function (item) {
+        navHtml += navRow(item.key, item.label, item.icon);
+      });
+    });
 
     return (
       '<aside class="dash-sidebar" aria-label="Dashboard navigation">' +
       '<div class="dash-sidebar__inner">' +
       '<nav class="dash-nav-list" aria-label="Main navigation">' +
-      navRow('home', 'Home', 'home') +
-      '<div class="dash-nav-sep" aria-hidden="true"></div>' +
-      botRows +
-      '<div class="dash-nav-sep" aria-hidden="true"></div>' +
-      commonRows +
+      navHtml +
       '</nav>' +
       '</div>' +
       '</aside>'

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Dashboard</title>
     <link rel="stylesheet" href="dashboard.css" />
-    <link rel="stylesheet" href="dashboard-nav.css?v=20260610d" />
+    <link rel="stylesheet" href="dashboard-nav.css?v=20260610e" />
   </head>
   <body>
     <div class="dash-page-content" style="display:none">
@@ -13,7 +13,7 @@
       <div class="dash-home-grid" id="dash-home-grid"></div>
     </div>
     <script src="desk-auth.js"></script>
-    <script src="dashboard-nav.js?v=20260610d"></script>
+    <script src="dashboard-nav.js?v=20260610e"></script>
     <script>
       (function () {
         var bid = DashboardNav.getBid();
@@ -28,33 +28,29 @@
         var grid = document.getElementById('dash-home-grid');
         if (!grid) return;
 
-        var botCards = [
-          { key: 'uc-conversations', label: 'Chatbot conversations', desc: 'Leads, transcripts & chat stats' },
-          { key: 'queryanalytics', label: 'Customer questions', desc: 'Answered vs unanswered queries' },
-          { key: 'uiux-setting', label: 'Chatbot appearance', desc: 'Colors, text, launcher & welcome screen' },
-          { key: 'supersetting', label: 'Advanced configuration', desc: 'Power-user bot options' },
-        ];
-        var commonCards = [
-          { key: 'ua-conversations', label: 'Agent conversations', desc: 'Chats handled by your team' },
-          { key: 'live-agent', label: 'Live chat inbox', desc: 'Reply to visitors in real time' },
-          { key: 'appointments', label: 'Appointments', desc: 'Review and approve bookings' },
-          { key: 'live-agent/settings', label: 'Live chat setup', desc: 'Agents, departments & viewer secret' },
-          { key: 'documents', label: 'Customer uploads', desc: 'Files sent via chat or forms' },
-          { key: 'manage-access', label: 'Access permissions', desc: 'Who can open which pages' },
+        var homeCards = [
+          { key: 'live-agent', label: 'Live chat inbox', desc: 'Reply to visitors in real time', kind: 'common' },
+          { key: 'uc-conversations', label: 'Chatbot conversations', desc: 'Leads, transcripts & chat stats', kind: 'bot' },
+          { key: 'ua-conversations', label: 'Agent conversations', desc: 'Chats handled by your team', kind: 'common' },
+          { key: 'queryanalytics', label: 'Customer questions', desc: 'Answered vs unanswered queries', kind: 'bot' },
+          { key: 'appointments', label: 'Appointments', desc: 'Review and approve bookings', kind: 'common' },
+          { key: 'documents', label: 'Customer uploads', desc: 'Files sent via chat or forms', kind: 'common' },
+          { key: 'uiux-setting', label: 'Chatbot appearance', desc: 'Colors, text, launcher & welcome screen', kind: 'bot' },
+          { key: 'live-agent/settings', label: 'Live chat setup', desc: 'Agents, departments & viewer secret', kind: 'common' },
+          { key: 'supersetting', label: 'Advanced configuration', desc: 'Power-user bot options', kind: 'bot' },
+          { key: 'manage-access', label: 'Access permissions', desc: 'Who can open which pages', kind: 'common' },
         ];
 
-        function card(item, kind) {
+        function card(item) {
           var href = DashboardNav.navHref(item.key, bid);
           return (
-            '<a class="dash-home-card dash-home-card--' + kind + '" href="' + href + '">' +
+            '<a class="dash-home-card dash-home-card--' + item.kind + '" href="' + href + '">' +
             '<strong>' + item.label + '</strong>' +
             '<span>' + item.desc + '</span></a>'
           );
         }
 
-        grid.innerHTML =
-          botCards.map(function (c) { return card(c, 'bot'); }).join('') +
-          commonCards.map(function (c) { return card(c, 'common'); }).join('');
+        grid.innerHTML = homeCards.map(card).join('');
       })();
     </script>
   </body>
