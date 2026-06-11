@@ -1284,6 +1284,15 @@ app.post('/api/bot-registry', requireDeskAuth, (req, res) => {
   res.status(201).json(result);
 });
 
+app.delete('/api/bot-registry/:botId', requireDeskAuth, (req, res) => {
+  const result = sitePresetsStore.deleteProject(req.params.botId);
+  if (!result.ok) {
+    const status = result.error === 'Bot not found' ? 404 : 400;
+    return res.status(status).json(result);
+  }
+  res.json(result);
+});
+
 Object.entries(sitePresetsStore.LEGACY_BOT_IDS).forEach(([legacyId, botId]) => {
   app.get(`/bot-settings/${legacyId}.html`, (_req, res) => {
     res.redirect(301, `/bot-settings/${botId}.html`);

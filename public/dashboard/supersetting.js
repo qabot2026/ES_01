@@ -25,12 +25,20 @@
     }
     el.innerHTML =
       '<table class="super-bot-table" aria-label="Registered bots">' +
-      '<thead><tr><th>Bot ID</th><th>Name</th><th>Welcome event</th><th>Pages</th></tr></thead><tbody>' +
+      '<thead><tr><th>Bot ID</th><th>Name</th><th>Welcome event</th><th>Pages</th><th></th></tr></thead><tbody>' +
       bots
         .map(function (b) {
           var event = b.welcomeEventName
             ? '<code>' + esc(b.welcomeEventName) + '</code>'
             : '<span class="dash-muted">(default / home)</span>';
+          var canDelete = b.id !== '10001' && bots.length > 1;
+          var deleteCell = canDelete
+            ? '<button type="button" class="super-delete-btn" data-bot-id="' +
+              esc(b.id) +
+              '" data-bot-name="' +
+              esc(b.name) +
+              '">Delete</button>'
+            : '<span class="dash-muted" title="Default bot cannot be removed">—</span>';
           return (
             '<tr>' +
             '<td><code>' +
@@ -49,11 +57,56 @@
             '<a href="' +
             nav.bidPath(b.id, 'uiux-setting') +
             '">Appearance</a>' +
+            '</td>' +
+            '<td class="super-bot-actions">' +
+            deleteCell +
             '</td></tr>'
           );
         })
         .join('') +
       '</tbody></table>';
+
+    el.querySelectorAll('.super-delete-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        deleteBot(btn.getAttribute('data-bot-id'), btn.getAttribute('data-bot-name'));
+      });
+    });
+  }
+
+  function deleteBot(botId, botName) {
+    var label = botName ? botName + ' (' + botId + ')' : botId;
+    if (!window.confirm('Delete bot ' + label + '? This removes it from the dashboard and clears its appearance preset. This cannot be undone.')) {
+      return;
+    }
+    setStatus('Deleting…', false);
+
+    fetch(apiBase() + '/api/bot-registry/' + encodeURIComponent(botId), {
+      method: 'DELETE',
+      credentials: 'same-origin',
+      headers: auth.authHeaders(),
+    })
+      .then(function (res) {
+        return res.json().then(function (body) {
+          return { ok: res.ok, body: body };
+        });
+      })
+      .then(function (result) {
+        if (!result.ok || !result.body.ok) {
+          throw new Error((result.body && result.body.error) || 'Could not delete bot');
+        }
+        setStatus('Bot ' + label + ' deleted.', false);
+        var currentBid = nav.getBid();
+        return nav.refreshBots().then(function () {
+          if (currentBid === botId && nav.BOTS.length) {
+            window.location.href = '/dashboard/supersetting.html?bid=' + encodeURIComponent(nav.BOTS[0].id);
+            return;
+          }
+          return loadRegistry();
+        });
+      })
+      .catch(function (err) {
+        setStatus(err.message || 'Request failed', true);
+      });
   }
 
   function setStatus(msg, isError) {
