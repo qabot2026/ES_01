@@ -2,6 +2,7 @@
   'use strict';
 
   var PROJECT_ID = String(window.BOT_PROJECT_ID || '').trim();
+  var BID_BY_PROJECT = { '001': '10001', '002': '10002', '003': '10003' };
   var currentProject = null;
   var previewFrame = null;
   var previewReady = false;
@@ -402,7 +403,7 @@
       '<div class="settings-col-left">' +
       '<div class="settings-toolbar">' +
       '<div class="settings-toolbar__actions">' +
-      '<a class="btn ghost" href="index.html">All projects</a>' +
+      '<a class="btn ghost" href="/dashboard/">Dashboard</a>' +
       '<button type="button" class="btn primary" id="saveBtn">Save settings</button>' +
       '</div>' +
       '<span class="status" id="saveStatus" role="status"></span>' +
@@ -486,9 +487,12 @@
             '<p class="hint">sitePreset: <code>' +
             p.sitePreset +
             '</code></p>' +
+            (p.bid
+              ? '<p class="hint">Bot ID <code>' + p.bid + '</code></p>'
+              : '') +
             '<p style="margin-top:0.75rem"><a class="btn primary" href="' +
             p.settingsPath +
-            '">Open settings</a></p>';
+            '">Open UI / UX settings</a></p>';
           root.appendChild(card);
         });
       })

@@ -20,6 +20,7 @@ const appointmentsView = require('./lib/appointments-view');
 const appointmentStatus = require('./lib/appointment-status-store');
 const qaMode = require('./lib/qa-mode');
 const sitePresetsStore = require('./lib/site-presets-store');
+const dashboardBots = require('./lib/dashboard-bots');
 
 const app = express();
 const PORT = process.env.PORT || 4567;
@@ -703,6 +704,27 @@ app.get('/conversations.html', (_req, res) => {
   res.redirect(301, '/uc-conversations');
 });
 
+/** Dashboard bot-scoped URLs: /bid=10001/uc-conversations or /bid/10001/uc-conversations */
+function handleDashboardBidRoute(req, res) {
+  const m = req.path.match(/^\/bid[=/](\d{5})\/(.+)$/);
+  if (!m) {
+    return res.status(404).send('Not found');
+  }
+  const bid = m[1];
+  const slug = decodeURIComponent(m[2]).replace(/\/$/, '');
+  if (!dashboardBots.resolveBid(bid)) {
+    return res.status(404).send('Unknown bot ID');
+  }
+  const target = dashboardBots.resolvePageTarget(slug, bid);
+  if (!target || !target.redirect) {
+    return res.status(404).send('Unknown dashboard page');
+  }
+  res.redirect(302, target.redirect);
+}
+
+app.get(/^\/bid=(\d{5})\/.+$/, handleDashboardBidRoute);
+app.get(/^\/bid\/(\d{5})\/.+$/, handleDashboardBidRoute);
+
 function setConversationsSheetCors(req, res) {
   const origin =
     typeof req.headers.origin === 'string' ? req.headers.origin.trim() : '';
@@ -1174,8 +1196,27 @@ app.get('/api/site-presets/public', (_req, res) => {
   res.json({ sitePresets: sitePresetsStore.getPublicOverrides() });
 });
 
+app.get('/api/dashboard/bots', (_req, res) => {
+  res.json({
+    defaultBid: dashboardBots.defaultBid(),
+    bots: dashboardBots.listBots(),
+  });
+});
+
+app.get('/api/dashboard/nav', (req, res) => {
+  const bid = req.query.bid || dashboardBots.defaultBid();
+  res.json(dashboardBots.navSections(bid));
+});
+
 app.get('/api/bot-settings', (_req, res) => {
-  res.json({ projects: sitePresetsStore.listProjects() });
+  const projects = sitePresetsStore.listProjects().map((p) => {
+    const bot = Object.values(dashboardBots.BY_BID).find((b) => b.projectId === p.id);
+    return Object.assign({}, p, {
+      bid: bot ? bot.bid : null,
+      settingsPath: bot ? dashboardBots.bidPath(bot.bid, 'uiux-setting') : p.settingsPath,
+    });
+  });
+  res.json({ projects });
 });
 
 app.get('/api/bot-settings/:projectId', (req, res) => {

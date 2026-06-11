@@ -3,36 +3,59 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-          <title>Chat Analytics</title>
+    <title>Dashboard</title>
     <link rel="stylesheet" href="dashboard.css" />
+    <link rel="stylesheet" href="dashboard-nav.css" />
   </head>
   <body>
-    <div class="dash-app">
-      <header class="dash-header">
-        <div>
-          <h1>Chat Analytics</h1>
-          <p class="dash-muted">
-            <a href="/uc-conversations">Open conversation leads dashboard</a> (Google Sheet inbox + KPIs)
-          </p>
-        </div>
-        <nav class="dash-nav">
-          <a href="/uc-conversations" class="dash-btn dash-btn--primary">Conversation leads</a>
-          <a href="query-analytics.html" class="dash-btn dash-btn--ghost">Query analytics</a>
-          <a href="documents.html" class="dash-btn dash-btn--ghost">Customer documents</a>
-          <a href="appointments.html" class="dash-btn dash-btn--ghost">Appointments</a>
-          <a href="../live-agent/" class="dash-btn dash-btn--ghost">Service desk</a>
-          <button type="button" id="dash-refresh" class="dash-btn dash-btn--primary">Refresh</button>
-        </nav>
-      </header>
-      <main class="dash-grid" id="dash-cards">
-        <p class="dash-loading">Loading…</p>
-      </main>
-      <section class="dash-recent">
-        <h2>Recent sessions</h2>
-        <div id="dash-recent-list" class="dash-recent-list"></div>
-      </section>
+    <div class="dash-page-content" style="display:none">
+      <p class="dash-muted" id="dash-home-intro">Select a section below or use the sidebar. Bot-specific pages follow the active bot.</p>
+      <div class="dash-home-grid" id="dash-home-grid"></div>
     </div>
     <script src="desk-auth.js"></script>
-    <script src="dashboard.js"></script>
+    <script src="dashboard-nav.js"></script>
+    <script>
+      (function () {
+        var bid = DashboardNav.getBid();
+        var bot = DashboardNav.BOTS.find(function (b) { return b.bid === bid; }) || DashboardNav.BOTS[0];
+
+        DashboardNav.mount({
+          active: 'home',
+          title: 'Dashboard home',
+          subtitle: 'Bot: ' + bot.name + ' (ID ' + bot.bid + ') — change bot in the sidebar dropdown',
+        });
+
+        var grid = document.getElementById('dash-home-grid');
+        if (!grid) return;
+
+        var botCards = [
+          { key: 'uc-conversations', label: 'User chatbot analytics', desc: 'Visual chat stats & leads' },
+          { key: 'queryanalytics', label: 'Query analytics', desc: 'Answered vs unanswered queries' },
+          { key: 'uiux-setting', label: 'UI / UX settings', desc: 'Chatbot look & behaviour' },
+          { key: 'supersetting', label: 'Super settings', desc: 'Advanced bot configuration' },
+        ];
+        var commonCards = [
+          { key: 'ua-conversations', label: 'User agent analytics', desc: 'Human agent conversations' },
+          { key: 'live-agent', label: 'Service desk', desc: 'Live agent chat panel' },
+          { key: 'appointments', label: 'Appointments', desc: 'Booked appointments desk' },
+          { key: 'live-agent/settings', label: 'Service desk settings', desc: 'Live chat configuration' },
+          { key: 'documents', label: 'Documents', desc: 'Files saved on bucket' },
+          { key: 'manage-access', label: 'Manage access', desc: 'Who can open which pages' },
+        ];
+
+        function card(item, kind) {
+          var href = DashboardNav.navHref(item.key, bid);
+          return (
+            '<a class="dash-home-card dash-home-card--' + kind + '" href="' + href + '">' +
+            '<strong>' + item.label + '</strong>' +
+            '<span>' + item.desc + '</span></a>'
+          );
+        }
+
+        grid.innerHTML =
+          botCards.map(function (c) { return card(c, 'bot'); }).join('') +
+          commonCards.map(function (c) { return card(c, 'common'); }).join('');
+      })();
+    </script>
   </body>
 </html>

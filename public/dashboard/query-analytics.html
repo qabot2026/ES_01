@@ -5,22 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Query analytics</title>
     <link rel="stylesheet" href="dashboard.css" />
+    <link rel="stylesheet" href="dashboard-nav.css" />
     <link rel="stylesheet" href="query-analytics.css" />
   </head>
   <body>
+    <div class="dash-page-content" style="display:none">
     <div class="dash-app qa-app">
-      <header class="dash-header">
-        <div>
-          <h1>Query analytics</h1>
-          <p class="dash-muted">What visitors asked, how often, and whether the bot answered or fell back</p>
-        </div>
-        <nav class="dash-nav">
-          <a href="index.html" class="dash-btn dash-btn--ghost">Dashboard</a>
-          <a href="/uc-conversations" class="dash-btn dash-btn--ghost">Conversation leads</a>
-          <a href="documents.html" class="dash-btn dash-btn--ghost">Documents</a>
-          <button type="button" id="qa-refresh" class="dash-btn dash-btn--primary">Refresh</button>
-        </nav>
-      </header>
+      <div class="qa-toolbar-row" style="display:flex;justify-content:flex-end;margin-bottom:0.75rem">
+        <button type="button" id="qa-refresh" class="dash-btn dash-btn--primary">Refresh</button>
+      </div>
 
       <section id="qa-unlock" class="qa-unlock hidden" aria-label="Unlock query analytics">
         <h2>Viewer secret required</h2>
@@ -174,8 +167,17 @@
         </div>
       </section>
     </div>
+    </div>
     <script src="desk-auth.js"></script>
+    <script src="dashboard-nav.js"></script>
     <script src="date-display.js"></script>
     <script src="query-analytics.js"></script>
+    <script>
+      DashboardNav.mount({
+        active: 'queryanalytics',
+        title: 'Query analytics',
+        subtitle: 'Answered and unanswered queries for the selected bot',
+      });
+    </script>
   </body>
 </html>

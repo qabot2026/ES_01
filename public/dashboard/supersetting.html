@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Super settings</title>
+    <link rel="stylesheet" href="dashboard.css" />
+    <link rel="stylesheet" href="dashboard-nav.css" />
+  </head>
+  <body>
+    <div class="dash-page-content" style="display:none">
+      <section class="dash-recent" style="margin-top:0">
+        <p class="dash-muted" id="superBotLine">Advanced bot settings for the selected bot.</p>
+        <ul class="dash-muted" style="line-height:1.6;margin:1rem 0">
+          <li>Dialogflow events (FRESH, ENDCHAT) — edit in <code>company.config.js</code></li>
+          <li>Language list, speech-to-text, upload — <code>company.config.js</code></li>
+          <li>Agent orchestration — <code>SINGLE-AGENT-SETUP.md</code></li>
+          <li>Phrase translations — server data files</li>
+        </ul>
+        <p>
+          <a class="dash-btn dash-btn--primary" id="superUiLink" href="#">Open UI / UX settings</a>
+          <a class="dash-btn dash-btn--ghost" href="../company.config.js" target="_blank" rel="noopener">Open company.config.js</a>
+        </p>
+      </section>
+    </div>
+    <script src="desk-auth.js"></script>
+    <script src="dashboard-nav.js"></script>
+    <script>
+      (function () {
+        var bid = DashboardNav.getBid();
+        var bot = DashboardNav.BOTS.find(function (b) { return b.bid === bid; }) || DashboardNav.BOTS[0];
+        DashboardNav.mount({
+          active: 'supersetting',
+          title: 'Super settings',
+          subtitle: bot.name + ' (Bot ID ' + bot.bid + ')',
+        });
+        document.getElementById('superBotLine').textContent =
+          'Developer / advanced settings for ' + bot.name + ' (Bot ID ' + bot.bid + ').';
+        document.getElementById('superUiLink').href = DashboardNav.bidPath(bid, 'uiux-setting');
+      })();
+    </script>
+  </body>
+</html>
