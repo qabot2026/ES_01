@@ -194,10 +194,20 @@
       );
     }
 
-    function textLink(key, label) {
+    function rowLink(key, label, iconName) {
       var href = navHref(key, botId);
       var cls = 'dash-nav-link' + (activeKey === key ? ' is-active' : '');
-      return '<a class="' + cls + '" href="' + href + '">' + label + '</a>';
+      return (
+        '<a class="' +
+        cls +
+        '" href="' +
+        href +
+        '">' +
+        navIcon(iconName) +
+        '<span class="dash-nav-label">' +
+        label +
+        '</span></a>'
+      );
     }
 
     var railHome = railLink('home', 'Dashboard home', 'home');
@@ -209,10 +219,10 @@
     }).join('');
 
     var panelBot = BOT_PAGES.map(function (p) {
-      return textLink(p.key, p.label);
+      return rowLink(p.key, p.label, p.icon);
     }).join('');
     var panelCommon = COMMON_PAGES.map(function (p) {
-      return textLink(p.key, p.label);
+      return rowLink(p.key, p.label, p.icon);
     }).join('');
 
     return (
@@ -236,7 +246,7 @@
       '<h1>QualityAssistant</h1>' +
       '</div>' +
       '<nav class="dash-nav-group">' +
-      textLink('home', 'Dashboard home') +
+      rowLink('home', 'Dashboard home', 'home') +
       '</nav>' +
       '<nav class="dash-nav-group" aria-label="Bot-specific pages">' +
       '<h2>For ' +
@@ -244,8 +254,8 @@
       '</h2>' +
       panelBot +
       '</nav>' +
-      '<nav class="dash-nav-group" aria-label="Common pages">' +
-      '<h2>Common</h2>' +
+      '<nav class="dash-nav-group dash-nav-group--plain" aria-label="Shared pages">' +
+      '<div class="dash-nav-sep" aria-hidden="true"></div>' +
       panelCommon +
       '</nav>' +
       '</div>' +

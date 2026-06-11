@@ -1,6 +1,6 @@
 :root {
   --dash-rail-w: 52px;
-  --dash-flyout-w: 248px;
+  --dash-flyout-w: 272px;
 }
 
 .dash-shell {
@@ -133,7 +133,9 @@
 }
 
 .dash-nav-link {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
   padding: 0.45rem 0.65rem;
   margin: 0.1rem 0;
   border-radius: 8px;
@@ -141,6 +143,24 @@
   text-decoration: none;
   font-size: 0.86rem;
   line-height: 1.35;
+}
+
+.dash-nav-link .dash-nav-ic {
+  flex-shrink: 0;
+}
+
+.dash-nav-label {
+  min-width: 0;
+}
+
+.dash-nav-sep {
+  height: 1px;
+  margin: 0.35rem 0.65rem 0.5rem;
+  background: var(--dash-border, #dbe5ec);
+}
+
+.dash-nav-group--plain {
+  padding-top: 0;
 }
 
 .dash-nav-link:hover {
