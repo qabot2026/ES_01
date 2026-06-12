@@ -1,8 +1,10 @@
 /** Yahi file edit karo. common = Dialogflow/language. desk/mob = har device ki alag UI. showChatbot: false = us device par chatbot hide. composerUpload.enabled: false = 📎 upload button hide. */
 
-var QA_LOGO_LAUNCHER =
+/** Floating chat bubble icon (bottom-right launcher) */
+var DEFAULT_CHAT_LAUNCHER_ICON_URL =
   'https://storage.googleapis.com/companybucket/Images/cat.png';
-var QA_LOGO_HEADER =
+/** Chat header logo + default bot persona avatar */
+var DEFAULT_CHAT_HEADER_ICON_URL =
   'https://storage.googleapis.com/companybucket/Images/cat-icon.png';
 
 window.QA_CHAT_UI_CONFIG = {
@@ -121,9 +123,9 @@ window.QA_CHAT_UI_CONFIG = {
     header: {
       title: 'Quality Testing Assistant',
       subtitle: 'We are online to assist you',
-      chatIconUrl: QA_LOGO_LAUNCHER,
-      chatTitleIconUrl: QA_LOGO_HEADER,
-      headerIconUrl: QA_LOGO_HEADER,
+      chatIconUrl: DEFAULT_CHAT_LAUNCHER_ICON_URL,
+      chatTitleIconUrl: DEFAULT_CHAT_HEADER_ICON_URL,
+      headerIconUrl: DEFAULT_CHAT_HEADER_ICON_URL,
       showHeaderIcon: true,
       botWritingText: 'Typing',
       botWritingDotsIntervalMs: 480,
@@ -148,7 +150,7 @@ window.QA_CHAT_UI_CONFIG = {
 
     botPersona: {
       mode: 'image',
-      imageUrl: QA_LOGO_HEADER,
+      imageUrl: DEFAULT_CHAT_HEADER_ICON_URL,
       label: 'Quality',
       avatarSizePx: 32,
       gapBelowPx: 4,
@@ -328,7 +330,7 @@ window.QA_CHAT_UI_CONFIG = {
 
     launcher: {
       sizePx: 64,
-      iconUrl: QA_LOGO_LAUNCHER,
+      iconUrl: DEFAULT_CHAT_LAUNCHER_ICON_URL,
       cornerRoundness: '50%',
       /** enabled: true = bubble+X | false = bubble hide, panel niche (panelBottomPx) */
       closeBubbleWhenOpen: { enabled: true, panelBottomPx: 8 },
@@ -397,7 +399,7 @@ window.QA_CHAT_UI_CONFIG = {
 
     launcher: {
       sizePx: 58,
-      iconUrl: QA_LOGO_LAUNCHER,
+      iconUrl: DEFAULT_CHAT_LAUNCHER_ICON_URL,
       cornerRoundness: '50%',
       closeBubbleWhenOpen: {
         enabled: true,
