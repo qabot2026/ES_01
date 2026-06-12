@@ -74,11 +74,17 @@
 </head>
 <body class="qa-bot-preview">
   <p class="preview-hint" id="previewHint">Loading preview…</p>
-  <script src="/company.config.js"></script>
-  <script src="/widget/date-display.js"></script>
-  <script src="/widget/message-syntax.js"></script>
-  <script src="/widget/chat-form.js"></script>
-  <script src="/widget/chat-widget.js"></script>
-  <script src="preview.js"></script>
+  <script src="/bot-configs/bootstrap.js"></script>
+  <script src="/bot-configs/load-chain.js"></script>
+  <script>
+    QALoadScriptChain([
+      '/company.config.js',
+      '/widget/date-display.js',
+      '/widget/message-syntax.js',
+      '/widget/chat-form.js',
+      '/widget/chat-widget.js',
+      '/bot-settings/preview.js'
+    ]);
+  </script>
 </body>
 </html>

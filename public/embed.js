@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var QA_ASSET_VERSION = '20260611-site-presets-v2';
+  var QA_ASSET_VERSION = '20260613-bot-configs';
 
   var QA_FORM_SCRIPTS = [
     'contact.js',
@@ -116,7 +116,17 @@
 
   function boot() {
     if (window.__qaWidgetLoaded) return;
-    loadJs(assetUrl(base + '/company.config.js'), function () {
+    loadJs(assetUrl(base + '/bot-configs/bootstrap.js'), function () {
+      if (!window.QABotConfigsReady) {
+        return loadJs(assetUrl(base + '/company.config.js'), afterCompanyConfig);
+      }
+      window.QABotConfigsReady(function () {
+        loadJs(assetUrl(base + '/company.config.js'), afterCompanyConfig);
+      });
+    });
+  }
+
+  function afterCompanyConfig() {
       loadSitePresetOverrides_(function () {
       loadFormScripts(0, function () {
         loadCss(base + '/widget/chat-widget.css?v=20260612-typing-bubble');
@@ -141,7 +151,6 @@
         });
       });
       });
-    });
   }
 
   if (document.readyState === 'loading') {

@@ -22,6 +22,7 @@ const qaMode = require('./lib/qa-mode');
 const sitePresetsStore = require('./lib/site-presets-store');
 const dashboardBots = require('./lib/dashboard-bots');
 const googleCredentials = require('./lib/google-credentials');
+const botProjectFiles = require('./lib/bot-project-files');
 const fs = require('fs');
 
 const app = express();
@@ -128,30 +129,7 @@ app.get('/bot-settings/:botId.html', (req, res) => {
   if (!project) {
     return res.status(404).type('text/plain').send('Unknown bot ID');
   }
-  const navV = '20260611e';
-  res.type('html').send(
-    '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8" />' +
-      '<meta name="viewport" content="width=device-width, initial-scale=1.0" />' +
-      '<meta name="robots" content="noindex, nofollow" />' +
-      '<title>Bot settings — ' +
-      botId +
-      ' ' +
-      project.name +
-      '</title>' +
-      '<link rel="stylesheet" href="/bot-settings/bot-settings.css" />' +
-      '</head><body data-page="project">' +
-      '<div id="app"></div>' +
-      '<script>window.BOT_ID = "' +
-      botId +
-      '";</script>' +
-      '<script src="/company.config.js"></script>' +
-      '<script src="/dashboard/desk-auth.js"></script>' +
-      '<script src="/dashboard/dashboard-nav.js?v=' +
-      navV +
-      '"></script>' +
-      '<script src="/bot-settings/bot-settings.js"></script>' +
-      '</body></html>'
-  );
+  res.type('html').send(botProjectFiles.renderBotSettingsHtml(botId, project.name));
 });
 
 app.use(express.static(publicDir, {

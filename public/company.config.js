@@ -294,216 +294,14 @@ window.QA_CHAT_UI_CONFIG = {
       '--qa-ring-color': '#0ea5e9',
     },
 
-    /**
-     * Per-site colors — auto-applied when QA_CONFIG.sitePreset or themePreset matches key.
-     * receptionist = blue | greenValley = yellow | lakeView = green
-     */
-    themePresets: {
-      receptionist: {
-        '--qa-primary': '#0284c7',
-        '--qa-primary-dark': '#0369a1',
-        '--qa-primary-deep': '#075985',
-        '--qa-accent': '#0ea5e9',
-        '--qa-accent-light': '#bae6fd',
-        '--qa-bg': '#e8f4fc',
-        '--qa-bg-2': '#f7fbff',
-        '--qa-border': '#dbe5ec',
-        '--qa-bot-bg': 'linear-gradient(168deg, #e8f6ff 0%, #bae6fd 100%)',
-        '--qa-bot-text': '#0c4a6e',
-        '--qa-user-bg': 'linear-gradient(145deg, #0284c7 0%, #0ea5e9 100%)',
-        '--qa-user-text': '#f0f9ff',
-        '--qa-header-bg':
-          'linear-gradient(180deg, rgba(255,255,255,0.38) 0%, rgba(255,255,255,0.1) 24%, transparent 46%), linear-gradient(168deg, #38bdf8 0%, #0284c7 42%, #075985 100%)',
-        '--qa-shadow':
-          '0 10px 28px -6px rgba(15, 23, 42, 0.1), 0 20px 40px -14px rgba(14, 165, 233, 0.12)',
-        '--qa-launcher-shadow': '0 3px 10px -2px rgba(14, 165, 233, 0.2)',
-        '--qa-launcher-shadow-hover': '0 5px 14px -2px rgba(14, 165, 233, 0.28)',
-        '--qa-ring-color': '#0ea5e9',
-      },
-      greenValley: {
-        '--qa-primary': '#ca8a04',
-        '--qa-primary-dark': '#a16207',
-        '--qa-primary-deep': '#854d0e',
-        '--qa-accent': '#eab308',
-        '--qa-accent-light': '#fef08a',
-        '--qa-bg': '#fefce8',
-        '--qa-bg-2': '#fffbeb',
-        '--qa-border': '#fde68a',
-        '--qa-bot-bg': 'linear-gradient(168deg, #fef9c3 0%, #fde047 100%)',
-        '--qa-bot-text': '#713f12',
-        '--qa-user-bg': 'linear-gradient(145deg, #ca8a04 0%, #eab308 100%)',
-        '--qa-user-text': '#fffbeb',
-        '--qa-header-bg':
-          'linear-gradient(180deg, rgba(255,255,255,0.38) 0%, rgba(255,255,255,0.1) 24%, transparent 46%), linear-gradient(168deg, #fde047 0%, #ca8a04 42%, #854d0e 100%)',
-        '--qa-shadow':
-          '0 10px 28px -6px rgba(15, 23, 42, 0.1), 0 20px 40px -14px rgba(202, 138, 4, 0.12)',
-        '--qa-launcher-shadow': '0 3px 10px -2px rgba(202, 138, 4, 0.2)',
-        '--qa-launcher-shadow-hover': '0 5px 14px -2px rgba(202, 138, 4, 0.28)',
-        '--qa-ring-color': '#eab308',
-      },
-      lakeView: {
-        '--qa-primary': '#16a34a',
-        '--qa-primary-dark': '#15803d',
-        '--qa-primary-deep': '#166534',
-        '--qa-accent': '#22c55e',
-        '--qa-accent-light': '#bbf7d0',
-        '--qa-bg': '#f0fdf4',
-        '--qa-bg-2': '#f7fef9',
-        '--qa-border': '#bbf7d0',
-        '--qa-bot-bg': 'linear-gradient(168deg, #dcfce7 0%, #86efac 100%)',
-        '--qa-bot-text': '#14532d',
-        '--qa-user-bg': 'linear-gradient(145deg, #16a34a 0%, #22c55e 100%)',
-        '--qa-user-text': '#f0fdf4',
-        '--qa-header-bg':
-          'linear-gradient(180deg, rgba(255,255,255,0.38) 0%, rgba(255,255,255,0.1) 24%, transparent 46%), linear-gradient(168deg, #4ade80 0%, #16a34a 42%, #166534 100%)',
-        '--qa-shadow':
-          '0 10px 28px -6px rgba(15, 23, 42, 0.1), 0 20px 40px -14px rgba(22, 163, 74, 0.12)',
-        '--qa-launcher-shadow': '0 3px 10px -2px rgba(22, 163, 74, 0.2)',
-        '--qa-launcher-shadow-hover': '0 5px 14px -2px rgba(22, 163, 74, 0.28)',
-        '--qa-ring-color': '#22c55e',
-      },
-    },
+    /** Per-bot colors — loaded from public/bot-configs/*.config.js */
+    themePresets: {},
 
     /**
-     * Per-site full UI — page par QA_CONFIG.sitePreset set karo.
-     * Keys: receptionist (10001) | greenValley (10002) | lakeView (10003)
-     * Admin UI: /bot-settings/ — save overrides to data/site-presets.json
-     * Extra page override: QA_CONFIG.ui = { common: {...}, desk: {...}, mob: {...} }
+     * Per-bot UI — loaded from public/bot-configs/*.config.js
+     * Dashboard overrides merge from data/site-presets.json
      */
-    sitePresets: {
-      receptionist: {
-        common: {
-          header: {
-            title: 'Receptionist',
-            subtitle: 'We are online to assist you',
-          },
-          botPersona: { label: 'Reception' },
-          welcome: { enabled: false },
-          features: {
-            multiLanguage: { enabled: true },
-            speechToText: { enabled: true },
-            composerUpload: { enabled: true },
-          },
-          dialogflow: {
-            liveAgent: { enabled: true },
-            forms: { enabled: true },
-            endChatEvent: { enabled: true, idleTimeoutMs: 10000 },
-          },
-        },
-        desk: {
-          launcherStrip: { enabled: true, text: '👋 Welcome! How can we help?' },
-          autoOpenChat: { enabled: true, delayMs: 10000 },
-          restartButton: { enabled: true },
-          poweredBy: { enabled: true },
-          features: {
-            speechToText: { enabled: true },
-            composerUpload: { enabled: true },
-            restartChat: { enabled: false },
-          },
-        },
-        mob: {
-          launcherStrip: { enabled: true, text: '👋 Welcome! How can we help?' },
-          autoOpenChat: { enabled: true, delayMs: 7000 },
-          restartButton: { enabled: true },
-          poweredBy: { enabled: true },
-          features: {
-            speechToText: { enabled: true },
-            composerUpload: { enabled: true },
-            restartChat: { enabled: true },
-          },
-        },
-      },
-      greenValley: {
-        common: {
-          header: {
-            title: 'Green Valley',
-            subtitle: 'Explore your dream home',
-          },
-          botPersona: { label: 'Green Valley' },
-          welcome: { enabled: false },
-          features: {
-            multiLanguage: { enabled: false },
-            speechToText: { enabled: true },
-            composerUpload: { enabled: false },
-          },
-          dialogflow: {
-            liveAgent: { enabled: false },
-            forms: { enabled: true },
-            endChatEvent: { enabled: true, idleTimeoutMs: 15000 },
-          },
-        },
-        desk: {
-          launcherStrip: { enabled: false },
-          autoOpenChat: { enabled: true, delayMs: 5000 },
-          restartButton: { enabled: true },
-          poweredBy: { enabled: false },
-          features: {
-            speechToText: { enabled: true },
-            composerUpload: { enabled: false },
-            restartChat: { enabled: false },
-          },
-        },
-        mob: {
-          launcherStrip: { enabled: false },
-          autoOpenChat: { enabled: true, delayMs: 4000 },
-          restartButton: { enabled: true },
-          poweredBy: { enabled: false },
-          features: {
-            speechToText: { enabled: false },
-            composerUpload: { enabled: false },
-            restartChat: { enabled: true },
-          },
-        },
-      },
-      lakeView: {
-        common: {
-          header: {
-            title: 'Lake View',
-            subtitle: 'Luxury lakeside living',
-          },
-          botPersona: { label: 'Lake View' },
-          welcome: { enabled: false },
-          features: {
-            multiLanguage: { enabled: true },
-            speechToText: { enabled: true },
-            composerUpload: { enabled: true },
-          },
-          dialogflow: {
-            liveAgent: { enabled: true },
-            forms: { enabled: true },
-            endChatEvent: { enabled: true, idleTimeoutMs: 12000 },
-          },
-        },
-        desk: {
-          launcherStrip: {
-            enabled: true,
-            text: '🌿 Discover Lake View homes',
-          },
-          autoOpenChat: { enabled: false },
-          restartButton: { enabled: true },
-          poweredBy: { enabled: true },
-          features: {
-            speechToText: { enabled: true },
-            composerUpload: { enabled: true },
-            restartChat: { enabled: false },
-          },
-        },
-        mob: {
-          launcherStrip: {
-            enabled: true,
-            text: '🌿 Discover Lake View homes',
-          },
-          autoOpenChat: { enabled: false },
-          restartButton: { enabled: true },
-          poweredBy: { enabled: true },
-          features: {
-            speechToText: { enabled: true },
-            composerUpload: { enabled: true },
-            restartChat: { enabled: true },
-          },
-        },
-      },
-    },
+    sitePresets: {},
 
     chatPanel: {
       borderRadius: {
@@ -661,6 +459,17 @@ window.QA_CHAT_UI_CONFIG = {
 (function () {
   var c = window.QA_CHAT_UI_CONFIG;
   if (!c || !c.common) return;
+
+  var packs = window.QA_BOT_PRESETS || {};
+  c.common.themePresets = c.common.themePresets || {};
+  c.common.sitePresets = c.common.sitePresets || {};
+  Object.keys(packs).forEach(function (key) {
+    var pack = packs[key];
+    if (!pack) return;
+    if (pack.theme) c.common.themePresets[key] = pack.theme;
+    if (pack.sitePreset) c.common.sitePresets[key] = pack.sitePreset;
+  });
+
   /* Merge — landing pages set welcomeEventName before embed.js loads this file */
   window.QA_CONFIG = Object.assign(window.QA_CONFIG || {}, {
     apiBase: c.common.deploy.publicBaseUrl,

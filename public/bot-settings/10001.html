@@ -10,9 +10,15 @@
 <body data-page="project">
   <div id="app"></div>
   <script>window.BOT_ID = '10001';</script>
-  <script src="/company.config.js"></script>
-  <script src="../dashboard/desk-auth.js"></script>
-  <script src="../dashboard/dashboard-nav.js?v=20260611c"></script>
-  <script src="bot-settings.js"></script>
+  <script src="/bot-configs/bootstrap.js"></script>
+  <script src="/bot-configs/load-chain.js"></script>
+  <script>
+    QALoadScriptChain([
+      '/company.config.js',
+      '/dashboard/desk-auth.js',
+      '/dashboard/dashboard-nav.js?v=20260613b',
+      '/bot-settings/bot-settings.js'
+    ]);
+  </script>
 </body>
 </html>

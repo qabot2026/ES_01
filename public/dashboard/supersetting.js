@@ -25,7 +25,7 @@
     }
     el.innerHTML =
       '<table class="super-bot-table" aria-label="Registered bots">' +
-      '<thead><tr><th>Bot ID</th><th>Name</th><th>Welcome event</th><th>Pages</th><th></th></tr></thead><tbody>' +
+      '<thead><tr><th>Bot ID</th><th>Name</th><th>Welcome event</th><th>Files</th><th></th></tr></thead><tbody>' +
       bots
         .map(function (b) {
           var event = b.welcomeEventName
@@ -59,6 +59,9 @@
             '">Appearance</a>' +
             (b.demoPath
               ? ' · <a href="' + esc(b.demoPath) + '" target="_blank" rel="noopener">Demo</a>'
+              : '') +
+            (b.configPath
+              ? ' · <a href="' + esc(b.configPath) + '" target="_blank" rel="noopener">UI config</a>'
               : '') +
             '</td>' +
             '<td class="super-bot-actions">' +
@@ -168,7 +171,7 @@
               result.body.bot.name +
               ' (' +
               result.body.bot.id +
-              ') created. Dashboard pages, appearance preset, and demo HTML are ready.' +
+              ') created. Config file, dashboard pages, demo HTML, and appearance preset are ready.' +
               extra,
             false
           );
