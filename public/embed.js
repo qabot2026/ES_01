@@ -119,7 +119,7 @@
     loadJs(assetUrl(base + '/company.config.js'), function () {
       loadSitePresetOverrides_(function () {
       loadFormScripts(0, function () {
-        loadCss(base + '/widget/chat-widget.css');
+        loadCss(base + '/widget/chat-widget.css?v=20260612-typing-bubble');
         loadJs(assetUrl(base + '/widget/date-display.js'), function () {
           loadJs(assetUrl(base + '/widget/message-syntax.js'), function () {
             loadJs(assetUrl(base + '/widget/chat-form.js'), function () {

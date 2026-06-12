@@ -531,26 +531,52 @@
   text-decoration-thickness: 2px;
 }
 
+.qa-msg--typing-indicator .qa-msg__bubble--typing {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 56px;
+  padding: 12px 16px;
+  background: var(--qa-bot-bg, linear-gradient(135deg, #e8f0fe 0%, #d2e3fc 100%));
+  border: 1px solid color-mix(in srgb, var(--qa-primary, #4285f4) 22%, transparent);
+  border-bottom-left-radius: 4px;
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--qa-primary, #4285f4) 14%, transparent);
+}
+
 .qa-msg__typing {
   display: flex;
-  gap: 4px;
-  padding: 12px 16px;
+  gap: 5px;
+  padding: 0;
+  align-items: center;
 }
 
 .qa-msg__typing span {
-  width: 7px;
-  height: 7px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
-  background: var(--qa-muted);
-  animation: qa-bounce 1.2s infinite ease-in-out;
+  background: var(--qa-primary, #4285f4);
+  animation: qa-typing-dot 1.35s infinite ease-in-out;
 }
 
 .qa-msg__typing span:nth-child(2) {
-  animation-delay: 0.15s;
+  animation-delay: 0.16s;
 }
 
 .qa-msg__typing span:nth-child(3) {
-  animation-delay: 0.3s;
+  animation-delay: 0.32s;
+}
+
+@keyframes qa-typing-dot {
+  0%,
+  80%,
+  100% {
+    transform: scale(0.55);
+    opacity: 0.45;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 @keyframes qa-bounce {
@@ -1801,6 +1827,8 @@ body.qa-lightbox-open {
   font-size: 0.8125rem;
   font-style: italic;
 }
+
+/* Legacy text typing style — superseded by qa-msg__bubble--typing dots */
 
 .qa-powered,
 .qa-powered--link {

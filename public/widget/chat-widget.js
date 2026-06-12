@@ -4261,30 +4261,21 @@
   };
 
   QualityAssistantWidget.prototype.showTyping = function () {
-    var self = this;
-    var header = getRootCfg().header || {};
-    var baseText = header.botWritingText || 'Typing';
-    var interval = header.botWritingDotsIntervalMs || 480;
     var row = document.createElement('div');
     row.className = 'qa-msg qa-msg--bot qa-msg--typing-indicator';
     var body = document.createElement('div');
     body.className = 'qa-msg__body';
     body.appendChild(this.buildPersonaRow('bot'));
     var bubble = document.createElement('div');
-    bubble.className = 'qa-msg__bubble qa-msg__typing-text';
-    bubble.textContent = baseText;
+    bubble.className = 'qa-msg__bubble qa-msg__bubble--typing';
+    bubble.setAttribute('aria-label', 'Bot is typing');
+    bubble.innerHTML =
+      '<span class="qa-msg__typing" aria-hidden="true"><span></span><span></span><span></span></span>';
     body.appendChild(bubble);
     row.appendChild(body);
-    var dots = 0;
-    row._typingTimer = setInterval(function () {
-      dots = (dots + 1) % 4;
-      bubble.textContent = baseText + '.'.repeat(dots);
-    }, interval);
     this.els.messages.appendChild(row);
     this.els.messages.scrollTop = this.els.messages.scrollHeight;
-    row._stopTyping = function () {
-      if (row._typingTimer) clearInterval(row._typingTimer);
-    };
+    row._stopTyping = function () {};
     return row;
   };
 
