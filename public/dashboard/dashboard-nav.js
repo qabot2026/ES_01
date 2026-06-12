@@ -1,7 +1,7 @@
 (function (global) {
   'use strict';
 
-  var NAV_ASSET_V = '20260612b';
+  var NAV_ASSET_V = '20260613a';
   var APPEARANCE_MENU_ICON_URL = '/dashboard/icons/appearance-menu-icon.png';
 
   function ensureBoot() {
