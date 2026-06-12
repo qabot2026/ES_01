@@ -622,7 +622,7 @@ app.post(
       return res.status(503).json({
         error: 'gcs_not_configured',
         message:
-          'Set GCS_BUCKET_NAME and GOOGLE_CREDENTIALS_JSON on Railway. See GCS-STORAGE-STEPS.md',
+          'Set GCS_BUCKET_NAME and GOOGLE_CREDENTIALS_JSON on Railway.',
       });
     }
     if (!sessionId) {
@@ -1401,7 +1401,7 @@ app.listen(PORT, () => {
     console.log('[gcs] upload enabled — bucket', gcsUpload.BUCKET_NAME);
   } else {
     console.warn(
-      '[gcs] disabled — set GCS_BUCKET_NAME + GOOGLE_CREDENTIALS_JSON (GCS-STORAGE-STEPS.md)'
+      '[gcs] disabled — set GCS_BUCKET_NAME + GOOGLE_CREDENTIALS_JSON'
     );
   }
   dialogflow

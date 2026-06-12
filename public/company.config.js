@@ -13,11 +13,9 @@ window.QA_CHAT_UI_CONFIG = {
       projectId: 'recebot-ptav',
       agentId: '5ea01258-d01b-44eb-9b2a-9f6338d43d63',
       /**
-       * SINGLE AGENT setup (recommended) — see SINGLE-AGENT-SETUP.md
-       * Sab flows ek hi agent (recebot-ptav) mein contexts se.
+       * Single agent (recommended): sab flows ek hi agent (recebot-ptav) mein contexts se.
        * Landing pages: QA_CONFIG.welcomeEventName + sitePreset per site.
-       *
-       * Multi-agent (purana): agentOrchestration.enabled = true — AGENT-ORCHESTRATION.md
+       * Multi-agent (purana): agentOrchestration.enabled = true
        */
       agentOrchestration: {
         enabled: false,
