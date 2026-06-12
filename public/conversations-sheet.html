@@ -5536,6 +5536,9 @@
             "offset=" + encodeURIComponent(String(sheetOffset))
           ];
           if (!loadingLive) dq.unshift("includeStats=1");
+          if (!loadingLive && typeof DashboardNav !== "undefined" && DashboardNav.getBid) {
+            dq.push("bid=" + encodeURIComponent(DashboardNav.getBid()));
+          }
           if (fromV) dq.push("from=" + encodeURIComponent(fromV));
           if (toV) dq.push("to=" + encodeURIComponent(toV));
           var apiPath = loadingLive ? "/api/live-agent-sheet" : "/api/conversations-sheet";
@@ -5906,6 +5909,9 @@
         var fromV = getDateFilterYmd_(dateFromEl);
         var toV = getDateFilterYmd_(dateToEl);
         var qp = [];
+        if (typeof DashboardNav !== "undefined" && DashboardNav.getBid) {
+          qp.push("bid=" + encodeURIComponent(DashboardNav.getBid()));
+        }
         if (fromV) qp.push("from=" + encodeURIComponent(fromV));
         if (toV) qp.push("to=" + encodeURIComponent(toV));
         try {
@@ -6000,6 +6006,9 @@
         var fromV = getDateFilterYmd_(dateFromEl);
         var toV = getDateFilterYmd_(dateToEl);
           var qp = [];
+          if (typeof DashboardNav !== "undefined" && DashboardNav.getBid) {
+            qp.push("bid=" + encodeURIComponent(DashboardNav.getBid()));
+          }
           if (fromV) qp.push("from=" + encodeURIComponent(fromV));
           if (toV) qp.push("to=" + encodeURIComponent(toV));
           var url =

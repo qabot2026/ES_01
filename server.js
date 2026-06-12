@@ -23,6 +23,8 @@ const sitePresetsStore = require('./lib/site-presets-store');
 const dashboardBots = require('./lib/dashboard-bots');
 const googleCredentials = require('./lib/google-credentials');
 const botProjectFiles = require('./lib/bot-project-files');
+const botSheetTabs = require('./lib/bot-sheet-tabs');
+const liveAgentSheet = require('./lib/live-agent-sheet');
 const fs = require('fs');
 
 const app = express();
@@ -872,6 +874,8 @@ app.get('/api/conversations-sheet', async (req, res) => {
     const allInRange = req.query.all !== '0' && req.query.all !== 'false';
     const includeStats =
       req.query.includeStats !== '0' && req.query.includeStats !== 'false';
+    const bid =
+      req.query && typeof req.query.bid === 'string' ? req.query.bid.trim() : '';
     const payload = await conversationsSheetView.fetchConversationSheetPreview({
       maxRows,
       offset,
@@ -879,6 +883,7 @@ app.get('/api/conversations-sheet', async (req, res) => {
       includeStats,
       from: rawFrom,
       to: rawTo,
+      botId: bid,
     });
     res.json({ ok: true, ...payload });
   } catch (err) {
@@ -933,8 +938,12 @@ app.get('/api/conversations-sheet-stats', async (req, res) => {
     const q = req.query || {};
     const from = typeof q.from === 'string' ? q.from.trim() : '';
     const to = typeof q.to === 'string' ? q.to.trim() : '';
-    const statsOpts =
-      from || to ? { from: from || undefined, to: to || undefined } : {};
+    const bid = typeof q.bid === 'string' ? q.bid.trim() : '';
+    const statsOpts = { botId: bid };
+    if (from || to) {
+      statsOpts.from = from || undefined;
+      statsOpts.to = to || undefined;
+    }
     const payload =
       await conversationsSheetView.fetchConversationLeadCaptureStats(statsOpts);
     res.json({ ok: true, ...payload });
@@ -1068,9 +1077,13 @@ app.get('/api/conversations-sheet-export', async (req, res) => {
     const q = req.query || {};
     const from = typeof q.from === 'string' ? q.from.trim() : '';
     const to = typeof q.to === 'string' ? q.to.trim() : '';
-    const payload = await conversationsSheetView.fetchConversationSheetExport(
-      from || to ? { from: from || undefined, to: to || undefined } : {}
-    );
+    const bid = typeof q.bid === 'string' ? q.bid.trim() : '';
+    const exportOpts = { botId: bid };
+    if (from || to) {
+      exportOpts.from = from || undefined;
+      exportOpts.to = to || undefined;
+    }
+    const payload = await conversationsSheetView.fetchConversationSheetExport(exportOpts);
     const csvBody = conversationsSheetView.rowsToCsv(
       payload.headers,
       payload.conversations
@@ -1302,11 +1315,28 @@ app.post('/api/bot-registry', requireDeskAuth, (req, res) => {
     id: body.id,
     name: body.name,
     welcomeEventName: body.welcomeEventName,
+    sheetTab: body.sheetTab,
   });
   if (!result.ok) {
     return res.status(400).json(result);
   }
   res.status(201).json(result);
+});
+
+app.patch('/api/bot-registry/:botId', requireDeskAuth, (req, res) => {
+  const body = req.body || {};
+  if (body.sheetTab == null) {
+    return res.status(400).json({ ok: false, error: 'No supported fields to update' });
+  }
+  const result = sitePresetsStore.updateProjectSheetTab(
+    req.params.botId,
+    body.sheetTab
+  );
+  if (!result.ok) {
+    const status = result.error === 'Bot not found' ? 404 : 400;
+    return res.status(status).json(result);
+  }
+  res.json(result);
 });
 
 app.delete('/api/bot-registry/:botId', requireDeskAuth, (req, res) => {
@@ -1390,6 +1420,38 @@ app.listen(PORT, () => {
         }
       })
       .catch((err) => console.error('[sheets] probe error:', err.message));
+    const agentTab = botSheetTabs.agentTabName();
+    const botTabs = sitePresetsStore
+      .listProjects()
+      .map((b) => botSheetTabs.resolveConversationTabForBot(b))
+      .filter(Boolean);
+    const tabsToEnsure = [agentTab].concat(
+      botTabs.filter((t) => t !== agentTab)
+    );
+    Promise.all(
+      tabsToEnsure.map((tab) =>
+        sheets.ensureTabExists(tab).then(() => {
+          if (tab === agentTab) {
+            return sheets.ensureHeaderRowOnTab(
+              tab,
+              liveAgentSheet.LIVE_AGENT_SHEET_HEADERS
+            );
+          }
+          return sheets.ensureHeaderRowOnTab(tab, conversationSheet.SHEET_HEADERS);
+        })
+      )
+    )
+      .then(() => {
+        console.log(
+          '[sheets] per-bot tabs ready — agent:',
+          agentTab,
+          '| bots:',
+          botTabs.join(', ')
+        );
+      })
+      .catch((err) =>
+        console.warn('[sheets] tab bootstrap:', err.message)
+      );
   } else if (String(process.env.SHEETS_SPREADSHEET_ID || '').trim()) {
     console.warn(
       '[sheets] SHEETS_SPREADSHEET_ID is set but logging is off — need GOOGLE_CREDENTIALS_JSON'

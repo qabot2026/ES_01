@@ -21,6 +21,17 @@
     return qa.sitePreset ? String(qa.sitePreset).trim() : '';
   }
 
+  function getBotId_() {
+    var qa = global.QA_CONFIG || {};
+    if (qa.botId) return String(qa.botId).trim();
+    var key = getSitePresetKey_();
+    if (key && global.QA_BOT_PRESETS && global.QA_BOT_PRESETS[key]) {
+      var preset = global.QA_BOT_PRESETS[key];
+      if (preset && preset.botId) return String(preset.botId).trim();
+    }
+    return '';
+  }
+
   function getSitePresetBlock_() {
     var key = getSitePresetKey_();
     if (!key) return null;
@@ -1651,9 +1662,13 @@
     var ua = (global.navigator && global.navigator.userAgent) || '';
     var params = new URLSearchParams(loc.search || '');
     var ctx = Object.assign({}, this.clientContext || {});
+    var sitePreset = getSitePresetKey_();
+    var botId = getBotId_();
     return Object.assign(ctx, {
       sessionId: this.sessionId,
       userEngaged: !!this._userHasInteracted,
+      sitePreset: sitePreset,
+      botId: botId,
       sourceUrl: loc.href || '',
       device: /Mobi|Android|iPhone|iPad/i.test(ua) ? 'Mobile' : 'Desktop',
       browser: parseUaBrowser(ua),

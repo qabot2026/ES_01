@@ -85,6 +85,15 @@
       .super-bot-links a:hover {
         text-decoration: underline;
       }
+      .super-sheet-tab-input {
+        font: inherit;
+        width: 100%;
+        min-width: 10rem;
+        max-width: 14rem;
+        padding: 0.35rem 0.5rem;
+        border: 1px solid var(--dash-border);
+        border-radius: 8px;
+      }
       .super-bot-actions {
         text-align: right;
         white-space: nowrap;
@@ -140,6 +149,11 @@
               <input id="superWelcomeEvent" name="welcomeEventName" placeholder="START_SUNSET_VILLAS" />
               <small>Dialogflow event for this site’s landing page. Leave empty for the main/home bot.</small>
             </label>
+            <label>
+              Conversation sheet tab
+              <input id="superSheetTab" name="sheetTab" placeholder="Sunset Villas Conv." />
+              <small>Google Sheet tab for this bot’s conversations. Created automatically if missing.</small>
+            </label>
             <div>
               <button type="submit" class="dash-btn dash-btn--primary">Create bot &amp; pages</button>
               <p class="super-form-status" id="superFormStatus" hidden></p>
@@ -149,7 +163,7 @@
 
         <section class="super-card">
           <h3>Registered bots</h3>
-          <p class="dash-muted">Each bot automatically gets Insights, Customer questions, Chatbot appearance, and this page under <code>/bid=…/</code>.</p>
+          <p class="dash-muted">Each bot gets its own sheet tab for Insights. Agent chats (all bots) use <code>SHEETS_AGENT_TAB</code> on Railway (default: Agent Chats).</p>
           <div id="superBotList"></div>
           <div class="super-actions">
             <a class="dash-btn dash-btn--primary" id="superUiLink" href="#">Open chatbot appearance</a>
@@ -170,6 +184,6 @@
     </div>
     <script src="desk-auth.js"></script>
     <script src="dashboard-nav.js?v=20260611c"></script>
-    <script src="supersetting.js?v=20260611e"></script>
+    <script src="supersetting.js?v=20260612a"></script>
   </body>
 </html>

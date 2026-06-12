@@ -16,6 +16,50 @@
       .replace(/"/g, '&quot;');
   }
 
+  function escAttr(s) {
+    return esc(s).replace(/'/g, '&#39;');
+  }
+
+  function suggestSheetTab(name) {
+    var label = String(name || '').trim();
+    if (!label) return 'Bot Conv.';
+    return label + ' Conv.';
+  }
+
+  function saveSheetTab(botId, sheetTab, inputEl) {
+    var tab = String(sheetTab || '').trim();
+    if (!tab) {
+      window.alert('Sheet tab name cannot be empty.');
+      return Promise.resolve();
+    }
+    if (inputEl) inputEl.disabled = true;
+
+    return fetch(apiBase() + '/api/bot-registry/' + encodeURIComponent(botId), {
+      method: 'PATCH',
+      credentials: 'same-origin',
+      headers: Object.assign({ 'Content-Type': 'application/json' }, auth.authHeaders()),
+      body: JSON.stringify({ sheetTab: tab }),
+    })
+      .then(function (res) {
+        return res.json().then(function (body) {
+          return { ok: res.ok, body: body };
+        });
+      })
+      .then(function (result) {
+        if (!result.ok || !result.body.ok) {
+          throw new Error((result.body && result.body.error) || 'Could not save sheet tab');
+        }
+        setStatus('Sheet tab updated for bot ' + botId + ' → ' + tab, false);
+        return nav.refreshBots().then(loadRegistry);
+      })
+      .catch(function (err) {
+        setStatus(err.message || 'Request failed', true);
+      })
+      .finally(function () {
+        if (inputEl) inputEl.disabled = false;
+      });
+  }
+
   function renderBotList(bots) {
     var el = document.getElementById('superBotList');
     if (!el) return;
@@ -25,12 +69,13 @@
     }
     el.innerHTML =
       '<table class="super-bot-table" aria-label="Registered bots">' +
-      '<thead><tr><th>Bot ID</th><th>Name</th><th>Welcome event</th><th>Files</th><th></th></tr></thead><tbody>' +
+      '<thead><tr><th>Bot ID</th><th>Name</th><th>Sheet tab</th><th>Welcome event</th><th>Files</th><th></th></tr></thead><tbody>' +
       bots
         .map(function (b) {
           var event = b.welcomeEventName
             ? '<code>' + esc(b.welcomeEventName) + '</code>'
             : '<span class="dash-muted">(default / home)</span>';
+          var tabVal = escAttr(b.sheetTab || '');
           var canDelete = b.id !== '10001' && bots.length > 1;
           var deleteCell = canDelete
             ? '<button type="button" class="super-delete-btn" data-bot-id="' +
@@ -47,6 +92,13 @@
             '<td>' +
             esc(b.name) +
             '</td>' +
+            '<td><input class="super-sheet-tab-input" type="text" data-bot-id="' +
+            esc(b.id) +
+            '" value="' +
+            tabVal +
+            '" aria-label="Sheet tab for ' +
+            esc(b.name) +
+            '" /></td>' +
             '<td>' +
             event +
             '</td>' +
@@ -75,6 +127,12 @@
     el.querySelectorAll('.super-delete-btn').forEach(function (btn) {
       btn.addEventListener('click', function () {
         deleteBot(btn.getAttribute('data-bot-id'), btn.getAttribute('data-bot-name'));
+      });
+    });
+
+    el.querySelectorAll('.super-sheet-tab-input').forEach(function (input) {
+      input.addEventListener('change', function () {
+        saveSheetTab(input.getAttribute('data-bot-id'), input.value, input);
       });
     });
   }
@@ -141,6 +199,19 @@
     var form = document.getElementById('superAddBotForm');
     if (!form) return;
 
+    var nameInput = document.getElementById('superBotName');
+    var sheetTabInput = document.getElementById('superSheetTab');
+
+    if (nameInput && sheetTabInput) {
+      nameInput.addEventListener('input', function () {
+        if (sheetTabInput.dataset.touched === '1') return;
+        sheetTabInput.value = suggestSheetTab(nameInput.value);
+      });
+      sheetTabInput.addEventListener('input', function () {
+        sheetTabInput.dataset.touched = '1';
+      });
+    }
+
     form.addEventListener('submit', function (ev) {
       ev.preventDefault();
       setStatus('Saving…', false);
@@ -148,12 +219,18 @@
       var id = document.getElementById('superBotId').value.trim();
       var name = document.getElementById('superBotName').value.trim();
       var welcomeEventName = document.getElementById('superWelcomeEvent').value.trim();
+      var sheetTab = sheetTabInput ? sheetTabInput.value.trim() : '';
 
       fetch(apiBase() + '/api/bot-registry', {
         method: 'POST',
         credentials: 'same-origin',
         headers: Object.assign({ 'Content-Type': 'application/json' }, auth.authHeaders()),
-        body: JSON.stringify({ id: id, name: name, welcomeEventName: welcomeEventName }),
+        body: JSON.stringify({
+          id: id,
+          name: name,
+          welcomeEventName: welcomeEventName,
+          sheetTab: sheetTab,
+        }),
       })
         .then(function (res) {
           return res.json().then(function (body) {
@@ -164,18 +241,22 @@
           if (!result.ok || !result.body.ok) {
             throw new Error((result.body && result.body.error) || 'Could not add bot');
           }
+          var bot = result.body.bot || {};
           var files = (result.body.filesCreated || []).join(', ');
           var extra = files ? ' Files: ' + files + '.' : '';
           setStatus(
             'Bot ' +
-              result.body.bot.name +
+              bot.name +
               ' (' +
-              result.body.bot.id +
-              ') created. Config file, dashboard pages, demo HTML, and appearance preset are ready.' +
+              bot.id +
+              ') created. Sheet tab "' +
+              (bot.sheetTab || '') +
+              '" will be created on first sync.' +
               extra,
             false
           );
           form.reset();
+          if (sheetTabInput) delete sheetTabInput.dataset.touched;
           return nav.refreshBots().then(function () {
             return loadRegistry();
           });
@@ -201,7 +282,7 @@
     var line = document.getElementById('superBotLine');
     if (line) {
       line.textContent =
-        'Add new chatbot projects here — no code edits. Each bot gets Insights, Customer questions, and Chatbot appearance pages automatically.';
+        'Add chatbot projects here. Set each bot’s Google Sheet tab name — tabs are created automatically when you save or when the first conversation syncs.';
     }
 
     var uiLink = document.getElementById('superUiLink');
