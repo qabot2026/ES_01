@@ -1662,8 +1662,8 @@
     var ua = (global.navigator && global.navigator.userAgent) || '';
     var params = new URLSearchParams(loc.search || '');
     var ctx = Object.assign({}, this.clientContext || {});
-    var sitePreset = getSitePresetKey_();
-    var botId = getBotId_();
+    var sitePreset = getSitePresetKey_() || 'receptionist';
+    var botId = getBotId_() || '10001';
     return Object.assign(ctx, {
       sessionId: this.sessionId,
       userEngaged: !!this._userHasInteracted,

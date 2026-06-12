@@ -24,6 +24,8 @@ const dashboardBots = require('./lib/dashboard-bots');
 const googleCredentials = require('./lib/google-credentials');
 const botProjectFiles = require('./lib/bot-project-files');
 const botSheetTabs = require('./lib/bot-sheet-tabs');
+const DEFAULT_RECEPTIONIST_BOT_ID = botSheetTabs.DEFAULT_BOT_ID;
+const DEFAULT_RECEPTIONIST_SITE_PRESET = botSheetTabs.DEFAULT_SITE_PRESET;
 const liveAgentSheet = require('./lib/live-agent-sheet');
 const fs = require('fs');
 
@@ -553,6 +555,10 @@ app.post('/api/session-context', (req, res) => {
   const meta = conversationSheet.metaFromClientBody(req.body || {});
   const ip = formApi.getClientIp(req);
   if (ip) meta.ip = ip;
+  if (!meta.botId && !meta.sitePreset) {
+    meta.botId = DEFAULT_RECEPTIONIST_BOT_ID;
+    meta.sitePreset = DEFAULT_RECEPTIONIST_SITE_PRESET;
+  }
   if (Object.keys(meta).length) {
     chatTranscript.mergeSessionMeta(sid, meta);
   }
