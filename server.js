@@ -21,6 +21,8 @@ const appointmentStatus = require('./lib/appointment-status-store');
 const qaMode = require('./lib/qa-mode');
 const sitePresetsStore = require('./lib/site-presets-store');
 const dashboardBots = require('./lib/dashboard-bots');
+const googleCredentials = require('./lib/google-credentials');
+const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 4567;
@@ -69,6 +71,51 @@ app.use((req, res, next) => {
     res.setHeader('Cache-Control', 'no-cache, must-revalidate');
   }
   next();
+});
+
+const APPEARANCE_ICON_BUCKET =
+  process.env.APPEARANCE_MENU_ICON_BUCKET || 'recep-bucket';
+const APPEARANCE_ICON_OBJECT =
+  process.env.APPEARANCE_MENU_ICON_OBJECT || 'fromclient/appearence-logo.png';
+
+/** Appearance menu icon — GCS object is private; serve via server credentials */
+app.get('/dashboard/icons/appearance-menu-icon.png', async (req, res) => {
+  const localIcon = path.join(publicDir, 'dashboard', 'icons', 'appearance-menu-icon.png');
+  if (fs.existsSync(localIcon)) {
+    res.setHeader('Cache-Control', 'public, max-age=86400');
+    return res.sendFile(localIcon);
+  }
+
+  const creds = googleCredentials.getServiceAccountCredentials();
+  if (!creds) {
+    return res.status(404).type('text/plain').send('Appearance icon not configured');
+  }
+
+  try {
+    const { Storage } = require('@google-cloud/storage');
+    const storage = new Storage({
+      credentials: creds,
+      projectId: creds.project_id,
+    });
+    const file = storage.bucket(APPEARANCE_ICON_BUCKET).file(APPEARANCE_ICON_OBJECT);
+    const [exists] = await file.exists();
+    if (!exists) {
+      return res.status(404).type('text/plain').send('Appearance icon not found');
+    }
+    const [meta] = await file.getMetadata();
+    res.setHeader('Content-Type', meta.contentType || 'image/png');
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    file
+      .createReadStream()
+      .on('error', (err) => {
+        console.warn('[appearance-icon]', err.message);
+        if (!res.headersSent) res.status(502).end();
+      })
+      .pipe(res);
+  } catch (err) {
+    console.warn('[appearance-icon]', err.message);
+    res.status(502).type('text/plain').send('Appearance icon unavailable');
+  }
 });
 
 /** Dynamic bot settings page — works for any registered 5-digit bot ID */

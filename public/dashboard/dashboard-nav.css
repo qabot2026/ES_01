@@ -209,6 +209,10 @@ html.dash-ready #dash-shell-loader {
   object-fit: contain;
 }
 
+.dash-nav-ic--fallback {
+  color: #db2777;
+}
+
 .dash-nav-row__label {
   flex: 1;
   min-width: 0;

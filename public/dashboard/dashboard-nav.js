@@ -1,9 +1,8 @@
 (function (global) {
   'use strict';
 
-  var NAV_ASSET_V = '20260612a';
-  var APPEARANCE_MENU_ICON_URL =
-    'https://storage.googleapis.com/recep-bucket/fromclient/appearence-logo.png';
+  var NAV_ASSET_V = '20260612b';
+  var APPEARANCE_MENU_ICON_URL = '/dashboard/icons/appearance-menu-icon.png';
 
   function ensureBoot() {
     var root = document.documentElement;
@@ -277,7 +276,10 @@
       return (
         '<img class="dash-nav-ic dash-nav-ic--img" src="' +
         APPEARANCE_MENU_ICON_URL +
-        '" alt="" width="18" height="18" decoding="async" aria-hidden="true" />'
+        '" alt="" width="18" height="18" decoding="async" aria-hidden="true" onerror="this.style.display=\'none\';var f=this.nextElementSibling;if(f)f.hidden=false;" />' +
+        '<svg class="dash-nav-ic dash-nav-ic--fallback" hidden width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+        (ICONS.brush || ICONS.home) +
+        '</svg>'
       );
     }
     var paths = ICONS[name] || ICONS.home;
