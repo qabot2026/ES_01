@@ -161,6 +161,28 @@
   <body>
     <div class="dash-page-content" style="display:none">
       <div class="super-grid">
+        <section class="super-card" id="superCurrentBotCard">
+          <h3>Current bot settings</h3>
+          <p class="dash-muted" id="superCurrentBotLine">Loading…</p>
+          <form class="super-form" id="superEditBotForm">
+            <input type="hidden" id="superEditBotId" />
+            <label>
+              Conversation sheet tab
+              <input id="superEditSheetTab" name="sheetTab" placeholder="Green Valley Conv." required />
+              <small>Google Sheet tab for this bot’s conversations. Tab is created automatically when you save.</small>
+            </label>
+            <label>
+              Welcome event name
+              <input id="superEditWelcomeEvent" name="welcomeEventName" placeholder="START_GREEN_VALLEY" />
+              <small>Dialogflow event for this site’s landing page. Leave empty for the main/home bot.</small>
+            </label>
+            <div>
+              <button type="submit" class="dash-btn dash-btn--primary" id="superSaveSettingsBtn">Save settings</button>
+              <p class="super-form-status" id="superEditStatus" hidden></p>
+            </div>
+          </form>
+        </section>
+
         <section class="super-card">
           <h3>Add chatbot project</h3>
           <p class="dash-muted" id="superBotLine">Loading…</p>
@@ -194,7 +216,7 @@
 
         <section class="super-card">
           <h3>Registered bots</h3>
-          <p class="dash-muted">Edit sheet tab or welcome event, then click <strong>Save</strong> on that row. Agent chats (all bots) use <code>SHEETS_AGENT_TAB</code> on Railway (default: Agent Chats).</p>
+          <p class="dash-muted">Overview of all bots. Use <strong>Current bot settings</strong> above to edit the selected project. Agent chats use <code>SHEETS_AGENT_TAB</code> on Railway.</p>
           <div id="superBotList"></div>
           <p class="super-list-status" id="superListStatus" hidden></p>
           <div class="super-actions">
@@ -216,6 +238,6 @@
     </div>
     <script src="desk-auth.js"></script>
     <script src="dashboard-nav.js?v=20260611c"></script>
-    <script src="supersetting.js?v=20260612b"></script>
+    <script src="supersetting.js?v=20260612c"></script>
   </body>
 </html>
