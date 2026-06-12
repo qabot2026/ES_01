@@ -1325,13 +1325,10 @@ app.post('/api/bot-registry', requireDeskAuth, (req, res) => {
 
 app.patch('/api/bot-registry/:botId', requireDeskAuth, (req, res) => {
   const body = req.body || {};
-  if (body.sheetTab == null) {
-    return res.status(400).json({ ok: false, error: 'No supported fields to update' });
-  }
-  const result = sitePresetsStore.updateProjectSheetTab(
-    req.params.botId,
-    body.sheetTab
-  );
+  const result = sitePresetsStore.updateProjectSettings(req.params.botId, {
+    sheetTab: body.sheetTab,
+    welcomeEventName: body.welcomeEventName,
+  });
   if (!result.ok) {
     const status = result.error === 'Bot not found' ? 404 : 400;
     return res.status(status).json(result);

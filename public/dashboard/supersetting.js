@@ -26,37 +26,80 @@
     return label + ' Conv.';
   }
 
-  function saveSheetTab(botId, sheetTab, inputEl) {
-    var tab = String(sheetTab || '').trim();
-    if (!tab) {
-      window.alert('Sheet tab name cannot be empty.');
+  function setStatus(msg, isError) {
+    var el = document.getElementById('superFormStatus');
+    if (!el) return;
+    el.textContent = msg || '';
+    el.className = 'super-form-status' + (isError ? ' super-form-status--error' : ' super-form-status--ok');
+    el.hidden = !msg;
+  }
+
+  function setListStatus(msg, isError) {
+    var el = document.getElementById('superListStatus');
+    if (!el) return;
+    el.textContent = msg || '';
+    el.className = 'super-list-status' + (isError ? ' super-list-status--error' : ' super-list-status--ok');
+    el.hidden = !msg;
+  }
+
+  function saveBotSettings(botId, rowEl) {
+    if (!botId || !rowEl) return Promise.resolve();
+
+    var sheetInput = rowEl.querySelector('.super-sheet-tab-input');
+    var welcomeInput = rowEl.querySelector('.super-welcome-input');
+    var saveBtn = rowEl.querySelector('.super-save-btn');
+    var sheetTab = sheetInput ? sheetInput.value.trim() : '';
+    var welcomeEventName = welcomeInput ? welcomeInput.value.trim() : '';
+
+    if (!sheetTab) {
+      setListStatus('Sheet tab name cannot be empty.', true);
       return Promise.resolve();
     }
-    if (inputEl) inputEl.disabled = true;
+
+    if (saveBtn) saveBtn.disabled = true;
+    setListStatus('Saving bot ' + botId + '…', false);
 
     return fetch(apiBase() + '/api/bot-registry/' + encodeURIComponent(botId), {
       method: 'PATCH',
       credentials: 'same-origin',
       headers: Object.assign({ 'Content-Type': 'application/json' }, auth.authHeaders()),
-      body: JSON.stringify({ sheetTab: tab }),
+      body: JSON.stringify({ sheetTab: sheetTab, welcomeEventName: welcomeEventName }),
     })
       .then(function (res) {
         return res.json().then(function (body) {
-          return { ok: res.ok, body: body };
+          return { ok: res.ok, status: res.status, body: body };
         });
       })
       .then(function (result) {
-        if (!result.ok || !result.body.ok) {
-          throw new Error((result.body && result.body.error) || 'Could not save sheet tab');
+        if (result.status === 401) {
+          throw new Error('Not signed in — open Live chat inbox or Insights and enter your desk token first.');
         }
-        setStatus('Sheet tab updated for bot ' + botId + ' → ' + tab, false);
+        if (!result.ok || !result.body.ok) {
+          throw new Error((result.body && result.body.error) || 'Could not save settings');
+        }
+        var bot = result.body.bot || {};
+        setListStatus(
+          'Saved ' +
+            (bot.name || 'bot') +
+            ' (' +
+            botId +
+            '): sheet tab "' +
+            (bot.sheetTab || sheetTab) +
+            '"' +
+            (bot.welcomeEventName
+              ? ', welcome event "' + bot.welcomeEventName + '"'
+              : ', welcome event cleared'),
+          false
+        );
+        if (sheetInput && bot.sheetTab) sheetInput.value = bot.sheetTab;
+        if (welcomeInput) welcomeInput.value = bot.welcomeEventName || '';
         return nav.refreshBots().then(loadRegistry);
       })
       .catch(function (err) {
-        setStatus(err.message || 'Request failed', true);
+        setListStatus(err.message || 'Request failed', true);
       })
       .finally(function () {
-        if (inputEl) inputEl.disabled = false;
+        if (saveBtn) saveBtn.disabled = false;
       });
   }
 
@@ -69,13 +112,11 @@
     }
     el.innerHTML =
       '<table class="super-bot-table" aria-label="Registered bots">' +
-      '<thead><tr><th>Bot ID</th><th>Name</th><th>Sheet tab</th><th>Welcome event</th><th>Files</th><th></th></tr></thead><tbody>' +
+      '<thead><tr><th>Bot ID</th><th>Name</th><th>Sheet tab</th><th>Welcome event</th><th></th><th>Files</th><th></th></tr></thead><tbody>' +
       bots
         .map(function (b) {
-          var event = b.welcomeEventName
-            ? '<code>' + esc(b.welcomeEventName) + '</code>'
-            : '<span class="dash-muted">(default / home)</span>';
           var tabVal = escAttr(b.sheetTab || '');
+          var welcomeVal = escAttr(b.welcomeEventName || '');
           var canDelete = b.id !== '10001' && bots.length > 1;
           var deleteCell = canDelete
             ? '<button type="button" class="super-delete-btn" data-bot-id="' +
@@ -85,7 +126,9 @@
               '">Delete</button>'
             : '<span class="dash-muted" title="Default bot cannot be removed">—</span>';
           return (
-            '<tr>' +
+            '<tr data-bot-row="' +
+            esc(b.id) +
+            '">' +
             '<td><code>' +
             esc(b.id) +
             '</code></td>' +
@@ -99,9 +142,16 @@
             '" aria-label="Sheet tab for ' +
             esc(b.name) +
             '" /></td>' +
-            '<td>' +
-            event +
-            '</td>' +
+            '<td><input class="super-welcome-input" type="text" data-bot-id="' +
+            esc(b.id) +
+            '" value="' +
+            welcomeVal +
+            '" placeholder="(default / home)" aria-label="Welcome event for ' +
+            esc(b.name) +
+            '" /></td>' +
+            '<td class="super-bot-actions"><button type="button" class="super-save-btn" data-bot-id="' +
+            esc(b.id) +
+            '">Save</button></td>' +
             '<td class="super-bot-links">' +
             '<a href="' +
             nav.bidPath(b.id, 'uc-conversations') +
@@ -130,9 +180,11 @@
       });
     });
 
-    el.querySelectorAll('.super-sheet-tab-input').forEach(function (input) {
-      input.addEventListener('change', function () {
-        saveSheetTab(input.getAttribute('data-bot-id'), input.value, input);
+    el.querySelectorAll('.super-save-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var botId = btn.getAttribute('data-bot-id');
+        var row = btn.closest('tr[data-bot-row]');
+        saveBotSettings(botId, row);
       });
     });
   }
@@ -142,7 +194,7 @@
     if (!window.confirm('Delete bot ' + label + '? This removes it from the dashboard and clears its appearance preset. This cannot be undone.')) {
       return;
     }
-    setStatus('Deleting…', false);
+    setListStatus('Deleting…', false);
 
     fetch(apiBase() + '/api/bot-registry/' + encodeURIComponent(botId), {
       method: 'DELETE',
@@ -158,7 +210,7 @@
         if (!result.ok || !result.body.ok) {
           throw new Error((result.body && result.body.error) || 'Could not delete bot');
         }
-        setStatus('Bot ' + label + ' deleted.', false);
+        setListStatus('Bot ' + label + ' deleted.', false);
         var currentBid = nav.getBid();
         return nav.refreshBots().then(function () {
           if (currentBid === botId && nav.BOTS.length) {
@@ -169,16 +221,8 @@
         });
       })
       .catch(function (err) {
-        setStatus(err.message || 'Request failed', true);
+        setListStatus(err.message || 'Request failed', true);
       });
-  }
-
-  function setStatus(msg, isError) {
-    var el = document.getElementById('superFormStatus');
-    if (!el) return;
-    el.textContent = msg || '';
-    el.className = 'super-form-status' + (isError ? ' super-form-status--error' : ' super-form-status--ok');
-    el.hidden = !msg;
   }
 
   function loadRegistry() {
@@ -234,10 +278,13 @@
       })
         .then(function (res) {
           return res.json().then(function (body) {
-            return { ok: res.ok, body: body };
+            return { ok: res.ok, status: res.status, body: body };
           });
         })
         .then(function (result) {
+          if (result.status === 401) {
+            throw new Error('Not signed in — open Live chat inbox or Insights and enter your desk token first.');
+          }
           if (!result.ok || !result.body.ok) {
             throw new Error((result.body && result.body.error) || 'Could not add bot');
           }
@@ -251,7 +298,7 @@
               bot.id +
               ') created. Sheet tab "' +
               (bot.sheetTab || '') +
-              '" will be created on first sync.' +
+              '" is ready.' +
               extra,
             false
           );
@@ -282,7 +329,7 @@
     var line = document.getElementById('superBotLine');
     if (line) {
       line.textContent =
-        'Add chatbot projects here. Set each bot’s Google Sheet tab name — tabs are created automatically when you save or when the first conversation syncs.';
+        'Create new bots below. For existing bots, edit settings in the table and click Save on each row.';
     }
 
     var uiLink = document.getElementById('superUiLink');
