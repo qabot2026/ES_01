@@ -1,8 +1,7 @@
 (function (global) {
   'use strict';
 
-  var NAV_ASSET_V = '20260612b';
-  var APPEARANCE_MENU_ICON_URL = '/dashboard/icons/appearance-menu-icon.png';
+  var NAV_ASSET_V = '20260613b';
 
   function ensureBoot() {
     var root = document.documentElement;
@@ -133,6 +132,9 @@
       '<polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/>',
     brush:
       '<path d="m15 20-4-4 6.5-6.5a4.2 4.2 0 1 1 6 6L11 20"/><path d="M18.375 2.625a1 1 0 0 1 3 3l-9.013 9.014a2 2 0 0 1-.853.505l-2.873.84a.5.5 0 0 1-.62-.62l.84-2.873a2 2 0 0 1 .506-.852z"/>',
+    appearance:
+      '<path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>' +
+      '<path d="M5 3v4"/><path d="M3 5h4"/><path d="M19 17v4"/><path d="M17 19h4"/>',
     search:
       '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/>',
     palette:
@@ -272,19 +274,15 @@
   }
 
   function navIcon(name) {
-    if (name === 'appearance') {
-      return (
-        '<img class="dash-nav-ic dash-nav-ic--img" src="' +
-        APPEARANCE_MENU_ICON_URL +
-        '" alt="" width="18" height="18" decoding="async" aria-hidden="true" onerror="this.style.display=\'none\';var f=this.nextElementSibling;if(f)f.hidden=false;" />' +
-        '<svg class="dash-nav-ic dash-nav-ic--fallback" hidden width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
-        (ICONS.brush || ICONS.home) +
-        '</svg>'
-      );
-    }
     var paths = ICONS[name] || ICONS.home;
+    var stroke = name === 'appearance' ? '2.25' : '1.5';
+    var cls = 'dash-nav-ic' + (name === 'appearance' ? ' dash-nav-ic--appearance' : '');
     return (
-      '<svg class="dash-nav-ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+      '<svg class="' +
+      cls +
+      '" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="' +
+      stroke +
+      '" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
       paths +
       '</svg>'
     );
