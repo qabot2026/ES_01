@@ -1,7 +1,9 @@
 (function (global) {
   'use strict';
 
-  var NAV_ASSET_V = '20260611f';
+  var NAV_ASSET_V = '20260612a';
+  var APPEARANCE_MENU_ICON_URL =
+    'https://storage.googleapis.com/recep-bucket/fromclient/appearence-logo.png';
 
   function ensureBoot() {
     var root = document.documentElement;
@@ -15,7 +17,7 @@
       crit.textContent =
         'html.dash-mount-pending,html.dash-mount-pending body{overflow:hidden!important}' +
         'html.dash-mount-pending .dash-page-content,html.dash-mount-pending #app[data-dash-pre-mount]{visibility:hidden!important;opacity:0!important}' +
-        '.dash-nav-ic,svg.dash-nav-ic{width:18px!important;height:18px!important;max-width:18px!important;max-height:18px!important}' +
+        '.dash-nav-ic,svg.dash-nav-ic,.dash-nav-ic--img{width:18px!important;height:18px!important;max-width:18px!important;max-height:18px!important;object-fit:contain!important}' +
         '.dash-icon-badge svg{width:18px!important;height:18px!important;max-width:18px!important;max-height:18px!important}' +
         '#dash-shell-loader{position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;background:#f1f5f9}' +
         'html.dash-ready #dash-shell-loader{display:none!important}';
@@ -107,7 +109,7 @@
         { key: 'queryanalytics', label: 'Customer questions', icon: 'search' },
         { key: 'appointments', label: 'Appointments', icon: 'calendar' },
         { key: 'documents', label: 'Customer uploads', icon: 'file' },
-        { key: 'uiux-setting', label: 'Chatbot appearance', icon: 'brush' },
+        { key: 'uiux-setting', label: 'Chatbot appearance', icon: 'appearance' },
         { key: 'supersetting', label: 'Advanced configuration', icon: 'shield' },
       ],
     },
@@ -271,6 +273,13 @@
   }
 
   function navIcon(name) {
+    if (name === 'appearance') {
+      return (
+        '<img class="dash-nav-ic dash-nav-ic--img" src="' +
+        APPEARANCE_MENU_ICON_URL +
+        '" alt="" width="18" height="18" decoding="async" aria-hidden="true" />'
+      );
+    }
     var paths = ICONS[name] || ICONS.home;
     return (
       '<svg class="dash-nav-ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
