@@ -1102,34 +1102,21 @@
 
       function updateSessionMeta(json) {
         var metaEl = document.getElementById("sessionMeta");
-        if (!metaEl) return;
-        var sessionVal = String(json.session || sessionFromUrl() || "").trim();
+        var titleEl = document.querySelector("h1");
         var meta = json.meta && typeof json.meta === "object" ? json.meta : {};
         var sheet = json.sheet && typeof json.sheet === "object" ? json.sheet : null;
         var cols = sheet && sheet.columns && typeof sheet.columns === "object" ? sheet.columns : null;
-        var mobileVal = String(meta.mobile || meta.phone || "").trim();
-        if (!mobileVal && cols) {
-          mobileVal = String(cols.Mobile || cols.mobile || "").trim();
+        var nameVal = String(meta.name || "").trim();
+        if (!nameVal && cols) {
+          nameVal = String(cols.Name || cols.name || "").trim();
         }
-        if (!sessionVal && !mobileVal) {
+        var title = nameVal ? "Chat script — " + nameVal : "Chat script";
+        if (titleEl) titleEl.textContent = title;
+        document.title = title;
+        if (metaEl) {
           metaEl.hidden = true;
-          metaEl.textContent = "";
-          return;
+          metaEl.innerHTML = "";
         }
-        var chunks = [];
-        if (mobileVal) {
-          chunks.push("<strong>Mobile:</strong> " + escapeHtml(mobileVal));
-        }
-        if (sessionVal) {
-          chunks.push("<strong>Dialog code:</strong> " + escapeHtml(sessionVal));
-        }
-        metaEl.innerHTML = chunks.join(" · ");
-        metaEl.hidden = false;
-        document.title = mobileVal
-          ? "Chat script — " + mobileVal
-          : sessionVal
-            ? "Chat script — " + sessionVal
-            : "Chat script";
       }
 
       function buildDetails(json) {
@@ -1181,7 +1168,7 @@
         if (nameVal) pairs.push(["Name", String(nameVal)]);
         if (emailVal) pairs.push(["Email", String(emailVal)]);
         if (mobileVal) pairs.push(["Phone", String(mobileVal)]);
-        if (sessionVal) pairs.push(["Dialog code", sessionVal]);
+        if (sessionVal) pairs.push(["Session", sessionVal]);
 
         var deviceVal = takeSemanticCol("device");
         var channelVal = takeSemanticCol("channel");
