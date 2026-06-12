@@ -472,10 +472,16 @@ window.QA_CHAT_UI_CONFIG = {
 
   /* Merge — landing pages set welcomeEventName + sitePreset before embed.js loads this file */
   var qaExisting = window.QA_CONFIG || {};
+  var sitePreset = qaExisting.sitePreset || 'receptionist';
+  var botId = qaExisting.botId || '';
+  if (!botId && sitePreset && window.QA_BOT_PRESETS && window.QA_BOT_PRESETS[sitePreset]) {
+    botId = window.QA_BOT_PRESETS[sitePreset].botId || '';
+  }
+  if (!botId) botId = '10001';
   window.QA_CONFIG = Object.assign({}, qaExisting, {
     apiBase: c.common.deploy.publicBaseUrl,
     embedScript: c.common.deploy.embedScript,
-    sitePreset: qaExisting.sitePreset || 'receptionist',
-    botId: qaExisting.botId || '10001',
+    sitePreset: sitePreset,
+    botId: botId,
   });
 })();

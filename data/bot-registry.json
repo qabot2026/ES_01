@@ -6,7 +6,7 @@
       "sitePreset": "receptionist",
       "welcomeEventName": "",
       "themeKey": "receptionist",
-      "sheetTab": "Recep. Chats"
+      "sheetTab": "Receptionist"
     },
     {
       "id": "10002",
@@ -14,7 +14,7 @@
       "sitePreset": "greenValley",
       "welcomeEventName": "START_GREEN_VALLEY",
       "themeKey": "greenValley",
-      "sheetTab": "Green Valley Conv."
+      "sheetTab": "Green Valley"
     },
     {
       "id": "10003",
@@ -22,8 +22,8 @@
       "sitePreset": "lakeView",
       "welcomeEventName": "START_LAKE_VIEW",
       "themeKey": "lakeView",
-      "sheetTab": "Lake Valley Leads"
+      "sheetTab": "Lake View"
     }
   ],
-  "updatedAt": "2026-06-12T12:00:00.000Z"
+  "updatedAt": "2026-06-12T18:00:00.000Z"
 }

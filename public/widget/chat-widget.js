@@ -23,12 +23,13 @@
 
   function getBotId_() {
     var qa = global.QA_CONFIG || {};
-    if (qa.botId) return String(qa.botId).trim();
-    var key = getSitePresetKey_();
-    if (key && global.QA_BOT_PRESETS && global.QA_BOT_PRESETS[key]) {
-      var preset = global.QA_BOT_PRESETS[key];
-      if (preset && preset.botId) return String(preset.botId).trim();
+    var key = getSitePresetKey_() || 'receptionist';
+    if (key !== 'receptionist' && global.QA_BOT_PRESETS && global.QA_BOT_PRESETS[key]) {
+      var childPreset = global.QA_BOT_PRESETS[key];
+      if (childPreset && childPreset.botId) return String(childPreset.botId).trim();
     }
+    if (qa.botId) return String(qa.botId).trim();
+    if (key === 'receptionist') return '10001';
     return '';
   }
 
