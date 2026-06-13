@@ -10,7 +10,11 @@ const signals = require('./live-agent-signals');
 const knowledge = require('./live-agent-knowledge');
 const liveAgentHours = require('./live-agent-hours');
 const liveAgentQueue = require('./live-agent-queue');
-const channelOutbound = require('./channels/channel-outbound');
+
+function deliverChannelReply(sessionId, text) {
+  const channelOutbound = require('./channels/channel-outbound');
+  return channelOutbound.deliverAgentReply(sessionId, text);
+}
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -672,9 +676,9 @@ function mountLiveAgentRoutes(app) {
         agentName: trim(req.body && req.body.agentName),
       });
       await store.syncPush();
-      void channelOutbound
-        .deliverAgentReply(req.params.id, text)
-        .catch((err) => console.warn('[channels] agent reply:', err.message));
+      void deliverChannelReply(req.params.id, text).catch((err) =>
+        console.warn('[channels] agent reply:', err.message)
+      );
       res.json({
         ok: true,
         message: result.message,
@@ -1135,9 +1139,9 @@ function mountLiveAgentRoutes(app) {
         agentEmail: req.liveAgentSession.agentId,
         agentName: req.body.agentName,
       });
-      void channelOutbound
-        .deliverAgentReply(sessionId, text)
-        .catch((err) => console.warn('[channels] agent reply:', err.message));
+      void deliverChannelReply(sessionId, text).catch((err) =>
+        console.warn('[channels] agent reply:', err.message)
+      );
       res.json({ ok: true, message: result.message });
     } catch (err) {
       res.status(400).json({ ok: false, error: err.message });

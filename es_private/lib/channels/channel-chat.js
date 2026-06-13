@@ -5,8 +5,11 @@
 const dialogflow = require('../dialogflow');
 const phraseTranslations = require('../phrase-translations');
 const messageSyntax = require('../message-syntax');
-const liveAgent = require('../live-agent');
 const chatTranscript = require('../chat-transcript');
+
+function liveAgent() {
+  return require('../live-agent');
+}
 const esTestMode = require('../es-test-mode');
 const channelSessions = require('./channel-sessions');
 
@@ -55,16 +58,17 @@ async function processChatTurn(opts) {
   const uiLang = uiLanguageCode || languageCode;
   const sheetChannel = channelSessions.sheetChannelName(sid);
 
-  await liveAgent.refreshStore();
+  const la = liveAgent();
+  await la.refreshStore();
 
-  if (!isEsTest && liveAgent.isDialogflowBlockedForSession(sid)) {
-    const conv = liveAgent.getConversation(sid);
+  if (!isEsTest && la.isDialogflowBlockedForSession(sid)) {
+    const conv = la.getConversation(sid);
     const agentName = conv
-      ? liveAgent.resolveAgentDisplayName(conv.assignedAgentEmail)
+      ? la.resolveAgentDisplayName(conv.assignedAgentEmail)
       : '';
     if (!eventName && message && typeof message === 'string' && message.trim()) {
       try {
-        await liveAgent.postUserMessage(sid, message.trim());
+        await la.postUserMessage(sid, message.trim());
       } catch (postErr) {
         console.warn('[live-agent] visitor message during handoff:', postErr.message);
       }
@@ -133,7 +137,7 @@ async function processChatTurn(opts) {
     } catch {
       /* ignore */
     }
-    const handoff = await liveAgent.requestHandoff(sid, {
+    const handoff = await la.requestHandoff(sid, {
       userLanguage: uiLang,
       previewMessage: message ? message.trim() : '',
       visitorName: handoffVisitorName,
