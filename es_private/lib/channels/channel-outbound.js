@@ -3,7 +3,15 @@
  */
 
 const channelSessions = require('./channel-sessions');
-const meta = require('./meta-shared');
+const whatsapp = require('./whatsapp');
+const instagram = require('./instagram');
+const facebook = require('./facebook');
+
+const OUTBOUND_BY_CHANNEL = {
+  whatsapp,
+  instagram,
+  facebook,
+};
 
 async function deliverAgentReply(sessionId, text) {
   const sid = String(sessionId || '').trim();
@@ -11,24 +19,15 @@ async function deliverAgentReply(sessionId, text) {
   if (!sid || !body) return { sent: false, reason: 'empty' };
 
   const { channel, externalId } = channelSessions.parseSessionId(sid);
-
-  if (channel === 'whatsapp') {
-    if (!meta.isWhatsAppConfigured()) {
-      return { sent: false, reason: 'whatsapp_not_configured' };
-    }
-    await meta.sendWhatsAppText(externalId, body);
-    return { sent: true, channel: 'whatsapp' };
+  const integration = OUTBOUND_BY_CHANNEL[channel];
+  if (!integration || !integration.enabled) {
+    return { sent: false, reason: 'not_social_session' };
   }
-
-  if (channel === 'instagram' || channel === 'facebook') {
-    if (!meta.isMessengerConfigured()) {
-      return { sent: false, reason: 'messenger_not_configured' };
-    }
-    await meta.sendMessengerText(externalId, body);
-    return { sent: true, channel };
+  if (!integration.isConfigured()) {
+    return { sent: false, reason: `${channel}_not_configured` };
   }
-
-  return { sent: false, reason: 'not_social_session' };
+  await integration.sendOutboundReply(externalId, body);
+  return { sent: true, channel };
 }
 
 module.exports = {

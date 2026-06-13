@@ -76,15 +76,23 @@ function registerRoutes(app) {
 
   app.get('/api/channels/status', (_req, res) => {
     res.json({
-      whatsapp: meta.isWhatsAppConfigured(),
-      instagram: meta.isMessengerConfigured(),
-      facebook: meta.isMessengerConfigured(),
-      sessionPrefixes: {
-        web: 'web-',
-        whatsapp: 'wa-',
-        instagram: 'ig-',
-        facebook: 'fb-',
+      integrationsDir: 'es_private/client-based/integrations',
+      whatsapp: {
+        enabled: whatsapp.enabled,
+        configured: whatsapp.isConfigured(),
+        sessionPrefix: whatsapp.sessionPrefix,
       },
+      instagram: {
+        enabled: instagram.enabled,
+        configured: instagram.isConfigured(),
+        sessionPrefix: instagram.sessionPrefix,
+      },
+      facebook: {
+        enabled: facebook.enabled,
+        configured: facebook.isConfigured(),
+        sessionPrefix: facebook.sessionPrefix,
+      },
+      webSessionPrefix: 'web-',
       webhookUrl: '/webhooks/meta',
     });
   });
