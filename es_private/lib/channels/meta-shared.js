@@ -77,21 +77,27 @@ async function graphPost(path, body, accessToken) {
   return data;
 }
 
-async function sendWhatsAppText(to, text) {
+async function sendWhatsAppPayload(to, payload) {
   const c = metaConfig();
   if (!isWhatsAppConfigured()) throw new Error('WhatsApp not configured');
-  const body = text == null ? '' : String(text).trim();
-  if (!body) return null;
   return graphPost(
     `/${c.whatsappPhoneNumberId}/messages`,
     {
       messaging_product: 'whatsapp',
       to: String(to).replace(/\D/g, ''),
-      type: 'text',
-      text: { body: body.slice(0, 4096) },
+      ...payload,
     },
     c.whatsappToken
   );
+}
+
+async function sendWhatsAppText(to, text) {
+  const body = text == null ? '' : String(text).trim();
+  if (!body) return null;
+  return sendWhatsAppPayload(to, {
+    type: 'text',
+    text: { body: body.slice(0, 4096) },
+  });
 }
 
 async function sendMessengerText(recipientId, text) {
@@ -111,5 +117,6 @@ module.exports = {
   verifyWebhookChallenge,
   verifySignature,
   sendWhatsAppText,
+  sendWhatsAppPayload,
   sendMessengerText,
 };

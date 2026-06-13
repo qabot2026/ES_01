@@ -24,6 +24,7 @@
 const channelSessions = require('../../lib/channels/channel-sessions');
 const channelChat = require('../../lib/channels/channel-chat');
 const meta = require('../../lib/channels/meta-shared');
+const waRich = require('../../lib/channels/whatsapp-rich-outbound');
 
 /** Integration on/off — false karo jab tak setup na ho */
 const enabled = true;
@@ -73,10 +74,21 @@ function extractMessages(body) {
       const value = change.value || {};
       const messages = Array.isArray(value.messages) ? value.messages : [];
       for (const msg of messages) {
-        if (msg.type !== 'text' || !msg.text || !msg.text.body) continue;
+        let text = '';
+        if (msg.type === 'text' && msg.text && msg.text.body) {
+          text = msg.text.body;
+        } else if (msg.type === 'interactive' && msg.interactive) {
+          const ir = msg.interactive;
+          if (ir.type === 'button_reply' && ir.button_reply) {
+            text = ir.button_reply.title || ir.button_reply.id || '';
+          } else if (ir.type === 'list_reply' && ir.list_reply) {
+            text = ir.list_reply.title || ir.list_reply.id || '';
+          }
+        }
+        if (!text || !String(text).trim()) continue;
         out.push({
           from: msg.from,
-          text: msg.text.body,
+          text: String(text).trim(),
           messageId: msg.id,
           phoneNumberId: value.metadata && value.metadata.phone_number_id,
         });
@@ -115,8 +127,8 @@ async function handleInboundMessage(from, text, opts) {
       const welcomeText =
         welcome.outboundText ||
         (welcome.waitingForAgent ? waitingForAgentMessage : '');
-      if (welcomeText) {
-        await sendOutboundReply(phone, welcomeText);
+      if (welcomeText || (welcome.chips && welcome.chips.length)) {
+        await sendDialogflowResult(phone, welcome);
       }
       const genericOpeners = /^(hi|hello|hey|hii|hola|namaste|start|menu)$/i;
       if (genericOpeners.test(String(text).trim())) {
@@ -144,13 +156,41 @@ async function handleInboundMessage(from, text, opts) {
     result.outboundText ||
     (result.waitingForAgent ? waitingForAgentMessage : '');
 
-  if (reply) {
-    await sendOutboundReply(phone, reply);
+  const hasRich =
+    (result.chips && result.chips.length) ||
+    (result.dropdowns && result.dropdowns.length) ||
+    (result.downloads && result.downloads.length) ||
+    (result.infoCards && result.infoCards.length) ||
+    (result.galleries && result.galleries.length) ||
+    (result.cardCarousels && result.cardCarousels.length) ||
+    (result.forms && result.forms.length) ||
+    (result.replyParts && result.replyParts.length > 1);
+
+  if (reply || hasRich) {
+    if (result.waitingForAgent && !hasRich) {
+      await sendOutboundReply(phone, reply);
+    } else {
+      await sendDialogflowResult(phone, result);
+    }
   }
   return { sessionId, reply };
 }
 
-/** Agent desk / bot se user ko message bhejo */
+/** Dialogflow result — text + chips/lists/images/forms */
+async function sendDialogflowResult(recipientId, result) {
+  if (!isConfigured()) return null;
+  try {
+    return await waRich.deliverDialogflowResult(recipientId, result);
+  } catch (err) {
+    console.error('[whatsapp.integration] rich send:', err.message);
+    const fallback =
+      (result && (result.outboundText || result.reply)) || '';
+    if (fallback) return sendOutboundReply(recipientId, fallback);
+    return null;
+  }
+}
+
+/** Agent desk / simple text reply */
 async function sendOutboundReply(recipientId, text) {
   if (!isConfigured()) return null;
   return meta.sendWhatsAppText(recipientId, text);
@@ -177,6 +217,7 @@ module.exports = {
   welcomeEventName,
   extractMessages,
   handleInboundMessage,
+  sendDialogflowResult,
   sendOutboundReply,
   processWebhookPayload,
 };
