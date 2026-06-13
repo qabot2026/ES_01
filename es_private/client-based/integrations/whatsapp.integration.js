@@ -4,9 +4,11 @@
  * ============================================================================
  * Session ID prefix: wa-  (example: wa-919876543210)
  *
- * Railway Variables (.env.example dekho):
- *   META_VERIFY_TOKEN, META_APP_SECRET
- *   WHATSAPP_ACCESS_TOKEN, WHATSAPP_PHONE_NUMBER_ID
+ * Railway Variables (tumhare names OK):
+ *   WHATSAPP_TOKEN
+ *   WHATSAPP_APP_SECRET
+ *   WHATSAPP_PHONE_NUMBER_ID
+ *   WHATSAPP_VERIFY_TOKEN
  *
  * Meta App → Webhook URL:
  *   https://YOUR_DOMAIN/webhooks/meta
