@@ -18,26 +18,30 @@ const conversationsSheetView = require('./lib/conversations-sheet-view');
 const queryAnalytics = require('./lib/query-analytics');
 const appointmentsView = require('./lib/appointments-view');
 const appointmentStatus = require('./lib/appointment-status-store');
-const qaMode = require('./lib/qa-mode');
+const esTestMode = require('./lib/es-test-mode');
 const sitePresetsStore = require('./lib/site-presets-store');
 const dashboardBots = require('./lib/dashboard-bots');
 const googleCredentials = require('./lib/google-credentials');
 const botProjectFiles = require('./lib/bot-project-files');
 const botSheetTabs = require('./lib/bot-sheet-tabs');
+const dataFileSync = require('./lib/data-file-sync');
+const clientPaths = require('./lib/client-paths');
 const DEFAULT_RECEPTIONIST_BOT_ID = botSheetTabs.DEFAULT_BOT_ID;
 const DEFAULT_RECEPTIONIST_SITE_PRESET = botSheetTabs.DEFAULT_SITE_PRESET;
 const liveAgentSheet = require('./lib/live-agent-sheet');
 const fs = require('fs');
+const appEnv = require('./lib/app-env');
+const channels = require('./lib/channels');
+const channelSessions = require('./lib/channels/channel-sessions');
+const channelChat = require('./lib/channels/channel-chat');
 
 const app = express();
-const PORT = process.env.PORT || 4567;
-const publicDir = path.join(__dirname, 'public');
-const PUBLIC_BASE_URL =
-  process.env.PUBLIC_BASE_URL ||
-  'https://es-based-chatbot-production.up.railway.app';
+const PORT = appEnv.PORT;
+const publicDir = path.join(__dirname, '..', 'es_public');
+const PUBLIC_BASE_URL = appEnv.PUBLIC_BASE_URL;
 
 const CORS_ALLOW_HEADERS =
-  'Content-Type, X-Agent-Token, X-Desk-Token, X-Conversations-Sheet-Secret, Authorization, X-Live-Agent-Email, X-Live-Agent-Name, X-QA-Mode';
+  'Content-Type, X-Agent-Token, X-Desk-Token, X-Conversations-Sheet-Secret, Authorization, X-Live-Agent-Email, X-Live-Agent-Name, X-ES-Test-Mode';
 
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -47,9 +51,11 @@ app.use((req, res, next) => {
   next();
 });
 
+channels.registerRoutes(app);
+
 app.use(express.json({ limit: '32kb' }));
 
-// `public/` is the static root on disk — not part of the URL path.
+// `es_public/client-based/` = per-client browser files. `es_private/client-based/data/` = server data.
 app.use((req, res, next) => {
   if (req.path === '/public' || req.path.startsWith('/public/')) {
     const rest = req.path.slice('/public'.length) || '/';
@@ -78,10 +84,8 @@ app.use((req, res, next) => {
   next();
 });
 
-const APPEARANCE_ICON_BUCKET =
-  process.env.APPEARANCE_MENU_ICON_BUCKET || 'recep-bucket';
-const APPEARANCE_ICON_OBJECT =
-  process.env.APPEARANCE_MENU_ICON_OBJECT || 'fromclient/appearence-logo.png';
+const APPEARANCE_ICON_BUCKET = appEnv.APPEARANCE_MENU_ICON_BUCKET;
+const APPEARANCE_ICON_OBJECT = appEnv.APPEARANCE_MENU_ICON_OBJECT;
 
 /** Appearance menu icon — GCS object is private; serve via server credentials */
 app.get('/dashboard/icons/appearance-menu-icon.png', async (req, res) => {
@@ -136,19 +140,42 @@ app.get('/bot-settings/:botId.html', (req, res) => {
   res.type('html').send(botProjectFiles.renderBotSettingsHtml(botId, project.name));
 });
 
+/** Per-client files — es_public/client-based/ */
+app.get('/company.config.js', (_req, res) => {
+  res.setHeader('Cache-Control', 'no-cache, must-revalidate');
+  res.sendFile(clientPaths.companyConfigPath());
+});
+
+app.use(
+  '/bot-configs',
+  express.static(clientPaths.botConfigsDir(), {
+    maxAge: process.env.NODE_ENV === 'production' ? '1d' : 0,
+    etag: true,
+  })
+);
+
+app.use((req, res, next) => {
+  if (req.method !== 'GET' && req.method !== 'HEAD') return next();
+  const page = path.basename(req.path);
+  if (!/\.html$/i.test(page)) return next();
+  const pagePath = path.join(clientPaths.pagesDir(), page);
+  if (fs.existsSync(pagePath)) return res.sendFile(pagePath);
+  next();
+});
+
 app.use(express.static(publicDir, {
   maxAge: process.env.NODE_ENV === 'production' ? '1d' : 0,
   etag: true,
 }));
 
-app.get('/qa', (_req, res) => {
-  res.redirect(301, '/qa/');
+app.get('/es-test', (_req, res) => {
+  res.redirect(301, '/es-test/');
 });
 
 app.get('/health', async (_req, res) => {
   const base = {
     status: 'ok',
-    service: 'quality-assistant-chatbot',
+    service: 'es-chatbot',
     projectId: dialogflow.PROJECT_ID,
     credentials: dialogflow.isConfigured() ? 'present' : 'missing',
     credentialsMeta: dialogflow.getCredentialsMeta(),
@@ -181,164 +208,28 @@ app.post('/api/chat', async (req, res) => {
     orchestrationChildId,
     channel,
   } = req.body || {};
-  const sid = sessionId || randomUUID();
-  const isQa = qaMode.isQaRequest(req, sid);
-  const eventName =
-    typeof event === 'string' && event.trim() ? event.trim() : null;
-  const uiLang = uiLanguageCode || languageCode;
+  const sid = channelSessions.resolveWebSessionId(sessionId);
 
   try {
-    await liveAgent.refreshStore();
-    if (!isQa && liveAgent.isDialogflowBlockedForSession(sid)) {
-      const conv = liveAgent.getConversation(sid);
-      const agentName = conv
-        ? liveAgent.resolveAgentDisplayName(conv.assignedAgentEmail)
-        : '';
-      if (!eventName && message && typeof message === 'string' && message.trim()) {
-        try {
-          await liveAgent.postUserMessage(sid, message.trim());
-        } catch (postErr) {
-          console.warn('[live-agent] visitor message during handoff:', postErr.message);
-        }
-      }
-      return res.json({
-        sessionId: sid,
-        reply: '',
-        replyParts: [],
-        chips: [],
-        forms: [],
-        messages: [],
-        liveAgent: true,
-        humanActive: true,
-        skipBot: true,
-        agentConnected: !!(conv && conv.status === 'active' && conv.assignedAgentEmail),
-        assignedAgentDisplayName: agentName,
-        connectedMessage: agentName
-          ? `You are now chatting with ${agentName}.`
-          : '',
-      });
-    }
-    if (!eventName) {
-      if (!message || typeof message !== 'string' || !message.trim()) {
-        return res.status(400).json({ error: 'message or event is required' });
-      }
-    }
-    const dfProjectId =
-      typeof dialogflowProjectId === 'string' && dialogflowProjectId.trim()
-        ? dialogflowProjectId.trim()
-        : undefined;
-    let result = eventName
-      ? await dialogflow.detectEvent(sid, eventName, languageCode, dfProjectId)
-      : await dialogflow.detectIntent(sid, message.trim(), languageCode, dfProjectId);
-    if (phraseTranslations.isEnabled()) {
-      result = phraseTranslations.applyToResult(result, uiLang);
-    }
-    if (result.liveAgent && isQa) {
-      result.liveAgent = false;
-      result.waitingForAgent = false;
-      result.humanActive = false;
-      result.skipBot = false;
-      const qaNote =
-        'QA test mode: live agent handoff is disabled and nothing is saved.';
-      if (!result.reply || !String(result.reply).trim()) {
-        result.reply = qaNote;
-      } else {
-        result.reply = String(result.reply).trim() + '\n\n' + qaNote;
-      }
-    } else if (result.liveAgent) {
-      let handoffVisitorName = '';
-      try {
-        const doc = chatTranscript.getSessionDoc(sid);
-        const meta = doc && doc.meta && typeof doc.meta === 'object' ? doc.meta : {};
-        handoffVisitorName =
-          (typeof meta.name === 'string' && meta.name.trim()) ||
-          (typeof meta.visitorName === 'string' && meta.visitorName.trim()) ||
-          '';
-      } catch {
-        /* ignore */
-      }
-      const handoff = await liveAgent.requestHandoff(sid, {
-        userLanguage: uiLang,
-        previewMessage: message ? message.trim() : '',
-        visitorName: handoffVisitorName,
-        department:
-          (result.liveAgentDepartment && String(result.liveAgentDepartment).trim()) ||
-          '',
-      });
-      if (handoff && handoff.outsideHours) {
-        const closedMsg =
-          (handoff.message && String(handoff.message).trim()) ||
-          'Our live support team is currently unavailable. Please try again during business hours.';
-        return res.json({
-          sessionId: sid,
-          reply: closedMsg,
-          replyParts: [],
-          chips: [],
-          forms: [],
-          messages: [],
-          liveAgent: false,
-          humanActive: false,
-          skipBot: false,
-          outsideHours: true,
-        });
-      }
-      if (handoff && handoff.dismissed) {
-        return res.json({
-          sessionId: sid,
-          reply:
-            'This chat was closed by our team. You can continue with the assistant below.',
-          replyParts: [],
-          chips: [],
-          forms: [],
-          messages: [],
-          liveAgent: false,
-          humanActive: false,
-          skipBot: false,
-        });
-      }
-      chatTranscript.mergeSessionMeta(sid, {
-        channel: 'Web',
-        liveAgentRequested: true,
-        liveAgentActive: true,
-      });
-      result.reply = '';
-      result.replyParts = [];
-      result.chips = [];
-      result.chipHeading = '';
-      result.forms = [];
-      result.infoCards = [];
-      result.downloads = [];
-      result.dropdowns = [];
-      result.galleries = [];
-      result.cardCarousels = [];
-      result.liveAgent = true;
-      result.waitingForAgent = true;
-      result.humanActive = false;
-      result.skipBot = false;
-    }
-
-    const userText = eventName ? '' : message && message.trim();
-    if (!isQa) {
-      chatTranscript.logDialogflowExchange(sid, userText, result, {
-        skipTranscriptUser: req.body && req.body.skipTranscriptUser === true,
-      });
-    }
-
-    messageSyntax.applyFormattedReplyFields(
-      result,
-      channel || req.body.source || 'web'
-    );
-
-    res.json({
+    const result = await channelChat.processChatTurn({
       sessionId: sid,
-      qaMode: isQa,
-      orchestrationMode:
-        typeof orchestrationMode === 'string' ? orchestrationMode : '',
-      orchestrationChildId:
-        typeof orchestrationChildId === 'string' ? orchestrationChildId : '',
-      ...result,
+      message,
+      languageCode,
+      uiLanguageCode,
+      event,
+      dialogflowProjectId,
+      orchestrationMode,
+      orchestrationChildId,
+      channel: channel || req.body.source || 'web',
+      skipTranscriptUser: req.body && req.body.skipTranscriptUser === true,
+      req,
     });
+    const { outboundText, ...json } = result;
+    res.json(json);
   } catch (err) {
+    if (err.status === 400) {
+      return res.status(400).json({ error: 'message or event is required' });
+    }
     const detail = dialogflow.formatApiError(err);
     console.error('[dialogflow]', detail);
     const status =
@@ -354,7 +245,7 @@ app.post('/api/chat', async (req, res) => {
       projectId: dialogflow.PROJECT_ID,
       hint:
         err.code === 7
-          ? 'Service account needs Dialogflow API Client role on project qualityassistant-ygdm.'
+          ? 'Service account needs Dialogflow API Client role on project recebot-ptav.'
           : err.code === 16
             ? 'Invalid or corrupted JSON key in Railway — re-paste the full service account file.'
             : undefined,
@@ -445,15 +336,15 @@ app.post('/api/appointment-book', (req, res) => {
     const date = String(body.date || body.appointmentdate || '').trim();
     const time = String(body.time || body.appointmenttime || '').trim();
     const sid = String(body.sessionId || body.session_id || '').trim();
-    const isQa = qaMode.isQaRequest(req, sid);
-    const result = formApi.bookAppointmentSlot(formId, date, time, { dryRun: isQa });
+    const isEsTest = esTestMode.isEsTestRequest(req, sid);
+    const result = formApi.bookAppointmentSlot(formId, date, time, { dryRun: isEsTest });
     if (!result.ok) {
       return res.status(409).json(result);
     }
-    if (isQa) {
+    if (isEsTest) {
       return res.json({
         ...result,
-        qaMode: true,
+        esTestMode: true,
         simulated: true,
         message: 'QA test mode: appointment validated but not booked.',
       });
@@ -549,8 +440,8 @@ app.post('/api/session-context', (req, res) => {
   if (!sid) {
     return res.status(400).json({ error: 'session_required' });
   }
-  if (qaMode.isQaRequest(req, sid)) {
-    return res.json({ ok: true, qaMode: true, sessionId: sid, merged: 0, skipped: true });
+  if (esTestMode.isEsTestRequest(req, sid)) {
+    return res.json({ ok: true, esTestMode: true, sessionId: sid, merged: 0, skipped: true });
   }
   const meta = conversationSheet.metaFromClientBody(req.body || {});
   const ip = formApi.getClientIp(req);
@@ -617,10 +508,10 @@ app.post(
   },
   async (req, res) => {
     const sessionId = String(req.body.sessionId || '').trim();
-    if (qaMode.isQaRequest(req, sessionId)) {
+    if (esTestMode.isEsTestRequest(req, sessionId)) {
       return res.json({
         ok: true,
-        qaMode: true,
+        esTestMode: true,
         simulated: true,
         sessionId,
         message: 'QA test mode: files were not uploaded or saved.',
@@ -730,8 +621,8 @@ app.post(
 
 app.post('/api/transcript/append', (req, res) => {
   const { sessionId, role, text, meta, turns } = req.body || {};
-  if (qaMode.isQaRequest(req, sessionId)) {
-    return res.json({ ok: true, qaMode: true, skipped: true });
+  if (esTestMode.isEsTestRequest(req, sessionId)) {
+    return res.json({ ok: true, esTestMode: true, skipped: true });
   }
   if (Array.isArray(turns) && turns.length) {
     return res.json({
@@ -1383,14 +1274,24 @@ app.get('/api/config', (_req, res) => {
 app.get('*', (req, res, next) => {
   if (req.path.startsWith('/api/')) return next();
   if (path.extname(req.path)) return next();
-  if (req.path === '/qa' || req.path.startsWith('/qa/')) return next();
+  if (req.path === '/es-test' || req.path.startsWith('/es-test/')) return next();
   res.sendFile(path.join(publicDir, 'index.html'));
 });
 
-app.listen(PORT, () => {
+async function startServer() {
+  try {
+    await dataFileSync.pullAllOnStartup();
+  } catch (err) {
+    console.warn('[data-sync] startup pull:', err.message);
+  }
+
+  app.listen(PORT, () => {
   const local = `http://localhost:${PORT}`;
-  console.log(`QualityAssistant → ${PUBLIC_BASE_URL}`);
+  console.log(`ES Chatbot → ${PUBLIC_BASE_URL}`);
   console.log(`Local: ${local}`);
+  if (dataFileSync.useGcs() || dataFileSync.useGithub()) {
+    console.log('[data-sync] auto-sync enabled (GCS/GitHub)');
+  }
   if (!dialogflow.isConfigured()) {
     console.warn('⚠ GOOGLE_CREDENTIALS_JSON missing — /api/chat will not work.');
     return;
@@ -1475,4 +1376,10 @@ app.listen(PORT, () => {
     .catch((err) =>
       console.error('Dialogflow probe failed:', dialogflow.formatApiError(err))
     );
+});
+}
+
+startServer().catch((err) => {
+  console.error('Server failed to start:', err.message);
+  process.exit(1);
 });

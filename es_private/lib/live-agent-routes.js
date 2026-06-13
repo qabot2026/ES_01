@@ -10,6 +10,7 @@ const signals = require('./live-agent-signals');
 const knowledge = require('./live-agent-knowledge');
 const liveAgentHours = require('./live-agent-hours');
 const liveAgentQueue = require('./live-agent-queue');
+const channelOutbound = require('./channels/channel-outbound');
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -88,7 +89,7 @@ async function longPollUntilChange(sessionId, clientRev, waitMs, clientLastMsgId
   return payload;
 }
 
-const DESK_DIR = path.join(__dirname, '..', 'public', 'live-agent');
+const DESK_DIR = path.join(__dirname, '..', '..', 'es_public', 'live-agent');
 
 const SHEET_SECRET = String(
   process.env.CONVERSATIONS_SHEET_VIEW_SECRET || ''
@@ -671,6 +672,9 @@ function mountLiveAgentRoutes(app) {
         agentName: trim(req.body && req.body.agentName),
       });
       await store.syncPush();
+      void channelOutbound
+        .deliverAgentReply(req.params.id, text)
+        .catch((err) => console.warn('[channels] agent reply:', err.message));
       res.json({
         ok: true,
         message: result.message,
@@ -1121,14 +1125,19 @@ function mountLiveAgentRoutes(app) {
     });
   });
 
-  app.post('/api/live-agent/agent-message', requireAgentSession, (req, res) => {
+  app.post('/api/live-agent/agent-message', requireAgentSession, async (req, res) => {
     try {
+      const sessionId = trim(req.body.sessionId);
+      const text = trim(req.body.message);
       const result = store.postAgentMessage({
-        conversationId: req.body.sessionId,
-        text: req.body.message,
+        conversationId: sessionId,
+        text,
         agentEmail: req.liveAgentSession.agentId,
         agentName: req.body.agentName,
       });
+      void channelOutbound
+        .deliverAgentReply(sessionId, text)
+        .catch((err) => console.warn('[channels] agent reply:', err.message));
       res.json({ ok: true, message: result.message });
     } catch (err) {
       res.status(400).json({ ok: false, error: err.message });

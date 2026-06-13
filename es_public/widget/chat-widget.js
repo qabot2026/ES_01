@@ -17,15 +17,15 @@
   };
 
   function getSitePresetKey_() {
-    var qa = global.QA_CONFIG || {};
+    var qa = global.ES_CONFIG || {};
     return qa.sitePreset ? String(qa.sitePreset).trim() : '';
   }
 
   function getBotId_() {
-    var qa = global.QA_CONFIG || {};
+    var qa = global.ES_CONFIG || {};
     var key = getSitePresetKey_() || 'receptionist';
-    if (key !== 'receptionist' && global.QA_BOT_PRESETS && global.QA_BOT_PRESETS[key]) {
-      var childPreset = global.QA_BOT_PRESETS[key];
+    if (key !== 'receptionist' && global.ES_BOT_PRESETS && global.ES_BOT_PRESETS[key]) {
+      var childPreset = global.ES_BOT_PRESETS[key];
       if (childPreset && childPreset.botId) return String(childPreset.botId).trim();
     }
     if (qa.botId) return String(qa.botId).trim();
@@ -37,9 +37,9 @@
     var key = getSitePresetKey_();
     if (!key) return null;
     var presets =
-      (global.QA_CHAT_UI_CONFIG &&
-        global.QA_CHAT_UI_CONFIG.common &&
-        global.QA_CHAT_UI_CONFIG.common.sitePresets) ||
+      (global.ES_CHAT_UI_CONFIG &&
+        global.ES_CHAT_UI_CONFIG.common &&
+        global.ES_CHAT_UI_CONFIG.common.sitePresets) ||
       {};
     return presets[key] || null;
   }
@@ -61,8 +61,8 @@
 
   function getRootCfg() {
     var common =
-      (global.QA_CHAT_UI_CONFIG && global.QA_CHAT_UI_CONFIG.common) || {};
-    var qa = global.QA_CONFIG || {};
+      (global.ES_CHAT_UI_CONFIG && global.ES_CHAT_UI_CONFIG.common) || {};
+    var qa = global.ES_CONFIG || {};
     var siteBlock = getSitePresetBlock_();
     var hasOverride =
       siteBlock ||
@@ -85,18 +85,18 @@
   }
 
   function isMobileViewport() {
-    var qa = global.QA_CONFIG || {};
+    var qa = global.ES_CONFIG || {};
     if (qa.previewViewport === 'desk') return false;
     if (qa.previewViewport === 'mob') return true;
     return !!(global.matchMedia && global.matchMedia('(max-width: 768px)').matches);
   }
 
   function getViewportCfg() {
-    var root = global.QA_CHAT_UI_CONFIG || {};
+    var root = global.ES_CHAT_UI_CONFIG || {};
     var branch = isMobileViewport() ? 'mob' : 'desk';
     var base = root[branch] || {};
     var siteBlock = getSitePresetBlock_();
-    var qa = global.QA_CONFIG || {};
+    var qa = global.ES_CONFIG || {};
     var hasOverride = siteBlock || (qa.ui && qa.ui[branch]);
     if (!hasOverride) return base;
 
@@ -141,7 +141,7 @@
   }
 
   function isChatbotEnabledAnywhere() {
-    var root = global.QA_CHAT_UI_CONFIG || {};
+    var root = global.ES_CHAT_UI_CONFIG || {};
     var desk = root.desk || {};
     var mob = root.mob || {};
     return desk.showChatbot !== false || mob.showChatbot !== false;
@@ -282,7 +282,7 @@
   }
 
   function hasLauncherStripTextAnywhere() {
-    var root = global.QA_CHAT_UI_CONFIG || {};
+    var root = global.ES_CHAT_UI_CONFIG || {};
     var d = (root.desk || {}).launcherStrip || {};
     var m = (root.mob || {}).launcherStrip || {};
     return !!(d.text || m.text);
@@ -317,18 +317,18 @@
     return String(text).slice(emoji.length).trimStart();
   }
 
-  var QA_RING_GRADIENT_INSTAGRAM =
+  var ES_RING_GRADIENT_INSTAGRAM =
     'conic-gradient(from 180deg, #f09433 0deg, #e6683c 72deg, #dc2743 144deg, #cc2366 216deg, #bc1888 252deg, #833ab4 288deg, #5851db 324deg, #405de6 360deg, #f09433 360deg)';
 
   function getStoryRingGradient(ring) {
     if (ring && ring.gradient) return ring.gradient;
-    if (ring && ring.instagramStyle === true) return QA_RING_GRADIENT_INSTAGRAM;
+    if (ring && ring.instagramStyle === true) return ES_RING_GRADIENT_INSTAGRAM;
     var theme = getRootCfg().theme || {};
-    var c1 = theme['--qa-ring-color'] || '#0ea5e9';
-    var c2 = theme['--qa-accent'] || '#0ea5e9';
-    var c3 = theme['--qa-primary'] || '#0284c7';
-    var c4 = theme['--qa-primary-dark'] || '#0369a1';
-    var c5 = theme['--qa-primary-deep'] || '#075985';
+    var c1 = theme['--es-ring-color'] || '#0ea5e9';
+    var c2 = theme['--es-accent'] || '#0ea5e9';
+    var c3 = theme['--es-primary'] || '#0284c7';
+    var c4 = theme['--es-primary-dark'] || '#0369a1';
+    var c5 = theme['--es-primary-deep'] || '#075985';
     return (
       'conic-gradient(from 0deg, ' +
       c1 +
@@ -368,12 +368,12 @@
     return df.welcomeEvent || {};
   }
 
-  /** Home = FRESH; landing pages: QA_CONFIG.welcomeEventName on that page's embed script */
+  /** Home = FRESH; landing pages: ES_CONFIG.welcomeEventName on that page's embed script */
   function resolveWelcomeEventName_() {
     var cfg = getWelcomeEventCfg();
     var override =
-      global.QA_CONFIG && global.QA_CONFIG.welcomeEventName
-        ? String(global.QA_CONFIG.welcomeEventName).trim()
+      global.ES_CONFIG && global.ES_CONFIG.welcomeEventName
+        ? String(global.ES_CONFIG.welcomeEventName).trim()
         : '';
     if (override) return override;
     return String(cfg.eventName || 'FRESH').trim();
@@ -387,7 +387,7 @@
   function getAgentOrchestrationCfg() {
     var df = getRootCfg().dialogflow || {};
     var orch = Object.assign({}, df.agentOrchestration || {});
-    var qaGlobal = global.QA_CONFIG && global.QA_CONFIG.agentOrchestration;
+    var qaGlobal = global.ES_CONFIG && global.ES_CONFIG.agentOrchestration;
     if (qaGlobal && typeof qaGlobal === 'object') {
       Object.assign(orch, qaGlobal);
     }
@@ -519,24 +519,24 @@
     }
   }
 
-  function QualityAssistantWidget(options) {
+  function ESChatWidget(options) {
     var common = getRootCfg();
     var header = common.header || {};
     var welcome = common.welcome || {};
     var deploy = common.deploy || {};
 
-    this.cfg = global.QA_CHAT_UI_CONFIG || {};
+    this.cfg = global.ES_CHAT_UI_CONFIG || {};
     this.langList = getLangList();
     this.langMap = langMapFromList(this.langList);
 
     this.apiBase =
       (options && options.apiBase) ||
-      (global.QA_CONFIG && global.QA_CONFIG.apiBase) ||
+      (global.ES_CONFIG && global.ES_CONFIG.apiBase) ||
       deploy.publicBaseUrl ||
       '';
-    this.qaMode = !!(options && options.qaMode);
+    this.esTestMode = !!(options && options.esTestMode);
 
-    this.title = header.title || 'QualityAssistant';
+    this.title = header.title || 'ES Chatbot';
     this.subtitle = header.subtitle || 'Your quality & compliance guide';
     /* Use ?? so empty string "" in config is kept (|| wrongly showed defaults). */
     this.welcomeTitle =
@@ -575,12 +575,12 @@
     this.init();
   }
 
-  QualityAssistantWidget.prototype.resetOrchestrationState = function () {
+  ESChatWidget.prototype.resetOrchestrationState = function () {
     var orch = getAgentOrchestrationCfg();
     var df = getRootCfg().dialogflow || {};
     var overridePid =
-      global.QA_CONFIG && global.QA_CONFIG.dialogflowProjectId
-        ? String(global.QA_CONFIG.dialogflowProjectId).trim()
+      global.ES_CONFIG && global.ES_CONFIG.dialogflowProjectId
+        ? String(global.ES_CONFIG.dialogflowProjectId).trim()
         : '';
     this._orchMode =
       orch.enabled !== false && orch.role === 'receptionist' ? 'receptionist' : 'standalone';
@@ -589,11 +589,11 @@
     this._activeDialogflowProjectId = overridePid || String(df.projectId || '').trim();
   };
 
-  QualityAssistantWidget.prototype.getDialogflowProjectId = function () {
+  ESChatWidget.prototype.getDialogflowProjectId = function () {
     return this._activeDialogflowProjectId || '';
   };
 
-  QualityAssistantWidget.prototype.isOrchestrationReceptionistHost = function () {
+  ESChatWidget.prototype.isOrchestrationReceptionistHost = function () {
     var orch = getAgentOrchestrationCfg();
     return !!(
       orch.enabled !== false &&
@@ -603,7 +603,7 @@
     );
   };
 
-  QualityAssistantWidget.prototype.withDialogflowRouting_ = function (body) {
+  ESChatWidget.prototype.withDialogflowRouting_ = function (body) {
     var payload = Object.assign({}, body || {});
     var pid = this.getDialogflowProjectId();
     if (pid) payload.dialogflowProjectId = pid;
@@ -612,7 +612,7 @@
     return payload;
   };
 
-  QualityAssistantWidget.prototype.switchToChildAgent = function (child) {
+  ESChatWidget.prototype.switchToChildAgent = function (child) {
     var orch = getAgentOrchestrationCfg();
     var welcome = String(
       child.welcomeEvent || orch.childWelcomeEvent || 'FRESH'
@@ -633,7 +633,7 @@
     );
   };
 
-  QualityAssistantWidget.prototype.switchToReceptionist = function () {
+  ESChatWidget.prototype.switchToReceptionist = function () {
     var orch = getAgentOrchestrationCfg();
     var df = getRootCfg().dialogflow || {};
     var welcome = String(orch.returnWelcomeEvent || 'FRESH').trim();
@@ -653,29 +653,29 @@
     );
   };
 
-  QualityAssistantWidget.prototype.isHumanChatActive = function () {
+  ESChatWidget.prototype.isHumanChatActive = function () {
     if (this._liveAgentBotCopilotActive) return false;
     return !!this._liveAgentHumanActive;
   };
 
-  QualityAssistantWidget.prototype.newSessionId = function () {
-    var prefix = this.qaMode ? 'qa-test-' : 'qa-';
+  ESChatWidget.prototype.newSessionId = function () {
+    var prefix = this.esTestMode ? 'es-test-' : 'web-';
     return prefix + Date.now() + '-' + Math.random().toString(36).slice(2, 11);
   };
 
-  QualityAssistantWidget.prototype.qaApiHeaders = function (extra) {
+  ESChatWidget.prototype.esTestApiHeaders = function (extra) {
     var headers = Object.assign({ 'Content-Type': 'application/json' }, extra || {});
-    if (this.qaMode) headers['X-QA-Mode'] = '1';
+    if (this.esTestMode) headers['X-ES-Test-Mode'] = '1';
     return headers;
   };
 
-  QualityAssistantWidget.prototype.withQaBody = function (body) {
+  ESChatWidget.prototype.withEsTestBody = function (body) {
     var payload = Object.assign({}, body || {});
-    if (this.qaMode) payload.qaMode = true;
+    if (this.esTestMode) payload.esTestMode = true;
     return payload;
   };
 
-  QualityAssistantWidget.prototype.init = function () {
+  ESChatWidget.prototype.init = function () {
     if (!isChatbotEnabledAnywhere()) return;
 
     this.root = document.createElement('div');
@@ -696,7 +696,7 @@
     this._bootLiveAgentScript();
   };
 
-  QualityAssistantWidget.prototype._bootLiveAgentScript = function () {
+  ESChatWidget.prototype._bootLiveAgentScript = function () {
     var cfg = getRootCfg();
     var la = (cfg.common && cfg.common.liveAgent) || cfg.liveAgent || {};
     if (la.enabled === false || !this.apiBase) {
@@ -713,8 +713,8 @@
     }
     if (global.__qaLiveAgentScriptDone) {
       setTimeout(function () {
-        if (typeof global.QA_LIVE_AGENT_PATCH === 'function') {
-          global.QA_LIVE_AGENT_PATCH();
+        if (typeof global.ES_LIVE_AGENT_PATCH === 'function') {
+          global.ES_LIVE_AGENT_PATCH();
         }
         if (self._liveAgentResumeIfNeeded) {
           self._liveAgentResumeIfNeeded();
@@ -732,8 +732,8 @@
     s.onload = function () {
       global.__qaLiveAgentScriptDone = true;
       global.__qaLiveAgentScriptLoading = false;
-      if (typeof global.QA_LIVE_AGENT_PATCH === 'function') {
-        global.QA_LIVE_AGENT_PATCH();
+      if (typeof global.ES_LIVE_AGENT_PATCH === 'function') {
+        global.ES_LIVE_AGENT_PATCH();
       }
       if (self._liveAgentResumeIfNeeded) {
         self._liveAgentResumeIfNeeded();
@@ -745,17 +745,17 @@
     document.head.appendChild(s);
   };
 
-  QualityAssistantWidget.prototype.updateRestartVisibility = function () {
+  ESChatWidget.prototype.updateRestartVisibility = function () {
     if (!this.els || !this.els.restart) return;
     this.els.restart.style.display = getRestartCfg().enabled ? '' : 'none';
   };
 
-  QualityAssistantWidget.prototype.updateChatbotVisibility = function () {
+  ESChatWidget.prototype.updateChatbotVisibility = function () {
     if (!this.root) return;
     this.root.style.display = isChatbotEnabledForViewport() ? '' : 'none';
   };
 
-  QualityAssistantWidget.prototype.updateLauncherStripVisibility = function () {
+  ESChatWidget.prototype.updateLauncherStripVisibility = function () {
     var wrap =
       this.root && this.root.querySelector('.qa-launcher-strip-wrap');
     var strip = this.root && this.root.querySelector('.qa-launcher-strip');
@@ -781,7 +781,7 @@
     host.classList.toggle('qa-launcher-strip--hidden', !!this.isOpen);
   };
 
-  QualityAssistantWidget.prototype.scheduleStripHandPop = function () {
+  ESChatWidget.prototype.scheduleStripHandPop = function () {
     var self = this;
     if (self._stripHandPopTimer) {
       clearTimeout(self._stripHandPopTimer);
@@ -797,7 +797,7 @@
     }, delay);
   };
 
-  QualityAssistantWidget.prototype.playStripHandPop = function () {
+  ESChatWidget.prototype.playStripHandPop = function () {
     if (this._stripHandPopPlayed) return;
     var stripCfg = getLauncherStripCfg();
     if (stripCfg.enabled === false || !stripCfg.text) return;
@@ -808,8 +808,8 @@
     this._stripHandPopPlayed = true;
     var scale = Math.max(1.5, parseFloat(waveCfg.scale) || 3);
     var ms = Math.max(200, parseInt(waveCfg.durationMs, 10) || 1000);
-    wave.style.setProperty('--qa-hand-pop-scale', String(scale));
-    wave.style.setProperty('--qa-hand-pop-duration', ms / 1000 + 's');
+    wave.style.setProperty('--es-hand-pop-scale', String(scale));
+    wave.style.setProperty('--es-hand-pop-duration', ms / 1000 + 's');
     wave.classList.remove('qa-launcher-strip__wave--pop');
     void wave.offsetWidth;
     wave.classList.add('qa-launcher-strip__wave--pop');
@@ -818,13 +818,13 @@
     }, ms);
   };
 
-  QualityAssistantWidget.prototype.applyChatSide = function () {
+  ESChatWidget.prototype.applyChatSide = function () {
     if (!this.root) return;
     var side = getChatLayoutSide();
     this.root.classList.toggle('qa-widget--left', side === 'left');
   };
 
-  QualityAssistantWidget.prototype.bindViewportRestartToggle = function () {
+  ESChatWidget.prototype.bindViewportRestartToggle = function () {
     var self = this;
     this.updateRestartVisibility();
     this.updateLauncherStripVisibility();
@@ -844,12 +844,12 @@
     else if (mq.addListener) mq.addListener(onChange);
   };
 
-  QualityAssistantWidget.prototype.applyTheme = function () {
+  ESChatWidget.prototype.applyTheme = function () {
     var common = getRootCfg();
     var theme = common.theme || {};
     var typo = common.typography || {};
     if (typo.fontFamily) {
-      this.root.style.setProperty('--qa-font', typo.fontFamily);
+      this.root.style.setProperty('--es-font', typo.fontFamily);
       this.root.style.fontFamily = typo.fontFamily;
     }
     Object.keys(theme).forEach(
@@ -862,7 +862,7 @@
     if (ml) {
       var ch = ml.selectWidthCh != null ? ml.selectWidthCh : 10;
       var extra = ml.selectWidthExtraPx != null ? ml.selectWidthExtraPx : 5;
-      this.root.style.setProperty('--qa-lang-width', 'calc(' + ch + 'ch + ' + extra + 'px)');
+      this.root.style.setProperty('--es-lang-width', 'calc(' + ch + 'ch + ' + extra + 'px)');
       if (ml.showSelectBorder === false) {
         this.root.classList.add('qa-lang--no-border');
       }
@@ -871,70 +871,70 @@
 
     var panel = common.chatPanel && common.chatPanel.borderRadius;
     if (panel) {
-      this.root.style.setProperty('--qa-panel-tl', panel.topLeft || '16px');
-      this.root.style.setProperty('--qa-panel-tr', panel.topRight || '16px');
-      this.root.style.setProperty('--qa-panel-bl', panel.bottomLeft || '16px');
-      this.root.style.setProperty('--qa-panel-br', panel.bottomRight || '16px');
+      this.root.style.setProperty('--es-panel-tl', panel.topLeft || '16px');
+      this.root.style.setProperty('--es-panel-tr', panel.topRight || '16px');
+      this.root.style.setProperty('--es-panel-bl', panel.bottomLeft || '16px');
+      this.root.style.setProperty('--es-panel-br', panel.bottomRight || '16px');
     }
 
     var hdrLayout = getHeaderLayoutCfg();
     if (hdrLayout.titleFontSizePx != null) {
       this.root.style.setProperty(
-        '--qa-header-title-size',
+        '--es-header-title-size',
         hdrLayout.titleFontSizePx + 'px'
       );
     }
     if (hdrLayout.subtitleFontSizePx != null) {
       this.root.style.setProperty(
-        '--qa-header-subtitle-size',
+        '--es-header-subtitle-size',
         hdrLayout.subtitleFontSizePx + 'px'
       );
     }
     var iconPx = hdrLayout.iconSizePx != null ? hdrLayout.iconSizePx : 40;
-    this.root.style.setProperty('--qa-header-icon-size', iconPx + 'px');
+    this.root.style.setProperty('--es-header-icon-size', iconPx + 'px');
 
     var bp = common.botPersona || {};
     var up = common.userPersona || {};
     if (bp.avatarSizePx) {
-      this.root.style.setProperty('--qa-bot-avatar-size', bp.avatarSizePx + 'px');
+      this.root.style.setProperty('--es-bot-avatar-size', bp.avatarSizePx + 'px');
     }
     if (up.avatarSizePx) {
-      this.root.style.setProperty('--qa-user-avatar-size', up.avatarSizePx + 'px');
+      this.root.style.setProperty('--es-user-avatar-size', up.avatarSizePx + 'px');
     }
     if (bp.gapBelowPx != null) {
-      this.root.style.setProperty('--qa-bot-gap', bp.gapBelowPx + 'px');
+      this.root.style.setProperty('--es-bot-gap', bp.gapBelowPx + 'px');
     }
 
     var pd = common.personaDisplay || {};
     if (pd.nameFontSizePx != null) {
       this.root.style.setProperty(
-        '--qa-persona-name-size',
+        '--es-persona-name-size',
         pd.nameFontSizePx + 'px'
       );
     }
     if (pd.timeFontSizePx != null) {
       this.root.style.setProperty(
-        '--qa-persona-time-size',
+        '--es-persona-time-size',
         pd.timeFontSizePx + 'px'
       );
     }
     if (pd.blurPx != null) {
-      this.root.style.setProperty('--qa-persona-blur', pd.blurPx + 'px');
+      this.root.style.setProperty('--es-persona-blur', pd.blurPx + 'px');
     }
     if (pd.opacity != null) {
-      this.root.style.setProperty('--qa-persona-meta-opacity', String(pd.opacity));
+      this.root.style.setProperty('--es-persona-meta-opacity', String(pd.opacity));
     }
 
     var pb = common.poweredBy || {};
-    if (pb.color) this.root.style.setProperty('--qa-powered-color', pb.color);
+    if (pb.color) this.root.style.setProperty('--es-powered-color', pb.color);
     if (pb.fontSizePx) {
-      this.root.style.setProperty('--qa-powered-size', pb.fontSizePx + 'px');
+      this.root.style.setProperty('--es-powered-size', pb.fontSizePx + 'px');
     }
     if (pb.offsetDownPx != null) {
-      this.root.style.setProperty('--qa-powered-offset-down', pb.offsetDownPx + 'px');
+      this.root.style.setProperty('--es-powered-offset-down', pb.offsetDownPx + 'px');
     }
     if (pb.logoHeightPx != null) {
-      this.root.style.setProperty('--qa-powered-logo-height', pb.logoHeightPx + 'px');
+      this.root.style.setProperty('--es-powered-logo-height', pb.logoHeightPx + 'px');
     }
     var rb = common.restartButton || {};
     var restartGap =
@@ -942,84 +942,84 @@
         ? rb.gapAfterLanguagePx
         : rb.offsetLeftPx;
     if (restartGap != null) {
-      this.root.style.setProperty('--qa-restart-gap-after-lang', restartGap + 'px');
+      this.root.style.setProperty('--es-restart-gap-after-lang', restartGap + 'px');
     }
 
     var rc = common.dialogflow && common.dialogflow.richContentChips;
     var imgCfg = (rc && rc.infoCardImage) || {};
     if (imgCfg.cardWidthPx != null) {
       this.root.style.setProperty(
-        '--qa-rich-card-width',
+        '--es-rich-card-width',
         imgCfg.cardWidthPx + 'px'
       );
     }
     if (imgCfg.imageMaxHeightPx != null) {
       this.root.style.setProperty(
-        '--qa-rich-card-img-max-height',
+        '--es-rich-card-img-max-height',
         imgCfg.imageMaxHeightPx + 'px'
       );
     }
     if (imgCfg.imageHeightPx != null) {
       this.root.style.setProperty(
-        '--qa-rich-card-img-height',
+        '--es-rich-card-img-height',
         imgCfg.imageHeightPx + 'px'
       );
     }
     if (imgCfg.objectFit) {
-      this.root.style.setProperty('--qa-rich-card-img-fit', imgCfg.objectFit);
+      this.root.style.setProperty('--es-rich-card-img-fit', imgCfg.objectFit);
     }
     if (imgCfg.background) {
-      this.root.style.setProperty('--qa-rich-card-img-bg', imgCfg.background);
+      this.root.style.setProperty('--es-rich-card-img-bg', imgCfg.background);
     }
 
     var galCfg = (rc && rc.galleryImage) || {};
     if (galCfg.itemWidthPx != null) {
       this.root.style.setProperty(
-        '--qa-gallery-item-width',
+        '--es-gallery-item-width',
         galCfg.itemWidthPx + 'px'
       );
     }
     if (galCfg.itemMaxWidthVw != null) {
       this.root.style.setProperty(
-        '--qa-gallery-item-max-vw',
+        '--es-gallery-item-max-vw',
         galCfg.itemMaxWidthVw + 'vw'
       );
     }
     if (galCfg.imageHeightPx != null) {
       this.root.style.setProperty(
-        '--qa-gallery-img-height',
+        '--es-gallery-img-height',
         galCfg.imageHeightPx + 'px'
       );
     }
     if (galCfg.objectFit) {
-      this.root.style.setProperty('--qa-gallery-img-fit', galCfg.objectFit);
+      this.root.style.setProperty('--es-gallery-img-fit', galCfg.objectFit);
     }
     if (galCfg.background) {
-      this.root.style.setProperty('--qa-gallery-img-bg', galCfg.background);
+      this.root.style.setProperty('--es-gallery-img-bg', galCfg.background);
     }
 
     var carouselCfg = (rc && rc.cardCarousel) || {};
     if (carouselCfg.cardWidthPx != null) {
       this.root.style.setProperty(
-        '--qa-carousel-card-width',
+        '--es-carousel-card-width',
         carouselCfg.cardWidthPx + 'px'
       );
     }
     if (carouselCfg.imageHeightPx != null) {
       this.root.style.setProperty(
-        '--qa-carousel-img-height',
+        '--es-carousel-img-height',
         carouselCfg.imageHeightPx + 'px'
       );
     }
     if (carouselCfg.objectFit) {
-      this.root.style.setProperty('--qa-carousel-img-fit', carouselCfg.objectFit);
+      this.root.style.setProperty('--es-carousel-img-fit', carouselCfg.objectFit);
     }
     if (carouselCfg.background) {
-      this.root.style.setProperty('--qa-carousel-img-bg', carouselCfg.background);
+      this.root.style.setProperty('--es-carousel-img-bg', carouselCfg.background);
     }
   };
 
-  QualityAssistantWidget.prototype.applyLayout = function () {
+  ESChatWidget.prototype.applyLayout = function () {
     var eff = getEffectiveCfg();
     var win = eff.chatWindow || {};
     var panel = this.root.querySelector('.qa-panel');
@@ -1029,19 +1029,19 @@
     var pos = win.position || {};
     var topInset = win.topInsetPx != null ? win.topInsetPx : 16;
     var widgetBottom = pos.bottomPx != null ? pos.bottomPx : 24;
-    this.root.style.setProperty('--qa-panel-top-inset', topInset + 'px');
-    this.root.style.setProperty('--qa-widget-bottom', widgetBottom + 'px');
+    this.root.style.setProperty('--es-panel-top-inset', topInset + 'px');
+    this.root.style.setProperty('--es-widget-bottom', widgetBottom + 'px');
 
     if (win.widthPx) {
       panel.style.width = win.widthPx + 'px';
       panel.style.maxWidth = win.widthPx + 'px';
     }
     if (win.heightPx) {
-      this.root.style.setProperty('--qa-panel-height', win.heightPx + 'px');
+      this.root.style.setProperty('--es-panel-height', win.heightPx + 'px');
     }
     var minH = win.minHeightPx != null ? win.minHeightPx : 360;
     minH += getPanelHeightExtraPx(false);
-    this.root.style.setProperty('--qa-panel-min-height', minH + 'px');
+    this.root.style.setProperty('--es-panel-min-height', minH + 'px');
     var isMob = isMobileViewport();
     if (isMob && win.horizontalInsetPx != null) {
       panel.style.width = 'calc(100vw - ' + win.horizontalInsetPx * 2 + 'px)';
@@ -1115,8 +1115,8 @@
       wrap.classList.add('qa-launcher-wrap--ring');
       var ring = launch.storyRing;
       var ringW = ring.widthPx != null ? ring.widthPx : 2.5;
-      wrap.style.setProperty('--qa-ring-width', ringW + 'px');
-      wrap.style.setProperty('--qa-ring-gradient', getStoryRingGradient(ring));
+      wrap.style.setProperty('--es-ring-width', ringW + 'px');
+      wrap.style.setProperty('--es-ring-gradient', getStoryRingGradient(ring));
       if (ring.instagramStyle === true) {
         wrap.classList.add('qa-launcher-wrap--ring-ig');
       } else {
@@ -1128,7 +1128,7 @@
       if (motionOn) {
         wrap.classList.add('qa-launcher-wrap--ring-spin');
         wrap.style.setProperty(
-          '--qa-ring-duration',
+          '--es-ring-duration',
           ring.rotateSeconds + 's'
         );
       }
@@ -1175,26 +1175,26 @@
       if (st.maxWidthPx) strip.style.maxWidth = st.maxWidthPx + 'px';
     }
 
-    if (global.QA_CONFIG && global.QA_CONFIG.previewViewport) {
+    if (global.ES_CONFIG && global.ES_CONFIG.previewViewport) {
       this.root.classList.add('qa-widget--preview');
       this.applyPreviewPanelLayout_();
     }
 
     this.syncLauncherStack();
 
-    if (global.QA_CONFIG && global.QA_CONFIG.previewViewport) {
+    if (global.ES_CONFIG && global.ES_CONFIG.previewViewport) {
       this.applyPreviewPanelLayout_();
       this.syncPreviewStageLayout_();
     }
   };
 
-  QualityAssistantWidget.prototype.applyPreviewPanelLayout_ = function () {
-    if (!global.QA_CONFIG || !global.QA_CONFIG.previewViewport || !this.root) return;
+  ESChatWidget.prototype.applyPreviewPanelLayout_ = function () {
+    if (!global.ES_CONFIG || !global.ES_CONFIG.previewViewport || !this.root) return;
     var win = getEffectiveCfg().chatWindow || {};
     var previewW = win.widthPx || 400;
     var previewH = win.heightPx || 520;
     var panel = this.els.panel || this.root.querySelector('.qa-panel');
-    this.root.style.setProperty('--qa-panel-height', previewH + 'px');
+    this.root.style.setProperty('--es-panel-height', previewH + 'px');
     if (!panel) return;
     panel.style.width = previewW + 'px';
     panel.style.maxWidth = previewW + 'px';
@@ -1205,8 +1205,8 @@
     }
   };
 
-  QualityAssistantWidget.prototype.syncPreviewStageLayout_ = function () {
-    var qa = global.QA_CONFIG || {};
+  ESChatWidget.prototype.syncPreviewStageLayout_ = function () {
+    var qa = global.ES_CONFIG || {};
     if (!qa.previewViewport || !this.root) return;
 
     var win = getEffectiveCfg().chatWindow || {};
@@ -1269,12 +1269,12 @@
     }
   };
 
-  QualityAssistantWidget.prototype.isComposerUploadEnabled = function () {
+  ESChatWidget.prototype.isComposerUploadEnabled = function () {
     var cfg = (getEffectiveCfg().features || {}).composerUpload || {};
     return cfg.enabled !== false;
   };
 
-  QualityAssistantWidget.prototype.buildComposerUploadHtml = function () {
+  ESChatWidget.prototype.buildComposerUploadHtml = function () {
     if (!this.isComposerUploadEnabled()) return '';
     var uploadCfg = (getEffectiveCfg().features || {}).composerUpload || {};
     var display = String(uploadCfg.display || 'rich').toLowerCase();
@@ -1289,7 +1289,7 @@
           '</span>'
         : '<span class="qa-attach__icon-wrap" aria-hidden="true">' + ICONS.attach + '</span>';
     return (
-      '<button type="button" class="qa-attach" aria-label="Upload document" title="Upload document" style="--qa-attach-tilt:' +
+      '<button type="button" class="qa-attach" aria-label="Upload document" title="Upload document" style="--es-attach-tilt:' +
       tilt +
       'deg">' +
       '<span class="qa-attach__glyph">' +
@@ -1301,7 +1301,7 @@
     );
   };
 
-  QualityAssistantWidget.prototype.applyFeatureToggles = function () {
+  ESChatWidget.prototype.applyFeatureToggles = function () {
     var eff = getEffectiveCfg();
     var feats = eff.features || {};
     if (this.els.mic) {
@@ -1326,7 +1326,7 @@
     }
   };
 
-  QualityAssistantWidget.prototype.refreshUiFromConfig = function () {
+  ESChatWidget.prototype.refreshUiFromConfig = function () {
     if (!this.root) return;
     var root = getRootCfg();
     var hdr = root.header || {};
@@ -1367,7 +1367,7 @@
     this.applyFeatureToggles();
   };
 
-  QualityAssistantWidget.prototype.maybeAutoOpen = function () {
+  ESChatWidget.prototype.maybeAutoOpen = function () {
     if (!isChatbotEnabledForViewport()) return;
     var ao = getViewportCfg().autoOpenChat;
     if (!ao || !ao.enabled) return;
@@ -1377,7 +1377,7 @@
     }, ao.delayMs || 0);
   };
 
-  QualityAssistantWidget.prototype.template = function () {
+  ESChatWidget.prototype.template = function () {
     var eff = getEffectiveCfg();
     var header = eff.header || {};
     var feats = eff.features || {};
@@ -1430,12 +1430,12 @@
           '<a class="qa-powered__logo-link" href="' +
           this.escape(poweredLink) +
           '" target="_blank" rel="noopener noreferrer" aria-label="' +
-          this.escape(pb.brandName || 'QualityAssistant') +
+          this.escape(pb.brandName || 'ES Chatbot') +
           '">' +
           logoImg +
           '</a>';
       }
-      var brandName = pb.brandName || 'QualityAssistant';
+      var brandName = pb.brandName || 'ES Chatbot';
       var brandBlock =
         '<strong class="qa-powered__brand">' +
         this.escape(brandName) +
@@ -1539,7 +1539,7 @@
     );
   };
 
-  QualityAssistantWidget.prototype.cacheElements = function () {
+  ESChatWidget.prototype.cacheElements = function () {
     this.els = {
       launcherWrap: this.root.querySelector('.qa-launcher-wrap'),
       launcher: this.root.querySelector('.qa-launcher'),
@@ -1560,7 +1560,7 @@
     if (this.els.lang) this.els.lang.value = this.language;
   };
 
-  QualityAssistantWidget.prototype.bindEvents = function () {
+  ESChatWidget.prototype.bindEvents = function () {
     var self = this;
     var feats = getRootCfg().features || {};
     var placeholders = feats.inputPlaceholderByLanguage || {};
@@ -1658,7 +1658,7 @@
     return '';
   }
 
-  QualityAssistantWidget.prototype.buildSessionContextPayload = function () {
+  ESChatWidget.prototype.buildSessionContextPayload = function () {
     var loc = global.location || {};
     var ua = (global.navigator && global.navigator.userAgent) || '';
     var params = new URLSearchParams(loc.search || '');
@@ -1683,17 +1683,17 @@
     });
   };
 
-  QualityAssistantWidget.prototype.pushSessionContext = function () {
-    if (!this.apiBase || !this.sessionId || this.qaMode) return;
+  ESChatWidget.prototype.pushSessionContext = function () {
+    if (!this.apiBase || !this.sessionId || this.esTestMode) return;
     var payload = this.buildSessionContextPayload();
     fetch(this.apiBase + '/api/session-context', {
       method: 'POST',
-      headers: this.qaApiHeaders(),
-      body: JSON.stringify(this.withQaBody(payload)),
+      headers: this.esTestApiHeaders(),
+      body: JSON.stringify(this.withEsTestBody(payload)),
     }).catch(function () {});
   };
 
-  QualityAssistantWidget.prototype.fetchConfig = function () {
+  ESChatWidget.prototype.fetchConfig = function () {
     var self = this;
     if (!this.apiBase) return;
     this.pushSessionContext();
@@ -1749,7 +1749,7 @@
     return text;
   }
 
-  QualityAssistantWidget.prototype.ensurePhraseMap = function () {
+  ESChatWidget.prototype.ensurePhraseMap = function () {
     var self = this;
     var lang = this.language || 'en';
     if (!usePhraseTranslationFile() || lang === 'en' || !this.apiBase) {
@@ -1778,7 +1778,7 @@
       });
   };
 
-  QualityAssistantWidget.prototype.applyClientPhrasePayload = function (data) {
+  ESChatWidget.prototype.applyClientPhrasePayload = function (data) {
     if (!data || !this._phraseMap || this.language === 'en') return data;
     var map = this._phraseMap;
     var t = function (s) {
@@ -1847,7 +1847,7 @@
     return data;
   };
 
-  QualityAssistantWidget.prototype.shouldAutoTranslateReplies = function () {
+  ESChatWidget.prototype.shouldAutoTranslateReplies = function () {
     var ml = getMultiLanguageCfg();
     if (ml.usePhraseTranslationFile === true) return false;
     if (ml.autoTranslateBotReplies !== true) return false;
@@ -1855,7 +1855,7 @@
     return ui !== 'en';
   };
 
-  QualityAssistantWidget.prototype.maybeTranslateBotPayload = function (data) {
+  ESChatWidget.prototype.maybeTranslateBotPayload = function (data) {
     var self = this;
     if (
       !data ||
@@ -1985,7 +1985,7 @@
       });
   };
 
-  QualityAssistantWidget.prototype.getDialogflowLang = function () {
+  ESChatWidget.prototype.getDialogflowLang = function () {
     var ml = (getRootCfg().features || {}).multiLanguage || {};
     var fixed = String(
       ml.alwaysUseDialogflowLanguage || ml.intentLanguage || ''
@@ -1996,7 +1996,7 @@
       : 'en';
   };
 
-  QualityAssistantWidget.prototype.applyDialogflowResult = function (result) {
+  ESChatWidget.prototype.applyDialogflowResult = function (result) {
     var self = this;
     if (!result.ok) {
       this.appendMessage(
@@ -2096,7 +2096,7 @@
     });
   };
 
-  QualityAssistantWidget.prototype.postToDialogflow = function (body, opts) {
+  ESChatWidget.prototype.postToDialogflow = function (body, opts) {
     opts = opts || {};
     var self = this;
     if (this.isHumanChatActive()) {
@@ -2128,8 +2128,8 @@
 
     return fetch(this.apiBase + '/api/chat', {
       method: 'POST',
-      headers: this.qaApiHeaders(),
-      body: JSON.stringify(this.withQaBody(this.withDialogflowRouting_(body))),
+      headers: this.esTestApiHeaders(),
+      body: JSON.stringify(this.withEsTestBody(this.withDialogflowRouting_(body))),
     })
       .then(function (res) {
         return res.json().then(function (data) {
@@ -2165,7 +2165,7 @@
       });
   };
 
-  QualityAssistantWidget.prototype.triggerWelcomeEvent = function () {
+  ESChatWidget.prototype.triggerWelcomeEvent = function () {
     if (this.isHumanChatActive()) return;
     var cfg = getWelcomeEventCfg();
     if (cfg.enabled === false) return;
@@ -2188,7 +2188,7 @@
     });
   };
 
-  QualityAssistantWidget.prototype.triggerEndChatEvent = function (opts) {
+  ESChatWidget.prototype.triggerEndChatEvent = function (opts) {
     opts = opts || {};
     if (this.isHumanChatActive()) return Promise.resolve();
     var cfg = getEndChatEventCfg();
@@ -2224,7 +2224,7 @@
       });
   };
 
-  QualityAssistantWidget.prototype.getIdleTimeoutMs = function () {
+  ESChatWidget.prototype.getIdleTimeoutMs = function () {
     var cfg = getEndChatEventCfg();
     if (cfg.idleTimeoutMs != null) {
       return Math.max(0, parseInt(cfg.idleTimeoutMs, 10) || 0);
@@ -2232,14 +2232,14 @@
     return 20000;
   };
 
-  QualityAssistantWidget.prototype.clearIdleTimer = function () {
+  ESChatWidget.prototype.clearIdleTimer = function () {
     if (this._idleTimer) {
       clearTimeout(this._idleTimer);
       this._idleTimer = null;
     }
   };
 
-  QualityAssistantWidget.prototype.noteUserActivity = function () {
+  ESChatWidget.prototype.noteUserActivity = function () {
     var cfg = getEndChatEventCfg();
     if (cfg.enabled === false || cfg.triggerOnIdle === false) return;
     if (!this.isOpen) return;
@@ -2249,11 +2249,11 @@
     this.resetIdleTimer();
   };
 
-  QualityAssistantWidget.prototype.markUserInteracted = function () {
+  ESChatWidget.prototype.markUserInteracted = function () {
     this._userHasInteracted = true;
   };
 
-  QualityAssistantWidget.prototype.resetIdleTimer = function () {
+  ESChatWidget.prototype.resetIdleTimer = function () {
     var cfg = getEndChatEventCfg();
     if (cfg.enabled === false || cfg.triggerOnIdle === false) return;
     if (!this.isOpen) return;
@@ -2274,7 +2274,7 @@
     }, ms);
   };
 
-  QualityAssistantWidget.prototype.onUserIdle = function () {
+  ESChatWidget.prototype.onUserIdle = function () {
     var cfg = getEndChatEventCfg();
     if (cfg.enabled === false || cfg.triggerOnIdle === false) return;
     if (!this.isOpen) return;
@@ -2295,21 +2295,21 @@
     });
   };
 
-  QualityAssistantWidget.prototype.finishClose = function () {
+  ESChatWidget.prototype.finishClose = function () {
     this.clearIdleTimer();
     this.isOpen = false;
     this.root.classList.remove('qa-widget--chat-open');
     this.els.panel.classList.remove('qa-panel--open');
     this.updateLauncherCloseBubble();
     this.updateLauncherStripVisibility();
-    if (global.QA_CONFIG && global.QA_CONFIG.previewViewport) {
+    if (global.ES_CONFIG && global.ES_CONFIG.previewViewport) {
       this.applyPreviewPanelLayout_();
       this.syncPreviewStageLayout_();
     }
     this.stopSpeech();
   };
 
-  QualityAssistantWidget.prototype.maybeTriggerWelcomeEvent = function () {
+  ESChatWidget.prototype.maybeTriggerWelcomeEvent = function () {
     var cfg = getWelcomeEventCfg();
     if (cfg.enabled === false || cfg.triggerOnChatOpen === false) return;
     if (this._welcomeEventSent || this._welcomeEventInFlight) return;
@@ -2319,7 +2319,7 @@
     }, 0);
   };
 
-  QualityAssistantWidget.prototype.setLauncherCloseMode = function (isClose) {
+  ESChatWidget.prototype.setLauncherCloseMode = function (isClose) {
     var btn = this.els.launcher;
     if (!btn) return;
     var openEl = btn.querySelector('.qa-launcher__state--open');
@@ -2335,14 +2335,14 @@
     btn.setAttribute('aria-label', isClose ? 'Close chat' : 'Open chat');
   };
 
-  QualityAssistantWidget.prototype.syncLauncherStack = function () {
+  ESChatWidget.prototype.syncLauncherStack = function () {
     if (!this.root) return;
     var stackPx = getLauncherStackPx(!!this.isOpen);
-    this.root.style.setProperty('--qa-launcher-stack', stackPx + 'px');
+    this.root.style.setProperty('--es-launcher-stack', stackPx + 'px');
     var noCloseBubble = !!this.isOpen && !isLauncherCloseBubbleEnabled();
     this.root.classList.toggle('qa-widget--no-close-bubble', noCloseBubble);
     var boostPx = noCloseBubble ? getPanelHeightExtraPx(true) : 0;
-    this.root.style.setProperty('--qa-panel-height-boost', boostPx + 'px');
+    this.root.style.setProperty('--es-panel-height-boost', boostPx + 'px');
 
     var panel = this.els.panel || this.root.querySelector('.qa-panel');
     if (!panel) return;
@@ -2350,17 +2350,17 @@
       var openH = computeOpenPanelHeightPx();
       panel.style.height = openH + 'px';
       panel.style.maxHeight = openH + 'px';
-    } else if (!(global.QA_CONFIG && global.QA_CONFIG.previewViewport)) {
+    } else if (!(global.ES_CONFIG && global.ES_CONFIG.previewViewport)) {
       panel.style.height = '';
       panel.style.maxHeight = '';
     }
-    if (global.QA_CONFIG && global.QA_CONFIG.previewViewport) {
+    if (global.ES_CONFIG && global.ES_CONFIG.previewViewport) {
       this.applyPreviewPanelLayout_();
       this.syncPreviewStageLayout_();
     }
   };
 
-  QualityAssistantWidget.prototype.updateLauncherCloseBubble = function () {
+  ESChatWidget.prototype.updateLauncherCloseBubble = function () {
     var wrap = this.els.launcherWrap;
     if (!wrap) return;
     var showCloseBubble = isLauncherCloseBubbleEnabled();
@@ -2383,13 +2383,13 @@
     this.syncLauncherStack();
   };
 
-  QualityAssistantWidget.prototype.open = function () {
+  ESChatWidget.prototype.open = function () {
     this.isOpen = true;
     this.root.classList.add('qa-widget--chat-open');
     this.els.panel.classList.add('qa-panel--open');
     this.updateLauncherCloseBubble();
     this.updateLauncherStripVisibility();
-    if (global.QA_CONFIG && global.QA_CONFIG.previewViewport) {
+    if (global.ES_CONFIG && global.ES_CONFIG.previewViewport) {
       this.applyPreviewPanelLayout_();
       this.syncPreviewStageLayout_();
     }
@@ -2397,7 +2397,7 @@
     this.maybeTriggerWelcomeEvent();
   };
 
-  QualityAssistantWidget.prototype.scheduleFinishClose = function () {
+  ESChatWidget.prototype.scheduleFinishClose = function () {
     var self = this;
     var cfg = getEndChatEventCfg();
     if (cfg.closePanelAfterEnd !== true) {
@@ -2422,7 +2422,7 @@
     self.finishClose();
   };
 
-  QualityAssistantWidget.prototype.close = function () {
+  ESChatWidget.prototype.close = function () {
     var self = this;
     var cfg = getEndChatEventCfg();
     var shouldEnd =
@@ -2439,7 +2439,7 @@
     this.finishClose();
   };
 
-  QualityAssistantWidget.prototype.restart = function () {
+  ESChatWidget.prototype.restart = function () {
     var self = this;
     var endCfg = getEndChatEventCfg();
     var runRestart = function () {
@@ -2478,7 +2478,7 @@
     runRestart();
   };
 
-  QualityAssistantWidget.prototype.botAvatarHtml = function () {
+  ESChatWidget.prototype.botAvatarHtml = function () {
     var bp = getRootCfg().botPersona || {};
     if (bp.mode === 'image' && bp.imageUrl) {
       return (
@@ -2493,11 +2493,11 @@
     return ICONS.bot;
   };
 
-  QualityAssistantWidget.prototype.userAvatarHtml = function () {
+  ESChatWidget.prototype.userAvatarHtml = function () {
     return ICONS.user;
   };
 
-  QualityAssistantWidget.prototype.agentHumanAvatarHtml = function () {
+  ESChatWidget.prototype.agentHumanAvatarHtml = function () {
     var ap = getRootCfg().agentPersona || {};
     if (ap.mode === 'image' && ap.imageUrl) {
       return (
@@ -2509,7 +2509,7 @@
     return ICONS.agentHuman;
   };
 
-  QualityAssistantWidget.prototype.buildPersonaRow = function (role, options) {
+  ESChatWidget.prototype.buildPersonaRow = function (role, options) {
     options = options || {};
     var bp = getRootCfg().botPersona || {};
     var up = getRootCfg().userPersona || {};
@@ -2560,7 +2560,7 @@
     return row;
   };
 
-  QualityAssistantWidget.prototype.buildWelcomeHtml = function (title, body) {
+  ESChatWidget.prototype.buildWelcomeHtml = function (title, body) {
     if (!isWelcomeEnabled()) return '';
     var titleStr = (title == null ? '' : String(title)).trim();
     var bodyStr = (body == null ? '' : String(body)).trim();
@@ -2591,7 +2591,7 @@
     return html;
   };
 
-  QualityAssistantWidget.prototype.buildInfoCardsEl = function (cards) {
+  ESChatWidget.prototype.buildInfoCardsEl = function (cards) {
     var wrap = document.createElement('div');
     wrap.className = 'qa-rich-cards';
     wrap.setAttribute('role', 'list');
@@ -2691,7 +2691,7 @@
     return wrap;
   };
 
-  QualityAssistantWidget.prototype.wrapScrollTrack = function (track, options) {
+  ESChatWidget.prototype.wrapScrollTrack = function (track, options) {
     options = options || {};
     var shell = document.createElement('div');
     shell.className = 'qa-scroll-strip';
@@ -2844,7 +2844,7 @@
     return shell;
   };
 
-  QualityAssistantWidget.prototype.buildCardCarouselEl = function (carousel) {
+  ESChatWidget.prototype.buildCardCarouselEl = function (carousel) {
     var wrap = document.createElement('div');
     wrap.className = 'qa-card-carousel';
     var track = document.createElement('div');
@@ -2959,7 +2959,7 @@
     return wrap;
   };
 
-  QualityAssistantWidget.prototype.createDownloadLink = function (entry) {
+  ESChatWidget.prototype.createDownloadLink = function (entry) {
     var a = document.createElement('a');
     a.className = 'qa-download-btn';
     a.href = entry.href;
@@ -2985,7 +2985,7 @@
     return a;
   };
 
-  QualityAssistantWidget.prototype.ensureGalleryLightbox = function () {
+  ESChatWidget.prototype.ensureGalleryLightbox = function () {
     if (this._lightboxEl) return this._lightboxEl;
 
     var lb = document.createElement('div');
@@ -3037,7 +3037,7 @@
     return lb;
   };
 
-  QualityAssistantWidget.prototype.renderGalleryLightbox = function () {
+  ESChatWidget.prototype.renderGalleryLightbox = function () {
     var lb = this._lightboxEl;
     var images = this._lightboxImages || [];
     if (!lb || !images.length) return;
@@ -3060,7 +3060,7 @@
     lb.querySelector('.qa-lightbox__next').hidden = !multi;
   };
 
-  QualityAssistantWidget.prototype.openGalleryLightbox = function (images, startIndex) {
+  ESChatWidget.prototype.openGalleryLightbox = function (images, startIndex) {
     var list = (images || []).filter(function (img) {
       return img && img.url;
     });
@@ -3076,7 +3076,7 @@
     this._lightboxEl.querySelector('.qa-lightbox__close').focus();
   };
 
-  QualityAssistantWidget.prototype.closeGalleryLightbox = function () {
+  ESChatWidget.prototype.closeGalleryLightbox = function () {
     if (!this._lightboxEl) return;
     this._lightboxEl.hidden = true;
     document.body.classList.remove('qa-lightbox-open');
@@ -3084,7 +3084,7 @@
     if (imgEl) imgEl.removeAttribute('src');
   };
 
-  QualityAssistantWidget.prototype.stepGalleryLightbox = function (delta) {
+  ESChatWidget.prototype.stepGalleryLightbox = function (delta) {
     var images = this._lightboxImages || [];
     if (!images.length) return;
     var next = this._lightboxIndex + delta;
@@ -3094,7 +3094,7 @@
     this.renderGalleryLightbox();
   };
 
-  QualityAssistantWidget.prototype.buildGalleryEl = function (gallery) {
+  ESChatWidget.prototype.buildGalleryEl = function (gallery) {
     var wrap = document.createElement('div');
     wrap.className = 'qa-gallery';
     if (gallery.message) {
@@ -3149,14 +3149,14 @@
     return wrap;
   };
 
-  QualityAssistantWidget.prototype.buildInlineSelectEl = function (dropdown, opts) {
+  ESChatWidget.prototype.buildInlineSelectEl = function (dropdown, opts) {
     if (getInlineSelectDisplay() === 'dropdown') {
       return this.buildInlineSelectDropdownEl(dropdown, opts);
     }
     return this.buildInlineSelectChipsEl(dropdown, opts);
   };
 
-  QualityAssistantWidget.prototype.buildInlineSelectChipsEl = function (dropdown, opts) {
+  ESChatWidget.prototype.buildInlineSelectChipsEl = function (dropdown, opts) {
     opts = opts || {};
     var wrap = document.createElement('div');
     wrap.className = 'qa-inline-select qa-inline-select--chips';
@@ -3207,7 +3207,7 @@
     return wrap;
   };
 
-  QualityAssistantWidget.prototype.buildInlineSelectDropdownEl = function (
+  ESChatWidget.prototype.buildInlineSelectDropdownEl = function (
     dropdown,
     opts
   ) {
@@ -3268,7 +3268,7 @@
     return wrap;
   };
 
-  QualityAssistantWidget.prototype.buildDownloadsEl = function (downloads) {
+  ESChatWidget.prototype.buildDownloadsEl = function (downloads) {
     var wrap = document.createElement('div');
     wrap.className = 'qa-downloads';
     wrap.setAttribute('role', 'list');
@@ -3284,7 +3284,7 @@
     return wrap;
   };
 
-  QualityAssistantWidget.prototype.appendDownloadLink = function (
+  ESChatWidget.prototype.appendDownloadLink = function (
     parent,
     btn
   ) {
@@ -3304,7 +3304,7 @@
     return true;
   };
 
-  QualityAssistantWidget.prototype.removeFormCard = function (formEl) {
+  ESChatWidget.prototype.removeFormCard = function (formEl) {
     if (!formEl) return;
     formEl.classList.add('qa-form--closed');
     var row = formEl.closest('.qa-msg');
@@ -3322,7 +3322,7 @@
     if (!hasContent) row.remove();
   };
 
-  QualityAssistantWidget.prototype.runFormDialogflowAction = function (action, opts) {
+  ESChatWidget.prototype.runFormDialogflowAction = function (action, opts) {
     opts = opts || {};
     if (this.isHumanChatActive()) return Promise.resolve();
     if (!action) return Promise.resolve();
@@ -3352,7 +3352,7 @@
     );
   };
 
-  QualityAssistantWidget.prototype.handleOtpResend = function (payload) {
+  ESChatWidget.prototype.handleOtpResend = function (payload) {
     var self = this;
     payload = payload || {};
     var values = payload.values || {};
@@ -3400,7 +3400,7 @@
       });
   };
 
-  QualityAssistantWidget.prototype.buildRichMetaFromMessageOptions = function (
+  ESChatWidget.prototype.buildRichMetaFromMessageOptions = function (
     options
   ) {
     options = options || {};
@@ -3453,7 +3453,7 @@
     return has ? { rich: rich } : undefined;
   };
 
-  QualityAssistantWidget.prototype.messageHasVisibleContent = function (
+  ESChatWidget.prototype.messageHasVisibleContent = function (
     role,
     text,
     options
@@ -3497,7 +3497,7 @@
     return false;
   };
 
-  QualityAssistantWidget.prototype.transcriptTextFromMessage = function (
+  ESChatWidget.prototype.transcriptTextFromMessage = function (
     role,
     text,
     options
@@ -3558,7 +3558,7 @@
     return '';
   };
 
-  QualityAssistantWidget.prototype.syncTranscriptFromMessage = function (
+  ESChatWidget.prototype.syncTranscriptFromMessage = function (
     role,
     text,
     options
@@ -3587,8 +3587,8 @@
     );
   };
 
-  QualityAssistantWidget.prototype.appendTranscriptTurn = function (role, text, meta) {
-    if (!this.apiBase || !this.sessionId || this.qaMode) return Promise.resolve();
+  ESChatWidget.prototype.appendTranscriptTurn = function (role, text, meta) {
+    if (!this.apiBase || !this.sessionId || this.esTestMode) return Promise.resolve();
     var t = text == null ? '' : String(text).trim();
     if (!t) return Promise.resolve();
     var body = {
@@ -3606,7 +3606,7 @@
     });
   };
 
-  QualityAssistantWidget.prototype.handleFormClose = function (payload) {
+  ESChatWidget.prototype.handleFormClose = function (payload) {
     payload = payload || {};
     this.removeFormCard(payload.formEl);
     var formId = payload.formId ? String(payload.formId).trim() : '';
@@ -3624,11 +3624,11 @@
     }
   };
 
-  QualityAssistantWidget.prototype.getComposerUploadCfg = function () {
+  ESChatWidget.prototype.getComposerUploadCfg = function () {
     return (getEffectiveCfg().features || {}).composerUpload || {};
   };
 
-  QualityAssistantWidget.prototype.composerUploadLabel = function (map, fallback) {
+  ESChatWidget.prototype.composerUploadLabel = function (map, fallback) {
     var cfg = this.getComposerUploadCfg();
     var m = (cfg && map) || {};
     return (
@@ -3639,14 +3639,14 @@
     );
   };
 
-  QualityAssistantWidget.prototype.setComposerUploadBusy = function (busy) {
+  ESChatWidget.prototype.setComposerUploadBusy = function (busy) {
     if (this.els.attach) {
       this.els.attach.disabled = !!busy;
       this.els.attach.classList.toggle('qa-attach--busy', !!busy);
     }
   };
 
-  QualityAssistantWidget.prototype.uploadDocumentNames = function (up, fallbackNames) {
+  ESChatWidget.prototype.uploadDocumentNames = function (up, fallbackNames) {
     up = up || {};
     return (
       up.document_names ||
@@ -3660,21 +3660,21 @@
     );
   };
 
-  QualityAssistantWidget.prototype.shouldShowUploadSuccessAck = function (up) {
+  ESChatWidget.prototype.shouldShowUploadSuccessAck = function (up) {
     var cfg = this.getComposerUploadCfg();
-    if (this.qaMode && up && up.simulated) return true;
+    if (this.esTestMode && up && up.simulated) return true;
     return cfg.showSuccessAck === true;
   };
 
-  QualityAssistantWidget.prototype.shouldShowUploadingStatus = function () {
+  ESChatWidget.prototype.shouldShowUploadingStatus = function () {
     var cfg = this.getComposerUploadCfg();
     return cfg.showUploadingStatus === true;
   };
 
-  QualityAssistantWidget.prototype.buildUploadAckMessage = function (up, fallbackNames) {
+  ESChatWidget.prototype.buildUploadAckMessage = function (up, fallbackNames) {
     var cfg = this.getComposerUploadCfg();
     var names = this.uploadDocumentNames(up, fallbackNames);
-    if (this.qaMode && up && up.simulated) {
+    if (this.esTestMode && up && up.simulated) {
       return this.composerUploadLabel(
         cfg.qaPreviewByLanguage,
         'QA test mode: upload preview only — file was not saved.'
@@ -3694,7 +3694,7 @@
     return tpl.replace('{files}', names);
   };
 
-  QualityAssistantWidget.prototype.updateBotMessageText = function (row, text, kind) {
+  ESChatWidget.prototype.updateBotMessageText = function (row, text, kind) {
     if (!row) return;
     var bubble = row.querySelector('.qa-msg__bubble');
     if (!bubble) return;
@@ -3709,21 +3709,21 @@
     }
   };
 
-  QualityAssistantWidget.prototype.showUploadAcknowledgement = function (up, fallbackNames, statusRow) {
+  ESChatWidget.prototype.showUploadAcknowledgement = function (up, fallbackNames, statusRow) {
     if (!this.shouldShowUploadSuccessAck(up)) return;
     var msg = this.buildUploadAckMessage(up, fallbackNames);
     if (statusRow) {
       var kind = up && up.ok ? 'success' : 'failed';
-      if (this.qaMode && up && up.simulated) kind = 'failed';
+      if (this.esTestMode && up && up.simulated) kind = 'failed';
       this.updateBotMessageText(statusRow, msg, kind);
       return;
     }
     this.appendMessage('bot', msg, {
-      messageKind: up && up.ok && !(this.qaMode && up.simulated) ? 'upload-success' : '',
+      messageKind: up && up.ok && !(this.esTestMode && up.simulated) ? 'upload-success' : '',
     });
   };
 
-  QualityAssistantWidget.prototype.handleComposerUploadPick = function (fileList) {
+  ESChatWidget.prototype.handleComposerUploadPick = function (fileList) {
     var files = [];
     if (fileList && fileList.length) {
       for (var i = 0; i < fileList.length; i += 1) {
@@ -3779,7 +3779,7 @@
               skipTranscriptLog: true,
             });
           }
-          if (!self.qaMode) {
+          if (!self.esTestMode) {
             self.appendTranscriptTurn('user', emoji + (docNames ? ' ' + docNames : ''));
             self.pushSessionContext();
           }
@@ -3812,7 +3812,7 @@
       });
   };
 
-  QualityAssistantWidget.prototype.uploadFormDocuments = function (files, values, request) {
+  ESChatWidget.prototype.uploadFormDocuments = function (files, values, request) {
     if (!this.apiBase) {
       return Promise.resolve({
         ok: false,
@@ -3836,7 +3836,7 @@
       '';
     uploadTag = String(uploadTag || '').trim();
     if (uploadTag) fd.append('tag', uploadTag);
-    fd.append('channel', this.qaMode ? 'QA' : 'Web');
+    fd.append('channel', this.esTestMode ? 'ES-Test' : 'Web');
     var mobile = vals.mobile != null ? String(vals.mobile).trim() : String(ctx.mobile || '').trim();
     var dial = vals.dial_code != null ? String(vals.dial_code).trim() : String(ctx.dial_code || '').trim();
     if (mobile) fd.append('mobile', mobile);
@@ -3852,7 +3852,7 @@
     }
     var self = this;
     var uploadHeaders = {};
-    if (this.qaMode) uploadHeaders['X-QA-Mode'] = '1';
+    if (this.esTestMode) uploadHeaders['X-ES-Test-Mode'] = '1';
     this._uploadInFlight = fetch(this.apiBase + '/api/upload/documents', {
       method: 'POST',
       headers: uploadHeaders,
@@ -3898,7 +3898,7 @@
     return this._uploadInFlight;
   };
 
-  QualityAssistantWidget.prototype.handleFormSubmit = function (payload) {
+  ESChatWidget.prototype.handleFormSubmit = function (payload) {
     var self = this;
     payload = payload || {};
     this.clientContext = Object.assign({}, this.clientContext || {}, payload.values || {});
@@ -3988,7 +3988,7 @@
     }
   };
 
-  QualityAssistantWidget.prototype.mergeSessionParameters = function (sessionParameters) {
+  ESChatWidget.prototype.mergeSessionParameters = function (sessionParameters) {
     var params =
       sessionParameters && typeof sessionParameters === 'object'
         ? sessionParameters
@@ -4005,7 +4005,7 @@
     this.clientContext = Object.assign({}, this.clientContext || {}, patch);
   };
 
-  QualityAssistantWidget.prototype.handleSkippedForm = function (request) {
+  ESChatWidget.prototype.handleSkippedForm = function (request) {
     var prefill = (request && request.prefill) || {};
     this.clientContext = Object.assign({}, this.clientContext || {}, prefill);
     this.pushSessionContext();
@@ -4019,11 +4019,11 @@
     }
   };
 
-  QualityAssistantWidget.prototype.handleSkippedContactForm = function (request) {
+  ESChatWidget.prototype.handleSkippedContactForm = function (request) {
     this.handleSkippedForm(request);
   };
 
-  QualityAssistantWidget.prototype.resolveFormRequestsForDisplay = function (forms) {
+  ESChatWidget.prototype.resolveFormRequestsForDisplay = function (forms) {
     var self = this;
     var skipFn =
       global.QAChatForm &&
@@ -4042,7 +4042,7 @@
     return out;
   };
 
-  QualityAssistantWidget.prototype.buildFormEl = function (formRequest) {
+  ESChatWidget.prototype.buildFormEl = function (formRequest) {
     if (!global.QAChatForm || !global.QAChatForm.isFormsEnabled()) return null;
     var skipFn =
       global.QAChatForm.resolveFormSkips || global.QAChatForm.resolveContactSkip;
@@ -4054,7 +4054,7 @@
     return global.QAChatForm.buildFormEl(resolved, this);
   };
 
-  QualityAssistantWidget.prototype.appendFormattedBubbleContent = function (
+  ESChatWidget.prototype.appendFormattedBubbleContent = function (
     bubble,
     text,
     replyHtml
@@ -4075,7 +4075,7 @@
     return true;
   };
 
-  QualityAssistantWidget.prototype.fillMessageBubble = function (bubble, text, replyParts, replyHtml) {
+  ESChatWidget.prototype.fillMessageBubble = function (bubble, text, replyParts, replyHtml) {
     bubble.textContent = '';
     bubble.classList.remove('qa-msg__bubble--formatted', 'qa-msg__bubble--multiline');
     if (replyHtml && String(replyHtml).trim()) {
@@ -4143,7 +4143,7 @@
     }
   };
 
-  QualityAssistantWidget.prototype.appendMessage = function (role, text, options) {
+  ESChatWidget.prototype.appendMessage = function (role, text, options) {
     options = options || {};
     if (this.els.welcome) {
       this.els.welcome.remove();
@@ -4276,7 +4276,7 @@
     return row;
   };
 
-  QualityAssistantWidget.prototype.showTyping = function () {
+  ESChatWidget.prototype.showTyping = function () {
     var row = document.createElement('div');
     row.className = 'qa-msg qa-msg--bot qa-msg--typing-indicator';
     var body = document.createElement('div');
@@ -4295,7 +4295,7 @@
     return row;
   };
 
-  QualityAssistantWidget.prototype.sendMessage = function () {
+  ESChatWidget.prototype.sendMessage = function () {
     var text = (this.els.input.value || '').trim();
     if (!text || this.isSending) return;
     this.els.input.value = '';
@@ -4303,7 +4303,7 @@
     this.sendMessageWithText(text);
   };
 
-  QualityAssistantWidget.prototype.sendMessageWithText = function (text) {
+  ESChatWidget.prototype.sendMessageWithText = function (text) {
     text = (text || '').trim();
     if (!text || this.isSending) return;
     if (this.isHumanChatActive()) {
@@ -4351,7 +4351,7 @@
     );
   };
 
-  QualityAssistantWidget.prototype.toggleSpeech = function () {
+  ESChatWidget.prototype.toggleSpeech = function () {
     var stt = getRootCfg().features && getRootCfg().features.speechToText;
     if (stt && stt.enabled === false) return;
 
@@ -4391,7 +4391,7 @@
     this.recognition.start();
   };
 
-  QualityAssistantWidget.prototype.stopSpeech = function () {
+  ESChatWidget.prototype.stopSpeech = function () {
     if (this.recognition) {
       try {
         this.recognition.stop();
@@ -4401,21 +4401,21 @@
     if (this.els.mic) this.els.mic.classList.remove('qa-mic--active');
   };
 
-  QualityAssistantWidget.prototype.showError = function (msg) {
+  ESChatWidget.prototype.showError = function (msg) {
     this.els.error.textContent = msg;
     this.els.error.hidden = false;
   };
 
-  QualityAssistantWidget.prototype.hideError = function () {
+  ESChatWidget.prototype.hideError = function () {
     this.els.error.hidden = true;
     this.els.error.textContent = '';
   };
 
-  QualityAssistantWidget.prototype.escape = function (s) {
+  ESChatWidget.prototype.escape = function (s) {
     var d = document.createElement('div');
     d.textContent = s;
     return d.innerHTML;
   };
 
-  global.QualityAssistantWidget = QualityAssistantWidget;
+  global.ESChatWidget = ESChatWidget;
 })(typeof window !== 'undefined' ? window : this);
