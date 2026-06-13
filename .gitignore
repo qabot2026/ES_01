@@ -9,5 +9,5 @@ Only to refer company.config.js
 Only to refer*
 Only Refer/
 refer-forms/
-data/transcripts/*.json
-!data/transcripts/.gitkeep
+es_private/data/transcripts/*.json
+!es_private/data/transcripts/.gitkeep

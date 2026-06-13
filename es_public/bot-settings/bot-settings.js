@@ -105,7 +105,7 @@
   }
 
   function effectivePreset(project, saved) {
-    var cfg = window.QA_CHAT_UI_CONFIG || {};
+    var cfg = window.ES_CHAT_UI_CONFIG || {};
     var sp =
       (cfg.common &&
         cfg.common.sitePresets &&
@@ -149,7 +149,7 @@
 
     var embed = $('embedSnippet');
     if (embed && project) {
-      var lines = ["<script>", "  window.QA_CONFIG = {"];
+      var lines = ["<script>", "  window.ES_CONFIG = {"];
       if (project.welcomeEventName) {
         lines.push("    welcomeEventName: '" + project.welcomeEventName + "',");
       }

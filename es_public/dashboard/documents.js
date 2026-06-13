@@ -659,7 +659,7 @@
           );
         } else if (!state.rows.length) {
           showAlert(
-            'No documents yet. Upload from production chat (not /qa), wait for bot success, then Refresh.'
+            'No documents yet. Upload from production chat (not /es-test), wait for bot success, then Refresh.'
           );
         } else if (state.dateFilterActive) {
           var range = getDateRangeFromInputs();

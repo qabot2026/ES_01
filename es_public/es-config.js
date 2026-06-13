@@ -3,8 +3,8 @@
  * Loads company.config if present; otherwise minimal production defaults.
  */
 (function () {
-  if (window.QA_CHAT_UI_CONFIG) return;
-  window.QA_CHAT_UI_CONFIG = {
+  if (window.ES_CHAT_UI_CONFIG) return;
+  window.ES_CHAT_UI_CONFIG = {
     common: {
       deploy: {
         publicBaseUrl: 'https://es-based-chatbot-production.up.railway.app',
@@ -12,13 +12,13 @@
           'https://es-based-chatbot-production.up.railway.app/embed.js',
       },
       header: {
-        title: 'QualityAssistant',
+        title: 'ES Chatbot',
         subtitle: 'We are online to assist you',
       },
     },
   };
-  window.QA_CONFIG = {
-    apiBase: window.QA_CHAT_UI_CONFIG.common.deploy.publicBaseUrl,
-    embedScript: window.QA_CHAT_UI_CONFIG.common.deploy.embedScript,
+  window.ES_CONFIG = {
+    apiBase: window.ES_CHAT_UI_CONFIG.common.deploy.publicBaseUrl,
+    embedScript: window.ES_CHAT_UI_CONFIG.common.deploy.embedScript,
   };
 })();

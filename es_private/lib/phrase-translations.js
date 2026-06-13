@@ -4,9 +4,9 @@
  */
 
 const fs = require('fs');
-const path = require('path');
+const clientPaths = require('./client-paths');
 
-const DATA_PATH = path.join(__dirname, '..', 'data', 'phrase-translations.json');
+const DATA_PATH = clientPaths.phraseTranslationsPath();
 
 let cache = null;
 let cacheMtime = 0;

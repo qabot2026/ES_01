@@ -16,9 +16,9 @@
   <script src="/company.config.js"></script>
   <script>
     document.getElementById('snippet').textContent =
-      '<script>\n  window.QA_CONFIG = { sitePreset: \'receptionist\' };\n<\/script>\n' +
-      '<script src="' + window.QA_CONFIG.embedScript + '" async><\/script>';
-    window.QA_CONFIG = Object.assign(window.QA_CONFIG || {}, {
+      '<script>\n  window.ES_CONFIG = { sitePreset: \'receptionist\' };\n<\/script>\n' +
+      '<script src="' + window.ES_CONFIG.embedScript + '" async><\/script>';
+    window.ES_CONFIG = Object.assign(window.ES_CONFIG || {}, {
       sitePreset: 'receptionist',
     });
   </script>

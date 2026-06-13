@@ -5,7 +5,7 @@
   'use strict';
 
   function liveCfg() {
-    var root = global.QA_CHAT_UI_CONFIG || {};
+    var root = global.ES_CHAT_UI_CONFIG || {};
     var c = (root.common && root.common.liveAgent) || root.liveAgent || {};
     return c;
   }
@@ -17,8 +17,8 @@
   function t(widget, key, fallback) {
     var lang = (widget && widget.language) || 'en';
     var pack =
-      (global.QA_CHAT_LIVE_STRINGS && global.QA_CHAT_LIVE_STRINGS[lang]) ||
-      (global.QA_CHAT_LIVE_STRINGS && global.QA_CHAT_LIVE_STRINGS.en) ||
+      (global.ES_CHAT_LIVE_STRINGS && global.ES_CHAT_LIVE_STRINGS[lang]) ||
+      (global.ES_CHAT_LIVE_STRINGS && global.ES_CHAT_LIVE_STRINGS.en) ||
       {};
     return pack[key] != null ? pack[key] : fallback;
   }
@@ -97,7 +97,7 @@
   }
 
   function patchWidget() {
-    var C = global.QualityAssistantWidget;
+    var C = global.ESChatWidget;
     if (!C || !C.prototype) return false;
     var p = C.prototype;
     if (p._liveAgentPatched) return true;
@@ -932,9 +932,9 @@
     return true;
   }
 
-  global.QA_LIVE_AGENT_PATCH = patchWidget;
+  global.ES_LIVE_AGENT_PATCH = patchWidget;
 
-  global.QA_CHAT_LIVE_STRINGS = {
+  global.ES_CHAT_LIVE_STRINGS = {
     en: {
       waiting: 'Waiting for an agent…',
       agentTyping: 'Typing...',
@@ -968,7 +968,7 @@
 
   patchWidget();
 
-  if (!global.QualityAssistantWidget) {
+  if (!global.ESChatWidget) {
     var n = 0;
     var iv = setInterval(function () {
       n += 1;

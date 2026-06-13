@@ -3,7 +3,9 @@
  * Dialogflow ES: one agent per GCP project; projectId selects the agent.
  */
 
-const PROJECT_ID = process.env.DIALOGFLOW_PROJECT_ID || 'qualityassistant-ygdm';
+const appEnv = require('./app-env');
+
+const PROJECT_ID = appEnv.DIALOGFLOW_PROJECT_ID;
 
 function normalizeText_(value) {
   return String(value || '')
@@ -31,7 +33,7 @@ function resolveProjectId(requested) {
   }
   if (pid === primary) return pid;
 
-  const allowed = String(process.env.DIALOGFLOW_ALLOWED_PROJECTS || '')
+  const allowed = String(appEnv.DIALOGFLOW_ALLOWED_PROJECTS || '')
     .split(',')
     .map((s) => s.trim())
     .filter(Boolean);

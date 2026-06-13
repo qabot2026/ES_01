@@ -1,9 +1,9 @@
 (function () {
   'use strict';
 
-  var QA_ASSET_VERSION = '20260613-bot-configs';
+  var ES_ASSET_VERSION = '20260613-bot-configs';
 
-  var QA_FORM_SCRIPTS = [
+  var ES_FORM_SCRIPTS = [
     'contact.js',
     'feedback.js',
     'otp.js',
@@ -18,20 +18,20 @@
   if (script && script.src) {
     base = script.src.replace(/\/embed\.js(\?.*)?$/i, '');
   }
-  if (!base && window.QA_CONFIG && window.QA_CONFIG.apiBase) {
-    base = window.QA_CONFIG.apiBase;
+  if (!base && window.ES_CONFIG && window.ES_CONFIG.apiBase) {
+    base = window.ES_CONFIG.apiBase;
   }
-  if (!base && window.QA_CHAT_UI_CONFIG && window.QA_CHAT_UI_CONFIG.common) {
-    base = window.QA_CHAT_UI_CONFIG.common.deploy.publicBaseUrl;
+  if (!base && window.ES_CHAT_UI_CONFIG && window.ES_CHAT_UI_CONFIG.common) {
+    base = window.ES_CHAT_UI_CONFIG.common.deploy.publicBaseUrl;
   }
 
   function assetUrl(path) {
-    return path + (path.indexOf('?') >= 0 ? '&' : '?') + 'v=' + QA_ASSET_VERSION;
+    return path + (path.indexOf('?') >= 0 ? '&' : '?') + 'v=' + ES_ASSET_VERSION;
   }
 
   function loadCss(href) {
     var url = assetUrl(href);
-    var existing = document.querySelector('link[data-qa-widget-css]');
+    var existing = document.querySelector('link[data-es-widget-css]');
     if (existing) {
       if (existing.getAttribute('href') === url) return;
       existing.remove();
@@ -39,7 +39,7 @@
     var link = document.createElement('link');
     link.rel = 'stylesheet';
     link.href = url;
-    link.setAttribute('data-qa-widget-css', 'true');
+    link.setAttribute('data-es-widget-css', 'true');
     document.head.appendChild(link);
   }
 
@@ -56,11 +56,11 @@
   }
 
   function loadFormScripts(index, cb) {
-    if (index >= QA_FORM_SCRIPTS.length) {
+    if (index >= ES_FORM_SCRIPTS.length) {
       if (cb) cb();
       return;
     }
-    loadJs(assetUrl(base + '/forms/' + QA_FORM_SCRIPTS[index]), function () {
+    loadJs(assetUrl(base + '/forms/' + ES_FORM_SCRIPTS[index]), function () {
       loadFormScripts(index + 1, cb);
     });
   }
@@ -100,11 +100,11 @@
         if (
           data &&
           data.sitePresets &&
-          window.QA_CHAT_UI_CONFIG &&
-          window.QA_CHAT_UI_CONFIG.common
+          window.ES_CHAT_UI_CONFIG &&
+          window.ES_CHAT_UI_CONFIG.common
         ) {
-          var current = window.QA_CHAT_UI_CONFIG.common.sitePresets || {};
-          window.QA_CHAT_UI_CONFIG.common.sitePresets = deepMerge_(
+          var current = window.ES_CHAT_UI_CONFIG.common.sitePresets || {};
+          window.ES_CHAT_UI_CONFIG.common.sitePresets = deepMerge_(
             current,
             data.sitePresets
           );
@@ -136,11 +136,11 @@
               loadJs(assetUrl(base + '/widget/chat-widget.js'), function () {
                 loadJs(assetUrl(base + '/widget/live-agent-client.js'), function () {
                   loadJs(assetUrl(base + '/widget/transcript-client.js'), function () {
-                    if (window.QualityAssistantWidget) {
+                    if (window.ESChatWidget) {
                       window.__qaWidgetLoaded = true;
-                      new window.QualityAssistantWidget({
+                      new window.ESChatWidget({
                         apiBase:
-                          (window.QA_CONFIG && window.QA_CONFIG.apiBase) || base,
+                          (window.ES_CONFIG && window.ES_CONFIG.apiBase) || base,
                       });
                     }
                   });

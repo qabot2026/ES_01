@@ -3,9 +3,11 @@ const path = require('path');
 const botProjectFiles = require('./bot-project-files');
 const botConfigFiles = require('./bot-config-files');
 const botSheetTabs = require('./bot-sheet-tabs');
+const dataFileSync = require('./data-file-sync');
+const clientPaths = require('./client-paths');
 
-const DATA_PATH = path.join(__dirname, '..', 'data', 'site-presets.json');
-const REGISTRY_PATH = path.join(__dirname, '..', 'data', 'bot-registry.json');
+const DATA_PATH = clientPaths.sitePresetsPath();
+const REGISTRY_PATH = clientPaths.registryPath();
 
 /** Seed used only when bot-registry.json is missing */
 const BOT_PROJECTS_SEED = {
@@ -240,6 +242,7 @@ function writeRegistryFile_(bots) {
     'utf8'
   );
   fs.renameSync(tmp, REGISTRY_PATH);
+  dataFileSync.scheduleSync('bot-registry.json');
 }
 
 function toSitePresetKey(name, botId) {
@@ -345,6 +348,7 @@ function writeOverrides_(sitePresets) {
     'utf8'
   );
   fs.renameSync(tmp, DATA_PATH);
+  dataFileSync.scheduleSync('site-presets.json');
 }
 
 function getMergedSitePresets() {

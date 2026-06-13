@@ -5,6 +5,7 @@
 const { google } = require('googleapis');
 const googleCredentials = require('./google-credentials');
 const sheetDateFormat = require('./sheet-date-format');
+const appEnv = require('./app-env');
 
 /** Must match lib/conversation-sheet.js row order. */
 const SHEET_COL_HEADERS = [
@@ -43,22 +44,14 @@ const SHEET_COL_HEADERS = [
   'Fall back',
 ];
 
-const SPREADSHEET_ID = String(process.env.SHEETS_SPREADSHEET_ID || '').trim();
-const RANGE = String(process.env.SHEETS_RANGE || 'Sheet1!A:AG').trim();
-const DASHBOARD_RANGE = String(
-  process.env.SHEETS_DASHBOARD_RANGE || 'Sheet2!A:M'
-).trim();
-const AGENT_TAB = String(process.env.SHEETS_AGENT_TAB || '').trim();
+const SPREADSHEET_ID = appEnv.SHEETS_SPREADSHEET_ID;
+const RANGE = appEnv.SHEETS_RANGE;
+const DASHBOARD_RANGE = appEnv.SHEETS_DASHBOARD_RANGE;
+const AGENT_TAB = appEnv.SHEETS_AGENT_TAB;
 
 /** Same base URL as server.js — required for column A Chatscript / Conv. Link. */
 function resolvePublicBaseUrl() {
-  const explicit = String(process.env.PUBLIC_BASE_URL || '').trim();
-  if (explicit) return explicit.replace(/\/$/, '');
-  const railway = String(process.env.RAILWAY_PUBLIC_DOMAIN || '').trim();
-  if (railway) {
-    return `https://${railway.replace(/^https?:\/\//i, '')}`.replace(/\/$/, '');
-  }
-  return 'https://es-based-chatbot-production.up.railway.app';
+  return appEnv.PUBLIC_BASE_URL;
 }
 
 let headerWritten = false;

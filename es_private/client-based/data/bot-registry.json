@@ -6,7 +6,7 @@
       "sitePreset": "receptionist",
       "welcomeEventName": "",
       "themeKey": "receptionist",
-      "sheetTab": "Recep. Chats"
+      "sheetTab": "Recept"
     },
     {
       "id": "10002",
@@ -25,5 +25,5 @@
       "sheetTab": "Lake View"
     }
   ],
-  "updatedAt": "2026-06-12T18:00:00.000Z"
+  "updatedAt": "2026-06-13T15:57:46.861Z"
 }

@@ -6,7 +6,7 @@ const fs = require('fs');
 const path = require('path');
 const { randomUUID } = require('crypto');
 const transcriptDisplay = require('./transcript-display-text');
-const qaMode = require('./qa-mode');
+const esTestMode = require('./es-test-mode');
 function scheduleSheetSync(sessionId) {
   try {
     require('./conversation-sheet').scheduleSheetSync(sessionId);
@@ -75,7 +75,7 @@ function shouldScheduleSheetForSession(sessionId, doc) {
 
 function appendTurn(sessionId, role, text, meta, options) {
   const sid = String(sessionId || '').trim();
-  if (qaMode.isQaSessionId(sid)) return null;
+  if (esTestMode.isEsTestSessionId(sid)) return null;
   let t = String(text || '').trim();
   if (!sid || !t) return null;
   const normalizedRole = normalizeRole(role);
@@ -176,7 +176,7 @@ function getSessionDoc(sessionId) {
 
 function mergeSessionMeta(sessionId, partial, options) {
   const sid = String(sessionId || '').trim();
-  if (qaMode.isQaSessionId(sid)) return;
+  if (esTestMode.isEsTestSessionId(sid)) return;
   if (!sid || !partial || typeof partial !== 'object') return;
   ensureDir();
   const file = sessionPath(sid);
@@ -274,7 +274,7 @@ function getTranscript(sessionId) {
 function listSessions(limit = 100) {
   const index = loadIndex();
   const list = Object.values(index.sessions || {}).filter(
-    (s) => !qaMode.isQaSessionId(s && s.sessionId)
+    (s) => !esTestMode.isEsTestSessionId(s && s.sessionId)
   );
   list.sort((a, b) =>
     String(b.updatedAt || '').localeCompare(String(a.updatedAt || ''))
@@ -285,7 +285,7 @@ function listSessions(limit = 100) {
 function getAnalyticsSummary(liveAgentQueue) {
   const index = loadIndex();
   const sessions = Object.values(index.sessions || {}).filter(
-    (s) => !qaMode.isQaSessionId(s && s.sessionId)
+    (s) => !esTestMode.isEsTestSessionId(s && s.sessionId)
   );
   const now = new Date();
   const today = now.toISOString().slice(0, 10);
@@ -427,7 +427,7 @@ function botDisplayTextFromDialogflowResult(result) {
 /** Record user + bot lines from /api/chat (server-side; does not rely on widget patch). */
 function logDialogflowExchange(sessionId, userMessage, result, options) {
   const sid = String(sessionId || '').trim();
-  if (qaMode.isQaSessionId(sid)) return;
+  if (esTestMode.isEsTestSessionId(sid)) return;
   if (!sid || !result) return;
   const opts = options && typeof options === 'object' ? options : {};
   const noSchedule = { scheduleSheet: false };

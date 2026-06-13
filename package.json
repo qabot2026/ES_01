@@ -1,11 +1,11 @@
 {
-  "name": "quality-assistant-chatbot",
+  "name": "es-chatbot",
   "version": "1.0.0",
-  "description": "Production UI for Dialogflow ES QualityAssistant chatbot",
+  "description": "ES-based Dialogflow chatbot",
   "private": true,
   "scripts": {
-    "start": "node server.js",
-    "dev": "node server.js"
+    "start": "node es_private/server.js",
+    "dev": "node es_private/server.js"
   },
   "engines": {
     "node": ">=18"

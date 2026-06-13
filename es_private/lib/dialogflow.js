@@ -7,8 +7,9 @@ const {
 } = require('./rich-content');
 const googleCredentials = require('./google-credentials');
 const orchestration = require('./agent-orchestration');
+const appEnv = require('./app-env');
 
-const PROJECT_ID = process.env.DIALOGFLOW_PROJECT_ID || 'qualityassistant-ygdm';
+const PROJECT_ID = appEnv.DIALOGFLOW_PROJECT_ID;
 
 let sessionsClient = null;
 let initError = null;

@@ -1,5 +1,5 @@
 const botConfigFiles = require('../lib/bot-config-files');
-const registry = require('../data/bot-registry.json');
+const registry = require('../client-based/data/bot-registry.json');
 
 const sitePresets = {
   receptionist: {

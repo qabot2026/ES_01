@@ -4,9 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="robots" content="noindex, nofollow" />
-  <meta name="description" content="QualityAssistant QA sandbox — test chatbot without creating leads" />
+  <meta name="description" content="ES Chatbot QA sandbox — test chatbot without creating leads" />
   <meta name="theme-color" content="#b45309" />
-  <title>QualityAssistant — QA Test</title>
+  <title>ES Chatbot — QA Test</title>
   <link rel="stylesheet" href="/widget/chat-widget.css?v=20260605-upload-silent" />
   <style>
     * { box-sizing: border-box; }
@@ -61,7 +61,7 @@
     <strong>QA test mode</strong> — chatbot works here but no leads, conversations, Google Sheet rows, or appointment bookings are saved.
   </div>
   <main class="demo-hero">
-    <h1>QualityAssistant — QA</h1>
+    <h1>ES Chatbot — QA</h1>
     <p>Use the teal button bottom-right to test flows safely. Dialogflow replies appear normally; nothing is written to production data.</p>
     <p class="hint">Production chat: <a href="/">home page</a></p>
   </main>
@@ -78,9 +78,9 @@
   <script src="/widget/live-agent-client.js?v=20260605-upload-silent"></script>
   <script src="/widget/transcript-client.js?v=20260605-upload-silent"></script>
   <script>
-    new QualityAssistantWidget({
-      apiBase: window.QA_CONFIG.apiBase,
-      qaMode: true,
+    new ESChatWidget({
+      apiBase: window.ES_CONFIG.apiBase,
+      esTestMode: true,
     });
   </script>
 </body>

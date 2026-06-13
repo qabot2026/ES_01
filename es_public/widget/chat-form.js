@@ -291,10 +291,10 @@
 
   function getFormsCfg() {
     var c =
-      global.QA_CHAT_UI_CONFIG &&
-      global.QA_CHAT_UI_CONFIG.common &&
-      global.QA_CHAT_UI_CONFIG.common.dialogflow &&
-      global.QA_CHAT_UI_CONFIG.common.dialogflow.forms;
+      global.ES_CHAT_UI_CONFIG &&
+      global.ES_CHAT_UI_CONFIG.common &&
+      global.ES_CHAT_UI_CONFIG.common.dialogflow &&
+      global.ES_CHAT_UI_CONFIG.common.dialogflow.forms;
     return c || {};
   }
 
@@ -915,8 +915,8 @@
       trigger.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
     });
 
-    if (!global.__QA_DIAL_PICKER_DOC_CLOSE__) {
-      global.__QA_DIAL_PICKER_DOC_CLOSE__ = true;
+    if (!global.__ES_DIAL_PICKER_DOC_CLOSE__) {
+      global.__ES_DIAL_PICKER_DOC_CLOSE__ = true;
       document.addEventListener('click', function () {
         var openMenus = document.querySelectorAll('.qa-dial-picker__menu:not([hidden])');
         for (var i = 0; i < openMenus.length; i += 1) {
@@ -1825,7 +1825,7 @@
     var base = apiBase(widget);
     if (!base) return Promise.resolve({ ok: true, skipped: true });
     var ctx = (widget && widget.clientContext) || {};
-    var qa = !!(widget && widget.qaMode);
+    var esTest = !!(widget && widget.esTestMode);
     return fetch(base + '/api/appointment-book', {
       method: 'POST',
       headers: Object.assign(
@@ -1837,7 +1837,7 @@
         date: dateIso,
         time: time,
         sessionId: widget && widget.sessionId,
-        qaMode: qa,
+        esTestMode: esTest,
         name: values.name || ctx.name || '',
         mobile: values.mobile || ctx.mobile || '',
         email: values.email || ctx.email || '',

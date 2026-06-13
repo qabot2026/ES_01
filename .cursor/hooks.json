@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "hooks": {
+    "sessionStart": [
+      {
+        "command": "node .cursor/hooks/sync-data-from-cloud.js",
+        "timeout": 30
+      }
+    ]
+  }
+}

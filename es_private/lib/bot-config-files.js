@@ -1,74 +1,75 @@
 const fs = require('fs');
 const path = require('path');
+const clientPaths = require('./client-paths');
 
-const BOT_CONFIGS_DIR = path.join(__dirname, '..', 'public', 'bot-configs');
+const BOT_CONFIGS_DIR = clientPaths.botConfigsDir();
 const MANIFEST_PATH = path.join(BOT_CONFIGS_DIR, 'manifest.json');
 
 const DEFAULT_THEME = {
-  '--qa-primary': '#0284c7',
-  '--qa-primary-dark': '#0369a1',
-  '--qa-primary-deep': '#075985',
-  '--qa-accent': '#0ea5e9',
-  '--qa-accent-light': '#bae6fd',
-  '--qa-bg': '#e8f4fc',
-  '--qa-bg-2': '#f7fbff',
-  '--qa-border': '#dbe5ec',
-  '--qa-bot-bg': 'linear-gradient(168deg, #e8f6ff 0%, #bae6fd 100%)',
-  '--qa-bot-text': '#0c4a6e',
-  '--qa-user-bg': 'linear-gradient(145deg, #0284c7 0%, #0ea5e9 100%)',
-  '--qa-user-text': '#f0f9ff',
-  '--qa-header-bg':
+  '--es-primary': '#0284c7',
+  '--es-primary-dark': '#0369a1',
+  '--es-primary-deep': '#075985',
+  '--es-accent': '#0ea5e9',
+  '--es-accent-light': '#bae6fd',
+  '--es-bg': '#e8f4fc',
+  '--es-bg-2': '#f7fbff',
+  '--es-border': '#dbe5ec',
+  '--es-bot-bg': 'linear-gradient(168deg, #e8f6ff 0%, #bae6fd 100%)',
+  '--es-bot-text': '#0c4a6e',
+  '--es-user-bg': 'linear-gradient(145deg, #0284c7 0%, #0ea5e9 100%)',
+  '--es-user-text': '#f0f9ff',
+  '--es-header-bg':
     'linear-gradient(180deg, rgba(255,255,255,0.38) 0%, rgba(255,255,255,0.1) 24%, transparent 46%), linear-gradient(168deg, #38bdf8 0%, #0284c7 42%, #075985 100%)',
-  '--qa-shadow':
+  '--es-shadow':
     '0 10px 28px -6px rgba(15, 23, 42, 0.1), 0 20px 40px -14px rgba(14, 165, 233, 0.12)',
-  '--qa-launcher-shadow': '0 3px 10px -2px rgba(14, 165, 233, 0.2)',
-  '--qa-launcher-shadow-hover': '0 5px 14px -2px rgba(14, 165, 233, 0.28)',
-  '--qa-ring-color': '#0ea5e9',
+  '--es-launcher-shadow': '0 3px 10px -2px rgba(14, 165, 233, 0.2)',
+  '--es-launcher-shadow-hover': '0 5px 14px -2px rgba(14, 165, 233, 0.28)',
+  '--es-ring-color': '#0ea5e9',
 };
 
 const SEED_THEMES = {
   receptionist: DEFAULT_THEME,
   greenValley: {
-    '--qa-primary': '#ca8a04',
-    '--qa-primary-dark': '#a16207',
-    '--qa-primary-deep': '#854d0e',
-    '--qa-accent': '#eab308',
-    '--qa-accent-light': '#fef08a',
-    '--qa-bg': '#fefce8',
-    '--qa-bg-2': '#fffbeb',
-    '--qa-border': '#fde68a',
-    '--qa-bot-bg': 'linear-gradient(168deg, #fef9c3 0%, #fde047 100%)',
-    '--qa-bot-text': '#713f12',
-    '--qa-user-bg': 'linear-gradient(145deg, #ca8a04 0%, #eab308 100%)',
-    '--qa-user-text': '#fffbeb',
-    '--qa-header-bg':
+    '--es-primary': '#ca8a04',
+    '--es-primary-dark': '#a16207',
+    '--es-primary-deep': '#854d0e',
+    '--es-accent': '#eab308',
+    '--es-accent-light': '#fef08a',
+    '--es-bg': '#fefce8',
+    '--es-bg-2': '#fffbeb',
+    '--es-border': '#fde68a',
+    '--es-bot-bg': 'linear-gradient(168deg, #fef9c3 0%, #fde047 100%)',
+    '--es-bot-text': '#713f12',
+    '--es-user-bg': 'linear-gradient(145deg, #ca8a04 0%, #eab308 100%)',
+    '--es-user-text': '#fffbeb',
+    '--es-header-bg':
       'linear-gradient(180deg, rgba(255,255,255,0.38) 0%, rgba(255,255,255,0.1) 24%, transparent 46%), linear-gradient(168deg, #fde047 0%, #ca8a04 42%, #854d0e 100%)',
-    '--qa-shadow':
+    '--es-shadow':
       '0 10px 28px -6px rgba(15, 23, 42, 0.1), 0 20px 40px -14px rgba(202, 138, 4, 0.12)',
-    '--qa-launcher-shadow': '0 3px 10px -2px rgba(202, 138, 4, 0.2)',
-    '--qa-launcher-shadow-hover': '0 5px 14px -2px rgba(202, 138, 4, 0.28)',
-    '--qa-ring-color': '#eab308',
+    '--es-launcher-shadow': '0 3px 10px -2px rgba(202, 138, 4, 0.2)',
+    '--es-launcher-shadow-hover': '0 5px 14px -2px rgba(202, 138, 4, 0.28)',
+    '--es-ring-color': '#eab308',
   },
   lakeView: {
-    '--qa-primary': '#16a34a',
-    '--qa-primary-dark': '#15803d',
-    '--qa-primary-deep': '#166534',
-    '--qa-accent': '#22c55e',
-    '--qa-accent-light': '#bbf7d0',
-    '--qa-bg': '#f0fdf4',
-    '--qa-bg-2': '#f7fef9',
-    '--qa-border': '#bbf7d0',
-    '--qa-bot-bg': 'linear-gradient(168deg, #dcfce7 0%, #86efac 100%)',
-    '--qa-bot-text': '#14532d',
-    '--qa-user-bg': 'linear-gradient(145deg, #16a34a 0%, #22c55e 100%)',
-    '--qa-user-text': '#f0fdf4',
-    '--qa-header-bg':
+    '--es-primary': '#16a34a',
+    '--es-primary-dark': '#15803d',
+    '--es-primary-deep': '#166534',
+    '--es-accent': '#22c55e',
+    '--es-accent-light': '#bbf7d0',
+    '--es-bg': '#f0fdf4',
+    '--es-bg-2': '#f7fef9',
+    '--es-border': '#bbf7d0',
+    '--es-bot-bg': 'linear-gradient(168deg, #dcfce7 0%, #86efac 100%)',
+    '--es-bot-text': '#14532d',
+    '--es-user-bg': 'linear-gradient(145deg, #16a34a 0%, #22c55e 100%)',
+    '--es-user-text': '#f0fdf4',
+    '--es-header-bg':
       'linear-gradient(180deg, rgba(255,255,255,0.38) 0%, rgba(255,255,255,0.1) 24%, transparent 46%), linear-gradient(168deg, #4ade80 0%, #16a34a 42%, #166534 100%)',
-    '--qa-shadow':
+    '--es-shadow':
       '0 10px 28px -6px rgba(15, 23, 42, 0.1), 0 20px 40px -14px rgba(22, 163, 74, 0.12)',
-    '--qa-launcher-shadow': '0 3px 10px -2px rgba(22, 163, 74, 0.2)',
-    '--qa-launcher-shadow-hover': '0 5px 14px -2px rgba(22, 163, 74, 0.28)',
-    '--qa-ring-color': '#22c55e',
+    '--es-launcher-shadow': '0 3px 10px -2px rgba(22, 163, 74, 0.2)',
+    '--es-launcher-shadow-hover': '0 5px 14px -2px rgba(22, 163, 74, 0.28)',
+    '--es-ring-color': '#22c55e',
   },
 };
 
@@ -107,8 +108,8 @@ function renderBotConfigJs(bot, theme, sitePresetBlock) {
     key +
     ') */\n' +
     '(function (g) {\n' +
-    "  g.QA_BOT_PRESETS = g.QA_BOT_PRESETS || {};\n" +
-    '  g.QA_BOT_PRESETS[' +
+    "  g.ES_BOT_PRESETS = g.ES_BOT_PRESETS || {};\n" +
+    '  g.ES_BOT_PRESETS[' +
     JSON.stringify(key) +
     '] = ' +
     json +

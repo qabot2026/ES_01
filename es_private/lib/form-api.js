@@ -8,8 +8,9 @@ const appointmentSchedule = require('./appointment-schedule');
 const localTime = require('./local-time');
 const { to24h, to12h } = require('./time-format');
 const dateDisplay = require('./date-display');
+const clientPaths = require('./client-paths');
 
-const BRANCHES_PATH = path.join(__dirname, '..', 'data', 'branches.json');
+const BRANCHES_PATH = clientPaths.branchesPath();
 const BOOKED_PATH = path.join(__dirname, '..', 'data', 'appointment-booked.json');
 
 const COUNTRY_DIAL = {

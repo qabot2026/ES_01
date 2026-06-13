@@ -7,14 +7,14 @@ var DEFAULT_CHAT_LAUNCHER_ICON_URL =
 var DEFAULT_CHAT_HEADER_ICON_URL =
   'https://storage.googleapis.com/companybucket/Images/cat-icon.png';
 
-window.QA_CHAT_UI_CONFIG = {
+window.ES_CHAT_UI_CONFIG = {
   common: {
     dialogflow: {
       projectId: 'recebot-ptav',
       agentId: '5ea01258-d01b-44eb-9b2a-9f6338d43d63',
       /**
        * Single agent (recommended): sab flows ek hi agent (recebot-ptav) mein contexts se.
-       * Landing pages: QA_CONFIG.welcomeEventName + sitePreset per site.
+       * Landing pages: ES_CONFIG.welcomeEventName + sitePreset per site.
        * Multi-agent (purana): agentOrchestration.enabled = true
        */
       agentOrchestration: {
@@ -268,30 +268,30 @@ window.QA_CHAT_UI_CONFIG = {
     restartButton: { gapAfterLanguagePx: 10 },
 
     theme: {
-      '--qa-primary': '#0284c7',
-      '--qa-primary-dark': '#0369a1',
-      '--qa-primary-deep': '#075985',
-      '--qa-accent': '#0ea5e9',
-      '--qa-accent-light': '#bae6fd',
-      '--qa-bg': '#e8f4fc',
-      '--qa-bg-2': '#f7fbff',
-      '--qa-surface': '#ffffff',
-      '--qa-text': '#0f172a',
-      '--qa-text-soft': '#475569',
-      '--qa-muted': '#475569',
-      '--qa-border': '#dbe5ec',
-      '--qa-bot-bg': 'linear-gradient(168deg, #e8f6ff 0%, #bae6fd 100%)',
-      '--qa-bot-text': '#0c4a6e',
-      '--qa-user-bg': 'linear-gradient(145deg, #0284c7 0%, #0ea5e9 100%)',
-      '--qa-user-text': '#f0f9ff',
-      '--qa-header-bg':
+      '--es-primary': '#0284c7',
+      '--es-primary-dark': '#0369a1',
+      '--es-primary-deep': '#075985',
+      '--es-accent': '#0ea5e9',
+      '--es-accent-light': '#bae6fd',
+      '--es-bg': '#e8f4fc',
+      '--es-bg-2': '#f7fbff',
+      '--es-surface': '#ffffff',
+      '--es-text': '#0f172a',
+      '--es-text-soft': '#475569',
+      '--es-muted': '#475569',
+      '--es-border': '#dbe5ec',
+      '--es-bot-bg': 'linear-gradient(168deg, #e8f6ff 0%, #bae6fd 100%)',
+      '--es-bot-text': '#0c4a6e',
+      '--es-user-bg': 'linear-gradient(145deg, #0284c7 0%, #0ea5e9 100%)',
+      '--es-user-text': '#f0f9ff',
+      '--es-header-bg':
         'linear-gradient(180deg, rgba(255,255,255,0.38) 0%, rgba(255,255,255,0.1) 24%, transparent 46%), linear-gradient(168deg, #38bdf8 0%, #0284c7 42%, #075985 100%)',
-      '--qa-shadow':
+      '--es-shadow':
         '0 10px 28px -6px rgba(15, 23, 42, 0.1), 0 20px 40px -14px rgba(14, 165, 233, 0.12)',
-      '--qa-launcher-shadow': '0 3px 10px -2px rgba(14, 165, 233, 0.2)',
-      '--qa-launcher-shadow-hover': '0 5px 14px -2px rgba(14, 165, 233, 0.28)',
-      '--qa-radius': '22px',
-      '--qa-ring-color': '#0ea5e9',
+      '--es-launcher-shadow': '0 3px 10px -2px rgba(14, 165, 233, 0.2)',
+      '--es-launcher-shadow-hover': '0 5px 14px -2px rgba(14, 165, 233, 0.28)',
+      '--es-radius': '22px',
+      '--es-ring-color': '#0ea5e9',
     },
 
     /** Per-bot colors — loaded from public/bot-configs/*.config.js */
@@ -365,7 +365,7 @@ window.QA_CHAT_UI_CONFIG = {
     poweredBy: {
       enabled: true,
       prefix: '⚡by ',
-      brandName: 'QualityAssistant',
+      brandName: 'ES Chatbot',
       logoUrl:
         'https://www.vhv.rs/dpng/d/6-68550_hanuman-ji-png-transparent-png.png',
       linkUrl: 'www.google.com',
@@ -438,7 +438,7 @@ window.QA_CHAT_UI_CONFIG = {
     poweredBy: {
       enabled: true,
       prefix: '⚡by ',
-      brandName: 'QualityAssistant',
+      brandName: 'ES Chatbot',
       logoUrl:
         'https://www.vhv.rs/dpng/d/6-68550_hanuman-ji-png-transparent-png.png',
       linkUrl: 'www.google.com',
@@ -457,10 +457,10 @@ window.QA_CHAT_UI_CONFIG = {
 };
 
 (function () {
-  var c = window.QA_CHAT_UI_CONFIG;
+  var c = window.ES_CHAT_UI_CONFIG;
   if (!c || !c.common) return;
 
-  var packs = window.QA_BOT_PRESETS || {};
+  var packs = window.ES_BOT_PRESETS || {};
   c.common.themePresets = c.common.themePresets || {};
   c.common.sitePresets = c.common.sitePresets || {};
   Object.keys(packs).forEach(function (key) {
@@ -471,14 +471,14 @@ window.QA_CHAT_UI_CONFIG = {
   });
 
   /* Merge — landing pages set welcomeEventName + sitePreset before embed.js loads this file */
-  var qaExisting = window.QA_CONFIG || {};
+  var qaExisting = window.ES_CONFIG || {};
   var sitePreset = qaExisting.sitePreset || 'receptionist';
   var botId = qaExisting.botId || '';
-  if (!botId && sitePreset && window.QA_BOT_PRESETS && window.QA_BOT_PRESETS[sitePreset]) {
-    botId = window.QA_BOT_PRESETS[sitePreset].botId || '';
+  if (!botId && sitePreset && window.ES_BOT_PRESETS && window.ES_BOT_PRESETS[sitePreset]) {
+    botId = window.ES_BOT_PRESETS[sitePreset].botId || '';
   }
   if (!botId) botId = '10001';
-  window.QA_CONFIG = Object.assign({}, qaExisting, {
+  window.ES_CONFIG = Object.assign({}, qaExisting, {
     apiBase: c.common.deploy.publicBaseUrl,
     embedScript: c.common.deploy.embedScript,
     sitePreset: sitePreset,

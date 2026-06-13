@@ -6,7 +6,7 @@
   'use strict';
 
   function patchWidget() {
-    var C = global.QualityAssistantWidget;
+    var C = global.ESChatWidget;
     if (!C || !C.prototype) return !!C;
     if (C.prototype._transcriptPatched) return true;
     C.prototype._transcriptPatched = true;

@@ -42,7 +42,7 @@
   function mergePreviewConfig(payload) {
     var project = payload.project;
     var preset = payload.preset || {};
-    var cfg = window.QA_CHAT_UI_CONFIG;
+    var cfg = window.ES_CHAT_UI_CONFIG;
     if (!cfg || !cfg.common) return null;
 
     if (!cfg.common.sitePresets) cfg.common.sitePresets = {};
@@ -51,13 +51,13 @@
       preset
     );
 
-    window.QA_CONFIG = {
+    window.ES_CONFIG = {
       apiBase: window.location.origin.replace(/\/$/, ''),
       sitePreset: project.sitePreset,
       previewViewport: 'desk',
     };
     if (project.welcomeEventName) {
-      window.QA_CONFIG.welcomeEventName = project.welcomeEventName;
+      window.ES_CONFIG.welcomeEventName = project.welcomeEventName;
     }
 
     return project;
@@ -77,13 +77,13 @@
   }
 
   function bootWidget(project) {
-    if (!window.QualityAssistantWidget) {
+    if (!window.ESChatWidget) {
       updateHint('Preview failed: chat widget did not load.', true);
       return;
     }
 
-    widgetInstance = new window.QualityAssistantWidget({
-      apiBase: window.QA_CONFIG.apiBase,
+    widgetInstance = new window.ESChatWidget({
+      apiBase: window.ES_CONFIG.apiBase,
     });
     currentSitePreset = project.sitePreset;
     if (!widgetInstance.root) {

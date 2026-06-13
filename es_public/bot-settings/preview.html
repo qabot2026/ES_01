@@ -66,9 +66,9 @@
     /* iframe 100vh ≠ frame height — use explicit panel height from config */
     body.qa-bot-preview .qa-panel,
     body.qa-bot-preview .qa-widget--chat-open .qa-panel {
-      height: var(--qa-panel-height, 520px) !important;
-      max-height: var(--qa-panel-height, 520px) !important;
-      min-height: var(--qa-panel-height, 520px) !important;
+      height: var(--es-panel-height, 520px) !important;
+      max-height: var(--es-panel-height, 520px) !important;
+      min-height: var(--es-panel-height, 520px) !important;
     }
   </style>
 </head>
@@ -77,7 +77,7 @@
   <script src="/bot-configs/bootstrap.js"></script>
   <script src="/bot-configs/load-chain.js"></script>
   <script>
-    QALoadScriptChain([
+    ESLoadScriptChain([
       '/company.config.js',
       '/widget/date-display.js',
       '/widget/message-syntax.js',

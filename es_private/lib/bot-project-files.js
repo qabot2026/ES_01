@@ -1,10 +1,11 @@
 const fs = require('fs');
 const path = require('path');
 const botConfigFiles = require('./bot-config-files');
+const clientPaths = require('./client-paths');
 
-const ROOT = path.join(__dirname, '..');
-const BOT_SETTINGS_DIR = path.join(ROOT, 'public', 'bot-settings');
-const PUBLIC_DIR = path.join(ROOT, 'public');
+const PUBLIC_DIR = path.join(clientPaths.PROJECT_ROOT, 'es_public');
+const BOT_SETTINGS_DIR = clientPaths.botSettingsDir();
+const PAGES_DIR = clientPaths.pagesDir();
 const NAV_ASSET_V = '20260613b';
 
 function toDemoSlug(name, botId) {
@@ -39,7 +40,7 @@ function renderBotSettingsHtml(botId, botName) {
     '  <script src="/bot-configs/bootstrap.js"></script>\n' +
     '  <script src="/bot-configs/load-chain.js"></script>\n' +
     '  <script>\n' +
-    '    QALoadScriptChain([\n' +
+    '    ESLoadScriptChain([\n' +
     "      '/company.config.js',\n" +
     "      '/dashboard/desk-auth.js',\n" +
     "      '/dashboard/dashboard-nav.js?v=" +
@@ -78,7 +79,7 @@ function renderDemoHtml(bot) {
     eventNote +
     '</p>\n' +
     '  <script>\n' +
-    '    window.QA_CONFIG = {\n' +
+    '    window.ES_CONFIG = {\n' +
     (bot.welcomeEventName
       ? "      welcomeEventName: '" + event + "',\n"
       : '') +
@@ -108,7 +109,7 @@ function createForBot(bot, preset) {
   files.push('/bot-settings/' + botId + '.html');
 
   const demoName = demoFileName(bot.name, botId);
-  const demoPath = path.join(PUBLIC_DIR, demoName);
+  const demoPath = path.join(PAGES_DIR, demoName);
   writeFileAtomic_(demoPath, renderDemoHtml(bot));
   files.push('/' + demoName);
 
@@ -136,7 +137,7 @@ function removeForBot(bot) {
     }
   }
   if (bot && bot.name) {
-    const demoPath = path.join(PUBLIC_DIR, demoFileName(bot.name, bot.id));
+    const demoPath = path.join(PAGES_DIR, demoFileName(bot.name, bot.id));
     try {
       if (fs.existsSync(demoPath)) fs.unlinkSync(demoPath);
       removed.push('/' + demoFileName(bot.name, bot.id));

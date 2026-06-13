@@ -6,10 +6,10 @@ const fs = require('fs');
 const path = require('path');
 const { to24h, to12h } = require('./time-format');
 const localTime = require('./local-time');
+const clientPaths = require('./client-paths');
 
 const SCHEDULE_PATH =
-  process.env.APPOINTMENT_SCHEDULE_PATH ||
-  path.join(__dirname, '..', 'data', 'appointment-schedule.json');
+  process.env.APPOINTMENT_SCHEDULE_PATH || clientPaths.appointmentSchedulePath();
 
 const WEEKDAY_NAMES = [
   'sunday',
