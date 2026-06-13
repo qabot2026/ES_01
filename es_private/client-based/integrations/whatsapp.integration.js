@@ -33,6 +33,14 @@ const channelName = 'WhatsApp';
 const webhookObject = 'whatsapp_business_account';
 const defaultLanguage = 'en';
 
+/**
+ * Pehli baar WhatsApp chat — website ki tarah welcome event.
+ * recebot-ptav → FRESH → "Recep Start" (main receptionist menu)
+ * Green Valley ke liye: 'START_GREEN_VALLEY'
+ * Lake View ke liye: 'START_LAKE_VIEW' (Dialogflow mein jo event ho)
+ */
+const welcomeEventName = 'FRESH';
+
 /** Live agent queue message jab bot handoff kare */
 const waitingForAgentMessage = 'Please wait — a team member will join shortly.';
 
@@ -89,6 +97,36 @@ async function handleInboundMessage(from, text, opts) {
   const sessionId = channelSessions.sessionIdFor('wa', phone);
   mergeSessionMeta(sessionId, phone);
 
+  const chatTranscript = require('../../lib/chat-transcript');
+  const doc = chatTranscript.getSessionDoc(sessionId);
+  const priorTurns =
+    doc && Array.isArray(doc.turns) ? doc.turns.length : 0;
+  const isNewSession = priorTurns === 0;
+
+  if (isNewSession && welcomeEventName) {
+    try {
+      const welcome = await channelChat.processChatTurn({
+        sessionId,
+        event: welcomeEventName,
+        languageCode: (opts && opts.languageCode) || defaultLanguage,
+        channel: 'whatsapp',
+        skipTranscriptUser: true,
+      });
+      const welcomeText =
+        welcome.outboundText ||
+        (welcome.waitingForAgent ? waitingForAgentMessage : '');
+      if (welcomeText) {
+        await sendOutboundReply(phone, welcomeText);
+      }
+      const genericOpeners = /^(hi|hello|hey|hii|hola|namaste|start|menu)$/i;
+      if (genericOpeners.test(String(text).trim())) {
+        return { sessionId, reply: welcomeText };
+      }
+    } catch (err) {
+      console.error('[whatsapp.integration] welcome:', err.message);
+    }
+  }
+
   let result;
   try {
     result = await channelChat.processChatTurn({
@@ -136,6 +174,7 @@ module.exports = {
   channelName,
   webhookObject,
   isConfigured,
+  welcomeEventName,
   extractMessages,
   handleInboundMessage,
   sendOutboundReply,
