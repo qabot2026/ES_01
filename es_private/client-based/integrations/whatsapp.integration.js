@@ -61,6 +61,50 @@ function mergeSessionMeta(sessionId, phone) {
   }
 }
 
+function trimText(text) {
+  return String(text || '').trim();
+}
+
+/** Kab FRESH welcome dubara bhejna hai (purani session / fallback ke baad). */
+function welcomeReason(sessionId, text) {
+  const msg = trimText(text);
+  const chatTranscript = require('../../lib/chat-transcript');
+  const doc = chatTranscript.getSessionDoc(sessionId);
+  const turns = Array.isArray(doc.turns) ? doc.turns : [];
+  const meta = doc && doc.meta && typeof doc.meta === 'object' ? doc.meta : {};
+
+  if (/^(main menu|menu|restart|start over|start)$/i.test(msg)) {
+    return 'restart';
+  }
+  if (turns.length === 0) return 'new';
+  if (
+    String(meta.fallback || '').toLowerCase() === 'yes' &&
+    /^(hi|hello|hey|hii|hola|namaste)$/i.test(msg)
+  ) {
+    return 'recover';
+  }
+  return null;
+}
+
+function isGenericOpener(text) {
+  return /^(hi|hello|hey|hii|hola|namaste|start|menu|main menu|restart|start over)$/i.test(
+    trimText(text)
+  );
+}
+
+function clearFallbackFlag(sessionId) {
+  try {
+    const chatTranscript = require('../../lib/chat-transcript');
+    chatTranscript.mergeSessionMeta(
+      sessionId,
+      { fallback: '' },
+      { scheduleSheet: false }
+    );
+  } catch {
+    /* ignore */
+  }
+}
+
 /**
  * Meta webhook body se messages nikalo.
  * Custom formats ke liye yahan edit karo.
@@ -110,12 +154,9 @@ async function handleInboundMessage(from, text, opts) {
   mergeSessionMeta(sessionId, phone);
 
   const chatTranscript = require('../../lib/chat-transcript');
-  const doc = chatTranscript.getSessionDoc(sessionId);
-  const priorTurns =
-    doc && Array.isArray(doc.turns) ? doc.turns.length : 0;
-  const isNewSession = priorTurns === 0;
+  const reason = welcomeReason(sessionId, text);
 
-  if (isNewSession && welcomeEventName) {
+  if (reason && welcomeEventName) {
     try {
       const welcome = await channelChat.processChatTurn({
         sessionId,
@@ -130,8 +171,8 @@ async function handleInboundMessage(from, text, opts) {
       if (welcomeText || (welcome.chips && welcome.chips.length)) {
         await sendDialogflowResult(phone, welcome);
       }
-      const genericOpeners = /^(hi|hello|hey|hii|hola|namaste|start|menu)$/i;
-      if (genericOpeners.test(String(text).trim())) {
+      clearFallbackFlag(sessionId);
+      if (isGenericOpener(text)) {
         return { sessionId, reply: welcomeText };
       }
     } catch (err) {
@@ -172,6 +213,9 @@ async function handleInboundMessage(from, text, opts) {
     } else {
       await sendDialogflowResult(phone, result);
     }
+  }
+  if (!result.intentIsFallback) {
+    clearFallbackFlag(sessionId);
   }
   return { sessionId, reply };
 }
