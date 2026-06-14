@@ -42,6 +42,12 @@ const defaultLanguage = 'en';
  */
 const welcomeEventName = 'FRESH';
 
+/** Purani chat kitni der baad nayi maani jaye (4 ghante) */
+const SESSION_IDLE_MS = 4 * 60 * 60 * 1000;
+
+/** Dialogflow context clear — purane number / stale session ke liye */
+const resetEventName = 'ENDCHAT';
+
 /** Live agent queue message jab bot handoff kare */
 const waitingForAgentMessage = 'Please wait — a team member will join shortly.';
 
@@ -65,33 +71,6 @@ function trimText(text) {
   return String(text || '').trim();
 }
 
-/** Kab FRESH welcome dubara bhejna hai (purani session / fallback ke baad). */
-function welcomeReason(sessionId, text) {
-  const msg = trimText(text);
-  const chatTranscript = require('../../lib/chat-transcript');
-  const doc = chatTranscript.getSessionDoc(sessionId);
-  const turns = Array.isArray(doc.turns) ? doc.turns : [];
-  const meta = doc && doc.meta && typeof doc.meta === 'object' ? doc.meta : {};
-
-  if (/^(main menu|menu|restart|start over|start)$/i.test(msg)) {
-    return 'restart';
-  }
-  if (turns.length === 0) return 'new';
-  if (
-    String(meta.fallback || '').toLowerCase() === 'yes' &&
-    /^(hi|hello|hey|hii|hola|namaste)$/i.test(msg)
-  ) {
-    return 'recover';
-  }
-  return null;
-}
-
-function isGenericOpener(text) {
-  return /^(hi|hello|hey|hii|hola|namaste|start|menu|main menu|restart|start over)$/i.test(
-    trimText(text)
-  );
-}
-
 function clearFallbackFlag(sessionId) {
   try {
     const chatTranscript = require('../../lib/chat-transcript');
@@ -103,6 +82,101 @@ function clearFallbackFlag(sessionId) {
   } catch {
     /* ignore */
   }
+}
+
+function storeLastIntent(sessionId, intent) {
+  try {
+    const chatTranscript = require('../../lib/chat-transcript');
+    chatTranscript.mergeSessionMeta(
+      sessionId,
+      { lastIntent: String(intent || '').trim() },
+      { scheduleSheet: false }
+    );
+  } catch {
+    /* ignore */
+  }
+}
+
+function lastActivityMs(doc) {
+  const turns = doc && Array.isArray(doc.turns) ? doc.turns : [];
+  if (!turns.length) return 0;
+  const last = turns[turns.length - 1];
+  const at = last && last.at ? Date.parse(last.at) : NaN;
+  return Number.isFinite(at) ? at : 0;
+}
+
+/** Green Valley / Lake View ke andar — wahan Hi = GV greeting, FRESH mat bhejo */
+function isInChildFlow(meta) {
+  const last = String((meta && meta.lastIntent) || '').trim();
+  if (!last) return false;
+  if (/fallback/i.test(last)) return false;
+  return /^(rec green valley|gv|landing green|lake view|rec lake|lv)/i.test(last);
+}
+
+/** Kab FRESH welcome bhejna hai — har number (purana/naya) ke liye */
+function welcomeReason(sessionId, text) {
+  const msg = trimText(text);
+  const chatTranscript = require('../../lib/chat-transcript');
+  const doc = chatTranscript.getSessionDoc(sessionId);
+  const turns = Array.isArray(doc.turns) ? doc.turns : [];
+  const meta = doc && doc.meta && typeof doc.meta === 'object' ? doc.meta : {};
+
+  if (/^(main menu|menu|restart|start over|start)$/i.test(msg)) {
+    return 'restart';
+  }
+  if (turns.length === 0) return 'new';
+  if (String(meta.fallback || '').toLowerCase() === 'yes') return 'recover';
+
+  const idle =
+    turns.length > 0 &&
+    Date.now() - lastActivityMs(doc) > SESSION_IDLE_MS;
+  if (idle && isGenericOpener(msg)) return 'idle';
+
+  if (/^(hi|hello|hey|hii|hola|namaste)$/i.test(msg) && !isInChildFlow(meta)) {
+    return 'opener';
+  }
+  return null;
+}
+
+async function sendWelcomeMenu(sessionId, phone, opts, withReset) {
+  if (withReset && resetEventName) {
+    try {
+      await channelChat.processChatTurn({
+        sessionId,
+        event: resetEventName,
+        languageCode: (opts && opts.languageCode) || defaultLanguage,
+        channel: 'whatsapp',
+        skipTranscriptUser: true,
+      });
+    } catch {
+      /* ENDCHAT optional */
+    }
+  }
+
+  const welcome = await channelChat.processChatTurn({
+    sessionId,
+    event: welcomeEventName,
+    languageCode: (opts && opts.languageCode) || defaultLanguage,
+    channel: 'whatsapp',
+    skipTranscriptUser: true,
+  });
+
+  const welcomeText =
+    welcome.outboundText ||
+    (welcome.waitingForAgent ? waitingForAgentMessage : '');
+
+  if (welcomeText || (welcome.chips && welcome.chips.length)) {
+    await sendDialogflowResult(phone, welcome);
+  }
+  clearFallbackFlag(sessionId);
+  storeLastIntent(sessionId, welcome.intent);
+  return welcome;
+}
+
+function isGenericOpener(text) {
+  return /^(hi|hello|hey|hii|hola|namaste|start|menu|main menu|restart|start over)$/i.test(
+    trimText(text)
+  );
 }
 
 /**
@@ -158,20 +232,16 @@ async function handleInboundMessage(from, text, opts) {
 
   if (reason && welcomeEventName) {
     try {
-      const welcome = await channelChat.processChatTurn({
+      const withReset = reason !== 'new';
+      const welcome = await sendWelcomeMenu(
         sessionId,
-        event: welcomeEventName,
-        languageCode: (opts && opts.languageCode) || defaultLanguage,
-        channel: 'whatsapp',
-        skipTranscriptUser: true,
-      });
+        phone,
+        opts,
+        withReset
+      );
       const welcomeText =
         welcome.outboundText ||
         (welcome.waitingForAgent ? waitingForAgentMessage : '');
-      if (welcomeText || (welcome.chips && welcome.chips.length)) {
-        await sendDialogflowResult(phone, welcome);
-      }
-      clearFallbackFlag(sessionId);
       if (isGenericOpener(text)) {
         return { sessionId, reply: welcomeText };
       }
@@ -191,6 +261,19 @@ async function handleInboundMessage(from, text, opts) {
   } catch (err) {
     console.error('[whatsapp.integration]', err.message);
     return null;
+  }
+
+  if (result.intentIsFallback && welcomeEventName) {
+    try {
+      const welcome = await sendWelcomeMenu(sessionId, phone, opts, true);
+      return {
+        sessionId,
+        reply: welcome.outboundText || waitingForAgentMessage,
+        recoveredFromFallback: true,
+      };
+    } catch (err) {
+      console.error('[whatsapp.integration] fallback recover:', err.message);
+    }
   }
 
   const reply =
@@ -216,6 +299,18 @@ async function handleInboundMessage(from, text, opts) {
   }
   if (!result.intentIsFallback) {
     clearFallbackFlag(sessionId);
+    storeLastIntent(sessionId, result.intent);
+  } else {
+    try {
+      const chatTranscript = require('../../lib/chat-transcript');
+      chatTranscript.mergeSessionMeta(
+        sessionId,
+        { fallback: 'yes' },
+        { scheduleSheet: false }
+      );
+    } catch {
+      /* ignore */
+    }
   }
   return { sessionId, reply };
 }
