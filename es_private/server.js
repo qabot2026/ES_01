@@ -20,6 +20,7 @@ const appointmentsView = require('./lib/appointments-view');
 const appointmentStatus = require('./lib/appointment-status-store');
 const esTestMode = require('./lib/es-test-mode');
 const sitePresetsStore = require('./lib/site-presets-store');
+const whatsappIntegrationStore = require('./lib/whatsapp-integration-store');
 const dashboardBots = require('./lib/dashboard-bots');
 const googleCredentials = require('./lib/google-credentials');
 const botProjectFiles = require('./lib/bot-project-files');
@@ -1240,6 +1241,23 @@ app.delete('/api/bot-registry/:botId', requireDeskAuth, (req, res) => {
     return res.status(status).json(result);
   }
   res.json(result);
+});
+
+app.get('/api/whatsapp-integration', requireDeskAuth, (_req, res) => {
+  res.json(whatsappIntegrationStore.getPublicView(PUBLIC_BASE_URL));
+});
+
+app.patch('/api/whatsapp-integration', requireDeskAuth, (req, res) => {
+  const result = whatsappIntegrationStore.saveConfig(req.body || {});
+  if (!result.ok) {
+    return res.status(400).json(result);
+  }
+  res.json(
+    Object.assign({}, whatsappIntegrationStore.getPublicView(PUBLIC_BASE_URL), {
+      ok: true,
+      config: result.config,
+    })
+  );
 });
 
 Object.entries(sitePresetsStore.LEGACY_BOT_IDS).forEach(([legacyId, botId]) => {

@@ -25,6 +25,8 @@ module.exports = {
   pagesDir: () => path.join(CLIENT_PUBLIC, 'pages'),
   registryPath: () => path.join(dataDir(), 'bot-registry.json'),
   sitePresetsPath: () => path.join(dataDir(), 'site-presets.json'),
+  whatsappIntegrationSettingsPath: () =>
+    path.join(dataDir(), 'whatsapp-integration.json'),
   branchesPath: () => path.join(dataDir(), 'branches.json'),
   appointmentSchedulePath: () => path.join(dataDir(), 'appointment-schedule.json'),
   phraseTranslationsPath: () => path.join(dataDir(), 'phrase-translations.json'),

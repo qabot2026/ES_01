@@ -7,3 +7,4 @@
 | `branches.json` | Branches |
 | `appointment-schedule.json` | Slots |
 | `phrase-translations.json` | Translations |
+| `whatsapp-integration.json` | WhatsApp vendor credentials (Supersetting) |

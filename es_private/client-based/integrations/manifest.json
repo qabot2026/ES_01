@@ -11,5 +11,7 @@
     "instagram": "instagram.integration.js",
     "facebook": "facebook.integration.js"
   },
+  "settingsFile": "data/whatsapp-integration.json",
+  "settingsApi": "/api/whatsapp-integration",
   "webhookUrl": "/webhooks/meta"
 }

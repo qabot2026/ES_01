@@ -156,6 +156,100 @@
         font-size: 0.875rem;
         line-height: 1.55;
       }
+      .super-form--wide {
+        max-width: 100%;
+      }
+      .super-wa-tabs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem;
+        margin-top: 0.5rem;
+      }
+      .super-wa-tab {
+        font: inherit;
+        font-size: 0.8125rem;
+        font-weight: 600;
+        padding: 0.4rem 0.75rem;
+        border-radius: 999px;
+        border: 1px solid var(--dash-border);
+        background: var(--dash-surface);
+        color: var(--dash-text);
+        cursor: pointer;
+      }
+      .super-wa-tab:hover {
+        border-color: #bae6fd;
+        background: #f0f9ff;
+      }
+      .super-wa-tab.is-active {
+        background: var(--dash-primary);
+        border-color: var(--dash-primary);
+        color: #fff;
+      }
+      .super-wa-tab.is-active-provider::after {
+        content: ' ✓';
+      }
+      .super-wa-panel {
+        display: none;
+        margin-top: 1rem;
+        padding: 1rem 1.1rem;
+        border: 1px solid var(--dash-border);
+        border-radius: 12px;
+        background: #f8fafc;
+      }
+      .super-wa-panel.is-visible {
+        display: block;
+      }
+      .super-wa-panel h4 {
+        margin: 0 0 0.35rem;
+        font-size: 0.9375rem;
+      }
+      .super-wa-panel .dash-muted {
+        margin: 0 0 0.85rem;
+        font-size: 0.8125rem;
+      }
+      .super-wa-webhook {
+        margin-top: 0.5rem;
+        padding: 0.75rem 0.9rem;
+        border-radius: 10px;
+        background: #eff6ff;
+        border: 1px solid #bfdbfe;
+        font-size: 0.8125rem;
+        line-height: 1.5;
+      }
+      .super-wa-webhook code {
+        word-break: break-all;
+      }
+      .super-wa-env {
+        margin-top: 0.25rem;
+        font-size: 0.75rem;
+        color: var(--dash-muted);
+      }
+      .super-wa-env code {
+        font-size: 0.75rem;
+      }
+      .super-wa-bot-grid {
+        display: grid;
+        gap: 0.85rem;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        margin-top: 0.75rem;
+      }
+      .super-wa-section-title {
+        margin: 1.25rem 0 0;
+        font-size: 0.875rem;
+        font-weight: 700;
+        color: var(--dash-text);
+      }
+      .super-form select,
+      .super-form textarea {
+        font: inherit;
+        padding: 0.55rem 0.65rem;
+        border: 1px solid var(--dash-border);
+        border-radius: 10px;
+      }
+      .super-form textarea {
+        min-height: 4.5rem;
+        resize: vertical;
+      }
     </style>
   </head>
   <body>
@@ -225,10 +319,55 @@
           </div>
         </section>
 
+        <section class="super-card" id="superWhatsappCard">
+          <h3>WhatsApp integration</h3>
+          <p class="dash-muted">
+            Har vendor ke liye alag credentials. <strong>Active provider</strong> wahi use hoga jab webhook adapter connect ho.
+            Abhi Meta direct wired hai; baaki vendors ke liye yahan values save karo (Railway env ya future adapter).
+          </p>
+          <form class="super-form super-form--wide" id="superWhatsappForm">
+            <label>
+              <span>Integration enabled</span>
+              <input type="checkbox" id="superWaEnabled" name="enabled" />
+              <small>WhatsApp channel on/off for this client.</small>
+            </label>
+            <label>
+              Active provider
+              <select id="superWaActiveProvider" name="activeProvider" required>
+                <option value="meta">Meta Cloud API</option>
+                <option value="aisensy">AiSensy</option>
+                <option value="wati">WATI</option>
+                <option value="interakt">Interakt</option>
+                <option value="gupshup">Gupshup</option>
+                <option value="dialog360">360dialog</option>
+                <option value="twilio">Twilio</option>
+              </select>
+              <small>Incoming webhooks + outbound API is vendor-specific.</small>
+            </label>
+            <div class="super-wa-webhook" id="superWaWebhookBox" hidden>
+              <strong>Webhook URL</strong> (vendor dashboard mein paste karo):<br />
+              <code id="superWaWebhookUrl">—</code>
+              <div class="super-wa-env" id="superWaWebhookPath"></div>
+            </div>
+            <p class="super-wa-section-title">Vendor credentials</p>
+            <div class="super-wa-tabs" id="superWaVendorTabs" role="tablist" aria-label="WhatsApp vendors"></div>
+            <div id="superWaVendorPanels"></div>
+            <p class="super-wa-section-title">Bot routing (Dialogflow)</p>
+            <div class="super-wa-bot-grid" id="superWaBotFields"></div>
+            <div>
+              <button type="submit" class="dash-btn dash-btn--primary" id="superWaSaveBtn">
+                Save WhatsApp settings
+              </button>
+              <p class="super-form-status" id="superWaStatus" hidden></p>
+            </div>
+          </form>
+        </section>
+
         <section class="super-card">
           <h3>Developer reference</h3>
           <ul class="super-dev-list">
-            <li>Dialogflow events (FRESH, ENDCHAT) — <code>company.config.js</code></li>
+            <li>WhatsApp vendors (Meta, WATI, Gupshup, …) — form above or <code>es_private/client-based/data/whatsapp-integration.json</code></li>
+            <li>WhatsApp flow code — <code>es_private/client-based/integrations/whatsapp.integration.js</code></li>
             <li>Languages, speech-to-text, uploads — <code>company.config.js</code> or Chatbot appearance</li>
             <li>Agent orchestration — <code>company.config.js</code> → <code>agentOrchestration</code></li>
             <li>On landing pages set <code>window.ES_CONFIG = { welcomeEventName: '…' }</code> before embed loads</li>
@@ -238,6 +377,7 @@
     </div>
     <script src="desk-auth.js"></script>
     <script src="dashboard-nav.js?v=20260611c"></script>
-    <script src="supersetting.js?v=20260612c"></script>
+    <script src="supersetting.js?v=20260612d"></script>
+    <script src="supersetting-whatsapp.js?v=20260612a"></script>
   </body>
 </html>
