@@ -48,6 +48,21 @@ const welcomeEventName = 'START_GREEN_VALLEY';
  */
 const SESSION_GAP_MS = 24 * 60 * 60 * 1000;
 
+/**
+ * Web company.config endChatEvent jaisa — session clear NAHI, sirf goodbye message.
+ * User baad mein message kare to same wa- session continue.
+ */
+const endChatEvent = {
+  enabled: true,
+  eventName: 'ENDCHAT',
+  triggerOnIdle: true,
+  idleTimeoutMs: 10000,
+  showBotResponse: true,
+};
+
+/** sessionId → idle timer (ENDCHAT session se alag) */
+const idleEndChatTimers = new Map();
+
 /** Live agent queue message jab bot handoff kare */
 const waitingForAgentMessage = 'Please wait — a team member will join shortly.';
 
@@ -111,6 +126,63 @@ async function sendWelcomeEvent(sessionId, phone, opts) {
   return welcome;
 }
 
+function clearIdleEndChatTimer(sessionId) {
+  const key = String(sessionId || '').trim();
+  const entry = idleEndChatTimers.get(key);
+  if (!entry) return;
+  if (entry.timer) clearTimeout(entry.timer);
+  idleEndChatTimers.delete(key);
+}
+
+async function triggerIdleEndChat(sessionId, phone) {
+  const cfg = endChatEvent;
+  if (!cfg.enabled || !cfg.eventName) return;
+
+  try {
+    const liveAgent = require('../../lib/live-agent');
+    await liveAgent.refreshStore();
+    if (liveAgent.isDialogflowBlockedForSession(sessionId)) return;
+  } catch {
+    /* ignore */
+  }
+
+  try {
+    const result = await channelChat.processChatTurn({
+      sessionId,
+      event: cfg.eventName,
+      languageCode: defaultLanguage,
+      channel: 'whatsapp',
+      skipTranscriptUser: true,
+    });
+    if (cfg.showBotResponse !== false) {
+      const text =
+        result.outboundText ||
+        result.reply ||
+        (result.waitingForAgent ? waitingForAgentMessage : '');
+      if (text || (result.chips && result.chips.length)) {
+        await sendDialogflowResult(phone, result);
+      }
+    }
+  } catch (err) {
+    console.error('[whatsapp.integration] ENDCHAT idle:', err.message);
+  }
+}
+
+function scheduleIdleEndChat(sessionId, phone) {
+  const cfg = endChatEvent;
+  clearIdleEndChatTimer(sessionId);
+  if (!cfg.enabled || !cfg.triggerOnIdle) return;
+  const ms = Math.max(0, Number(cfg.idleTimeoutMs) || 0);
+  if (ms <= 0) return;
+
+  const key = String(sessionId || '').trim();
+  const timer = setTimeout(() => {
+    idleEndChatTimers.delete(key);
+    void triggerIdleEndChat(key, phone);
+  }, ms);
+  idleEndChatTimers.set(key, { timer, phone });
+}
+
 /**
  * Meta webhook body se messages nikalo.
  * Custom formats ke liye yahan edit karo.
@@ -158,6 +230,7 @@ async function handleInboundMessage(from, text, opts) {
 
   const sessionId = channelSessions.sessionIdFor('wa', phone);
   mergeSessionMeta(sessionId, phone);
+  clearIdleEndChatTimer(sessionId);
 
   if (welcomeEventName && shouldSendWelcome(sessionId)) {
     try {
@@ -166,6 +239,7 @@ async function handleInboundMessage(from, text, opts) {
         welcome.outboundText ||
         (welcome.waitingForAgent ? waitingForAgentMessage : '');
       if (isGenericOpener(text)) {
+        scheduleIdleEndChat(sessionId, phone);
         return { sessionId, reply: welcomeText };
       }
     } catch (err) {
@@ -206,6 +280,10 @@ async function handleInboundMessage(from, text, opts) {
     } else {
       await sendDialogflowResult(phone, result);
     }
+  }
+
+  if (!result.waitingForAgent && !result.liveAgent) {
+    scheduleIdleEndChat(sessionId, phone);
   }
   return { sessionId, reply };
 }
