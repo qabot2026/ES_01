@@ -27,6 +27,7 @@ module.exports = {
   sitePresetsPath: () => path.join(dataDir(), 'site-presets.json'),
   whatsappIntegrationSettingsPath: () =>
     path.join(dataDir(), 'whatsapp-integration.json'),
+  socialIntegrationsPath: () => path.join(dataDir(), 'social-integrations.json'),
   branchesPath: () => path.join(dataDir(), 'branches.json'),
   appointmentSchedulePath: () => path.join(dataDir(), 'appointment-schedule.json'),
   phraseTranslationsPath: () => path.join(dataDir(), 'phrase-translations.json'),

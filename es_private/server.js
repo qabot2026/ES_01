@@ -21,6 +21,7 @@ const appointmentStatus = require('./lib/appointment-status-store');
 const esTestMode = require('./lib/es-test-mode');
 const sitePresetsStore = require('./lib/site-presets-store');
 const whatsappIntegrationStore = require('./lib/whatsapp-integration-store');
+const socialIntegrationStore = require('./lib/social-integration-store');
 const dashboardBots = require('./lib/dashboard-bots');
 const googleCredentials = require('./lib/google-credentials');
 const botProjectFiles = require('./lib/bot-project-files');
@@ -1243,6 +1244,60 @@ app.delete('/api/bot-registry/:botId', requireDeskAuth, (req, res) => {
   res.json(result);
 });
 
+app.get('/api/social-integration/:botId', requireDeskAuth, (req, res) => {
+  const result = socialIntegrationStore.getBotSummary(
+    req.params.botId,
+    PUBLIC_BASE_URL
+  );
+  if (!result.ok) {
+    return res.status(result.error === 'Bot not found' ? 404 : 400).json(result);
+  }
+  res.json(result);
+});
+
+app.get('/api/social-integration/:botId/:channel', requireDeskAuth, (req, res) => {
+  const result = socialIntegrationStore.getChannelView(
+    req.params.botId,
+    req.params.channel,
+    PUBLIC_BASE_URL
+  );
+  if (!result.ok) {
+    const status =
+      result.error === 'Bot not found' || result.error === 'Unknown channel'
+        ? 404
+        : 400;
+    return res.status(status).json(result);
+  }
+  res.json(result);
+});
+
+app.patch('/api/social-integration/:botId/:channel', requireDeskAuth, (req, res) => {
+  const result = socialIntegrationStore.saveChannelConfig(
+    req.params.botId,
+    req.params.channel,
+    req.body || {}
+  );
+  if (!result.ok) {
+    const status =
+      result.error === 'Bot not found' || result.error === 'Unknown channel'
+        ? 404
+        : 400;
+    return res.status(status).json(result);
+  }
+  res.json(
+    Object.assign(
+      {},
+      socialIntegrationStore.getChannelView(
+        req.params.botId,
+        req.params.channel,
+        PUBLIC_BASE_URL
+      ),
+      { ok: true, config: result.config }
+    )
+  );
+});
+
+/** @deprecated alias — use /api/social-integration/:botId/whatsapp */
 app.get('/api/whatsapp-integration/:botId', requireDeskAuth, (req, res) => {
   const result = whatsappIntegrationStore.getPublicView(
     req.params.botId,

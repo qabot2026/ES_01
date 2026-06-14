@@ -12,7 +12,12 @@ const appEnv = require('./app-env');
 const DATA_DIR = clientPaths.dataDir();
 const GCS_PREFIX = appEnv.GCS_DATA_SYNC_PREFIX.replace(/^\/+|\/+$/g, '');
 
-const SYNC_FILES = ['bot-registry.json', 'site-presets.json', 'whatsapp-integration.json'];
+const SYNC_FILES = [
+  'bot-registry.json',
+  'site-presets.json',
+  'social-integrations.json',
+  'whatsapp-integration.json',
+];
 
 const GITHUB_REPO = appEnv.GITHUB_REPO;
 const GITHUB_BRANCH = appEnv.GITHUB_BRANCH;
