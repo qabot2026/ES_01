@@ -125,7 +125,6 @@ function welcomeReason(sessionId, text) {
     return 'restart';
   }
   if (turns.length === 0) return 'new';
-  if (String(meta.fallback || '').toLowerCase() === 'yes') return 'recover';
 
   const idle =
     turns.length > 0 &&
@@ -134,6 +133,14 @@ function welcomeReason(sessionId, text) {
 
   if (/^(hi|hello|hey|hii|hola|namaste)$/i.test(msg) && !isInChildFlow(meta)) {
     return 'opener';
+  }
+
+  /* Fallback ke baad sirf Hi/Menu par menu — random text par Dialogflow fallback dikhe */
+  if (
+    String(meta.fallback || '').toLowerCase() === 'yes' &&
+    /^(hi|hello|hey|hii|hola|namaste|main menu|menu)$/i.test(msg)
+  ) {
+    return 'recover';
   }
   return null;
 }
@@ -261,19 +268,6 @@ async function handleInboundMessage(from, text, opts) {
   } catch (err) {
     console.error('[whatsapp.integration]', err.message);
     return null;
-  }
-
-  if (result.intentIsFallback && welcomeEventName) {
-    try {
-      const welcome = await sendWelcomeMenu(sessionId, phone, opts, true);
-      return {
-        sessionId,
-        reply: welcome.outboundText || waitingForAgentMessage,
-        recoveredFromFallback: true,
-      };
-    } catch (err) {
-      console.error('[whatsapp.integration] fallback recover:', err.message);
-    }
   }
 
   const reply =
