@@ -12,6 +12,6 @@
     "facebook": "facebook.integration.js"
   },
   "settingsFile": "data/whatsapp-integration.json",
-  "settingsApi": "/api/whatsapp-integration",
+  "settingsApi": "/api/whatsapp-integration/:botId",
   "webhookUrl": "/webhooks/meta"
 }

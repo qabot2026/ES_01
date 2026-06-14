@@ -321,11 +321,16 @@
 
         <section class="super-card" id="superWhatsappCard">
           <h3>WhatsApp integration</h3>
-          <p class="dash-muted">
-            Har vendor ke liye alag credentials. <strong>Active provider</strong> wahi use hoga jab webhook adapter connect ho.
-            Abhi Meta direct wired hai; baaki vendors ke liye yahan values save karo (Railway env ya future adapter).
-          </p>
-          <form class="super-form super-form--wide" id="superWhatsappForm">
+          <p class="dash-muted" id="superWaBotLine">Loading bot…</p>
+          <div id="superWhatsappEmpty" hidden>
+            <p class="dash-muted">
+              Is bot ke liye WhatsApp abhi configure nahi hai. Sirf is Bot ID ke liye alag integration save hoti hai.
+            </p>
+            <button type="button" class="dash-btn dash-btn--primary" id="superWaSetupBtn">
+              Set up WhatsApp for this bot
+            </button>
+          </div>
+          <form class="super-form super-form--wide" id="superWhatsappForm" hidden>
             <label>
               <span>Integration enabled</span>
               <input type="checkbox" id="superWaEnabled" name="enabled" />
@@ -366,7 +371,7 @@
         <section class="super-card">
           <h3>Developer reference</h3>
           <ul class="super-dev-list">
-            <li>WhatsApp vendors (Meta, WATI, Gupshup, …) — form above or <code>es_private/client-based/data/whatsapp-integration.json</code></li>
+            <li>WhatsApp per bot — <code>whatsapp-integration.json</code> → <code>bots["10002"]</code> etc.</li>
             <li>WhatsApp flow code — <code>es_private/client-based/integrations/whatsapp.integration.js</code></li>
             <li>Languages, speech-to-text, uploads — <code>company.config.js</code> or Chatbot appearance</li>
             <li>Agent orchestration — <code>company.config.js</code> → <code>agentOrchestration</code></li>
@@ -378,6 +383,6 @@
     <script src="desk-auth.js"></script>
     <script src="dashboard-nav.js?v=20260611c"></script>
     <script src="supersetting.js?v=20260612d"></script>
-    <script src="supersetting-whatsapp.js?v=20260612a"></script>
+    <script src="supersetting-whatsapp.js?v=20260613a"></script>
   </body>
 </html>

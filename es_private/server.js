@@ -1243,20 +1243,32 @@ app.delete('/api/bot-registry/:botId', requireDeskAuth, (req, res) => {
   res.json(result);
 });
 
-app.get('/api/whatsapp-integration', requireDeskAuth, (_req, res) => {
-  res.json(whatsappIntegrationStore.getPublicView(PUBLIC_BASE_URL));
+app.get('/api/whatsapp-integration/:botId', requireDeskAuth, (req, res) => {
+  const result = whatsappIntegrationStore.getPublicView(
+    req.params.botId,
+    PUBLIC_BASE_URL
+  );
+  if (!result.ok) {
+    return res.status(result.error === 'Bot not found' ? 404 : 400).json(result);
+  }
+  res.json(result);
 });
 
-app.patch('/api/whatsapp-integration', requireDeskAuth, (req, res) => {
-  const result = whatsappIntegrationStore.saveConfig(req.body || {});
+app.patch('/api/whatsapp-integration/:botId', requireDeskAuth, (req, res) => {
+  const result = whatsappIntegrationStore.saveBotConfig(
+    req.params.botId,
+    req.body || {}
+  );
   if (!result.ok) {
-    return res.status(400).json(result);
+    const status = result.error === 'Bot not found' ? 404 : 400;
+    return res.status(status).json(result);
   }
   res.json(
-    Object.assign({}, whatsappIntegrationStore.getPublicView(PUBLIC_BASE_URL), {
-      ok: true,
-      config: result.config,
-    })
+    Object.assign(
+      {},
+      whatsappIntegrationStore.getPublicView(req.params.botId, PUBLIC_BASE_URL),
+      { ok: true, config: result.config }
+    )
   );
 });
 

@@ -292,71 +292,142 @@ function defaultProviderValues() {
   return out;
 }
 
-function defaultConfig() {
+function defaultBotConfig(botId) {
+  const bid = String(botId || '').trim();
+  let reg = null;
+  try {
+    const sitePresetsStore = require('./site-presets-store');
+    reg =
+      sitePresetsStore.listProjects().find((b) => b.id === bid) || null;
+  } catch {
+    /* ignore */
+  }
   return {
-    updatedAt: new Date().toISOString(),
     enabled: false,
     activeProvider: 'meta',
     providers: defaultProviderValues(),
     bot: {
-      welcomeEventName: 'START_GREEN_VALLEY',
-      sitePreset: 'greenValley',
-      botId: '10002',
+      welcomeEventName: reg ? String(reg.welcomeEventName || '').trim() : '',
+      sitePreset: reg ? String(reg.sitePreset || '').trim() : '',
+      botId: bid,
       idleTimeoutMs: 10000,
     },
   };
 }
 
-function filePath() {
-  return clientPaths.whatsappIntegrationSettingsPath();
-}
-
-function ensureDir() {
-  const dir = clientPaths.dataDir();
-  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-}
-
-function readConfig() {
-  ensureDir();
-  const fp = filePath();
-  if (!fs.existsSync(fp)) {
-    const seed = defaultConfig();
-    fs.writeFileSync(fp, JSON.stringify(seed, null, 2), 'utf8');
-    return seed;
-  }
-  try {
-    const raw = JSON.parse(fs.readFileSync(fp, 'utf8'));
-    return normalizeConfig(raw);
-  } catch (err) {
-    console.warn('[whatsapp-integration] read failed:', err.message);
-    return defaultConfig();
-  }
-}
-
-function normalizeConfig(raw) {
-  const base = defaultConfig();
+function normalizeBotConfig(raw, botId) {
+  const base = defaultBotConfig(botId);
   const cfg = raw && typeof raw === 'object' ? raw : {};
   const providers = defaultProviderValues();
-  const incoming = cfg.providers && typeof cfg.providers === 'object' ? cfg.providers : {};
+  const incoming =
+    cfg.providers && typeof cfg.providers === 'object' ? cfg.providers : {};
   for (const id of PROVIDER_IDS) {
     const row = incoming[id] && typeof incoming[id] === 'object' ? incoming[id] : {};
     providers[id] = Object.assign({}, providers[id], row);
   }
   const botIn = cfg.bot && typeof cfg.bot === 'object' ? cfg.bot : {};
   return {
-    updatedAt: cfg.updatedAt || base.updatedAt,
     enabled: Boolean(cfg.enabled),
     activeProvider: PROVIDER_IDS.includes(cfg.activeProvider)
       ? cfg.activeProvider
       : base.activeProvider,
     providers,
-    bot: Object.assign({}, base.bot, botIn),
+    bot: Object.assign({}, base.bot, botIn, { botId: String(botId || '').trim() }),
   };
 }
 
-function saveConfig(patch) {
-  const current = readConfig();
-  const next = normalizeConfig(current);
+function isBotConfigured(cfg) {
+  if (!cfg) return false;
+  if (cfg.enabled) return true;
+  const providers = cfg.providers && typeof cfg.providers === 'object' ? cfg.providers : {};
+  for (const id of PROVIDER_IDS) {
+    const row = providers[id];
+    if (!row || typeof row !== 'object') continue;
+    const schema = PROVIDER_SCHEMAS[id];
+    for (const f of schema.fields) {
+      if (String(row[f.key] || '').trim()) return true;
+    }
+    if (String(row.notes || '').trim()) return true;
+  }
+  return false;
+}
+
+function readFileDoc() {
+  ensureDir();
+  const fp = filePath();
+  if (!fs.existsSync(fp)) {
+    const seed = { updatedAt: new Date().toISOString(), bots: {} };
+    fs.writeFileSync(fp, JSON.stringify(seed, null, 2), 'utf8');
+    return seed;
+  }
+  try {
+    const raw = JSON.parse(fs.readFileSync(fp, 'utf8'));
+    if (raw && raw.bots && typeof raw.bots === 'object') {
+      return {
+        updatedAt: raw.updatedAt || new Date().toISOString(),
+        bots: raw.bots,
+      };
+    }
+    /** Legacy single-bot file → migrate under bot ID from saved bot.botId */
+    if (raw && (raw.providers || raw.enabled != null)) {
+      const legacyBotId = String((raw.bot && raw.bot.botId) || '10002').trim();
+      return {
+        updatedAt: raw.updatedAt || new Date().toISOString(),
+        bots: {
+          [legacyBotId]: normalizeBotConfig(raw, legacyBotId),
+        },
+      };
+    }
+    return { updatedAt: new Date().toISOString(), bots: {} };
+  } catch (err) {
+    console.warn('[whatsapp-integration] read failed:', err.message);
+    return { updatedAt: new Date().toISOString(), bots: {} };
+  }
+}
+
+function writeFileDoc(doc) {
+  const next = {
+    updatedAt: new Date().toISOString(),
+    bots: doc && doc.bots && typeof doc.bots === 'object' ? doc.bots : {},
+  };
+  ensureDir();
+  fs.writeFileSync(filePath(), JSON.stringify(next, null, 2), 'utf8');
+  dataFileSync.scheduleSync(FILE_NAME);
+  return next;
+}
+
+function readBotConfig(botId) {
+  const bid = String(botId || '').trim();
+  if (!bid) return defaultBotConfig('');
+  const doc = readFileDoc();
+  const stored = doc.bots[bid];
+  if (!stored) return defaultBotConfig(bid);
+  return normalizeBotConfig(stored, bid);
+}
+
+function validateBotId(botId) {
+  const bid = String(botId || '').trim();
+  if (!/^\d{5}$/.test(bid)) {
+    return { ok: false, error: 'Invalid bot ID' };
+  }
+  try {
+    const sitePresetsStore = require('./site-presets-store');
+    const bot = sitePresetsStore.listProjects().find((b) => b.id === bid);
+    if (!bot) return { ok: false, error: 'Bot not found' };
+    return { ok: true, botId: bid, bot };
+  } catch (err) {
+    return { ok: false, error: err.message || 'Bot registry unavailable' };
+  }
+}
+
+function saveBotConfig(botId, patch) {
+  const check = validateBotId(botId);
+  if (!check.ok) return check;
+
+  const bid = check.botId;
+  const doc = readFileDoc();
+  const current = readBotConfig(bid);
+  const next = normalizeBotConfig(current, bid);
 
   if (patch && typeof patch === 'object') {
     if (patch.enabled != null) next.enabled = Boolean(patch.enabled);
@@ -376,6 +447,7 @@ function saveConfig(patch) {
     }
     if (patch.bot && typeof patch.bot === 'object') {
       for (const f of BOT_FIELD_SCHEMA) {
+        if (f.key === 'botId') continue;
         if (patch.bot[f.key] == null) continue;
         if (f.key === 'idleTimeoutMs') {
           const n = parseInt(patch.bot.idleTimeoutMs, 10);
@@ -387,29 +459,56 @@ function saveConfig(patch) {
     }
   }
 
-  next.updatedAt = new Date().toISOString();
-  ensureDir();
-  fs.writeFileSync(filePath(), JSON.stringify(next, null, 2), 'utf8');
-  dataFileSync.scheduleSync(FILE_NAME);
-  return { ok: true, config: next };
+  next.bot.botId = bid;
+  doc.bots[bid] = next;
+  writeFileDoc(doc);
+  return { ok: true, config: next, botId: bid };
 }
 
-function getPublicView(publicBaseUrl) {
-  const cfg = readConfig();
+function getPublicView(botId, publicBaseUrl) {
+  const check = validateBotId(botId);
+  if (!check.ok) return check;
+
+  const bid = check.botId;
+  const cfg = readBotConfig(bid);
   const active = PROVIDER_SCHEMAS[cfg.activeProvider] || PROVIDER_SCHEMAS.meta;
+  const base = String(publicBaseUrl || '').replace(/\/$/, '');
+  const webhookPath = active.webhookPath || '/webhooks/meta';
+  const webhookUrl = base
+    ? `${base}${webhookPath}?bid=${encodeURIComponent(bid)}`
+    : `${webhookPath}?bid=${encodeURIComponent(bid)}`;
+
   return {
     ok: true,
+    botId: bid,
+    botName: check.bot.name,
+    configured: isBotConfigured(cfg),
     config: cfg,
     schema: {
       providerIds: PROVIDER_IDS,
       providers: PROVIDER_SCHEMAS,
-      botFields: BOT_FIELD_SCHEMA,
+      botFields: BOT_FIELD_SCHEMA.filter((f) => f.key !== 'botId'),
     },
     publicBaseUrl: publicBaseUrl || '',
-    webhookUrl: publicBaseUrl
-      ? `${String(publicBaseUrl).replace(/\/$/, '')}${active.webhookPath}`
-      : active.webhookPath,
+    webhookUrl,
+    webhookPath,
   };
+}
+
+/** @deprecated use readBotConfig */
+function readConfig() {
+  return readBotConfig('10002');
+}
+
+/** @deprecated use saveBotConfig */
+function saveConfig(patch) {
+  const bid = (patch && patch.bot && patch.bot.botId) || '10002';
+  return saveBotConfig(bid, patch);
+}
+
+/** @deprecated */
+function defaultConfig() {
+  return defaultBotConfig('10002');
 }
 
 module.exports = {
@@ -417,8 +516,22 @@ module.exports = {
   PROVIDER_IDS,
   PROVIDER_SCHEMAS,
   BOT_FIELD_SCHEMA,
+  readBotConfig,
+  saveBotConfig,
+  getPublicView,
+  validateBotId,
+  isBotConfigured,
   readConfig,
   saveConfig,
-  getPublicView,
+  defaultBotConfig,
   defaultConfig,
 };
+
+function filePath() {
+  return clientPaths.whatsappIntegrationSettingsPath();
+}
+
+function ensureDir() {
+  const dir = clientPaths.dataDir();
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+}

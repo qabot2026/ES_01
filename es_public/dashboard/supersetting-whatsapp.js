@@ -5,6 +5,9 @@
   var nav = window.DashboardNav;
 
   var waState = {
+    botId: '',
+    botName: '',
+    configured: false,
     schema: null,
     config: null,
     publicBaseUrl: '',
@@ -13,6 +16,23 @@
 
   function apiBase() {
     return auth.apiBase();
+  }
+
+  function currentBotId() {
+    return nav && typeof nav.getBid === 'function' ? String(nav.getBid() || '').trim() : '';
+  }
+
+  function currentBotName() {
+    var bid = currentBotId();
+    var bot =
+      (nav.BOTS || []).find(function (b) {
+        return b.id === bid;
+      }) || null;
+    return bot ? bot.name : bid;
+  }
+
+  function waApiUrl(botId) {
+    return apiBase() + '/api/whatsapp-integration/' + encodeURIComponent(botId);
   }
 
   function esc(s) {
@@ -36,6 +56,27 @@
     el.hidden = !msg;
   }
 
+  function updateBotLine() {
+    var line = document.getElementById('superWaBotLine');
+    if (!line) return;
+    var bid = waState.botId || currentBotId();
+    var name = waState.botName || currentBotName();
+    line.textContent =
+      name +
+      ' (Bot ID ' +
+      bid +
+      ') — har bot ki alag WhatsApp config. Webhook URL mein ?bid=' +
+      bid +
+      ' include karo.';
+  }
+
+  function setWhatsappVisibility(showForm) {
+    var emptyEl = document.getElementById('superWhatsappEmpty');
+    var formEl = document.getElementById('superWhatsappForm');
+    if (emptyEl) emptyEl.hidden = !!showForm;
+    if (formEl) formEl.hidden = !showForm;
+  }
+
   function providerSchema(id) {
     return waState.schema && waState.schema.providers
       ? waState.schema.providers[id]
@@ -46,7 +87,9 @@
     var schema = providerSchema(providerId);
     var path = schema && schema.webhookPath ? schema.webhookPath : '/webhooks/meta';
     var base = String(waState.publicBaseUrl || window.location.origin || '').replace(/\/$/, '');
-    return base ? base + path : path;
+    var bid = waState.botId || currentBotId();
+    var q = bid ? '?bid=' + encodeURIComponent(bid) : '';
+    return base ? base + path + q : path + q;
   }
 
   function updateWebhookDisplay() {
@@ -134,7 +177,11 @@
       .map(function (field) {
         var inputType = field.secret ? 'password' : 'text';
         var envHint = field.env
-          ? '<div class="super-wa-env">Railway env: <code>' + esc(field.env) + '</code></div>'
+          ? '<div class="super-wa-env">Railway env (Bot ' +
+            esc(waState.botId) +
+            '): <code>' +
+            esc(field.env) +
+            '</code></div>'
           : '';
         return (
           '<label>' +
@@ -229,7 +276,7 @@
       providers[id] = row;
     });
 
-    var bot = {};
+    var bot = { botId: waState.botId || currentBotId() };
     document.querySelectorAll('[data-bot-field]').forEach(function (input) {
       bot[input.getAttribute('data-bot-field')] = input.value;
     });
@@ -251,13 +298,24 @@
     if (activeEl) activeEl.value = cfg.activeProvider || 'meta';
     waState.visibleVendor = cfg.activeProvider || 'meta';
 
+    setWhatsappVisibility(waState.configured);
     renderVendorTabs();
     renderBotFields();
     updateWebhookDisplay();
+    updateBotLine();
   }
 
   function loadWhatsappIntegration() {
-    return fetch(apiBase() + '/api/whatsapp-integration', {
+    var botId = currentBotId();
+    if (!botId) {
+      setWaStatus('No bot selected.', true);
+      return Promise.resolve();
+    }
+
+    waState.botId = botId;
+    setWaStatus('', false);
+
+    return fetch(waApiUrl(botId), {
       credentials: 'same-origin',
       headers: auth.authHeaders(),
     })
@@ -279,21 +337,31 @@
         }
         waState.schema = result.body.schema;
         waState.config = result.body.config;
+        waState.configured = !!result.body.configured;
+        waState.botId = result.body.botId || botId;
+        waState.botName = result.body.botName || currentBotName();
         waState.publicBaseUrl = result.body.publicBaseUrl || window.location.origin;
         applyConfigToForm();
       })
       .catch(function (err) {
+        setWhatsappVisibility(false);
         setWaStatus(err.message || 'Could not load WhatsApp settings', true);
       });
   }
 
   function saveWhatsappIntegration(ev) {
     if (ev) ev.preventDefault();
+    var botId = waState.botId || currentBotId();
+    if (!botId) {
+      setWaStatus('No bot selected.', true);
+      return Promise.resolve();
+    }
+
     var saveBtn = document.getElementById('superWaSaveBtn');
     if (saveBtn) saveBtn.disabled = true;
     setWaStatus('Saving…', false);
 
-    return fetch(apiBase() + '/api/whatsapp-integration', {
+    return fetch(waApiUrl(botId), {
       method: 'PATCH',
       credentials: 'same-origin',
       headers: Object.assign({ 'Content-Type': 'application/json' }, auth.authHeaders()),
@@ -316,14 +384,20 @@
           );
         }
         waState.config = result.body.config;
+        waState.configured = !!result.body.configured;
         waState.publicBaseUrl = result.body.publicBaseUrl || waState.publicBaseUrl;
         var provider =
           providerSchema(result.body.config.activeProvider) ||
           providerSchema('meta');
         setWaStatus(
-          'Saved — active provider: ' + (provider ? provider.label : 'Meta') + '.',
+          'Saved for Bot ' +
+            botId +
+            ' — active provider: ' +
+            (provider ? provider.label : 'Meta') +
+            '.',
           false
         );
+        setWhatsappVisibility(waState.configured);
         renderVendorTabs();
         updateWebhookDisplay();
       })
@@ -335,10 +409,19 @@
       });
   }
 
+  function startSetup() {
+    setWhatsappVisibility(true);
+    var enabledEl = document.getElementById('superWaEnabled');
+    if (enabledEl) enabledEl.checked = true;
+    setWaStatus('Fill vendor details below, then Save.', false);
+  }
+
   function bindWhatsappForm() {
     var form = document.getElementById('superWhatsappForm');
     var activeEl = document.getElementById('superWaActiveProvider');
+    var setupBtn = document.getElementById('superWaSetupBtn');
     if (form) form.addEventListener('submit', saveWhatsappIntegration);
+    if (setupBtn) setupBtn.addEventListener('click', startSetup);
     if (activeEl) {
       activeEl.addEventListener('change', function () {
         updateWebhookDisplay();
