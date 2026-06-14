@@ -335,9 +335,8 @@ function normalizeChannelConfig(raw, botId, channel) {
   };
 }
 
-function isChannelConfigured(cfg, channel) {
+function hasChannelCredentials(cfg, channel) {
   if (!cfg) return false;
-  if (cfg.enabled) return true;
   const schema = channelSchema(channel);
   if (!schema) return false;
   const providers = cfg.providers && typeof cfg.providers === 'object' ? cfg.providers : {};
@@ -347,9 +346,21 @@ function isChannelConfigured(cfg, channel) {
     for (const f of schema.providers[id].fields) {
       if (String(row[f.key] || '').trim()) return true;
     }
-    if (String(row.notes || '').trim()) return true;
   }
   return false;
+}
+
+function isChannelStored(botId, channel) {
+  const doc = readFileDoc();
+  const bid = String(botId || '').trim();
+  const ch = String(channel || '').trim();
+  const entry = doc.bots[bid];
+  return !!(entry && entry[ch] && typeof entry[ch] === 'object');
+}
+
+/** @deprecated use hasChannelCredentials / isChannelStored + enabled */
+function isChannelConfigured(cfg, channel) {
+  return hasChannelCredentials(cfg, channel);
 }
 
 function normalizeBotEntry(raw, botId) {
@@ -441,7 +452,7 @@ function saveChannelConfig(botId, channel, patch) {
   const next = normalizeChannelConfig(current, bid, ch);
 
   if (patch && typeof patch === 'object') {
-    if (patch.enabled != null) next.enabled = Boolean(patch.enabled);
+    if ('enabled' in patch) next.enabled = Boolean(patch.enabled);
     if (patch.activeProvider && schema.providerIds.includes(patch.activeProvider)) {
       next.activeProvider = patch.activeProvider;
     }
@@ -507,7 +518,11 @@ function getChannelView(botId, channel, publicBaseUrl) {
       sessionPrefix: schema.sessionPrefix,
       accent: schema.accent,
     },
-    configured: isChannelConfigured(cfg, ch),
+    enabled: !!cfg.enabled,
+    hasCredentials: hasChannelCredentials(cfg, ch),
+    stored: isChannelStored(bid, ch),
+    /** true if form should show (saved before or has credentials) */
+    configured: isChannelStored(bid, ch) || hasChannelCredentials(cfg, ch),
     config: cfg,
     schema: {
       providerIds: schema.providerIds,
@@ -530,8 +545,10 @@ function getBotSummary(botId, publicBaseUrl) {
     const schema = channelSchema(ch);
     channels[ch] = {
       label: schema.label,
-      configured: isChannelConfigured(cfg, ch),
       enabled: !!cfg.enabled,
+      hasCredentials: hasChannelCredentials(cfg, ch),
+      stored: isChannelStored(bid, ch),
+      configured: isChannelStored(bid, ch) || hasChannelCredentials(cfg, ch),
       activeProvider: cfg.activeProvider,
       sessionPrefix: schema.sessionPrefix,
       accent: schema.accent,
@@ -558,5 +575,7 @@ module.exports = {
   getChannelView,
   getBotSummary,
   isChannelConfigured,
+  hasChannelCredentials,
+  isChannelStored,
   buildWebhookUrl,
 };

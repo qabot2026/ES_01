@@ -89,7 +89,9 @@
     var ch = state.summary && state.summary.channels && state.summary.channels[channelId];
     if (!ch) return { text: 'Not set up', cls: 'social-channel__badge--off' };
     if (ch.enabled) return { text: 'Active', cls: 'social-channel__badge--on' };
-    if (ch.configured) return { text: 'Draft', cls: 'social-channel__badge--draft' };
+    if (ch.stored || ch.hasCredentials) {
+      return { text: 'Disabled', cls: 'social-channel__badge--inactive' };
+    }
     return { text: 'Not set up', cls: 'social-channel__badge--off' };
   }
 
@@ -367,10 +369,12 @@
       state.visibleVendor[channelId] || cfg.activeProvider || 'meta';
 
     return (
-      '<div class="social-form-toolbar">' +
+      '<div class="social-form-toolbar' +
+      (cfg.enabled ? ' is-enabled-channel' : ' is-disabled-channel') +
+      '">' +
       '<div class="social-form-toolbar__info">' +
       '<span class="social-form-toolbar__title">Channel status</span>' +
-      '<span class="social-form-toolbar__hint">Credentials save ho jayein tab enable karo</span>' +
+      '<span class="social-form-toolbar__hint">Credentials save kar sakte ho — channel tab tak off rakho jab tak live na karna ho</span>' +
       '</div>' +
       '<label class="social-switch">' +
       '<input type="checkbox" class="social-switch__input" data-ch="' +
@@ -422,8 +426,6 @@
         if (form) {
           form.hidden = false;
           setupBtn.closest('.social-channel__empty').style.display = 'none';
-          var toggle = form.querySelector('[data-enabled-toggle]');
-          if (toggle) toggle.checked = true;
         }
       });
     }
@@ -458,6 +460,11 @@
       if (toggle && toggleLabel) {
         toggle.addEventListener('change', function () {
           toggleLabel.textContent = toggle.checked ? 'Enabled' : 'Disabled';
+          var toolbar = form.querySelector('.social-form-toolbar');
+          if (toolbar) {
+            toolbar.classList.toggle('is-enabled-channel', toggle.checked);
+            toolbar.classList.toggle('is-disabled-channel', !toggle.checked);
+          }
         });
       }
     }
@@ -548,7 +555,14 @@
           throw new Error((result.body && result.body.error) || 'Save failed');
         }
         state.channels[channelId] = result.body;
-        setChannelStatus(channelId, 'Saved for Bot ' + state.botId + '.', false);
+        var savedEnabled = !!(result.body.config && result.body.config.enabled);
+        setChannelStatus(
+          channelId,
+          'Saved — Bot ' +
+            state.botId +
+            (savedEnabled ? ' · channel enabled (live).' : ' · credentials saved, channel disabled.'),
+          false
+        );
         return loadSummary().then(function () {
           var body = document.getElementById('socialBody-' + channelId);
           if (body) {

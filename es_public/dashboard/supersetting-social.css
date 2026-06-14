@@ -146,9 +146,31 @@
   color: #166534;
 }
 
+.social-channel__badge--inactive {
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+}
+
 .social-channel__badge--draft {
   background: #fef3c7;
   color: #92400e;
+}
+
+.social-form-toolbar.is-disabled-channel {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+
+.social-form-toolbar.is-disabled-channel .social-form-toolbar__title::after {
+  content: ' · off';
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+.social-form-toolbar.is-enabled-channel {
+  background: linear-gradient(90deg, #f0fdf4 0%, #fff 100%);
+  border-color: #bbf7d0;
 }
 
 .social-channel__chev {
