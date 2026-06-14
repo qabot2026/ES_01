@@ -40,7 +40,7 @@ const defaultLanguage = 'en';
  * Green Valley ke liye: 'START_GREEN_VALLEY'
  * Lake View ke liye: 'START_LAKE_VIEW' (Dialogflow mein jo event ho)
  */
-const welcomeEventName = 'FRESH';
+const welcomeEventName = 'START_GREEN_VALLEY';
 
 /**
  * Web bot jaisa — 24 ghante ke andar session / Dialogflow context same rahe.
@@ -61,6 +61,8 @@ function mergeSessionMeta(sessionId, phone) {
     chatTranscript.mergeSessionMeta(sessionId, {
       channel: channelName,
       whatsappPhone: phone,
+      sitePreset: 'greenValley',
+      botId: '10002'
     });
   } catch {
     /* ignore */
