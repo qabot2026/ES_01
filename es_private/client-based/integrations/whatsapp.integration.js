@@ -43,12 +43,6 @@ const defaultLanguage = 'en';
 const welcomeEventName = 'START_GREEN_VALLEY';
 
 /**
- * Web bot jaisa — 24 ghante ke andar session / Dialogflow context same rahe.
- * FRESH sirf: pehli baar chat, ya 24+ ghante baad wapas aaye.
- */
-const SESSION_GAP_MS = 24 * 60 * 60 * 1000;
-
-/**
  * Web company.config endChatEvent jaisa — session clear NAHI, sirf goodbye message.
  * User baad mein message kare to same wa- session continue.
  */
@@ -58,10 +52,14 @@ const endChatEvent = {
   triggerOnIdle: true,
   idleTimeoutMs: 10000,
   showBotResponse: true,
+  /** Web jaisa — ek user reply ke baad idle par sirf ek baar ENDCHAT */
+  triggerOncePerIdleCycle: true,
 };
 
 /** sessionId → idle timer (ENDCHAT session se alag) */
 const idleEndChatTimers = new Map();
+/** sessionId set — is idle cycle mein ENDCHAT already bheja */
+const endChatSentThisCycle = new Set();
 
 /** Live agent queue message jab bot handoff kare */
 const waitingForAgentMessage = 'Please wait — a team member will join shortly.';
@@ -86,23 +84,6 @@ function mergeSessionMeta(sessionId, phone) {
 
 function trimText(text) {
   return String(text || '').trim();
-}
-
-function lastActivityMs(doc) {
-  const turns = doc && Array.isArray(doc.turns) ? doc.turns : [];
-  if (!turns.length) return 0;
-  const last = turns[turns.length - 1];
-  const at = last && last.at ? Date.parse(last.at) : NaN;
-  return Number.isFinite(at) ? at : 0;
-}
-
-/** Web: chat open → FRESH. WA: sirf nayi chat ya 24h+ gap — beech mein context rakho */
-function shouldSendWelcome(sessionId) {
-  const chatTranscript = require('../../lib/chat-transcript');
-  const doc = chatTranscript.getSessionDoc(sessionId);
-  const turns = Array.isArray(doc.turns) ? doc.turns : [];
-  if (turns.length === 0) return true;
-  return Date.now() - lastActivityMs(doc) > SESSION_GAP_MS;
 }
 
 function isGenericOpener(text) {
@@ -137,6 +118,8 @@ function clearIdleEndChatTimer(sessionId) {
 async function triggerIdleEndChat(sessionId, phone) {
   const cfg = endChatEvent;
   if (!cfg.enabled || !cfg.eventName) return;
+  const key = String(sessionId || '').trim();
+  if (cfg.triggerOncePerIdleCycle && endChatSentThisCycle.has(key)) return;
 
   try {
     const liveAgent = require('../../lib/live-agent');
@@ -163,6 +146,7 @@ async function triggerIdleEndChat(sessionId, phone) {
         await sendDialogflowResult(phone, result);
       }
     }
+    if (cfg.triggerOncePerIdleCycle) endChatSentThisCycle.add(key);
   } catch (err) {
     console.error('[whatsapp.integration] ENDCHAT idle:', err.message);
   }
@@ -172,10 +156,11 @@ function scheduleIdleEndChat(sessionId, phone) {
   const cfg = endChatEvent;
   clearIdleEndChatTimer(sessionId);
   if (!cfg.enabled || !cfg.triggerOnIdle) return;
+  const key = String(sessionId || '').trim();
+  if (cfg.triggerOncePerIdleCycle && endChatSentThisCycle.has(key)) return;
   const ms = Math.max(0, Number(cfg.idleTimeoutMs) || 0);
   if (ms <= 0) return;
 
-  const key = String(sessionId || '').trim();
   const timer = setTimeout(() => {
     idleEndChatTimers.delete(key);
     void triggerIdleEndChat(key, phone);
@@ -231,17 +216,17 @@ async function handleInboundMessage(from, text, opts) {
   const sessionId = channelSessions.sessionIdFor('wa', phone);
   mergeSessionMeta(sessionId, phone);
   clearIdleEndChatTimer(sessionId);
+  endChatSentThisCycle.delete(String(sessionId || '').trim());
 
-  if (welcomeEventName && shouldSendWelcome(sessionId)) {
+  /** Welcome event sirf explicit Hi/Hello — option click ya normal msg par nahi */
+  if (welcomeEventName && isGenericOpener(text)) {
     try {
       const welcome = await sendWelcomeEvent(sessionId, phone, opts);
       const welcomeText =
         welcome.outboundText ||
         (welcome.waitingForAgent ? waitingForAgentMessage : '');
-      if (isGenericOpener(text)) {
-        scheduleIdleEndChat(sessionId, phone);
-        return { sessionId, reply: welcomeText };
-      }
+      scheduleIdleEndChat(sessionId, phone);
+      return { sessionId, reply: welcomeText };
     } catch (err) {
       console.error('[whatsapp.integration] welcome:', err.message);
     }
